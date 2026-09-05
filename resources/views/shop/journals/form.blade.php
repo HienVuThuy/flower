@@ -8,6 +8,7 @@
     $suaSo = $journal->exists;
     // Loại sổ có thể đến từ URL (bấm từ màn hình trống) hoặc từ sổ đang sửa.
     $loaiDangChon = old('kind', request('kind', $journal->kind?->value ?? 'growth'));
+    $themeDangChon = old('theme_key', $journal->theme_key?->value);
 @endphp
 
 <section class="section-sm">
@@ -22,7 +23,9 @@
 
         <form method="POST"
               action="{{ $suaSo ? route('shop.journals.update', $journal) : route('shop.journals.store') }}"
-              class="surface-card p-4">
+              class="surface-card p-4"
+              enctype="multipart/form-data"
+              data-journal-form>
             @csrf
             @if($suaSo) @method('PUT') @endif
 
@@ -37,28 +40,129 @@
             </div>
 
             {{--
-                LOẠI SỔ HIỆN CẢ CÂU GIẢI THÍCH, không chỉ cái tên.
+                LOẠI SỔ HIỆN CẢ CÂU GIẢI THÍCH VÀ CẢ NHỮNG GÌ NÓ MANG LẠI.
 
-                "Phân tích cây" hay "Ghi chép tự do" đứng một mình thì
-                người chưa dùng bao giờ không đoán được khác nhau ở đâu, và
-                họ sẽ chọn bừa cái đầu tiên.
+                Trước đây chỉ có tên và một câu mô tả, nên "Phân tích cây"
+                và "Ghi chép tự do" nghe gần như nhau — người chưa dùng bao
+                giờ sẽ chọn bừa cái đầu tiên.
+
+                Nay mỗi loại liệt kê thẳng các khối mà trang sổ sẽ có. Đó
+                là thứ khác nhau thật giữa chúng, và nó lấy từ chính
+                `JournalKind::panels()` chứ không phải một danh sách chép
+                tay — nên không bao giờ lệch với thứ hiện ra sau đó.
             --}}
             <div class="mb-3">
                 <span class="form-label d-block">Kiểu sổ</span>
 
-                @foreach($kinds as $kind)
-                    <label class="d-flex gap-2 align-items-start p-2 rounded"
-                           style="cursor: pointer; border: 1px solid var(--border-soft); margin-bottom: 0.4rem;">
-                        <input type="radio" name="kind" value="{{ $kind->value }}"
-                               class="form-check-input mt-1"
-                               @checked($loaiDangChon === $kind->value)>
-                        <span>
-                            <span class="fw-semibold">{{ $kind->label() }}</span>
-                            <span class="d-block text-body-sm">{{ $kind->hint() }}</span>
+                <div class="kind-picker">
+                    @foreach($kinds as $kind)
+                        @php
+                            $khoi = [
+                                'goal' => 'thanh tiến độ mục tiêu',
+                                'milestones' => 'danh sách mốc cần đạt',
+                                'chart' => 'biểu đồ theo thời gian',
+                                'photo-strip' => 'dải ảnh theo thời gian',
+                                'care-summary' => 'tổng hợp việc đã chăm',
+                                'price-stats' => 'thống kê giá cao/thấp',
+                                'price-table' => 'bảng các lần khảo giá',
+                                'rating' => 'điểm bạn tự chấm',
+                                'findings' => 'gom được / chưa được',
+                                'timeline' => 'dòng thời gian',
+                            ];
+                        @endphp
+
+                        <label class="kind-picker__option">
+                            <input type="radio" name="kind" value="{{ $kind->value }}"
+                                   @checked($loaiDangChon === $kind->value)
+                                   data-kind-radio>
+
+                            <span class="kind-picker__box">
+                                <span class="kind-picker__head">
+                                    <x-site.icon :name="$kind->icon()" class="kind-picker__icon" />
+                                    <span class="kind-picker__name">{{ $kind->label() }}</span>
+                                </span>
+
+                                <span class="kind-picker__hint">{{ $kind->hint() }}</span>
+
+                                <span class="kind-picker__panels">
+                                    @foreach($kind->panels() as $p)
+                                        @if(isset($khoi[$p]))
+                                            <span class="kind-picker__chip">{{ $khoi[$p] }}</span>
+                                        @endif
+                                    @endforeach
+                                </span>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+                <x-form-error name="kind"/>
+            </div>
+
+            {{--
+                GIAO DIỆN SỔ — bộ chọn sẵn, không phải ô chọn màu tự do.
+
+                Xem chú thích ở App\Enums\JournalTheme: cho chọn mã màu tự
+                do thì sẽ có những quyển sổ chữ xám trên nền xám không đọc
+                nổi, và không có gì trong hệ thống ngăn được.
+            --}}
+            <div class="mb-3">
+                <span class="form-label d-block">Giao diện sổ</span>
+
+                <div class="theme-picker">
+                    <label class="theme-picker__option">
+                        <input type="radio" name="theme_key" value="" @checked(! $themeDangChon)>
+                        <span class="theme-picker__swatch theme-picker__swatch--auto">
+                            <span class="theme-picker__name">Theo kiểu sổ</span>
                         </span>
                     </label>
-                @endforeach
-                <x-form-error name="kind"/>
+
+                    @foreach(\App\Enums\JournalTheme::cases() as $theme)
+                        <label class="theme-picker__option">
+                            <input type="radio" name="theme_key" value="{{ $theme->value }}"
+                                   @checked($themeDangChon === $theme->value)>
+                            <span class="theme-picker__swatch {{ $theme->token() }}">
+                                @if($theme->pattern())
+                                    <x-journal.pattern :pattern="$theme->pattern()" />
+                                @endif
+                                <span class="theme-picker__name">{{ $theme->label() }}</span>
+                            </span>
+                        </label>
+                    @endforeach
+                </div>
+                <x-form-error name="theme_key"/>
+            </div>
+
+            {{--
+                ẢNH BÌA — không bắt buộc, và nói rõ là không bắt buộc.
+
+                Cột `cover_image` đã có từ migration đầu nhưng chưa bao giờ
+                có đường nào điền vào — một cột chết trong lược đồ. Hoặc
+                nối vào, hoặc bỏ đi; để nguyên là thứ tệ nhất, vì lần sửa
+                sau sẽ có người tưởng nó đang hoạt động.
+
+                Bộ giao diện ở trên đã đủ để mỗi quyển sổ trông khác nhau,
+                nên ảnh bìa là thêm chứ không phải thiếu-thì-xấu.
+            --}}
+            <div class="mb-3">
+                <label class="form-label" for="cover_image">Ảnh bìa sổ</label>
+
+                @if($journal->cover_image)
+                    <div class="journal-cover-current">
+                        <x-site.image :path="$journal->cover_image" alt="Ảnh bìa hiện tại"
+                                      class="journal-cover-current__img" />
+                        <label class="journal-cover-current__remove">
+                            <input type="checkbox" name="remove_cover" value="1">
+                            Bỏ ảnh bìa
+                        </label>
+                    </div>
+                @endif
+
+                <input type="file" name="cover_image" id="cover_image" class="form-control"
+                       accept="image/png,image/jpeg,image/webp">
+                <x-form-error name="cover_image"/>
+                <p class="form-text">
+                    Không bắt buộc — giao diện sổ ở trên đã đủ để phân biệt các quyển với nhau.
+                </p>
             </div>
 
             <div class="mb-3">
@@ -87,6 +191,7 @@
                         Cho gắn vào bất kỳ sản phẩm nào thì trang sổ trở
                         thành một cách dò xem cửa hàng bán gì — và tệ hơn,
                         một cách dựng dữ liệu giả về việc mình đã mua.
+                        Xem QĐ-129.
                     --}}
                     <p class="form-text">
                         @if($products->isEmpty())
@@ -109,16 +214,105 @@
             </div>
 
             {{--
-                MỤC TIÊU — nhóm riêng, và nói rõ là không bắt buộc.
+                SỔ NÀY SẼ HOẠT ĐỘNG THẾ NÀO — đổi theo kiểu sổ đang chọn.
+                ============================================================
+                ẨN/HIỆN BẰNG CÁCH NÂNG CẤP DẦN.
 
-                Bốn ô này chỉ có nghĩa với sổ kiểu "Mục tiêu", nhưng KHÔNG
-                ẩn đi theo lựa chọn ở trên: ẩn/hiện bằng JavaScript thì
-                người tắt JavaScript mất hẳn phần này, còn người bật thì
-                thấy khối nhảy ra nhảy vào mỗi lần đổi kiểu sổ. Một sổ sinh
-                trưởng đặt thêm mục tiêu "cao 50cm trước tháng 6" cũng là
-                chuyện hợp lý — không có lý do gì chặn.
+                Máy chủ vẽ ra ĐỦ CẢ NĂM khối; `data-for-kinds` chỉ là gợi ý
+                cho script. Không có JavaScript thì cả năm cùng hiện — dài
+                hơn nhưng đọc vẫn đúng, và không mất ô nhập nào. Có script
+                thì chỉ còn khối của kiểu sổ đang chọn.
+
+                Nội dung mỗi khối LẤY TỪ ENUM, không chép tay: `entryFields()`
+                và `suggestedMetrics()` là cùng nguồn mà biểu mẫu ghi thêm sẽ
+                dùng sau này. Chép tay thì mô tả ở đây và thứ hiện ra thật sẽ
+                lệch nhau ngay lần sửa đầu tiên, và người dùng phát hiện bằng
+                cách chọn nhầm kiểu sổ.
             --}}
-            <fieldset class="mb-3 p-3 rounded" style="border: 1px solid var(--border-soft);">
+            @foreach($kinds as $kind)
+                @php
+                    $oNhap = [
+                        'price' => 'ô nhập giá',
+                        'place' => 'nơi khảo giá',
+                        'condition' => 'tình trạng cây',
+                        'care' => 'tích việc đã chăm (tưới, bón, thay chậu, cắt tỉa)',
+                        'photo' => 'tải ảnh lên',
+                        'rating' => 'chấm điểm 1–5',
+                        'good' => 'ô “được” / “chưa được”',
+                        'sticker' => 'nhãn dán',
+                        'metrics' => 'chỉ số tự đặt tên',
+                    ];
+
+                    $co = collect($kind->entryFields())
+                        ->map(fn ($f) => $oNhap[$f] ?? null)
+                        ->filter()
+                        ->values();
+                @endphp
+
+                <div class="journal-form-block kind-brief mb-3 p-3 rounded"
+                     data-for-kinds="{{ $kind->value }}">
+
+                    <h2 class="kind-brief__title">
+                        Sổ “{{ $kind->label() }}” sẽ hoạt động thế nào
+                    </h2>
+
+                    <p class="text-body-sm">
+                        Mỗi lần ghi, sổ này hỏi bạn:
+                        <strong>{{ $co->join(', ') }}</strong>.
+                        Nút ghi có tên <em>“{{ $kind->entryWords()['add'] }}”</em>.
+                    </p>
+
+                    {{--
+                        CHỈ NÓI VỀ CHỈ SỐ KHI BIỂU MẪU THẬT SỰ CÓ Ô CHỈ SỐ.
+
+                        Bản đầu hiện dòng này cho mọi kiểu sổ, nên sổ Theo
+                        dõi giá quảng cáo "chỉ số điền sẵn: Giá (₫)" trong
+                        khi biểu mẫu của nó không có hàng chỉ số nào — nó
+                        có một ô nhập giá riêng. Đúng loại lời hứa hão mà
+                        cả khối này sinh ra để tránh.
+                    --}}
+                    @if($kind->hasField('metrics') && $kind->suggestedMetrics())
+                        <p class="text-body-sm">
+                            Chỉ số điền sẵn:
+                            @foreach($kind->suggestedMetrics() as $ten => $donVi)
+                                <span class="kind-brief__metric">{{ $ten }} ({{ $donVi }})</span>
+                            @endforeach
+                            — sửa được hết, thêm chỉ số nào cũng được.
+                        </p>
+                    @endif
+
+                    @if($kind->usesMilestones())
+                        <p class="text-body-sm mb-0">
+                            Sau khi tạo xong, trang sổ có chỗ để bạn chia mục tiêu thành
+                            <strong>các mốc nhỏ</strong>, mỗi mốc một hạn riêng.
+                        </p>
+                    @endif
+
+                    @if($kind === \App\Enums\JournalKind::Price)
+                        <p class="text-body-sm mb-0">
+                            Từ lần khảo thứ hai trở đi, sổ tự hiện mức
+                            <strong>thấp nhất, cao nhất và khoảng dao động</strong>,
+                            kèm chỗ bạn khảo được giá rẻ nhất.
+                        </p>
+                    @endif
+
+                    <p class="text-body-sm mb-0">
+                        Có <strong>{{ count(\App\Enums\JournalSticker::forKind($kind)) }} nhãn dán</strong>
+                        hợp với kiểu sổ này, và giao diện mặc định là
+                        <strong>{{ $kind->defaultTheme()->label() }}</strong>.
+                    </p>
+                </div>
+            @endforeach
+
+            {{--
+                MỤC TIÊU — nhóm riêng, không bắt buộc.
+
+                Chỉ thật sự có nghĩa với ba kiểu sổ. Sổ theo dõi giá và sổ
+                phân tích không có "đích" nào để tiến tới, nên khối này ở
+                đó chỉ là chỗ nhắc người ta rằng mình chưa điền gì.
+            --}}
+            <fieldset class="journal-form-block mb-3 p-3 rounded"
+                      data-for-kinds="goal growth free">
                 <legend class="form-label float-none w-auto px-2">Mục tiêu (không bắt buộc)</legend>
 
                 <p class="text-body-sm">
@@ -172,12 +366,12 @@
                 Nút xoá nằm cạnh nút Lưu là công thức để có người bấm nhầm.
                 Đặt ra ngoài, ở một khối riêng, kèm câu nói rõ hậu quả — và
                 nhắc rằng LƯU TRỮ mới là thứ họ đang muốn trong hầu hết
-                trường hợp.
+                trường hợp. Xem QĐ-130.
             --}}
             <div class="surface-card p-4 mt-4">
                 <h2 class="text-h4 mb-2">Xoá sổ này</h2>
                 <p class="text-body-sm">
-                    Xoá là mất hẳn: toàn bộ trang nhật ký, chỉ số và ảnh bên trong đều đi theo,
+                    Xoá là mất hẳn: toàn bộ trang nhật ký, chỉ số, mốc và ảnh bên trong đều đi theo,
                     không khôi phục được.
                     Nếu chỉ muốn cho gọn danh sách thì dùng <strong>Lưu trữ</strong> ở trang sổ.
                 </p>

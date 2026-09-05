@@ -282,45 +282,56 @@ nhưng chụp **hoa**, trong khi sản phẩm là cây bện thân.
 <!-- credits:products -->
 | Tệp | Sản phẩm | Tác giả | Giấy phép | Nguồn |
 |---|---|---|---|---|
+| `bao-li-xi-mini-treo-cay-ngay-tet.jpg` | bao-li-xi-mini-treo-cay-ngay-tet | quinn.anya | BY-SA 2.0 | [Day 34: Lunar New Year](https://www.flickr.com/photos/53326337@N00/12298155173) |
 | `binh-thuy-tinh-cam-hoa.jpg` | binh-thuy-tinh-cam-hoa | Ron Meck | BY 2.0 | [Glass Flower Vases](https://www.flickr.com/photos/115284274@N07/14498230476) |
+| `binh-tuoi-voi-dai-15l.jpg` | binh-tuoi-voi-dai-15l | chimpwithcan | BY 2.0 | [Watering Can Garden Gardening Water Edited 2020](https://www.flickr.com/photos/188454520@N02/49905865953) |
+| `bo-6-qua-cau-giang-sinh-treo-cay.jpg` | bo-6-qua-cau-giang-sinh-treo-cay | Michael Fötsch | BY-SA 2.0 | [Ornaments](https://www.flickr.com/photos/23557463@N05/6566261945) |
 | `bo-cam-tu-cau-xanh.jpg` | bo-cam-tu-cau-xanh | Scott 97006 | BY 2.0 | [Blue Hydrangea Flower Cluster](https://www.flickr.com/photos/29487672@N07/14584149951) |
-| `bo-cuc-hoa-mi-trang.jpg` | bo-cuc-hoa-mi-trang | docoverachiever | BY 2.0 | [A single flower](https://www.flickr.com/photos/90692748@N04/23712660045) |
+| `bo-cuc-hoa-mi-trang.jpg` | bo-cuc-hoa-mi-trang | Eric Kilby | BY-SA 2.0 | [Sea of Daisies](https://www.flickr.com/photos/8749778@N06/3749713017) |
 | `bo-hoa-mau-don-do.jpg` | bo-hoa-mau-don-do | Muffet | BY 2.0 | [gathering of peonies](https://www.flickr.com/photos/53133240@N00/3674711901) |
-| `bo-tulip-ha-lan.jpg` | bo-tulip-ha-lan | Muffet | BY 2.0 | [birthday bouquet](https://www.flickr.com/photos/53133240@N00/8543342510) |
+| `bo-tulip-ha-lan.jpg` | bo-tulip-ha-lan | Muffet | BY 2.0 | [birthday bouquet](https://www.flickr.com/photos/53133240@N00/13085174494) |
 | `bonsai-mai-chieu-thuy.jpg` | bonsai-mai-chieu-thuy | Daniel Gasteiger | BY 2.0 | [Another Bonsai at the 2011 Philadelphia Flower Show](https://www.flickr.com/photos/30014417@N04/5524991164) |
-| `bonsai-tung-la-han-dang-truc.jpg` | bonsai-tung-la-han-dang-truc | thisfeministrox | BY 2.0 | [Lantana Bonsai](https://www.flickr.com/photos/60088764@N00/1387656483) |
-| `canh-dao-phai-choi-tet.jpg` | canh-dao-phai-choi-tet | OakleyOriginals | BY 2.0 | [Spring Tree Blossoms](https://www.flickr.com/photos/47264866@N00/3343421030) |
+| `bonsai-tung-la-han-dang-truc.jpg` | bonsai-tung-la-han-dang-truc | MeganEHansen | BY-SA 2.0 | [podocarpus macrophyllus](https://www.flickr.com/photos/24495410@N03/4850131773) |
+| `canh-dao-phai-choi-tet.jpg` | canh-dao-phai-choi-tet | jenny downing | BY 2.0 | [floral](https://www.flickr.com/photos/7941044@N06/4529073298) |
 | `cay-lan-y-chau-su-trang.jpg` | cay-lan-y-chau-su-trang | daBinsi | BY 2.0 | [Spathiphyllum 'Peace Lily'](https://www.flickr.com/photos/13741829@N07/3328727610) |
 | `cay-luoi-ho-vang-vien-de-ban.jpg` | cay-luoi-ho-vang-vien-de-ban | Jungle Garden | BY 2.0 | [Sansevieria trifasciata var. laurentii](https://www.flickr.com/photos/63405895@N07/24414209594) |
-| `chau-su-trang-co-vua.jpg` | chau-su-trang-co-vua | john bonham2 | BY-SA 2.0 | [Flower pot Pablo Picasso series](https://www.flickr.com/photos/95205391@N05/9090127853) |
+| `chau-su-trang-co-vua.jpg` | chau-su-trang-co-vua | john bonham2 | BY-SA 2.0 | [Flower pots parrots](https://www.flickr.com/photos/95205391@N05/9063838073) |
+| `co-nhung-nhat-mini-phu-goc.jpg` | co-nhung-nhat-mini-phu-goc | A.Davey | BY 2.0 | [Skunk Cabbage in Forest Moss](https://www.flickr.com/photos/40595948@N00/3053902482) |
+| `da-trang-phu-mat-chau-1kg.jpg` | da-trang-phu-mat-chau-1kg | Bold Frontiers | BY 2.0 | [Colorful Stones](https://www.flickr.com/photos/82955120@N05/7995282466) |
 | `dat-trong-tron-san-5kg.jpg` | dat-trong-tron-san-5kg | Alex Cheek | BY-SA 2.0 | [These bulbs are breaking through the compacted potting soil, leaving cracks and causing general but small-scale tectonic upheaval in the flowerpots near school.](https://www.flickr.com/photos/76903355@N00/444011608) |
-| `dia-lot-chau-chong-tran.jpg` | dia-lot-chau-chong-tran | garryknight | BY 2.0 | [Teacup Plant Pot](https://www.flickr.com/photos/8176740@N05/10534474116) |
-| `dung-dich-duong-hoa-tuoi.jpg` | dung-dich-duong-hoa-tuoi | Wonderlane | BY 2.0 | [Ornate multi-headed, multi-armed Chenrayzee statue, holding a mala, flower, vase of nectar, bow and arrow, and bell with dharma wheel, stupa construction, Kopan Monastery and Nunnery, Kapan Village, Kathmandu, Nepal Kathmandu, Nepal](https://www.flickr.com/photos/71401718@N00/5108108964) |
+| `day-den-led-mini-quan-cay.jpg` | day-den-led-mini-quan-cay | Dominic's pics | BY 2.0 | [Fairy Lights](https://www.flickr.com/photos/64097751@N00/1128635213) |
+| `dia-lot-chau-chong-tran.jpg` | dia-lot-chau-chong-tran | ambabheg | BY 2.0 | [2022 (365 challenge) - Week 41 (fragile) - Day 5- broken clay plant saucer](https://www.flickr.com/photos/31518985@N04/52422107087) |
+| `dung-dich-duong-hoa-tuoi.jpg` | dung-dich-duong-hoa-tuoi | ProFlowers.com | BY 2.0 | [woman in white dress watering giant five foot tall red roses from a glass pitcher in a tall glass vase](https://www.flickr.com/photos/127365614@N08/15814839114) |
 | `duong-xi-boston-treo.jpg` | duong-xi-boston-treo | Starr Environmental | BY 2.0 | [starr-100623-7772-Nephrolepis_sp-potted_plants_in_shade_house-Pukalani_Plant_Company_Pulehu-Maui](https://www.flickr.com/photos/97499887@N06/24949015421) |
-| `gio-hoa-baby-trang.jpg` | gio-hoa-baby-trang | Swallowtail Garden Seeds | PDM 1.0 | [Flowers with Fruit and a Bird's Nest on a Marble Ledge (1840)](https://www.flickr.com/photos/97123293@N07/16882592463) |
+| `gio-hoa-baby-trang.jpg` | gio-hoa-baby-trang | Anne Worner | BY-SA 2.0 | [Gypsophila (Baby's-Breath)](https://www.flickr.com/photos/28652129@N06/5462827678) |
 | `gio-hoa-huong-duong-mini.jpg` | gio-hoa-huong-duong-mini | tracydekalb | BY 2.0 | [Basket of sunshine](https://www.flickr.com/photos/11540627@N03/4810587301) |
 | `hoa-cai-ao-chu-re.jpg` | hoa-cai-ao-chu-re | hortulus | BY 2.0 | [back from the wedding . . .](https://www.flickr.com/photos/15845498@N00/3789340877) |
-| `hoa-cam-tay-co-dau.jpg` | hoa-cam-tay-co-dau | jerryfergusonphotography | BY 2.0 | [Wedding Bouquet](https://www.flickr.com/photos/17445097@N03/8633321435) |
+| `hoa-cam-tay-co-dau.jpg` | hoa-cam-tay-co-dau | Sailor Coruscant | BY 2.0 | [My bouquet...](https://www.flickr.com/photos/30325243@N00/2949945463) |
 | `hoa-de-ban-tiec-cuoi.jpg` | hoa-de-ban-tiec-cuoi | Tracy Hunter | BY 2.0 | [Centerpieces](https://www.flickr.com/photos/11121785@N00/164578909) |
-| `hop-hoa-hong-pastel.jpg` | hop-hoa-hong-pastel | slgckgc | BY 2.0 | [Rose](https://www.flickr.com/photos/14771153@N04/4568774352) |
+| `hop-hoa-hong-pastel.jpg` | hop-hoa-hong-pastel | Sheba_Also 48,000 photos incl private | BY-SA 2.0 | [Rose Rose I Love You-1=](https://www.flickr.com/photos/34534185@N00/8148974444) |
 | `hop-hoa-tulip-vang.jpg` | hop-hoa-tulip-vang | Kirt Edblom | BY-SA 2.0 | [Crayon Box of Flowers](https://www.flickr.com/photos/27190564@N02/16732302779) |
 | `huong-duong-ruc-ro.jpg` | huong-duong-ruc-ro | kinglear55 | BY 2.0 | [Sunflower Bouquet](https://www.flickr.com/photos/65469424@N05/50366454337) |
-| `ke-hoa-khai-truong-hai-tang.jpg` | ke-hoa-khai-truong-hai-tang | Macleay Grass Man | BY 2.0 | [Walwhalleya proluta flowerhead10 SWS](https://www.flickr.com/photos/73840284@N04/9250176163) |
-| `keo-cat-canh-mui-cong.jpg` | keo-cat-canh-mui-cong | karenblakeman | CC0 1.0 | [Garden secateurs get the Reading Repair Cafe treatment](https://www.flickr.com/photos/11569642@N00/12034281506) |
-| `kim-ngan-ben-than.jpg` | kim-ngan-ben-than | mauro halpern | BY 2.0 | [Munguba/Monguba/Castanheiro do Maranhão / Money-tree (Pachira aquatica) flowers. Brazil / Latin-América native tree](https://www.flickr.com/photos/41597043@N00/3452213093) |
+| `ke-hoa-khai-truong-hai-tang.jpg` | ke-hoa-khai-truong-hai-tang | Muffet | BY 2.0 | [floral arrangement](https://www.flickr.com/photos/53133240@N00/15808096543) |
+| `keo-cat-canh-mui-cong.jpg` | keo-cat-canh-mui-cong | el cajon yacht club | BY 2.0 | [THOR's hammer, garden trowel, weed digger and pruning shears](https://www.flickr.com/photos/60944636@N00/30173721920) |
+| `kim-ngan-ben-than.jpg` | kim-ngan-ben-than | wallygrom | BY-SA 2.0 | [Pachira aquatica](https://www.flickr.com/photos/33037982@N04/8432823742) |
 | `kim-tien-chau-su.jpg` | kim-tien-chau-su | wlcutler | BY-SA 2.0 | [Zamioculcas-ZZ-plant_Cutler_20160617_P1260075](https://www.flickr.com/photos/20664893@N00/46385996094) |
 | `lan-ho-diep-tim-chau-su.jpg` | lan-ho-diep-tim-chau-su | HenryLeongHimWoh | BY-SA 2.0 | [Purple Orchid,Singapore Botanical Garden](https://www.flickr.com/photos/19517908@N00/4698040551) |
-| `lang-hoa-khai-truong.jpg` | lang-hoa-khai-truong | Nullumayulife | BY 2.0 | [Japanese flower arrangement 19, Ikebana: いけばな](https://www.flickr.com/photos/72859063@N00/4442958076) |
+| `lang-hoa-khai-truong.jpg` | lang-hoa-khai-truong | Nullumayulife | BY 2.0 | [Japanese flower arrangement 7, Ikebana: いけばな](https://www.flickr.com/photos/72859063@N00/2624390834) |
 | `luoi-ho-mini-de-ban.jpg` | luoi-ho-mini-de-ban | el cajon yacht club | BY 2.0 | [instax-Sansevieria-snake-plant-180704a](https://www.flickr.com/photos/60944636@N00/42298477505) |
 | `monstera-deliciosa.jpg` | monstera-deliciosa | Dinesh Valke | BY-SA 2.0 | [Split-leaf Philodendron](https://www.flickr.com/photos/91314344@N00/368807391) |
-| `phan-bon-npk-dang-vien-tan-cham.jpg` | phan-bon-npk-dang-vien-tan-cham | mikecogh | BY-SA 2.0 | [Fertilised Bulb](https://www.flickr.com/photos/89165847@N00/6305758762) |
+| `no-ruy-bang-do-trang-tri-chau.jpg` | no-ruy-bang-do-trang-tri-chau | versageek | BY-SA 2.0 | [Christmas Tree Bow](https://www.flickr.com/photos/8241297@N03/3208437447) |
+| `phan-bon-npk-dang-vien-tan-cham.jpg` | phan-bon-npk-dang-vien-tan-cham | Graham Steel | PDM 1.0 | [Slow release plant food granules](https://www.flickr.com/photos/7914713@N05/45877074582) |
+| `reu-kho-phu-goc-100g.jpg` | reu-kho-phu-goc-100g | Horia Varlan | BY 2.0 | [Legs of a girl wearing black sneakers on green moss](https://www.flickr.com/photos/10361931@N06/4273902982) |
 | `sen-da-kim-cuong-chau-treo.jpg` | sen-da-kim-cuong-chau-treo | srboisvert | BY 2.0 | [plants insanity](https://www.flickr.com/photos/35034346289@N01/5804078256) |
-| `sen-da-mix-chau-da.jpg` | sen-da-mix-chau-da | PattayaPatrol | BY-SA 2.0 | [DSC_5666: many different kinds of cactus in small pots](https://www.flickr.com/photos/194424926@N05/54113170325) |
+| `sen-da-mix-chau-da.jpg` | sen-da-mix-chau-da | joncutrer | BY 2.0 | [echeveria succulent](https://www.flickr.com/photos/47121680@N00/49279608393) |
 | `sen-da-nau-chau-su-mini.jpg` | sen-da-nau-chau-su-mini | hortulus | BY 2.0 | [Some of our potted succulent collection](https://www.flickr.com/photos/15845498@N00/5331014669) |
 | `set-qua-cay-de-ban-kem-thiep.jpg` | set-qua-cay-de-ban-kem-thiep | The Urban Botanist Images | BY 2.0 | [Succulents and Cacti with Marble Background](https://www.flickr.com/photos/193653073@N07/51443021534) |
+| `soi-mau-trang-tri-500g.jpg` | soi-mau-trang-tri-500g | Bold Frontiers | BY 2.0 | [Colorful Stones](https://www.flickr.com/photos/82955120@N05/7995277907) |
+| `thiep-chuc-mung-kem-kep-cam.jpg` | thiep-chuc-mung-kem-kep-cam | lifelikeapps | BY 2.0 | [Love Note 2](https://www.flickr.com/photos/56532794@N02/5352646071) |
 | `thuoc-tri-nam-la-sinh-hoc.jpg` | thuoc-tri-nam-la-sinh-hoc | Arria Belli | BY-SA 2.0 | [Spray bottle top](https://www.flickr.com/photos/24363893@N00/2489811453) |
-| `trau-ba-leo-cot.jpg` | trau-ba-leo-cot | yellow_bird_woodstock | BY-SA 2.0 | [植え替えしたポトスは元気 (pothos in a new pot)](https://www.flickr.com/photos/32872140@N05/3556523222) |
-| `van-nien-thanh-chau-su.jpg` | van-nien-thanh-chau-su | Key West Wedding Photography | BY-SA 2.0 | [Dieffenbachia (Dumb Cane) Flower](https://www.flickr.com/photos/58003213@N00/3949133636) |
+| `trau-ba-leo-cot.jpg` | trau-ba-leo-cot | Plant pests and diseases | CC0 1.0 | [Epipremnum aureum (golden pothos): Algal leaf spot caused by Cephaleuros sp.](https://www.flickr.com/photos/62295966@N07/43953782841) |
+| `tuong-gom-mini-trang-tri-chau.jpg` | tuong-gom-mini-trang-tri-chau | dozymoo | BY-SA 2.0 | [Garden scene - miniature](https://www.flickr.com/photos/16464111@N08/5618978906) |
+| `van-nien-thanh-chau-su.jpg` | van-nien-thanh-chau-su | Dinesh Valke | BY-SA 2.0 | [Dieffenbachia](https://www.flickr.com/photos/91314344@N00/405648176) |
 | `xuong-rong-bi-chau-dat-nung.jpg` | xuong-rong-bi-chau-dat-nung | fuentedelateja | BY-SA 2.0 | [Ombligo de la reina - Echinopsis eyriesii](https://www.flickr.com/photos/55917813@N00/2529987643) |
 <!-- /credits:products -->
 

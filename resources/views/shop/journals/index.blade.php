@@ -77,7 +77,22 @@
             <div class="row g-3">
                 @foreach($journals as $journal)
                     <div class="col-md-6 col-lg-4">
-                        <a href="{{ route('shop.journals.show', $journal) }}" class="journal-card">
+                        {{--
+                            THẺ SỔ MANG GIAO DIỆN CỦA CHÍNH QUYỂN SỔ ĐÓ.
+
+                            Bộ giao diện là thứ người dùng chọn để phân
+                            biệt sổ này với sổ kia. Nếu nó chỉ hiện khi đã
+                            mở sổ ra thì nó không giúp được gì ở đúng chỗ
+                            cần phân biệt nhất — màn hình danh sách.
+                        --}}
+                        <a href="{{ route('shop.journals.show', $journal) }}"
+                           class="journal-card {{ $journal->theme()->token() }}">
+
+                            @if($journal->cover_image)
+                                <x-site.image :path="$journal->cover_image" alt=""
+                                              class="journal-card__cover" />
+                            @endif
+
                             <span class="journal-card__kind">
                                 <x-site.icon :name="$journal->kind->icon()" /> {{ $journal->kind->label() }}
                             </span>
@@ -93,7 +108,12 @@
                             @endif
 
                             <span class="journal-card__meta">
-                                {{ $journal->entries_count }} lần ghi
+                                {{-- Mỗi loại sổ gọi một trang nhật ký bằng một từ
+                                     khác nhau: "lần khảo giá" ở sổ giá, "lần cập
+                                     nhật" ở sổ mục tiêu. Dùng chung một từ cho cả
+                                     năm là tiết kiệm chữ bằng cách làm giao diện
+                                     nói không đúng việc. --}}
+                                {{ $journal->entries_count }} {{ $journal->kind->entryWords()['one'] }}
                                 @if($journal->entries_count > 0)
                                     · sửa {{ $journal->updated_at->diffForHumans() }}
                                 @endif

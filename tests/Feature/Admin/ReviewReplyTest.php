@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\Review;
 use App\Models\User;
+use App\Services\Shop\StoreProfile;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -132,7 +133,7 @@ class ReviewReplyTest extends TestCase
 
         $this->get('/san-pham/'.$review->product->slug)
             ->assertOk()
-            ->assertSee('Phản hồi từ Flower &amp; Plant', false)
+            ->assertSee('Phản hồi từ ' . \App\Services\Shop\StoreProfile::name(), false)
             ->assertSee('Cửa hàng đã đổi đơn vị giao cho tuyến này.');
     }
 

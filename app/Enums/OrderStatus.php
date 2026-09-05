@@ -107,7 +107,7 @@ enum OrderStatus: string
             self::Shipping => 'Đơn của bạn đã rời cửa hàng. '
                 . 'Vui lòng để ý điện thoại để người giao hàng liên hệ được.',
 
-            self::Completed => 'Cảm ơn bạn đã tin tưởng Flower & Plant. '
+            self::Completed => 'Cảm ơn bạn đã tin tưởng ' . \App\Services\Shop\StoreProfile::name() . '. '
                 . 'Nếu hài lòng, hãy dành ít phút đánh giá sản phẩm để người mua sau tham khảo.',
 
             self::Cancelled => 'Đơn hàng này đã được huỷ và cửa hàng sẽ không giao nữa. '

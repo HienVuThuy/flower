@@ -269,3 +269,831 @@
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* ============================================================
+ * GIAO DIỆN SỔ — sáu bộ, mỗi bộ một màu giấy và một màu nhấn.
+ * ============================================================
+ * MÀU ĐỊNH NGHĨA BẰNG TOKEN, ĐỔI THEO NỀN SÁNG/TỐI.
+ *
+ * Bộ giao diện chỉ đặt ba biến: nền giấy, màu nhấn, màu hoa văn. Mọi thứ
+ * bên trong sổ đọc ba biến đó. Nhờ vậy thêm một bộ mới là thêm một khối
+ * ba dòng, không phải sửa hai chục luật.
+ *
+ * Nền tối KHÔNG phải phép lật tự động: mỗi bộ khai lại ba biến của riêng
+ * nó, vì "giấy trắng" ở nền tối không thể là màu trắng — nó phải là một
+ * sắc xám ấm đủ tối để chữ sáng nổi lên.
+ * ============================================================ */
+
+.journal-book {
+    position: relative;
+    padding: 1.4rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--journal-edge, var(--border-soft));
+    background: var(--journal-paper, var(--surface));
+    overflow: hidden;
+}
+
+/* Hoa văn nằm dưới cùng và KHÔNG chắn chuột của các nút bên trên. */
+.journal-pattern {
+    position: absolute;
+    inset: 0;
+    color: var(--journal-pattern, var(--border-soft));
+    opacity: 0.5;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.journal-book > *:not(.journal-pattern) {
+    position: relative;
+    z-index: 1;
+}
+
+.journal-book__head {
+    margin-bottom: 1rem;
+}
+
+/* --- Sáu bộ, nền sáng --- */
+
+.journal-theme--paper {
+    --journal-paper: #fffdf9;
+    --journal-edge: #e7e2d6;
+    --journal-accent: var(--brand-500);
+    --journal-pattern: #d9d3c4;
+}
+
+.journal-theme--leaf {
+    --journal-paper: #f4f8f1;
+    --journal-edge: #d3e2cd;
+    --journal-accent: #33513f;
+    --journal-pattern: #a9c6a4;
+}
+
+.journal-theme--terracotta {
+    --journal-paper: #fdf3ee;
+    --journal-edge: #edd3c5;
+    --journal-accent: #9a4b2c;
+    --journal-pattern: #d9a488;
+}
+
+.journal-theme--dusk {
+    --journal-paper: #f6f3fb;
+    --journal-edge: #ddd5ec;
+    --journal-accent: #55407e;
+    --journal-pattern: #b6a6d6;
+}
+
+.journal-theme--sand {
+    --journal-paper: #fdf8ec;
+    --journal-edge: #ebdfc4;
+    --journal-accent: #7a5c1e;
+    --journal-pattern: #d7c391;
+}
+
+.journal-theme--moss {
+    --journal-paper: #f1f5f2;
+    --journal-edge: #d2ded5;
+    --journal-accent: #2f5348;
+    --journal-pattern: #a3bdb0;
+}
+
+/* --- Sáu bộ, nền tối --- */
+
+:root[data-scheme="toi"] .journal-theme--paper {
+    --journal-paper: #24262a;
+    --journal-edge: #3a3d43;
+    --journal-accent: var(--brand-400);
+    --journal-pattern: #464a51;
+}
+
+:root[data-scheme="toi"] .journal-theme--leaf {
+    --journal-paper: #202821;
+    --journal-edge: #35422f;
+    --journal-accent: #8fc09a;
+    --journal-pattern: #465a48;
+}
+
+:root[data-scheme="toi"] .journal-theme--terracotta {
+    --journal-paper: #2a211d;
+    --journal-edge: #45332b;
+    --journal-accent: #e0a184;
+    --journal-pattern: #5e4438;
+}
+
+:root[data-scheme="toi"] .journal-theme--dusk {
+    --journal-paper: #24212e;
+    --journal-edge: #3a3448;
+    --journal-accent: #b8a6e0;
+    --journal-pattern: #4c4361;
+}
+
+:root[data-scheme="toi"] .journal-theme--sand {
+    --journal-paper: #2a2620;
+    --journal-edge: #443c2d;
+    --journal-accent: #ddc389;
+    --journal-pattern: #5b5039;
+}
+
+:root[data-scheme="toi"] .journal-theme--moss {
+    --journal-paper: #1f2724;
+    --journal-edge: #334039;
+    --journal-accent: #8fc0b0;
+    --journal-pattern: #43594f;
+}
+
+/* ============================================================
+ * KHỐI TRONG TRANG SỔ
+ * ============================================================ */
+
+.journal-panel {
+    margin-bottom: 1.5rem;
+}
+
+.journal-panel:last-child {
+    margin-bottom: 0;
+}
+
+.journal-panel__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.journal-panel__meta {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.journal-panel--goal {
+    padding: 0.9rem 1rem;
+    border: 1px solid var(--journal-edge, var(--border-soft));
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--journal-accent, var(--brand-500)) 6%, transparent);
+}
+
+/* ---------- Nhãn dán ---------- */
+
+.journal-sticker {
+    color: var(--journal-accent, var(--brand-500));
+    vertical-align: -0.15em;
+    flex-shrink: 0;
+}
+
+.journal-entry__sticker {
+    margin-right: 0.35rem;
+}
+
+/* ---------- Mốc mục tiêu ---------- */
+
+.milestone-list {
+    list-style: none;
+    margin: 0 0 0.9rem;
+    padding: 0;
+}
+
+.milestone {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.milestone:last-child {
+    border-bottom: 0;
+}
+
+.milestone__toggle-form {
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.milestone__toggle {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    color: inherit;
+}
+
+.milestone__box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-top: 0.15rem;
+    border: 1.5px solid var(--journal-accent, var(--brand-500));
+    border-radius: 0.3rem;
+    color: var(--surface);
+    background: transparent;
+    transition: background-color 0.15s ease;
+}
+
+.milestone.is-done .milestone__box {
+    background: var(--journal-accent, var(--brand-500));
+}
+
+.milestone__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.milestone__title {
+    word-break: break-word;
+}
+
+/*
+ * Mốc đã xong: gạch ngang VÀ giảm độ đậm — không chỉ giảm độ đậm.
+ * Chỉ làm nhạt đi thì ở nền tối gần như không phân biệt được, mà đó
+ * chính là thứ cần thấy ngay khi lướt qua danh sách.
+ */
+.milestone.is-done .milestone__title {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+
+.milestone__meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.milestone.is-overdue .milestone__meta {
+    color: var(--danger, #b3261e);
+    font-weight: 600;
+}
+
+.milestone__remove {
+    flex-shrink: 0;
+    padding: 0 0.4rem;
+    line-height: 1.2;
+}
+
+.milestone-add {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem;
+}
+
+@media (max-width: 575.98px) {
+    .milestone-add {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Thống kê giá ---------- */
+
+.price-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+    gap: 0.75rem;
+}
+
+.price-stat {
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--journal-edge, var(--border-soft));
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.price-stat--good {
+    border-color: var(--journal-accent, var(--brand-500));
+}
+
+.price-stat__label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+
+.price-stat__value {
+    display: block;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.price-stat__note {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.journal-table__price {
+    white-space: nowrap;
+}
+
+.journal-table tr.is-lowest {
+    background: color-mix(in srgb, var(--journal-accent, var(--brand-500)) 8%, transparent);
+}
+
+.badge-lowest {
+    display: inline-block;
+    margin-left: 0.3rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    color: var(--surface);
+    background: var(--journal-accent, var(--brand-500));
+}
+
+/* ---------- Dải ảnh theo thời gian ---------- */
+
+/*
+ * CUỘN NGANG TRONG KHUNG CỦA CHÍNH NÓ.
+ * Thân trang không bao giờ được cuộn ngang — đó là lỗi đã sửa một lần ở
+ * khung hero, và dải ảnh là chỗ dễ tái phạm nhất.
+ */
+.photo-strip {
+    display: flex;
+    gap: 0.7rem;
+    overflow-x: auto;
+    padding-bottom: 0.4rem;
+    scroll-snap-type: x proximity;
+}
+
+.photo-strip__item {
+    flex: 0 0 auto;
+    width: 8.5rem;
+    margin: 0;
+    scroll-snap-align: start;
+}
+
+.photo-strip__img {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--journal-edge, var(--border-soft));
+}
+
+.photo-strip__date {
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* ---------- Tổng hợp chăm sóc ---------- */
+
+.care-tally {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+    gap: 0.5rem;
+}
+
+/*
+ * HAI DÒNG CÓ CHỦ Ý, không để chữ tự xuống dòng.
+ *
+ * Bản đầu xếp cả bốn phần trên một dòng ngang. Đo được: ba thẻ cao 64px
+ * (chữ tự tràn xuống dòng hai) và một thẻ cao 41px (vừa đúng một dòng) —
+ * bốn ô cùng loại mà cao thấp so le, và độ cao phụ thuộc vào việc tên
+ * việc dài mấy chữ.
+ *
+ * Chia sẵn thành hai dòng thì mọi thẻ cao bằng nhau ở mọi bề rộng, và
+ * dòng dưới ("6 ngày trước") vốn là thông tin phụ nên nằm dưới là đúng
+ * thứ tự đọc.
+ */
+.care-tally__item {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+        "icon label count"
+        "icon last  last";
+    align-items: center;
+    column-gap: 0.45rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--journal-edge, var(--border-soft));
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    font-size: 0.9rem;
+}
+
+.care-tally__item > .journal-sticker {
+    grid-area: icon;
+}
+
+.care-tally__label {
+    grid-area: label;
+    min-width: 0;
+}
+
+.care-tally__count {
+    grid-area: count;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.care-tally__last {
+    grid-area: last;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.journal-entry__care {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.5rem;
+}
+
+.care-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--journal-edge, var(--border-soft));
+    border-radius: 999px;
+    font-size: 0.78rem;
+}
+
+/* ---------- Đánh giá ---------- */
+
+.rating-summary {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin-bottom: 0.4rem;
+}
+
+.rating-summary__value {
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.rating-summary__max {
+    color: var(--text-muted);
+}
+
+.rating-summary__stars,
+.entry-rating {
+    display: inline-flex;
+    gap: 0.1rem;
+    margin-left: 0.35rem;
+    color: var(--journal-accent, var(--brand-500));
+}
+
+.rating-summary__star,
+.entry-rating__star {
+    width: 1rem;
+    height: 1rem;
+}
+
+.entry-rating__star {
+    width: 0.8rem;
+    height: 0.8rem;
+}
+
+/* Năm ô radio chấm điểm — xem chú thích trong entry-form.blade.php về
+   lý do không dùng thanh trượt. */
+.rating-input {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.rating-input__option input,
+.care-picker__option input,
+.sticker-picker__option input,
+.kind-picker__option input,
+.theme-picker__option input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.rating-input__box {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.4rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.rating-input__box--none {
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.rating-input__option input:checked + .rating-input__box {
+    border-color: var(--brand-500);
+    background: color-mix(in srgb, var(--brand-500) 12%, transparent);
+}
+
+/*
+ * VIỀN TIÊU ĐIỂM cho mọi ô radio/checkbox đã giấu.
+ * Giấu ô gốc mà quên viền này thì người dùng bàn phím mất dấu hoàn toàn:
+ * họ Tab qua mà không thấy mình đang ở đâu.
+ */
+.rating-input__option input:focus-visible + .rating-input__box,
+.care-picker__option input:focus-visible + .care-picker__box,
+.sticker-picker__option input:focus-visible + .sticker-picker__box,
+.kind-picker__option input:focus-visible + .kind-picker__box,
+.theme-picker__option input:focus-visible + .theme-picker__swatch {
+    outline: 2px solid var(--brand-500);
+    outline-offset: 2px;
+}
+
+.entry-findings {
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* ---------- Được / chưa được ---------- */
+
+.findings {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.9rem;
+}
+
+.findings__col {
+    padding: 0.8rem 0.9rem;
+    border: 1px solid var(--journal-edge, var(--border-soft));
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.findings__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.findings__list {
+    margin: 0;
+    padding-left: 1.1rem;
+    font-size: 0.9rem;
+}
+
+.findings__list li {
+    margin-bottom: 0.3rem;
+}
+
+.findings__date {
+    margin-left: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+/* ---------- Chọn việc đã chăm & nhãn dán ---------- */
+
+.care-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.care-picker__box {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.6rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.care-picker__option input:checked + .care-picker__box {
+    border-color: var(--brand-500);
+    background: color-mix(in srgb, var(--brand-500) 12%, transparent);
+}
+
+.sticker-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(4.2rem, 1fr));
+    gap: 0.4rem;
+}
+
+.sticker-picker__option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    cursor: pointer;
+}
+
+.sticker-picker__box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+}
+
+.sticker-picker__box--none {
+    color: var(--text-muted);
+}
+
+.sticker-picker__option input:checked + .sticker-picker__box {
+    border-color: var(--brand-500);
+    border-width: 2px;
+    background: color-mix(in srgb, var(--brand-500) 10%, transparent);
+    color: var(--brand-500);
+}
+
+.sticker-picker__label {
+    font-size: 0.68rem;
+    line-height: 1.15;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+/* ---------- Chọn kiểu sổ & giao diện ---------- */
+
+.kind-picker {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.kind-picker__box {
+    display: block;
+    padding: 0.7rem 0.85rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.kind-picker__option input:checked + .kind-picker__box {
+    border-color: var(--brand-500);
+    background: color-mix(in srgb, var(--brand-500) 6%, transparent);
+}
+
+.kind-picker__head {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.kind-picker__icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--brand-500);
+}
+
+.kind-picker__name {
+    font-weight: 600;
+}
+
+.kind-picker__hint {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.kind-picker__panels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: 0.4rem;
+}
+
+.kind-picker__chip {
+    padding: 0.05rem 0.45rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.theme-picker {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr));
+    gap: 0.5rem;
+}
+
+.theme-picker__swatch {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    height: 3.4rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--journal-edge, var(--border-soft));
+    border-radius: var(--radius-md);
+    background: var(--journal-paper, var(--surface));
+    color: var(--journal-accent, var(--text-primary));
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.theme-picker__swatch--auto {
+    background: var(--surface-alt, var(--surface));
+    color: var(--text-secondary);
+}
+
+.theme-picker__option input:checked + .theme-picker__swatch {
+    outline: 2px solid var(--brand-500);
+    outline-offset: 1px;
+}
+
+.theme-picker__name {
+    position: relative;
+    z-index: 1;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+/* Ô ghi thêm dính theo màn hình chỉ ở màn rộng — ở màn hẹp nó chiếm
+   nguyên chiều cao và che mất phần đang đọc. */
+@media (min-width: 992px) {
+    .journal-compose {
+        position: sticky;
+        top: 1rem;
+    }
+}
+
+/* ---------- Khối "sổ này hoạt động thế nào" ---------- */
+
+.journal-form-block {
+    border: 1px solid var(--border-soft);
+}
+
+.kind-brief {
+    background: color-mix(in srgb, var(--brand-500) 4%, transparent);
+}
+
+.kind-brief__title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.kind-brief__metric {
+    display: inline-block;
+    margin-right: 0.3rem;
+    padding: 0.05rem 0.45rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    font-size: 0.78rem;
+}
+
+/* ---------- Ảnh bìa sổ ---------- */
+
+.journal-book__cover {
+    display: block;
+    width: 100%;
+    max-height: 14rem;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    margin-bottom: 1rem;
+}
+
+.journal-cover-current {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.journal-cover-current__img {
+    width: 6rem;
+    height: 4rem;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.journal-cover-current__remove {
+    font-size: 0.85rem;
+}
+
+/* ---------- Thẻ sổ mang giao diện của chính nó ---------- */
+
+.journal-card.journal-theme--paper,
+.journal-card.journal-theme--leaf,
+.journal-card.journal-theme--terracotta,
+.journal-card.journal-theme--dusk,
+.journal-card.journal-theme--sand,
+.journal-card.journal-theme--moss {
+    background: var(--journal-paper);
+    border-color: var(--journal-edge);
+}
+
+.journal-card .journal-card__kind {
+    color: var(--journal-accent, var(--ink-500));
+}
+
+.journal-card__cover {
+    width: 100%;
+    height: 6rem;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.6rem;
+}

@@ -418,6 +418,6 @@ class ProfileController extends Controller
 
         return redirect()
             ->route('welcome')
-            ->with('success', 'Tài khoản của bạn đã được xoá. Cảm ơn bạn đã ghé Flower & Plant.');
+            ->with('success', 'Tài khoản của bạn đã được xoá. Cảm ơn bạn đã ghé ' . \App\Services\Shop\StoreProfile::name() . '.');
     }
 }

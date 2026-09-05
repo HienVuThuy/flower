@@ -19,6 +19,7 @@ import { initSchemeToggle } from './scheme-toggle';
 import { initVariantDialog } from './variant-dialog';
 import { initGhnAddress } from './ghn-address';
 import { initWishlist } from './wishlist';
+import { initJournalForm } from './journal-form';
 
 /*
  * Header đổi trạng thái khi cuộn — glass chỉ bật lúc cần (accent),
@@ -53,3 +54,4 @@ initSchemeToggle();
 initVariantDialog();
 initGhnAddress();
 initWishlist();
+initJournalForm();

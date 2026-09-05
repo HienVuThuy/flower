@@ -35,7 +35,7 @@ class StoreProfile
          * thường là một mẫu thư, tức là chỗ khách nhìn thấy mà chủ cửa
          * hàng thì không.
          */
-        'site_name' => 'Flower & Plant',
+        'site_name' => 'Angevil',
 
         /*
          * Dòng chữ nhỏ dưới tên, ở logo và chân trang.

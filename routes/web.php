@@ -595,6 +595,20 @@ Route::prefix('nhat-ky')
 
         Route::post('{journal}/trang', [JournalController::class, 'storeEntry'])->name('entries.store');
         Route::delete('{journal}/trang/{entry}', [JournalController::class, 'destroyEntry'])->name('entries.destroy');
+
+        /*
+         * MỐC MỤC TIÊU — chỉ có nghĩa với sổ Mục tiêu, nhưng route thì
+         * không giới hạn theo loại sổ.
+         *
+         * Loại sổ đổi được bất cứ lúc nào ở trang sửa. Nếu route chặn
+         * theo loại thì một quyển sổ Mục tiêu đổi sang Ghi chép tự do sẽ
+         * mang theo các mốc không xoá được — dữ liệu kẹt lại mà không có
+         * đường vào. Giao diện quyết định hiện khối nào; route chỉ giữ
+         * quyền sở hữu.
+         */
+        Route::post('{journal}/moc', [JournalController::class, 'storeMilestone'])->name('milestones.store');
+        Route::patch('{journal}/moc/{milestone}', [JournalController::class, 'toggleMilestone'])->name('milestones.toggle');
+        Route::delete('{journal}/moc/{milestone}', [JournalController::class, 'destroyMilestone'])->name('milestones.destroy');
     });
 
 Route::get('yeu-thich', [WishlistController::class, 'index'])

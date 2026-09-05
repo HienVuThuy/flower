@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\JournalSticker;
 use App\Enums\PlantCondition;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,8 @@ class JournalEntry extends Model
         'body',
         'condition',
         'photo',
+        'sticker',
+        'data',
     ];
 
     protected function casts(): array
@@ -35,6 +38,8 @@ class JournalEntry extends Model
         return [
             'entry_date' => 'date',
             'condition' => PlantCondition::class,
+            'sticker' => JournalSticker::class,
+            'data' => 'array',
         ];
     }
 
@@ -61,5 +66,43 @@ class JournalEntry extends Model
     {
         return $this->title
             ?: 'Ghi ngày ' . $this->entry_date->format('d/m/Y');
+    }
+
+    /**
+     * Một trường riêng của loại sổ, trong cột `data`.
+     *
+     * ĐỌC QUA ĐÂY, không đọc thẳng $entry->data['price'].
+     *
+     * Cột `data` là NULL với mọi trang được tạo trước khi có tính năng
+     * này, và là mảng thiếu khoá với mọi trang của loại sổ không khai
+     * khoá đó. Đọc thẳng thì mỗi chỗ hiển thị phải tự nhớ kiểm hai
+     * trường hợp, và chỗ thứ ba sẽ quên.
+     */
+    public function field(string $key, mixed $macDinh = null): mixed
+    {
+        return ($this->data ?? [])[$key] ?? $macDinh;
+    }
+
+    /**
+     * Danh sách việc chăm sóc đã làm trong ngày (sổ sinh trưởng).
+     *
+     * @return list<JournalSticker>
+     */
+    public function careActions(): array
+    {
+        $ket = [];
+
+        foreach ((array) $this->field('care', []) as $khoa) {
+            $viec = JournalSticker::tryFrom((string) $khoa);
+
+            // Bỏ qua khoá lạ thay vì vỡ trang: cột JSON không có ràng
+            // buộc ở cơ sở dữ liệu, và một lần sửa tay có thể để lại giá
+            // trị không còn tồn tại trong enum.
+            if ($viec) {
+                $ket[] = $viec;
+            }
+        }
+
+        return $ket;
     }
 }

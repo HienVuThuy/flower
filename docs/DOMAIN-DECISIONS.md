@@ -4620,3 +4620,261 @@ phải phá thử và thấy nó đỏ.
 
 Toàn bộ 12 bài mới của mục 4 đã qua cách kiểm này: 12 đột biến chèn vào
 mã thật, mỗi cái làm đỏ đúng bài canh nó.
+
+---
+
+## QĐ-145. Dự án đã có Git — sau hai lần suýt mất việc cả buổi
+
+QĐ-122 ghi lại sự cố một script sửa hàng loạt xoá trắng
+`welcome.blade.php`, và kết luận là "dự án cần Git". Nay đã có.
+
+`git init` + commit đầu tiên gồm 666 tệp. Trước khi commit đã quét toàn
+bộ cây thư mục tìm token, mật khẩu và số tài khoản: **không có gì nằm
+ngoài `.env`**, và `.env` đã được `.gitignore` từ trước.
+
+Chưa có kho trên GitHub. Việc tạo kho và đẩy lên cần đăng nhập, nên phải
+do chủ dự án tự chạy — xem hướng dẫn ở cuối `README`.
+
+Cấu hình đặt ở mức repo, không phải toàn máy:
+
+```
+git config user.name  "Rin5"
+git config user.email "tuanhung6a6@gmail.com"
+```
+
+---
+
+## QĐ-146. Tên thương hiệu: Angevil
+
+Đổi ở **một chỗ**: `StoreProfile::FIELDS['site_name']` và bản ghi tương
+ứng trong bảng `settings`.
+
+Đó chính là thứ QĐ-120 dựng lên để có: trước khi có `StoreProfile`, tên
+cửa hàng viết cứng ở 24 chỗ, và đổi tên nghĩa là sửa 24 tệp rồi bỏ sót
+một chỗ — thường là một mẫu thư, tức là chỗ khách nhìn thấy mà chủ cửa
+hàng thì không.
+
+Lần này chỉ còn ba chỗ viết cứng sót lại (một câu cảm ơn trong
+`OrderStatus`, một câu ở `ProfileController`, một phép khẳng định trong
+bài kiểm thử). Cả ba đã nối vào `StoreProfile::name()`.
+
+---
+
+## QĐ-147. Mỗi loại sổ một KẾT CẤU, không chỉ một bộ gợi ý chỉ số
+
+Bản đầu của nhật ký: năm loại sổ dùng chung đúng một bố cục và đúng một
+biểu mẫu. Loại sổ chỉ quyết định **chỉ số nào được điền sẵn**.
+
+Hậu quả đo được trên giao diện thật:
+
+- Sổ "Theo dõi giá" hiện ô **tình trạng cây** và ô **tải ảnh**, còn ô để
+  ghi GIÁ thì không có — người dùng phải tự gõ chữ "Giá" vào một hàng chỉ
+  số.
+- Sổ "Mục tiêu" không có chỗ nào để liệt kê các bước cần làm — thứ duy
+  nhất khiến nó là sổ mục tiêu.
+
+Nay `JournalKind` khai ba danh sách:
+
+| | Sinh trưởng | Mục tiêu | Theo dõi giá | Phân tích | Tự do |
+|---|---|---|---|---|---|
+| **Khối trang sổ** | tiến độ, biểu đồ, dải ảnh, tổng hợp chăm sóc, dòng thời gian | tiến độ, **mốc cần đạt**, biểu đồ, dòng thời gian | **thống kê giá**, biểu đồ, **bảng khảo giá** | **điểm chấm**, **được/chưa được**, biểu đồ, dòng thời gian | biểu đồ, dòng thời gian |
+| **Ô biểu mẫu** | tình trạng, **việc đã chăm**, ảnh, nhãn dán, chỉ số | nhãn dán, chỉ số | **giá**, **nơi khảo** | **chấm 1–5**, **được/chưa được**, tình trạng, ảnh | ảnh, chỉ số |
+| **Nhãn dán** | 12 | 3 | 3 | 10 | 12 |
+
+`show.blade.php` KHÔNG biết sổ mục tiêu khác sổ giá ở chỗ nào — nó lặp
+qua `panels()` rồi vẽ. Viết `@if($journal->kind === Price)` trong Blade
+thì năm loại × sáu khối là ba mươi nhánh điều kiện trong một tệp, và thêm
+loại sổ thứ sáu là phải đọc lại cả ba mươi.
+
+---
+
+## QĐ-148. Cột JSON `data` được phép tồn tại, với đúng ba điều kiện
+
+Mỗi loại sổ cần những trường khác hẳn nhau. Làm thành cột riêng thì
+`journal_entries` có thêm chín cột mà mỗi trang chỉ dùng hai ba cột, bảy
+cột còn lại NULL vĩnh viễn — và mỗi loại sổ mới là một migration nữa.
+
+Cột JSON `data` giải quyết được, nhưng chỉ khi giữ đúng ba điều kiện —
+copy nguyên từ ràng buộc đã đặt cho `product_traits` (xem `TraitType`):
+
+1. Khoá hợp lệ do `JournalKind::dataFields()` khai, **đóng**.
+2. Controller chỉ ghi những khoá loại sổ đó khai (`truongRieng()`).
+3. **Không khoá nào được dùng để truy vấn, lọc hay thống kê chéo** —
+   chúng chỉ để hiển thị lại đúng trang đó.
+
+Mất điều kiện 3 thì phải tách cột thật, vì JSON không đánh chỉ mục được
+theo cách này.
+
+Đo được: điều kiện 1 và 2 là **hai lớp chặn độc lập**. Phá riêng lớp
+validate, hoặc riêng `truongRieng()`, thì bài kiểm thử vẫn xanh — lớp còn
+lại giữ được. Chỉ khi phá cả hai nó mới đỏ. Đó là chủ ý, và đã ghi rõ
+trong bài để người đọc không tưởng nó canh đúng một dòng.
+
+---
+
+## QĐ-149. Mốc mục tiêu là bảng riêng, và `done_at` thay cho cột boolean
+
+Một mốc KHÔNG thuộc về một trang nhật ký nào cả. Nó thuộc về cả quyển sổ,
+có thứ tự riêng, được đánh dấu hoàn thành ở một thời điểm khác với lúc
+tạo. Đó là một **thực thể**, không phải một thuộc tính — nên nó là bảng.
+
+`done_at` thay cho `is_done`: biết một mốc đã xong thì hữu ích, biết nó
+xong **ngày nào** thì hữu ích hơn nhiều — đó là thứ dựng được câu "mất ba
+tuần để đi từ mốc này sang mốc kia". NULL nghĩa là chưa xong. Một cột trả
+lời được hai câu hỏi.
+
+`done_at` **cố ý không nằm trong `$fillable`**, cùng lý do với `user_id`:
+nó là thứ hệ thống ghi lúc người dùng bấm nút, không phải thứ nhận từ dữ
+liệu gửi lên. Cho vào `$fillable` thì ai cũng đặt được một ngày hoàn
+thành tuỳ ý, và mọi phép tính thời gian thành vô nghĩa.
+
+Mốc **đã xong thì không bao giờ là quá hạn**, kể cả khi xong muộn: đánh
+dấu đỏ một việc người ta đã làm xong là trách móc chuyện đã qua, và nó
+đẩy sự chú ý ra khỏi những mốc còn đang dở.
+
+---
+
+## QĐ-150. Trang trí sổ: bộ chọn sẵn, không phải ô chọn màu tự do
+
+Sáu bộ giao diện (giấy, màu nhấn, hoa văn) và mười hai nhãn dán.
+
+**Không cho chọn mã màu tự do.** Nghe thì tự do hơn, nhưng kết quả là
+những quyển sổ chữ xám nhạt trên nền xám nhạt — và không có gì trong hệ
+thống ngăn được, vì màu nào cũng "hợp lệ".
+
+Sáu bộ đã **ĐO** tương phản màu nhấn trên màu giấy, ở cả hai chế độ nền:
+
+| bộ | nền sáng | nền tối |
+|---|---|---|
+| Giấy trắng | 6,05 | 4,61 |
+| Lá non | 8,18 | 7,34 |
+| Gốm đỏ | 5,63 | 7,20 |
+| Chiều tím | 7,90 | 7,18 |
+| Cát ấm | 5,87 | 8,77 |
+| Rêu đá | 7,78 | 7,52 |
+
+Cả mười hai tổ hợp vượt 4,5:1 — ngưỡng của **chữ thường**, cao hơn hẳn
+ngưỡng 3:1 mà nét đồ hoạ cần. Thêm bộ mới thì phải đo lại và ghi số vào
+bảng: con số đo được là thứ duy nhất chứng minh được, "trông thì ổn" thì
+không.
+
+Nền tối **không phải phép lật tự động**: mỗi bộ khai lại ba biến của
+riêng nó, vì "giấy trắng" ở nền tối không thể là màu trắng.
+
+---
+
+## QĐ-151. Nhãn dán vẽ bằng SVG và CÓ NGHĨA, không dùng emoji
+
+Ba lý do không dùng emoji:
+
+1. Hiển thị khác nhau trên từng hệ điều hành — cùng một trang nhật ký,
+   máy này ra hình này, máy kia ra hình khác.
+2. Không ăn theo màu được; SVG thì theo được màu của bộ giao diện sổ.
+3. Trình đọc màn hình đọc emoji ra một cái tên tiếng Anh dài dòng.
+
+Mỗi nhãn kèm một `meaning()` — "hôm nay đã tưới", "cây ra hoa", "bị sâu".
+Nhìn lướt dòng thời gian là thấy chuyện gì đã xảy ra mà không phải đọc
+từng trang. Đó cũng là lý do bộ nhãn **đóng** chứ không cho tự tải lên:
+một bộ hình có ý nghĩa chung thì đọc lướt được; một bộ ai thích gì dán
+nấy thì chỉ là hình.
+
+Nhãn dán và ô tích "việc đã chăm" dùng **chung một bộ từ vựng**. Tách làm
+hai bộ thì người dùng phải khai hai lần cho một việc, và hai chỗ sẽ lệch
+nhau.
+
+Bài kiểm thử `moi_nhan_dan_deu_ve_ra_hinh_that` render từng nhãn và
+khẳng định SVG có nét vẽ: enum có 12 case nhưng hình nằm trong một
+`@switch` ở Blade, và `@switch` không khớp thì **lặng lẽ** bỏ qua — thêm
+case mà quên vẽ hình thì nhãn đó hiện ra một ô trống, không có gì báo.
+
+---
+
+## QĐ-152. Hai lỗi tìm ra khi đối chiếu ba danh sách khai báo với nhau
+
+`JournalKind` khai ba thứ tách rời — `panels()`, `entryFields()`,
+`dataFields()`. Không có gì trong PHP bắt chúng khớp nhau, và cả hai lỗi
+dưới đây đều **xanh ở mọi bài kiểm thử đang có** lúc đó:
+
+**Lỗi 1 — biểu đồ trống vĩnh viễn.** Sổ Theo dõi giá có `'chart'` trong
+`panels()` nhưng KHÔNG có `'metrics'` trong `entryFields()` — nó có một ô
+nhập giá riêng. Người dùng tạo sổ giá bằng giao diện thật sẽ thấy một
+khối biểu đồ không bao giờ có dữ liệu.
+
+Lỗi bị che vì dữ liệu mẫu tôi dựng bằng script đã tự ghi thêm chỉ số
+"Giá" — thứ mà biểu mẫu thật không làm.
+
+Sửa: giá vừa nhập được ghi luôn thành chỉ số "Giá". Không phải bịa dữ
+liệu — nó chính là con số họ vừa gõ, chỉ được ghi thêm vào chỗ mà biểu đồ
+đọc.
+
+**Lỗi 2 — lời hứa hão trên trang tạo sổ.** Khối "sổ này hoạt động thế
+nào" quảng cáo *"chỉ số điền sẵn: Giá (₫)"* cho một loại sổ không có ô
+chỉ số nào. Đúng loại lời hứa hão mà cả khối đó sinh ra để tránh.
+
+`JournalKindStructureTest` nay đối chiếu ba danh sách với nhau: **có khối
+biểu đồ thì phải có đường ghi ra chỉ số**.
+
+---
+
+## QĐ-153. Đường dẫn tệp không bao giờ được nằm trong `$fillable`
+
+Lỗi thật, bắt được bằng `JournalCoverTest::thay_anh_bia_thi_xoa_tep_cu`:
+
+`cover_image` nằm trong `$fillable` của `Journal`. Khi sửa sổ,
+`fill($validated)` gán thẳng **đối tượng UploadedFile** đè lên đường dẫn
+cũ. Dòng ngay sau đó đọc `$so->cover_image` để xoá tệp cũ — và nhận được
+một đối tượng, không phải đường dẫn. Tệp cũ nằm lại vĩnh viễn.
+
+Mỗi lần đổi ảnh bìa là một tệp rác. Không ai thấy, vì trang vẫn hiện đúng
+ảnh mới.
+
+Cùng nguyên tắc với `user_id` và `JournalMilestone::done_at`: những giá
+trị do **hệ thống sinh ra** — id chủ sở hữu, dấu thời gian, đường dẫn tệp
+— không bao giờ được nhận từ dữ liệu gửi lên.
+
+Ảnh bìa cũng có **ba trạng thái, không phải hai**: ô tải tệp để trống có
+thể nghĩa là "không đổi gì" HOẶC "bỏ ảnh đi", và trình duyệt gửi lên y
+hệt nhau. Không phân biệt được thì người dùng không bao giờ gỡ được ảnh
+bìa đã lỡ chọn — mỗi lần lưu là ảnh cũ lại quay về. Nên có ô tích
+`remove_cover` riêng.
+
+---
+
+## QĐ-154. Đổi phần bên dưới theo kiểu sổ, bằng cách nâng cấp dần
+
+Trang tạo sổ hiện một khối "sổ này hoạt động thế nào" **đổi theo kiểu sổ
+đang chọn**: biểu mẫu sẽ hỏi những ô nào, nút ghi tên gì, có bao nhiêu
+nhãn dán, giao diện mặc định là bộ nào.
+
+Máy chủ vẽ ra **đủ cả năm** khối; JavaScript chỉ ẩn bớt. Không có script
+thì cả năm cùng hiện — dài hơn nhưng đọc vẫn đúng, và không mất ô nhập
+nào. Vẽ sẵn một khối rồi để script đổi nội dung thì người tắt script kẹt
+vĩnh viễn ở kiểu sổ mặc định.
+
+Nội dung mỗi khối **lấy từ enum**, không chép tay: `entryFields()` và
+`suggestedMetrics()` là cùng nguồn mà biểu mẫu ghi thêm sẽ dùng sau này.
+Chép tay thì mô tả ở đây và thứ hiện ra thật sẽ lệch nhau ngay lần sửa
+đầu tiên — và người dùng phát hiện bằng cách chọn nhầm kiểu sổ.
+
+Lỗi đã bắt được khi đo: bản đầu đặt `data-for-kinds` liệt kê **cả năm**
+loại lên khối duy nhất, nên script chạy mà không bao giờ ẩn gì. Bài kiểm
+bằng cách bấm lần lượt năm loại rồi đọc lại trạng thái `hidden` mới lộ ra.
+
+---
+
+## QĐ-155. Không nhắc "đã đến lúc tưới chưa"
+
+Khối "Đã chăm những gì" đếm số lần đã làm từng việc và nói lần gần nhất
+cách đây bao lâu. Nó **không** nhắc "nên tưới hôm nay".
+
+Chu kỳ tưới phụ thuộc loài, mùa, chậu, chỗ đặt và thời tiết tuần đó — hệ
+thống không biết gì trong số đó. Đưa ra một lời nhắc dựa trên phép đếm
+ngày là bịa một lời khuyên chăm cây, và người tin theo có thể làm úng
+cây.
+
+Nói *"đã tưới 6 lần, gần nhất 3 ngày trước"* là sự thật. Nói *"nên tưới
+hôm nay"* thì không.
+
+Cùng ranh giới ở sổ Theo dõi giá: đưa ra số liệu của chính khách rồi để
+họ tự quyết, **không** khuyên "nên mua" hay "nên đợi" — sổ này là ghi
+chép của khách, còn cửa hàng thì có lợi ích trong việc họ mua sớm.

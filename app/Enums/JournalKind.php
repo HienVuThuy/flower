@@ -103,6 +103,154 @@ enum JournalKind: string
         return array_key_first($this->suggestedMetrics());
     }
 
+    /* ================= MỖI LOẠI SỔ MỘT KẾT CẤU ================= */
+
+    /**
+     * Những khối hiện trên trang sổ, THEO ĐÚNG THỨ TỰ hiện ra.
+     * ============================================================
+     * ĐÂY LÀ CHỖ DUY NHẤT QUYẾT ĐỊNH MỘT LOẠI SỔ TRÔNG NHƯ THẾ NÀO.
+     *
+     * Trước đây năm loại sổ dùng chung đúng một bố cục: biểu đồ, dòng
+     * thời gian, biểu mẫu ghi thêm. Kết quả là sổ theo dõi giá cũng hiện
+     * ô "tình trạng cây", và sổ mục tiêu thì không có chỗ nào để liệt kê
+     * các bước cần làm — thứ duy nhất khiến nó là sổ mục tiêu.
+     *
+     * Đưa danh sách khối vào enum thay vì rải `@if($journal->kind ===
+     * ...)` khắp Blade: thêm một loại sổ mới thì sửa ở đây, và không có
+     * cách nào quên một chỗ.
+     *
+     * @return list<string>
+     */
+    public function panels(): array
+    {
+        return match ($this) {
+            self::Growth => ['goal', 'chart', 'photo-strip', 'care-summary', 'timeline'],
+            self::Goal => ['goal', 'milestones', 'chart', 'timeline'],
+            self::Price => ['price-stats', 'chart', 'price-table'],
+            self::Analysis => ['rating', 'findings', 'chart', 'timeline'],
+            self::Free => ['chart', 'timeline'],
+        };
+    }
+
+    /**
+     * Các ô của biểu mẫu ghi thêm một trang.
+     *
+     * @return list<string>
+     */
+    public function entryFields(): array
+    {
+        return match ($this) {
+            self::Growth => ['date', 'title', 'body', 'condition', 'care', 'photo', 'sticker', 'metrics'],
+            self::Goal => ['date', 'title', 'body', 'sticker', 'metrics'],
+            self::Price => ['date', 'price', 'place', 'body', 'sticker'],
+            self::Analysis => ['date', 'title', 'rating', 'good', 'bad', 'body', 'condition', 'photo', 'sticker', 'metrics'],
+            self::Free => ['date', 'title', 'body', 'photo', 'sticker', 'metrics'],
+        };
+    }
+
+    public function hasField(string $field): bool
+    {
+        return in_array($field, $this->entryFields(), true);
+    }
+
+    public function hasPanel(string $panel): bool
+    {
+        return in_array($panel, $this->panels(), true);
+    }
+
+    /**
+     * Các khoá được phép ghi vào `journal_entries.data`, kèm luật kiểm.
+     * ============================================================
+     * BỘ KHOÁ ĐÓNG — đây là điều kiện để cột JSON không thành thùng rác.
+     *
+     * Cùng ràng buộc đã đặt cho `product_traits` (xem `TraitType`): cơ sở
+     * dữ liệu không chặn được nội dung một cột JSON, nên chặn phải nằm ở
+     * đây, và mọi đường ghi đều đi qua đúng một chỗ trong controller.
+     *
+     * @return array<string, string|list<string>> khoá => luật validate
+     */
+    public function dataFields(): array
+    {
+        return match ($this) {
+            self::Growth => [
+                // Việc chăm sóc đã làm hôm đó. Là mảng khoá nhãn dán vì
+                // chúng là cùng một bộ từ vựng — "đã tưới" trên nhãn dán
+                // và "đã tưới" trong ô tích phải là một thứ, nếu không
+                // người dùng phải khai hai lần cho một việc.
+                'care' => ['nullable', 'array', 'max:8'],
+            ],
+            self::Price => [
+                'price' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+                'place' => ['nullable', 'string', 'max:120'],
+            ],
+            self::Analysis => [
+                'rating' => ['nullable', 'integer', 'min:1', 'max:5'],
+                'good' => ['nullable', 'string', 'max:500'],
+                'bad' => ['nullable', 'string', 'max:500'],
+            ],
+            self::Goal, self::Free => [],
+        };
+    }
+
+    /** Loại sổ này có danh sách các mốc cần làm không. */
+    public function usesMilestones(): bool
+    {
+        return $this === self::Goal;
+    }
+
+    /**
+     * Một trang nhật ký của loại sổ này gọi là gì.
+     *
+     * "Thêm trang" đúng với sổ sinh trưởng nhưng sai với sổ giá — ở đó
+     * mỗi dòng là một lần đi khảo giá. Dùng chung một từ cho cả năm loại
+     * là tiết kiệm chữ bằng cách làm giao diện nói không đúng việc.
+     *
+     * @return array{one: string, add: string, empty: string}
+     */
+    public function entryWords(): array
+    {
+        return match ($this) {
+            self::Growth => [
+                'one' => 'lần ghi',
+                'add' => 'Ghi thêm một lần',
+                'empty' => 'Chưa ghi lần nào',
+            ],
+            self::Goal => [
+                'one' => 'lần cập nhật',
+                'add' => 'Cập nhật tiến độ',
+                'empty' => 'Chưa cập nhật lần nào',
+            ],
+            self::Price => [
+                'one' => 'lần khảo giá',
+                'add' => 'Ghi một lần khảo giá',
+                'empty' => 'Chưa khảo giá lần nào',
+            ],
+            self::Analysis => [
+                'one' => 'lần quan sát',
+                'add' => 'Ghi một lần quan sát',
+                'empty' => 'Chưa quan sát lần nào',
+            ],
+            self::Free => [
+                'one' => 'ghi chép',
+                'add' => 'Viết thêm',
+                'empty' => 'Chưa viết gì',
+            ],
+        };
+    }
+
+    /** Bộ giao diện gợi ý sẵn khi tạo sổ loại này. */
+    public function defaultTheme(): JournalTheme
+    {
+        return match ($this) {
+            self::Growth => JournalTheme::Leaf,
+            self::Goal => JournalTheme::Dusk,
+            // Sổ giá để đọc số — giấy trơn, không hoa văn.
+            self::Price => JournalTheme::Paper,
+            self::Analysis => JournalTheme::Sand,
+            self::Free => JournalTheme::Moss,
+        };
+    }
+
     /** @return array<string, string> value => label, cho ô chọn */
     public static function options(): array
     {
