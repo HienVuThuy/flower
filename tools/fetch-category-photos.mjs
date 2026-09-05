@@ -75,6 +75,32 @@ const TARGETS = [
         must: /soil|compost|fertili|garden|potting|supply|supplies/i,
         hint: 'Danh mục: Vật tư chăm sóc',
     },
+
+    /* ---------- hai danh mục tách ra sau, chưa từng có ảnh ---------- */
+    {
+        slug: 'chau-va-de-lot',
+        q: 'flower pots',
+        alt: ['terracotta pots', 'ceramic pot', 'plant pot'],
+        must: /pot|planter|saucer|terracotta|ceramic/i,
+        /*
+         * Chặn ảnh có cây bên trong: danh mục này bán CHẬU, không bán
+         * cây trồng sẵn. Ảnh một chậu đầy cây làm khách tưởng mua về là
+         * có cả cây.
+         *
+         * Câu truy vấn dài đã trả về 0 kết quả (Openverse nối các từ bằng
+         * AND — xem chú thích ở product-targets.mjs). Rút ngắn xuống hai
+         * chữ mới có kết quả.
+         */
+        block: /bonsai|orchid in|blooming/i,
+        hint: 'Danh mục: Chậu & đế lót',
+    },
+    {
+        slug: 'phu-goc-tieu-canh',
+        q: 'decorative pebbles moss terrarium',
+        alt: ['white gravel stones garden', 'moss stones miniature garden'],
+        must: /pebble|gravel|stone|moss|terrarium|miniature/i,
+        hint: 'Danh mục: Phủ gốc & tiểu cảnh',
+    },
 ];
 
 const result = await fetchInto({

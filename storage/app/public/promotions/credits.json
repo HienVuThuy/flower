@@ -1,0 +1,32 @@
+[
+  {
+    "slug": "noel",
+    "file": "promotions/noel.jpg",
+    "hint": "Nền banner chủ đề Giáng sinh",
+    "title": "christmas tree ornament",
+    "author": "zaimoku_woodpile",
+    "license": "BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "pageUrl": "https://www.flickr.com/photos/11250735@N07/11338452985"
+  },
+  {
+    "slug": "tet",
+    "file": "promotions/tet.jpg",
+    "hint": "Nền banner chủ đề Tết",
+    "title": "apricot blossoms",
+    "author": "naturalflow",
+    "license": "BY-SA 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "pageUrl": "https://www.flickr.com/photos/70693287@N00/4479270934"
+  },
+  {
+    "slug": "valentine",
+    "file": "promotions/valentine.jpg",
+    "hint": "Nền banner chủ đề Valentine",
+    "title": "Red Rose",
+    "author": "Monkeystyle3000",
+    "license": "BY 2.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "pageUrl": "https://www.flickr.com/photos/132295270@N07/45678290115"
+  }
+]

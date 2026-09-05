@@ -4878,3 +4878,94 @@ hôm nay"* thì không.
 Cùng ranh giới ở sổ Theo dõi giá: đưa ra số liệu của chính khách rồi để
 họ tự quyết, **không** khuyên "nên mua" hay "nên đợi" — sổ này là ghi
 chép của khách, còn cửa hàng thì có lợi ích trong việc họ mua sớm.
+
+---
+
+## QĐ-156. Thư viện ảnh sản phẩm: một khung rỗng có viền suốt từ đầu
+
+`components/product/gallery.blade.php` dựng sẵn khung thư viện đầy đủ:
+ảnh lớn, hàng ảnh nhỏ bấm để đổi, JavaScript đổi cả `<source>` lẫn
+`<img>`. Hàng ảnh nhỏ có điều kiện `@if(count($paths) > 1)`.
+
+Bảng `product_images` **rỗng hoàn toàn** — 0 dòng. Nên điều kiện đó chưa
+bao giờ đúng, và mọi sản phẩm hiện đúng một ảnh. Cả tính năng chạy không
+lỗi, không cảnh báo, và không làm gì.
+
+Nay 101 ảnh phụ cho 51/53 sản phẩm. Hai món còn lại (hoa hồng đỏ, phân
+bón NPK) không tìm được ảnh thứ hai đủ điều kiện — và đó là câu trả lời
+đúng, không phải chỗ để nhét một ảnh gần đúng.
+
+Ba lựa chọn trong `tools/fetch-product-gallery.mjs`:
+
+- **Không lấy trùng ảnh đại diện.** Cùng câu truy vấn thì Openverse trả
+  về cùng thứ tự, nên ảnh đầu gần như luôn là ảnh đã dùng. Loại theo
+  `foreign_landing_url` chứ không theo tên tệp — cùng một bức có thể tải
+  về dưới hai tên.
+- **Gom kết quả từ MỌI câu truy vấn**, khác `fetchInto` vốn dừng ở câu
+  đầu tiên có kết quả. Câu thứ hai thường cho góc chụp khác hẳn, đúng thứ
+  một thư viện cần.
+- **Hai ảnh phụ, không hơn.** Cộng ảnh đại diện là ba ô — đủ để hàng ảnh
+  nhỏ có nghĩa. Nhiều hơn thì mỗi lần mở trang thêm vài trăm KB cho thứ
+  phần lớn khách không bấm tới, và ảnh stock thứ tư trở đi thường đã lạc
+  đề.
+
+`alt` của ảnh nhỏ để **rỗng** có chủ ý: nút bấm đã mang
+`aria-label="Xem ảnh N"`, nên lặp lại làm trình đọc màn hình đọc hai lần.
+
+---
+
+## QĐ-157. Hai lỗi im lặng trong danh sách truy vấn ảnh
+
+**Slug trùng.** `vien-dat-nung-lot-day-chau-1kg` nằm hai lần trong danh
+sách. Hậu quả không hiện ra ở đâu:
+
+- mỗi lần chạy tốn gấp đôi lượt gọi API cho món đó;
+- hai mục ghi đè lên **cùng một tên tệp**, nên tệp trên ổ đĩa là của mục
+  chạy sau, còn dòng ghi công có thể là của mục chạy trước — tức là
+  ASSETS.md ghi **sai tác giả và sai giấy phép**.
+
+Ghi sai giấy phép nghiêm trọng hơn hẳn một lỗi kỹ thuật: đó là điều kiện
+để được dùng bức ảnh. Nay `fetchInto()` ném lỗi ngay khi thấy slug trùng.
+
+**Slug không khớp sản phẩm nào.** `monstera-deliciosa` (đúng là
+`monstera-deliciosa-chau-gom`) và `cay-luoi-ho-vang-vien-de-ban` (đúng là
+`luoi-ho-vang-vien-de-ban`). Lệnh gán báo `thiếu: 2` suốt từ đầu — một
+con số đếm mà không ai đi tìm được.
+
+Nay lệnh **nêu tên** từng slug lạc kèm lý do và chỉ luôn tệp cần sửa. Một
+con số không đủ để ai hành động; một cái tên thì đủ.
+
+Danh sách truy vấn cũng đã tách khỏi `fetch-product-photos.mjs` sang
+`tools/lib/product-targets.mjs` để công cụ ảnh thư viện dùng chung. Chép
+bản thứ hai thì sớm muộn hai bản lệch, và lệch ở đây nghĩa là mất những
+luật `must`/`block` đã chặn được một bức tranh sơn dầu năm 1840 lọt vào
+chỗ giỏ hoa baby.
+
+---
+
+## QĐ-158. Banner khuyến mại tải về nhưng KHÔNG tự gán
+
+`tools/fetch-promotion-banners.mjs` tải ảnh nền cho ba chủ đề (Giáng
+sinh, Tết, Valentine) nhưng **không ghi vào cơ sở dữ liệu**.
+
+Banner là quyết định thương hiệu. Một bức ảnh stock chọn hộ chưa chắc hợp
+với chiến dịch đang chạy, và khối `campaign-banner` đã có sẵn trạng thái
+không-ảnh trông vẫn tử tế (`campaign-banner--has-image` là một modifier,
+không phải mặc định). Ảnh chỉ làm nó đẹp hơn, không phải thứ thiếu-thì-vỡ.
+
+Khoá theo `theme_key` chứ không theo slug chương trình: nhiều chương
+trình cùng chủ đề dùng chung được một ảnh, và chủ đề lặp lại hằng năm còn
+slug thì không.
+
+---
+
+## QĐ-159. Ảnh nút phân loại: chỉ bậc HỌ mới cần
+
+31/66 nút phân loại chưa có ảnh, và **không nút nào trong số đó từng hiện
+ra**: trang danh sách chỉ hiện bậc Họ (xem chú thích trong
+`shop/taxa/index.blade.php` — Ngành và Lớp quá rộng, Chi và Loài quá
+hẹp), còn trang chi tiết không dùng ảnh nút.
+
+Cả 15 họ đều đã có ảnh. Nên 31 nút kia không phải việc còn thiếu — chúng
+là dữ liệu không có chỗ hiển thị. Tải ảnh cho chúng là tốn băng thông và
+tốn chỗ trong ASSETS.md để đổi lấy đúng con số không.

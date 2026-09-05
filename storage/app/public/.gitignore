@@ -1,2 +1,63 @@
+# ============================================================
+# MẶC ĐỊNH: KHÔNG THEO DÕI GÌ CẢ.
+# ============================================================
+# Thư mục này chứa CẢ HAI loại tệp:
+#
+#   - ảnh hàng hoá do script tải về (sản phẩm, danh mục, banner) —
+#     là dữ liệu của cửa hàng, nên đưa lên kho để ai clone về cũng
+#     thấy trang đầy đủ mà không phải gọi lại API bên ngoài;
+#
+#   - ẢNH RIÊNG TƯ CỦA NGƯỜI DÙNG — ảnh bìa sổ nhật ký và ảnh trong
+#     từng trang nhật ký (`journals/`). Đây là thứ khách chụp cây nhà
+#     mình, và trang nhật ký hứa với họ là chỉ mình họ đọc được.
+#
+# Đẩy `journals/` lên một kho lưu trữ là phá đúng lời hứa đó — xem
+# QĐ-123. Nên quy tắc ở đây là CẤM HẾT rồi mở từng chỗ một, không phải
+# cho hết rồi cấm vài chỗ: cách sau thì một thư mục mới sinh ra sau này
+# sẽ tự động bị đẩy lên mà không ai kịp nghĩ.
 *
 !.gitignore
+
+# ------------------------------------------------------------
+# Mở đúng ba thư mục ảnh hàng hoá.
+# ------------------------------------------------------------
+!products/
+!categories/
+!promotions/
+
+# Trong ba thư mục đó cũng cấm hết, rồi chỉ mở ảnh gốc và tệp ghi công.
+products/**
+categories/**
+promotions/**
+
+!products/*.jpg
+!products/*.jpeg
+!products/*.png
+!products/credits.json
+
+!products/gallery/
+!products/gallery/*.jpg
+!products/gallery/*.jpeg
+!products/gallery/*.png
+!products/gallery/credits.json
+
+!categories/*.jpg
+!categories/*.jpeg
+!categories/*.png
+!categories/credits.json
+
+!promotions/*.jpg
+!promotions/*.jpeg
+!promotions/*.png
+!promotions/credits.json
+
+# ------------------------------------------------------------
+# KHÔNG đưa bản .webp lên kho.
+# ------------------------------------------------------------
+# Chúng SINH RA ĐƯỢC từ ảnh gốc bằng `php artisan anh:toi-uu`, chạy
+# hoàn toàn ở máy và mất vài giây — không cần mạng, không gọi API nào.
+#
+# 461 tệp webp là 6,8 MB và sẽ sinh lại y hệt sau mỗi lần chạy lệnh đó,
+# nên đưa lên kho chỉ làm mỗi lần clone nặng thêm để đổi lấy thứ tự
+# dựng lại được.
+*.webp

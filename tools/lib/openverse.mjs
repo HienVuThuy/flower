@@ -156,6 +156,32 @@ export async function search(q, opts = {}) {
 export async function fetchInto(cfg) {
     const { outDir, filePrefix, targets, shape = 'portrait', only = [] } = cfg;
 
+    /*
+     * SLUG TRÙNG PHẢI BÁO LỖI NGAY, KHÔNG ĐƯỢC CHẠY TIẾP.
+     *
+     * Đã xảy ra thật: `vien-dat-nung-lot-day-chau-1kg` nằm hai lần trong
+     * danh sách sản phẩm. Hậu quả im lặng và khó thấy:
+     *
+     *   - mỗi lần chạy tốn gấp đôi lượt gọi API cho món đó;
+     *   - hai mục ghi đè lên CÙNG một tên tệp, nên tệp trên ổ đĩa là của
+     *     mục chạy sau, còn dòng ghi công có thể là của mục chạy trước —
+     *     tức là ASSETS.md ghi sai tác giả và sai giấy phép.
+     *
+     * Ghi sai giấy phép là chuyện nghiêm trọng hơn hẳn một lỗi kỹ thuật:
+     * đó là điều kiện để được dùng bức ảnh. Nên chặn ở đây, ồn ào.
+     */
+    const dem = new Map();
+
+    for (const t of targets) {
+        dem.set(t.slug, (dem.get(t.slug) ?? 0) + 1);
+    }
+
+    const trung = [...dem].filter(([, n]) => n > 1).map(([s]) => s);
+
+    if (trung.length) {
+        throw new Error('Slug trung trong danh sach targets: ' + trung.join(', '));
+    }
+
     fs.mkdirSync(outDir, { recursive: true });
 
     const todo = only.length ? targets.filter((t) => only.includes(t.slug)) : targets;

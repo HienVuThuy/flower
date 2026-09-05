@@ -27,7 +27,9 @@ class SyncAssetCredits extends Command
     /** Mỗi nhóm: nhãn hiển thị, tệp credits, cột thứ hai của bảng. */
     private const GROUPS = [
         'products' => ['Ảnh sản phẩm', 'products/credits.json', 'Sản phẩm'],
+        'gallery' => ['Ảnh phụ trong thư viện', 'products/gallery/credits.json', 'Sản phẩm'],
         'categories' => ['Ảnh danh mục', 'categories/credits.json', 'Danh mục'],
+        'promotions' => ['Ảnh nền banner', 'promotions/credits.json', 'Chủ đề'],
     ];
 
     public function handle(): int
