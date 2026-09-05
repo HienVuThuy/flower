@@ -1,0 +1,21 @@
+/*
+ * BREADCRUMB
+ */
+
+.shop-breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    color: var(--ink-500);
+    margin-bottom: var(--space-sm);
+}
+
+.shop-breadcrumb a:hover {
+    color: var(--brand-600);
+}
+
+.shop-breadcrumb__sep {
+    color: var(--border-strong);
+}

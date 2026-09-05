@@ -1,0 +1,92 @@
+/*
+ * BADGES / TAGS / STATUS CHIPS
+ * ============================================================
+ * Đây là nơi DUY NHẤT dùng radius pill — đúng vai trò của nó
+ * (tag/filter/trạng thái), không phải cho CTA.
+ */
+
+.badge {
+    font-weight: 600;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    padding: 0.35em 0.7em;
+    border-radius: var(--radius-pill);
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-pill);
+    background: var(--brand-50);
+    color: var(--brand-700);
+    border: 1px solid transparent;
+}
+
+.filter-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-soft);
+    background: var(--surface);
+    color: var(--ink-700);
+    transition: border-color var(--duration-fast) var(--ease-standard),
+        background-color var(--duration-fast) var(--ease-standard);
+}
+
+.filter-chip.is-active,
+.filter-chip:hover {
+    border-color: var(--brand-400);
+    background: var(--brand-50);
+    color: var(--brand-700);
+}
+
+.status-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    padding: 0.3rem 0.7rem;
+    border-radius: var(--radius-pill);
+}
+
+.status-chip--success { background: color-mix(in srgb, var(--semantic-success) 14%, transparent); color: var(--semantic-success); }
+.status-chip--warning { background: color-mix(in srgb, var(--semantic-warning) 16%, transparent); color: var(--semantic-warning); }
+.status-chip--danger  { background: color-mix(in srgb, var(--semantic-danger) 14%, transparent); color: var(--semantic-danger); }
+.status-chip--neutral { background: var(--surface-alt); color: var(--ink-500); }
+
+/* Nhãn nhỏ đặt trên ảnh (card sản phẩm) — chỉ dùng khi thật cần */
+.media-tag {
+    position: absolute;
+    top: var(--space-2xs);
+    left: var(--space-2xs);
+    z-index: 2;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink-900);
+    box-shadow: var(--shadow-xs);
+}
+
+.media-tag--sale {
+    background: var(--accent-500);
+    color: #fff;
+}
+
+.media-tag--sold-out {
+    background: var(--ink-500);
+    color: #fff;
+}

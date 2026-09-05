@@ -1,0 +1,255 @@
+/* ============================================================
+   TRANG PHÂN TÍCH
+   ============================================================
+   Tách thành tệp riêng thay vì nhồi tiếp vào admin.css: đây là màn
+   hình duy nhất dùng những khối này, và admin.css đã dài.
+   ============================================================ */
+
+/* ---------- Trạng thái chưa có dữ liệu ---------- */
+
+/*
+ * Dùng ở mọi khối có thể trống. Có kiểu dáng riêng để người xem thấy
+ * ngay "chỗ này chưa có số" thay vì tưởng trang bị lỗi.
+ */
+.analytics-empty {
+    padding: var(--space-sm);
+    border: 1px dashed var(--admin-border);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--admin-border) 18%, transparent);
+    font-size: 0.875rem;
+}
+
+/* ---------- Phễu chuyển đổi ---------- */
+
+.funnel {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-sm);
+}
+
+.funnel__step {
+    position: relative;
+    padding: var(--space-sm);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+/*
+ * Mũi tên nối giữa các bước — vẽ bằng ::after nên không cần phần tử
+ * rỗng trong HTML. Bước cuối không có mũi tên.
+ */
+.funnel__step:not(:last-child)::after {
+    content: "›";
+    position: absolute;
+    top: 50%;
+    right: calc(var(--space-sm) * -0.5 - 0.35rem);
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--admin-ink-muted);
+}
+
+/* Màn hình hẹp: các bước xếp dọc nên mũi tên ngang không còn đúng. */
+@media (max-width: 575.98px) {
+    .funnel__step:not(:last-child)::after {
+        content: none;
+    }
+}
+
+.funnel__value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+.funnel__label {
+    font-size: 0.875rem;
+    margin-top: 0.15rem;
+}
+
+.funnel__rate {
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--admin-ink-muted);
+}
+
+/* ---------- Danh sách chỉ số ---------- */
+
+.stat-list {
+    margin: 0;
+}
+
+.stat-list__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-sm);
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.stat-list__row:last-child {
+    border-bottom: 0;
+}
+
+.stat-list__row dt {
+    font-weight: 400;
+    color: var(--admin-ink-muted);
+}
+
+.stat-list__row dd {
+    margin: 0;
+    font-weight: 600;
+    text-align: end;
+}
+
+.stat-list__row--total dd {
+    font-size: 1.1rem;
+}
+
+/* ---------- Bảng xếp hạng ---------- */
+
+.rank-list {
+    /* Đánh số bằng counter thay vì list-style: cần đặt số ở đúng vị trí
+       và cùng màu với phần còn lại. */
+    list-style: none;
+    counter-reset: rank;
+    margin: 0;
+    padding: 0;
+}
+
+.rank-list__item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-sm);
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--admin-border);
+    font-size: 0.875rem;
+}
+
+.rank-list__item:last-child {
+    border-bottom: 0;
+}
+
+.rank-list__item::before {
+    counter-increment: rank;
+    content: counter(rank) ".";
+    flex-shrink: 0;
+    width: 1.35rem;
+    color: var(--admin-ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.rank-list__name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rank-list__value {
+    flex-shrink: 0;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ---------- Biểu đồ cột ---------- */
+
+.bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.35rem;
+    height: 180px;
+}
+
+.bar-chart__col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    height: 100%;
+    min-width: 0;
+}
+
+/*
+ * Cột nằm trong một ô cao 100%, nên `height` theo phần trăm là so với
+ * cột cao nhất. Ngày có dữ liệu luôn được vẽ tối thiểu 4% để không
+ * biến mất hẳn — nhìn thấy một vạch mảnh khác hẳn nhìn thấy trống.
+ */
+.bar-chart__bar {
+    width: 100%;
+    max-width: 2.25rem;
+    background: var(--brand-500);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    transition: background-color var(--duration-base) var(--ease-standard);
+}
+
+.bar-chart__col:hover .bar-chart__bar {
+    background: var(--brand-700);
+}
+
+.bar-chart__value,
+.bar-chart__label {
+    font-size: 0.7rem;
+    color: var(--admin-ink-muted);
+    white-space: nowrap;
+}
+
+.bar-chart__value {
+    order: -1;
+    margin-bottom: 0.2rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.bar-chart__label {
+    margin-top: 0.3rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .bar-chart__bar {
+        transition: none;
+    }
+}
+
+
+/*
+ * SO SÁNH VỚI KỲ TRƯỚC
+ * ============================================================
+ * Nhãn nhỏ đi kèm mỗi chỉ số. Cỡ chữ nhỏ và màu nhạt có chủ đích: con số
+ * chính vẫn phải là thứ đọc được trước, phần so sánh chỉ là chú thích.
+ *
+ * Màu KHÔNG gắn cứng với hướng mũi tên. Component tự quyết định tốt/xấu
+ * (xem thuộc tính `invert`), vì số đơn huỷ tăng là tin xấu trong khi số
+ * đơn tăng là tin tốt — cùng một mũi tên đi lên.
+ */
+
+.admin-trend {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.admin-trend--up {
+    color: var(--admin-success);
+}
+
+.admin-trend--down {
+    color: var(--admin-danger);
+}
+
+.admin-trend--flat {
+    color: var(--admin-muted);
+    font-weight: 400;
+}
+
+.admin-trend__base {
+    display: block;
+    font-weight: 400;
+    color: var(--admin-ink-muted);
+}

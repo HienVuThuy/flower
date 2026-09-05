@@ -1,0 +1,326 @@
+@extends('layouts.admin')
+
+@section('title', 'Sản phẩm')
+
+@section('content')
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+
+    <div>
+
+        <h1 class="admin-page-title">
+            Sản phẩm
+        </h1>
+
+        <p class="admin-page-subtitle">
+            Quản lý hoa, cây cảnh và các hình thức sản phẩm.
+        </p>
+
+    </div>
+
+    <a
+        href="{{ route('admin.products.create') }}"
+        class="btn btn-primary-brand px-4"
+    >
+        + Thêm sản phẩm
+    </a>
+
+</div>
+
+{{--
+    THANH TÌM KIẾM + LỌC.
+
+    Bốn điều kiện, chọn theo việc admin thật sự làm mỗi ngày: tìm nhanh
+    một sản phẩm khách vừa hỏi qua điện thoại, xem danh mục nào còn
+    thiếu hàng, và lọc ra thứ sắp hết để nhập thêm.
+--}}
+<x-admin.filter-bar
+    :action="route('admin.products.index')"
+    placeholder="Tìm theo tên hoặc mã sản phẩm…"
+    :total="$products->total()"
+>
+    <select name="category" class="form-select" aria-label="Lọc theo danh mục">
+        <option value="">Mọi danh mục</option>
+        @foreach($categories as $category)
+            <option value="{{ $category->id }}" @selected(request('category') == $category->id)>
+                {{ $category->name }}
+            </option>
+        @endforeach
+    </select>
+
+    <select name="status" class="form-select" aria-label="Lọc theo trạng thái">
+        <option value="">Mọi trạng thái</option>
+        <option value="active" @selected(request('status') === 'active')>Đang bán</option>
+        <option value="draft" @selected(request('status') === 'draft')>Nháp</option>
+        <option value="out_of_stock" @selected(request('status') === 'out_of_stock')>Tạm hết hàng</option>
+    </select>
+
+    <select name="kho" class="form-select" aria-label="Lọc theo tồn kho">
+        <option value="">Mọi mức tồn kho</option>
+        <option value="het" @selected(request('kho') === 'het')>Đã hết hàng</option>
+        <option value="sap-het" @selected(request('kho') === 'sap-het')>Sắp hết (&le; {{ $lowStock }})</option>
+    </select>
+</x-admin.filter-bar>
+
+{{--
+    Thanh thao tác đặt TRÊN bảng, ngoài panel: nó dính lên đầu khi cuộn,
+    và nằm trong panel thì bị viền panel cắt mất một phần.
+--}}
+<x-admin.bulk-bar
+    :action="route('admin.products.bulk')"
+    :viec="[
+        'ban' => 'Chuyển sang Đang bán',
+        'an' => 'Chuyển sang Tạm ẩn',
+        'nhap' => 'Chuyển sang Bản nháp',
+        'xoa' => 'Xoá',
+    ]"
+    :canh-bao="[
+        'xoa' => 'Xoá {so} sản phẩm đã chọn?',
+    ]"
+/>
+
+<div class="admin-panel">
+
+    <div class="table-responsive">
+
+        <table class="admin-table align-middle mb-0">
+
+            <thead>
+
+                <tr>
+                    <th style="width: 2.5rem;">
+                        {{--
+                            Ô "chọn tất cả" chỉ có tác dụng khi có
+                            JavaScript, nên nhãn nói rõ phạm vi: nó chọn
+                            các dòng ĐANG HIỆN, không phải toàn bộ kho.
+                            Sau khi lọc "sắp hết hàng" thì đó đúng là
+                            điều người dùng muốn.
+                        --}}
+                        <input type="checkbox" class="admin-check"
+                               form="bulk-form" data-bulk-all
+                               aria-label="Chọn tất cả dòng đang hiện">
+                    </th>
+                    <th>Ảnh</th>
+
+                    {{--
+                        CHỈ NHỮNG CỘT THẬT SỰ ĐƯỢC DÙNG ĐỂ SẮP.
+
+                        "Danh mục" và "Hình thức" đã có bộ lọc riêng —
+                        sắp theo chúng chỉ gom các hàng cùng loại lại
+                        gần nhau, đúng bằng việc lọc nhưng kém rõ hơn.
+                        Cho sắp mọi cột là làm loãng: hàng tiêu đề đầy
+                        liên kết và không cột nào nổi lên nữa.
+                    --}}
+                    <x-admin.sort-header khoa="ten" nhan="Sản phẩm" />
+                    <th>Danh mục</th>
+                    <th>Hình thức</th>
+                    <x-admin.sort-header khoa="gia" nhan="Giá" dau="giam" />
+                    <x-admin.sort-header khoa="ton-kho" nhan="Tồn kho" />
+                    <x-admin.sort-header khoa="trang-thai" nhan="Trạng thái" />
+                    <th class="text-end">Thao tác</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+            @forelse($products as $product)
+
+                <tr>
+
+                    <td>
+                        <input type="checkbox" class="admin-check"
+                               form="bulk-form" name="ids[]" value="{{ $product->id }}"
+                               data-bulk-item
+                               aria-label="Chọn {{ $product->name }}">
+                    </td>
+
+                    <td>
+
+                        @if($product->main_image)
+
+                            <img
+                                src="{{ asset('storage/' . $product->main_image) }}"
+                                alt="{{ $product->name }}"
+                                class="admin-thumb"
+                            >
+
+                        @else
+
+                            <div class="admin-thumb admin-thumb--placeholder">
+                                <x-site.leaf-placeholder />
+                            </div>
+
+                        @endif
+
+                    </td>
+
+                    <td>
+
+                        <div class="fw-semibold">
+                            {{ $product->name }}
+                        </div>
+
+                        <small class="text-muted">
+                            {{ $product->product_code }}
+                        </small>
+
+                    </td>
+
+                    <td>
+                        {{ $product->category->name }}
+                    </td>
+
+                    <td>
+                        {{-- Nhãn lấy từ enum; trước đây khối này chép tay lại cả 10 dòng. --}}
+                        {{ $product->selling_form?->label() ?? '—' }}
+                    </td>
+
+                    <td>
+
+                        @php $price = $product->price(); @endphp
+
+                        @if($price->isContactForPrice())
+
+                            <span class="text-muted">Liên hệ</span>
+
+                        @elseif($price->isDiscounted())
+
+                            <div class="text-decoration-line-through text-muted small">
+                                <x-site.money :amount="$price->basePrice" />
+                            </div>
+
+                            <div class="fw-semibold text-accent">
+                                <x-site.money :amount="$price->finalPrice" />
+                            </div>
+
+                            <div class="text-caption">{{ $price->promotion->name }}</div>
+
+                        @else
+
+                            <x-site.money :amount="$price->finalPrice" />
+
+                        @endif
+
+                    </td>
+
+                    <td>
+
+                        {{--
+                            TỒN KHO — cột mới, đi cùng khả năng sắp xếp.
+
+                            Sắp theo một cột không hiện trên bảng thì
+                            thứ tự trông như ngẫu nhiên: admin bấm "Tồn
+                            kho" rồi nhìn một danh sách xáo trộn mà
+                            không thấy con số nào giải thích.
+
+                            Hàng LÀM THEO ĐƠN không có tồn kho để nói —
+                            hiện số 0 ở đó là sai, vì nó không hề hết
+                            hàng. Xem thêm ghi chú ở bộ lọc kho.
+                        --}}
+                        @if($product->track_inventory)
+                            <span class="{{ $product->stock_quantity <= 0 ? 'text-danger fw-semibold' : '' }}">
+                                {{ number_format((int) $product->stock_quantity, 0, ',', '.') }}
+                            </span>
+                        @else
+                            <span class="text-muted">Làm theo đơn</span>
+                        @endif
+
+                    </td>
+
+                    <td>
+
+                        @switch($product->status)
+
+                            @case('active')
+                                <span class="badge text-bg-success">
+                                    Đang bán
+                                </span>
+                                @break
+
+                            @case('inactive')
+                                <span class="badge text-bg-secondary">
+                                    Tạm ẩn
+                                </span>
+                                @break
+
+                            @case('out_of_stock')
+                                <span class="badge text-bg-danger">
+                                    Hết hàng
+                                </span>
+                                @break
+
+                            @default
+                                <span class="badge text-bg-warning">
+                                    Bản nháp
+                                </span>
+
+                        @endswitch
+
+                    </td>
+
+                    <td class="text-end">
+
+                        <div class="d-inline-flex gap-2">
+
+                            <a
+                                href="{{ route('admin.products.show', $product) }}"
+                                class="btn btn-sm btn-outline-primary"
+                            >
+                                Xem
+                            </a>
+
+                            <a
+                                href="{{ route('admin.products.edit', $product) }}"
+                                class="btn btn-sm btn-outline-secondary"
+                            >
+                                Sửa
+                            </a>
+
+                            <form
+                                action="{{ route('admin.products.destroy', $product) }}"
+                                method="POST"
+                                onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');"
+                            >
+
+                                @csrf
+                                @method('DELETE')
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                >
+                                    Xóa
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            @empty
+
+                <x-admin.empty-row :colspan="9" empty="Chưa có sản phẩm nào." />
+
+            @endforelse
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    @if($products->hasPages())
+
+        <div class="p-3 border-top">
+            {{ $products->links() }}
+        </div>
+
+    @endif
+
+</div>
+
+@endsection

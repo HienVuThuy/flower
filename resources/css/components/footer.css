@@ -1,0 +1,52 @@
+/*
+ * FOOTER
+ */
+
+.site-footer {
+    background: var(--surface-alt);
+    border-top: 1px solid var(--border-soft);
+    padding-block: var(--space-lg);
+    color: var(--ink-500);
+    font-size: 0.9rem;
+}
+
+.site-footer__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 700;
+    color: var(--ink-900);
+    margin-bottom: 0.5rem;
+}
+
+.site-footer__brand svg {
+    width: 1.4rem;
+    height: 1.4rem;
+    color: var(--brand-600);
+}
+
+.site-footer__heading {
+    font-size: var(--text-label);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ink-700);
+    margin-bottom: 0.6rem;
+}
+
+.site-footer a:hover {
+    color: var(--brand-600);
+}
+
+.site-footer__bottom {
+    border-top: 1px solid var(--border-soft);
+    margin-top: var(--space-md);
+    padding-top: var(--space-sm);
+    font-size: 0.8125rem;
+}
+
+/* Địa chỉ dài — cho xuống dòng thay vì tràn ra khỏi cột. */
+.site-footer__address {
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}

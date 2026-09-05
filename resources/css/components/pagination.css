@@ -1,0 +1,47 @@
+/*
+ * PAGINATION — reskin Bootstrap's default blue.
+ */
+
+.pagination .page-link {
+    /*
+     * ĐẶT CẢ NỀN, không chỉ đặt màu chữ.
+     *
+     * Bootstrap gán sẵn `--bs-pagination-bg: #fff` và
+     * `--bs-pagination-disabled-bg: #e9ecef` — hai mã màu CỨNG, không đi
+     * qua bảng màu của theme. Ở chế độ sáng chúng trùng nền trang nên
+     * không ai để ý; ở chế độ tối, nút "‹" bị vô hiệu hoá hiện ra một ô
+     * xám sáng với chữ sáng bên trong — không đọc được, và là mảng loá
+     * duy nhất trên cả trang.
+     *
+     * Đo được bằng cách quét mọi phần tử có nền sáng ở chế độ tối: đây
+     * là kết quả duy nhất trả về.
+     */
+    background: transparent;
+    color: var(--ink-700);
+    border-color: var(--border-soft);
+    border-radius: var(--radius-sm);
+    margin-inline: 0.15rem;
+}
+
+/*
+ * Nút đã vô hiệu hoá: mờ đi bằng ĐỘ ĐẬM CHỮ, không bằng một ô nền khác
+ * màu. Nền xám chỉ nói được "khác thường"; chữ mờ nói đúng "không bấm
+ * được", và nói được ở cả hai chế độ sáng lẫn tối.
+ */
+.pagination .page-item.disabled .page-link {
+    background: transparent;
+    color: var(--ink-500);
+    border-color: var(--border-soft);
+    opacity: 0.55;
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--brand-500);
+    border-color: var(--brand-500);
+    color: #fff;
+}
+
+.pagination .page-link:hover {
+    background: var(--brand-50);
+    color: var(--brand-700);
+}

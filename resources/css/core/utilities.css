@@ -1,0 +1,81 @@
+/*
+ * UTILITIES — số lượng nhỏ, có chủ đích. Không thay Bootstrap utilities.
+ */
+
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+}
+
+.text-balance {
+    text-wrap: balance;
+}
+
+.aspect-4-3 {
+    aspect-ratio: 4 / 3;
+}
+
+.aspect-1-1 {
+    aspect-ratio: 1 / 1;
+}
+
+.aspect-16-9 {
+    aspect-ratio: 16 / 9;
+}
+
+.no-scrollbar {
+    scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+
+/*
+ * THANH THỜI GIAN CỦA THÔNG BÁO TỰ ĐÓNG
+ * ============================================================
+ * Vạch mảnh chạy hết bề ngang thông báo rồi nó tự đóng. Không có vạch
+ * này thì thông báo đột ngột biến mất trông như trang bị lỗi.
+ *
+ * Thời lượng do JavaScript đặt qua animation-duration (khác nhau giữa
+ * thông báo thành công và lỗi), nên ở đây không gán con số nào.
+ */
+
+.alert {
+    position: relative;
+    overflow: hidden;
+}
+
+.alert__timer {
+    position: absolute;
+    inset-inline-start: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    background: currentColor;
+    opacity: 0.35;
+    transform-origin: left center;
+    animation-name: alert-timer;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+@keyframes alert-timer {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+/*
+ * Người bật "giảm chuyển động" vẫn muốn thông báo tự dọn đi — chỉ là
+ * không muốn nhìn thấy thanh chạy. Ẩn thanh, giữ nguyên hành vi đóng.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .alert__timer {
+        display: none;
+    }
+}

@@ -1,0 +1,98 @@
+/*
+ * THEME: default — "Modern Botanical"
+ * ============================================================
+ * Layer 1 (màu sắc/typography identity) của theme mặc định.
+ * Layer 2 (artwork) và Layer 3 (chuyển động) không áp dụng cho
+ * theme mặc định — đây là diện mạo thương mại "quanh năm", trầm,
+ * biên tập (editorial), không lễ hội.
+ *
+ * Mọi theme khác (tet/noel/valentine) PHẢI khai báo đủ danh sách
+ * biến dưới đây dưới [data-theme="..."] để không có biến "rơi rớt"
+ * về giá trị mặc định ngoài ý muốn.
+ */
+
+:root {
+
+    /* ============ BRAND — sage/forest, trầm và premium ============ */
+    --brand-50:  #eef2ec;
+    --brand-100: #dde6d8;
+    --brand-200: #b9cdb0;
+    --brand-300: #93b186;
+    --brand-400: #628857;
+    --brand-500: #33513f;
+    --brand-600: #26402f;
+    --brand-700: #1b2f22;
+    --brand-500-rgb: 51, 81, 63;
+
+    /* ============ ACCENT — đất nung, dùng rất tiết chế ============ */
+    --accent-400: #d38b6c;
+    --accent-500: #b5583a;
+    --accent-600: #8f4128;
+    --accent-500-rgb: 181, 88, 58;
+
+    /* ============ NEUTRAL / SURFACE ============ */
+    --surface-page: #faf7f0;
+    --surface: #fffdf9;
+    --surface-alt: #f3efe4;
+    --ink-900: #1c211d;
+    --ink-700: #3c443c;
+    --ink-500: #6b7268;
+    --border-soft: rgba(51, 81, 63, 0.14);
+    --border-strong: rgba(51, 81, 63, 0.28);
+
+    /* ============ SEMANTIC (ánh xạ Bootstrap bên dưới) ============ */
+    --semantic-primary: var(--brand-500);
+    --semantic-primary-rgb: var(--brand-500-rgb);
+    --semantic-success: #3f6b3f;
+    --semantic-success-rgb: 63, 107, 63;
+    --semantic-danger: #a13f2e;
+    --semantic-danger-rgb: 161, 63, 46;
+    --semantic-warning: #b5813a;
+    --semantic-warning-rgb: 181, 129, 58;
+    --semantic-info: #3c6178;
+    --semantic-info-rgb: 60, 97, 120;
+    --semantic-secondary: #6b7268;
+    --semantic-secondary-rgb: 107, 114, 104;
+    --semantic-light: #f3efe4;
+    --semantic-light-rgb: 243, 239, 228;
+
+    /* ============ GLASS — accent, không phải nền mặc định ============ */
+    --glass-bg: rgba(255, 253, 249, 0.78);
+    --glass-blur: 14px;
+    --glass-border: rgba(255, 255, 255, 0.5);
+}
+
+/*
+ * ============================================================
+ * Ánh xạ sang biến gốc Bootstrap 5.3 — xem giải thích đầy đủ
+ * trong lần triển khai trước; giữ nguyên cơ chế, chỉ đổi giá trị.
+ * ============================================================
+ */
+:root {
+    --bs-primary: var(--semantic-primary);
+    --bs-primary-rgb: var(--semantic-primary-rgb);
+    --bs-secondary: var(--semantic-secondary);
+    --bs-secondary-rgb: var(--semantic-secondary-rgb);
+    --bs-success: var(--semantic-success);
+    --bs-success-rgb: var(--semantic-success-rgb);
+    --bs-danger: var(--semantic-danger);
+    --bs-danger-rgb: var(--semantic-danger-rgb);
+    --bs-warning: var(--semantic-warning);
+    --bs-warning-rgb: var(--semantic-warning-rgb);
+    --bs-info: var(--semantic-info);
+    --bs-info-rgb: var(--semantic-info-rgb);
+    --bs-light: var(--semantic-light);
+    --bs-light-rgb: var(--semantic-light-rgb);
+
+    --bs-border-radius: var(--radius-md);
+    --bs-border-radius-sm: var(--radius-sm);
+    --bs-border-radius-lg: var(--radius-lg);
+    --bs-border-radius-xl: var(--radius-xl);
+    --bs-border-radius-pill: var(--radius-pill);
+
+    --bs-body-font-family: var(--font-sans);
+    --bs-body-color: var(--ink-900);
+    --bs-body-bg: var(--surface-page);
+    --bs-link-color: var(--brand-600);
+    --bs-link-hover-color: var(--brand-700);
+}

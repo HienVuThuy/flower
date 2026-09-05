@@ -1,0 +1,63 @@
+/*
+ * EMPTY / LOADING STATES
+ */
+
+.empty-state {
+    text-align: center;
+    padding: var(--space-xl) var(--space-md);
+    color: var(--ink-500);
+}
+
+.empty-state__figure {
+    width: 4rem;
+    height: 4rem;
+    margin-inline: auto;
+    margin-bottom: var(--space-sm);
+    color: var(--brand-300);
+}
+
+.empty-state__title {
+    font-weight: 700;
+    color: var(--ink-900);
+    margin-bottom: 0.35rem;
+}
+
+.empty-state__actions {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-top: var(--space-sm);
+}
+
+/* Skeleton loading */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--surface-alt);
+    border-radius: var(--radius-md);
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.5),
+        transparent
+    );
+    animation: skeleton-sweep 1.4s infinite;
+}
+
+@keyframes skeleton-sweep {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton::after {
+        animation: none;
+    }
+}

@@ -1,0 +1,336 @@
+/*
+ * SEASONAL LAYER — base dùng chung cho mọi theme.
+ * ============================================================
+ * Nội dung/artwork riêng theo theme nằm ở resources/css/seasonal/*.css
+ * (Layer 2) và resources/js/theme/effects/*.js (Layer 3). File này
+ * chỉ định nghĩa "khung" mà theme cắm vào — không theme nào cần sửa
+ * cấu trúc HTML để hoạt động.
+ */
+
+.seasonal-canvas {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-effect);
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+}
+
+/* ============ THANH THÔNG BÁO CHIẾN DỊCH ============ */
+
+/*
+ * Ba thông tin, ba mức nổi bật khác nhau — và thứ tự đó là cả điểm của
+ * khối này:
+ *
+ *   __deal   con số giảm giá  -> viền bao, chữ đậm. Đây là LÝ DO để bấm.
+ *   __name   tên chương trình -> chữ thường. Cho biết đây là dịp gì.
+ *   __meta   còn bao lâu      -> mờ hơn. Thông tin phụ, nhưng tạo cấp bách.
+ *
+ * Để cả ba cùng một cỡ chữ như bản cũ thì mắt không biết đọc cái nào
+ * trước, và con số giảm giá — thứ duy nhất khiến người ta bấm — chìm
+ * lẫn vào một câu quảng cáo dài.
+ */
+
+.announcement-bar {
+    background: var(--brand-700);
+    color: #fff;
+    font-size: 0.875rem;
+}
+
+.announcement-bar__inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem 0.75rem;
+    flex-wrap: wrap;
+    padding-block: 0.45rem;
+    text-align: center;
+}
+
+.announcement-bar__text {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+/* Con số giảm giá — thứ mắt phải chạm vào đầu tiên. */
+.announcement-bar__deal {
+    padding: 0.1rem 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
+}
+
+.announcement-bar__name {
+    font-weight: 500;
+}
+
+/*
+ * Khung giờ áp dụng (chương trình xả hàng cuối ngày, xem QĐ-24).
+ * Gạch dưới nét đứt: nó là điều kiện, không phải lời mời — trông khác
+ * hẳn phần còn lại để khách không đọc lướt qua.
+ */
+.announcement-bar__window {
+    padding: 0.05rem 0.4rem;
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.16);
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.announcement-bar__meta {
+    opacity: 0.75;
+    font-size: 0.8rem;
+    white-space: nowrap;
+}
+
+.announcement-bar__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.announcement-bar__link {
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+}
+
+.announcement-bar__link:hover {
+    color: #fff;
+    opacity: 0.85;
+}
+
+.announcement-bar__close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: currentColor;
+    opacity: 0.7;
+    cursor: pointer;
+}
+
+.announcement-bar__close:hover,
+.announcement-bar__close:focus-visible {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.18);
+}
+
+/*
+ * Trên điện thoại: bỏ tên chương trình và khung giờ.
+ *
+ * Giữ lại đúng ba thứ khách cần để quyết định — mức giảm, thời gian còn
+ * lại, và nút xem — nên thanh gói gọn trong hai dòng. Giữ đủ năm phần
+ * thì nó xuống bốn dòng và nuốt mất phần đầu màn hình, chỗ đắt nhất của
+ * trang. Tên chương trình vẫn đọc được ngay sau khi bấm vào.
+ */
+@media (max-width: 575.98px) {
+    .announcement-bar__name,
+    .announcement-bar__window {
+        display: none;
+    }
+}
+
+/* ============ BANNER CHIẾN DỊCH ============ */
+
+.campaign-banner {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    background: var(--surface-alt);
+}
+
+.campaign-banner__content {
+    position: relative;
+    z-index: var(--z-content);
+    max-width: 32rem;
+}
+
+.campaign-banner__eyebrow {
+    color: var(--brand-600);
+}
+
+.campaign-banner__countdown {
+    font-weight: 600;
+    color: var(--accent-600);
+}
+
+/*
+ * Khi chương trình có banner riêng do admin tải lên: ảnh phủ nền,
+ * phủ thêm lớp gradient để chữ luôn đọc được bất kể ảnh sáng/tối.
+ */
+.campaign-banner--has-image {
+    color: #fff;
+    min-height: 18rem;
+    display: flex;
+    align-items: center;
+}
+
+.campaign-banner__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+
+.campaign-banner--has-image::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+        100deg,
+        rgba(15, 23, 18, 0.82) 0%,
+        rgba(15, 23, 18, 0.55) 55%,
+        rgba(15, 23, 18, 0.15) 100%
+    );
+}
+
+.campaign-banner--has-image .campaign-banner__eyebrow,
+.campaign-banner--has-image .campaign-banner__countdown {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.campaign-banner--has-image h2,
+.campaign-banner--has-image p {
+    color: #fff;
+}
+
+
+/*
+ * TRANG SỰ KIỆN (landing page của một chương trình khuyến mại)
+ * ============================================================
+ * Khối đầu trang mang MÀU CỦA CHÍNH SỰ KIỆN, lấy từ cột
+ * promotions.theme_key qua thuộc tính data-event-theme. Nhờ vậy trang
+ * Giáng sinh trông khác trang Tết mà không cần một khối CSS riêng cho
+ * từng dịp — thêm chương trình mới chỉ là thêm một dòng dữ liệu.
+ *
+ * Chương trình không khai theme thì rơi về màu thương hiệu ở :root, vẫn
+ * đẹp và vẫn đúng.
+ */
+
+.event-hero {
+    position: relative;
+    overflow: hidden;
+    background: var(--brand-700);
+    color: #fff;
+    padding-block: var(--space-lg);
+}
+
+.event-hero[data-event-theme="noel"]     { background: #14532d; }
+.event-hero[data-event-theme="tet"]      { background: #9a3412; }
+.event-hero[data-event-theme="valentine"]{ background: #9d174d; }
+
+/*
+ * Ảnh banner làm NỀN MỜ, không phải nội dung.
+ *
+ * Ảnh chiến dịch do admin tải lên có đủ mọi tỉ lệ và độ sáng. Đặt nó làm
+ * nền rồi phủ một lớp tối lên trên là cách duy nhất bảo đảm chữ luôn đọc
+ * được, dù admin tải lên ảnh trắng toát hay ảnh đen kịt.
+ */
+.event-hero__bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.28;
+    /* aria-hidden không cần: alt="" đã báo cho trình đọc màn hình bỏ qua. */
+    pointer-events: none;
+}
+
+.event-hero__inner {
+    position: relative;
+    z-index: 1;
+}
+
+.event-hero__body {
+    max-width: 60ch;
+}
+
+.event-hero__ended {
+    display: inline-block;
+    margin-bottom: 0.6rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--radius-pill);
+    background: rgba(0, 0, 0, 0.35);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.event-hero__title {
+    margin: 0 0 0.5rem;
+    font-family: var(--font-serif);
+    font-size: var(--text-h1);
+    line-height: var(--leading-tight);
+}
+
+.event-hero__lead {
+    margin: 0 0 1rem;
+    font-size: 1.05rem;
+    opacity: 0.92;
+}
+
+.event-hero__facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.event-hero__deal {
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-pill);
+    background: #fff;
+    color: var(--ink-900);
+    font-weight: 700;
+}
+
+.event-hero__fact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    opacity: 0.85;
+}
+
+.event-hero__fact svg {
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+/* Thời gian còn lại — thứ duy nhất trong hàng này tạo cấp bách, nên nó
+   là thứ duy nhất được nổi bật. */
+.event-hero__fact--urgent {
+    padding: 0.15rem 0.55rem;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: var(--radius-pill);
+    font-weight: 700;
+    opacity: 1;
+}
+
+/* Breadcrumb trên nền tối phải đổi màu, nếu không nó biến mất. */
+.event-hero .breadcrumb-nav,
+.event-hero .breadcrumb-nav a {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.event-hero .breadcrumb-nav a:hover {
+    color: #fff;
+}

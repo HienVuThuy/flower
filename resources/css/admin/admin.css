@@ -1,0 +1,970 @@
+/*
+ * ADMIN — visual language RIÊNG so với public site.
+ * ============================================================
+ * Không glass-card, không pill khắp nơi, không emoji. Đây là công
+ * cụ vận hành: trung tính, rõ ràng, mật độ thông tin cao, dùng màu
+ * có chủ đích.
+ *
+ * QUY TẮC: file này CHỈ được dùng token --admin-*. Tuyệt đối không
+ * tham chiếu --brand-*, --accent-*, --surface*, --ink-* vì đó là các
+ * token theme mùa vụ ghi đè — dùng chúng thì đổi theme cửa hàng sẽ
+ * đổi luôn màu trang quản trị.
+ */
+
+.admin-shell {
+    min-height: 100vh;
+    background: var(--admin-bg);
+}
+
+.admin-sidebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--z-nav);
+    width: 264px;
+    min-height: 100vh;
+    background: var(--admin-sidebar-bg);
+    border-right: 1px solid var(--admin-border);
+    padding: var(--space-sm);
+    overflow-y: auto;
+}
+
+.admin-main {
+    min-height: 100vh;
+    margin-left: 264px;
+}
+
+.admin-topbar {
+    height: 64px;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    padding-inline: var(--space-md);
+    background: var(--admin-surface);
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-content {
+    padding: var(--space-md);
+}
+
+.admin-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.5rem 0.4rem var(--space-sm);
+    margin-bottom: var(--space-2xs);
+}
+
+.admin-brand svg {
+    width: 1.6rem;
+    height: 1.6rem;
+    color: var(--admin-accent);
+}
+
+.admin-brand__title {
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: #fff;
+}
+
+.admin-brand__subtitle {
+    font-size: 0.75rem;
+    color: var(--admin-muted);
+}
+
+.admin-nav-heading {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--admin-muted);
+    padding: 0.9rem 0.6rem 0.35rem;
+}
+
+.admin-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 0.6rem;
+    border-radius: var(--radius-sm);
+    color: var(--admin-text);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.admin-nav-link i {
+    font-size: 1rem;
+    width: 1.1rem;
+    text-align: center;
+    opacity: 0.85;
+}
+
+.admin-nav-link:hover {
+    background: var(--admin-hover-bg);
+    color: #fff;
+}
+
+.admin-nav-link.is-active {
+    background: var(--admin-accent);
+    color: #fff;
+}
+
+.admin-nav-link.is-disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+.admin-nav-link__count {
+    margin-left: auto;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    background: var(--admin-accent);
+    color: #fff;
+    border-radius: var(--radius-pill);
+    padding: 0.1rem 0.45rem;
+}
+
+/* Panel — thay glass-card trong admin: đục, viền mảnh, không blur */
+.admin-panel {
+    background: var(--admin-surface);
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-md);
+}
+
+.admin-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-sm) 0;
+}
+
+.admin-panel__body {
+    padding: var(--space-sm);
+}
+
+/* Table */
+.admin-table {
+    width: 100%;
+    font-size: 0.875rem;
+}
+
+.admin-table thead th {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--admin-ink-muted);
+    border-bottom: 1px solid var(--admin-border);
+    padding: 0.65rem 0.75rem;
+    background: var(--admin-surface-alt);
+}
+
+.admin-table td {
+    padding: 0.65rem 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-table tbody tr:hover {
+    background: var(--admin-surface-alt);
+}
+
+.admin-thumb {
+    width: 44px;
+    height: 44px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.admin-thumb--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--admin-surface-alt);
+    color: var(--admin-ink-muted);
+}
+
+.admin-thumb--placeholder svg {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.admin-page-title {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--admin-ink);
+    margin-bottom: 0.15rem;
+}
+
+.admin-page-subtitle {
+    color: var(--admin-ink-muted);
+    font-size: 0.9rem;
+}
+
+/* Theme picker cards trong Cài đặt */
+.theme-option-card {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid var(--admin-border);
+    border-radius: var(--radius-md);
+    padding: 0.7rem;
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.theme-option-card.is-selected,
+.theme-option-card:hover {
+    border-color: var(--admin-accent-strong);
+}
+
+.theme-option-card__swatch {
+    width: 100%;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5rem;
+}
+
+/* ============ NÚT MỞ MENU (chỉ có ở màn hẹp) ============ */
+
+.admin-nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    background: var(--admin-surface);
+    color: var(--admin-ink);
+    flex-shrink: 0;
+}
+
+.admin-nav-toggle:hover {
+    background: var(--admin-surface-alt);
+}
+
+.admin-nav-toggle[aria-expanded="true"] {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: #fff;
+}
+
+@media (max-width: 991.98px) {
+    /*
+     * Sidebar thành ngăn kéo: mặc định đóng (Bootstrap .collapse), mở
+     * bằng nút trong topbar. Trước đây nó luôn hiện dạng khối tĩnh cao
+     * gần một màn hình, nên mọi trang quản trị trên điện thoại đều phải
+     * cuộn qua hết menu mới tới nội dung.
+     */
+    .admin-sidebar {
+        position: static;
+        width: 100%;
+        min-height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--admin-hover-bg);
+    }
+
+    .admin-main {
+        margin-left: 0;
+    }
+
+    /*
+     * Bảng đã nằm trong .table-responsive của Bootstrap (tự cuộn ngang).
+     * Chỉ cần đặt bề rộng tối thiểu để các cột không bị bóp nát thành
+     * một cột chữ dựng đứng trên màn hẹp.
+     */
+    .table-responsive > .admin-table {
+        min-width: 44rem;
+    }
+}
+
+/* ============ THƯ VIỆN ẢNH SẢN PHẨM ============ */
+
+.gallery-manager {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 0.5rem;
+}
+
+.gallery-manager__item {
+    position: relative;
+    display: block;
+    border: 2px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.gallery-manager__item img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+    transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.gallery-manager__check {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    z-index: 2;
+    accent-color: var(--admin-danger);
+}
+
+.gallery-manager__label {
+    position: absolute;
+    inset: auto 0 0 0;
+    padding: 2px 0;
+    text-align: center;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: #fff;
+    background: var(--admin-danger);
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+/* Khi tích chọn xoá: làm mờ ảnh và hiện nhãn, để admin thấy rõ
+   ảnh nào sắp bị xoá trước khi bấm lưu. */
+.gallery-manager__item:has(.gallery-manager__check:checked) {
+    border-color: var(--admin-danger);
+}
+
+.gallery-manager__item:has(.gallery-manager__check:checked) img {
+    opacity: 0.4;
+}
+
+.gallery-manager__item:has(.gallery-manager__check:checked) .gallery-manager__label {
+    opacity: 1;
+}
+
+/* ============ NÚT HÀNH ĐỘNG TRONG ADMIN ============
+ * .btn-primary-brand là nút của storefront, màu lấy từ --brand-*.
+ * Trong khu quản trị nó phải theo accent riêng của admin, nếu không
+ * một trang có hai hệ màu: sidebar xanh đá còn nút xanh lá.
+ */
+.admin-main .btn-primary-brand {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: #fff;
+}
+
+.admin-main .btn-primary-brand:hover,
+.admin-main .btn-primary-brand:focus-visible {
+    background: var(--admin-accent-strong);
+    border-color: var(--admin-accent-strong);
+    color: #fff;
+}
+
+/*
+ * Dưới 576px topbar không đủ chỗ cho nhãn chữ: ẩn nhãn, giữ lại icon
+ * và nút Đăng xuất. Trước đây nhãn đẩy nút ra ngoài mép màn hình.
+ */
+@media (max-width: 575.98px) {
+    .admin-topbar__label {
+        display: none;
+    }
+
+    .admin-topbar {
+        padding-inline: var(--space-sm);
+    }
+}
+
+/* ============ KHỐI THÔNG BÁO TRẠNG THÁI HỆ THỐNG ============
+ * Dùng để nói rõ phần nào của hệ thống chưa chạy. Cố tình KHÔNG dùng
+ * màu cảnh báo đỏ/vàng: đây không phải lỗi, chỉ là thông tin.
+ */
+.admin-notice {
+    border: 1px solid var(--admin-border);
+    border-left: 3px solid var(--admin-accent);
+    border-radius: var(--radius-md);
+    background: var(--admin-accent-soft);
+    padding: var(--space-sm) var(--space-md);
+}
+
+.admin-notice__title {
+    font-weight: 700;
+    color: var(--admin-accent-strong);
+    margin-bottom: 0.35rem;
+}
+
+.admin-notice__body {
+    font-size: var(--text-body-sm);
+    color: var(--admin-ink-muted);
+    max-width: 68ch;
+}
+
+/* Nút phụ trong admin — thay cho .btn-outline-success của Bootstrap,
+   vốn dùng bảng màu riêng của Bootstrap chứ không theo token dự án. */
+.btn-outline-admin {
+    border: 1px solid var(--admin-border);
+    background: var(--admin-surface);
+    color: var(--admin-ink);
+    font-weight: 600;
+}
+
+.btn-outline-admin:hover,
+.btn-outline-admin:focus-visible {
+    border-color: var(--admin-accent);
+    background: var(--admin-accent-soft);
+    color: var(--admin-accent-strong);
+}
+
+/* ============ TAB LỌC (danh sách đơn hàng) ============ */
+
+.admin-filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: var(--space-sm);
+}
+
+.admin-filter-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-pill);
+    background: var(--admin-surface);
+    color: var(--admin-ink-muted);
+    font-size: var(--text-body-sm);
+    font-weight: 600;
+}
+
+.admin-filter-tab:hover {
+    border-color: var(--admin-accent);
+    color: var(--admin-accent-strong);
+}
+
+.admin-filter-tab.is-active {
+    background: var(--admin-accent);
+    border-color: var(--admin-accent);
+    color: #fff;
+}
+
+/* Con số đếm nằm trong tab, nền mờ để không tranh với nhãn. */
+.admin-filter-tab__count {
+    padding-inline: 0.4rem;
+    border-radius: var(--radius-pill);
+    background: rgba(0, 0, 0, 0.07);
+    font-size: var(--text-caption);
+}
+
+.admin-filter-tab.is-active .admin-filter-tab__count {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+/* ============ DANH SÁCH THÔNG TIN CHI TIẾT ============ */
+
+.admin-detail-list > div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding-block: 0.4rem;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-detail-list > div:last-child {
+    border-bottom: 0;
+}
+
+.admin-detail-list dt {
+    font-weight: 400;
+    color: var(--admin-ink-muted);
+    flex-shrink: 0;
+}
+
+.admin-detail-list dd {
+    margin: 0;
+    text-align: right;
+}
+
+/* ============ CON SỐ LỚN (doanh thu) ============ */
+
+.admin-stat-figure {
+    font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
+    font-weight: 700;
+    color: var(--admin-ink);
+    margin-bottom: 0.25rem;
+}
+
+/* ============ DANH SÁCH NGẮN (đơn gần đây) ============ */
+
+.admin-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-list__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-block: 0.6rem;
+    border-bottom: 1px solid var(--admin-border);
+    color: var(--admin-ink);
+}
+
+.admin-list__row:last-child {
+    border-bottom: 0;
+}
+
+.admin-list__row:hover {
+    color: var(--admin-accent-strong);
+}
+
+/* Cột giữa co giãn, mã đơn và tiền giữ nguyên bề rộng. */
+.admin-list__row > .admin-page-subtitle {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.admin-list__row > .fw-bold:last-child {
+    white-space: nowrap;
+}
+
+/* ============ QUẢN LÝ ẢNH HERO THEO THEME ============ */
+
+.hero-manager {
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.75rem;
+}
+
+.hero-manager__summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    cursor: pointer;
+    list-style: none;
+}
+
+/* Bỏ tam giác mặc định của <details> ở WebKit để tự vẽ mũi tên bên dưới. */
+.hero-manager__summary::-webkit-details-marker {
+    display: none;
+}
+
+.hero-manager__summary::after {
+    content: "▾";
+    margin-left: auto;
+    font-size: 0.8rem;
+    opacity: 0.55;
+}
+
+.hero-manager[open] > .hero-manager__summary::after {
+    content: "▴";
+}
+
+.hero-manager__body {
+    padding: 0 0.9rem 0.9rem;
+    border-top: 1px solid var(--admin-border);
+}
+
+.hero-manager__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 0.75rem;
+    margin: 0.9rem 0;
+}
+
+.hero-thumb img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--admin-border);
+    display: block;
+}
+
+.hero-thumb__remove {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--semantic-danger);
+    cursor: pointer;
+}
+
+
+/*
+ * CẢNH BÁO RỦI RO ĐƠN HÀNG
+ * ============================================================
+ * Màu cảnh báo (vàng) chứ KHÔNG phải màu nguy hiểm (đỏ).
+ *
+ * Đỏ trong hệ thống này nghĩa là "đã hỏng, phải sửa". Điểm rủi ro không
+ * phải vậy — nó là "hãy nhìn kỹ trước khi làm". Dùng đỏ thì nhân viên
+ * hoặc hoảng và từ chối oan khách thật, hoặc quen mắt rồi bỏ qua cả
+ * những cảnh báo đỏ thật sự ở chỗ khác.
+ */
+
+.risk-flag {
+    display: inline-block;
+    margin-inline-start: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: var(--radius-pill);
+    background: #fdf1d8;
+    color: #8a6316;
+    font-size: 0.7rem;
+    font-weight: 700;
+    /* cursor: help báo cho người dùng biết có thông tin khi rê chuột —
+       không có nó thì cái nhãn trông như một huy hiệu trang trí. */
+    cursor: help;
+}
+
+.risk-panel {
+    padding: 0.9rem 1.05rem;
+    border: 1px solid #e8c98a;
+    border-left-width: 4px;
+    border-radius: var(--radius-sm);
+    background: #fdf8ee;
+}
+
+.risk-panel__title {
+    margin: 0 0 0.5rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #7a5610;
+}
+
+.risk-panel__list {
+    margin: 0 0 0.6rem;
+    padding-inline-start: 1.15rem;
+    font-size: 0.86rem;
+    color: var(--admin-ink);
+}
+
+.risk-panel__list li + li {
+    margin-top: 0.15rem;
+}
+
+.risk-panel__points {
+    color: var(--admin-muted);
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+
+.risk-panel__note {
+    font-size: 0.78rem;
+    color: var(--admin-ink-muted);
+    line-height: 1.5;
+}
+
+/*
+ * ============================================================
+ * LỀ TRONG CỦA PANEL — sửa lỗi chữ dính sát viền
+ * ============================================================
+ * LỖI: `.admin-panel` vốn KHÔNG có padding. Lề trong do nơi gọi tự thêm
+ * bằng tiện ích Bootstrap (`p-4`, `p-3`) hoặc bằng `.admin-panel__body`.
+ *
+ * Đếm được trong resources/views/admin: 35 chỗ có `p-*`, 1 chỗ dùng
+ * `__body`, và **16 chỗ không có gì cả** — ở 16 chỗ đó chữ nằm sát viền.
+ * Không phải ai cũng nhớ thêm một lớp mà tên panel không hề gợi ý.
+ *
+ * SỬA Ở PANEL, KHÔNG SỬA 16 TỆP: đặt lề trong làm MẶC ĐỊNH.
+ *
+ * KHÔNG cần loại trừ `p-*` bằng :not(): tiện ích khoảng cách của
+ * Bootstrap khai kèm `!important` nên nó luôn thắng, dù admin.css nạp
+ * sau. Bản đầu tôi viết chuỗi `:not(.p-1)...:not(.p-5)` cho "chắc" — và
+ * chính chuỗi đó đẩy độ ưu tiên lên 0,6,0, cao hơn ngoại lệ `:has()`
+ * bên dưới (0,2,0), nên panel chứa bảng vẫn ăn padding và lề bị CỘNG
+ * ĐÔI: đo được 33px thay vì 16px.
+ */
+.admin-panel {
+    padding: var(--space-md);
+}
+
+/*
+ * NGOẠI LỆ DUY NHẤT: panel tự chia `__header` / `__body`.
+ *
+ * Hai phần đó đã có lề riêng; để panel ngoài giữ lề nữa là cộng đôi.
+ *
+ * CỐ Ý KHÔNG có ngoại lệ cho panel chứa BẢNG.
+ *
+ * Bản trước tôi cho bảng chạm mép panel (padding: 0) để dải nền khi rê
+ * chuột phủ trọn dòng. Nhưng phần lớn panel đó còn có một tiêu đề <h2>
+ * đứng trước bảng — và tiêu đề ấy dính sát viền, đúng cái lỗi đang sửa.
+ * Đo được: "Sản phẩm" cách viền 1px.
+ *
+ * Bảng nằm gọn trong lề panel thì mất chút "chạm mép", đổi lại MỌI thứ
+ * trong panel — tiêu đề, mô tả, nút, bảng — đều thẳng hàng theo một lề
+ * duy nhất. Không có trường hợp riêng nào để quên.
+ */
+.admin-panel:has(> .admin-panel__header),
+.admin-panel:has(> .admin-panel__body) {
+    padding: 0;
+}
+
+/*
+ * Ô đầu và ô cuối của bảng KHÔNG cộng thêm lề nữa.
+ *
+ * Bảng đã nằm trong lề của panel; cộng thêm ở đây là chữ trong bảng lùi
+ * sâu hơn tiêu đề phía trên nó, và hai thứ lệch hàng.
+ */
+.admin-table > thead > tr > *:first-child,
+.admin-table > tbody > tr > *:first-child {
+    padding-inline-start: 0.75rem;
+}
+
+.admin-table > thead > tr > *:last-child,
+.admin-table > tbody > tr > *:last-child {
+    padding-inline-end: 0.75rem;
+}
+
+/* Trên màn hình hẹp thì lề rộng ăn mất chỗ của nội dung. */
+@media (max-width: 575.98px) {
+    .admin-panel {
+        padding: var(--space-sm);
+    }
+}
+
+/*
+ * ============================================================
+ * THANH TÌM KIẾM + LỌC
+ * ============================================================
+ * Nằm giữa tiêu đề trang và bảng dữ liệu. Cuốn theo một hàng trên màn
+ * hình rộng, xuống dòng trên màn hình hẹp.
+ */
+
+.admin-filters {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-sm);
+}
+
+/*
+ * Ô tìm kiếm co giãn chiếm chỗ trống, các ô lọc giữ nguyên bề rộng.
+ * Ngược lại thì ô tìm bị bóp còn một khe hẹp trong khi ô chọn trạng
+ * thái — chỉ chứa vài chữ — lại rộng thênh thang.
+ */
+.admin-filters__search {
+    position: relative;
+    flex: 1 1 14rem;
+    min-width: 12rem;
+}
+
+.admin-filters__search .form-control {
+    padding-inline-start: 2.1rem;
+}
+
+.admin-filters__icon {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: 0.7rem;
+    transform: translateY(-50%);
+    color: var(--admin-ink-muted);
+    pointer-events: none;
+}
+
+.admin-filters .form-select {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 9rem;
+}
+
+/*
+ * Ô chọn NGÀY cũng phải giữ bề rộng như ô chọn khác.
+ *
+ * `.form-control` của Bootstrap là width:100%, nên hai ô ngày mỗi cái
+ * chiếm trọn một hàng và đẩy nút Lọc xuống hàng thứ tư — thanh lọc cao
+ * gấp ba mà không chứa thêm thông tin nào. Ô tìm kiếm thì vẫn phải co
+ * giãn, nên nhắm đúng input[type=date] chứ không nhắm cả .form-control.
+ */
+.admin-filters input[type="date"] {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 9.5rem;
+}
+
+.admin-filters__count {
+    margin-inline-start: auto;
+    font-size: 0.8125rem;
+    color: var(--admin-ink-muted);
+    white-space: nowrap;
+}
+
+/* Màn hình hẹp: số kết quả xuống dòng riêng thay vì chen vào cuối hàng. */
+@media (max-width: 575.98px) {
+    .admin-filters__count {
+        margin-inline-start: 0;
+        flex-basis: 100%;
+    }
+}
+
+/*
+ * ============================================================
+ * VIỆC CẦN LÀM (dashboard)
+ * ============================================================
+ * Mỗi dòng là một liên kết dẫn thẳng tới danh sách đã lọc sẵn — không
+ * bắt admin đọc con số rồi tự đi lọc lại.
+ */
+
+.admin-todo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.4rem;
+    border: 1px solid var(--admin-border);
+    border-inline-start-width: 3px;
+    border-radius: var(--radius-sm);
+    color: inherit;
+    text-decoration: none;
+}
+
+.admin-todo:last-child {
+    margin-bottom: 0;
+}
+
+.admin-todo:hover,
+.admin-todo:focus-visible {
+    background: var(--admin-surface-alt);
+}
+
+/*
+ * Con số đứng trước và to hơn chữ.
+ *
+ * Admin quét trang bằng mắt để tìm "có gì khác không" — con số là thứ
+ * đổi mỗi ngày, nên nó phải là thứ bắt mắt trước.
+ */
+.admin-todo__count {
+    flex: none;
+    min-width: 2.2rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.admin-todo__label {
+    flex: 1;
+}
+
+.admin-todo__go {
+    flex: none;
+    color: var(--admin-ink-muted);
+}
+
+/* Ba mức khẩn: nợ tiền khách > việc tồn > việc mới tới. */
+.admin-todo--danger { border-inline-start-color: #b3261e; }
+.admin-todo--danger .admin-todo__count { color: #b3261e; }
+
+.admin-todo--warning { border-inline-start-color: #a4670c; }
+.admin-todo--warning .admin-todo__count { color: #a4670c; }
+
+.admin-todo--info { border-inline-start-color: var(--brand-500); }
+.admin-todo--info .admin-todo__count { color: var(--brand-500); }
+
+/*
+ * ĐẦU CỘT SẮP XẾP ĐƯỢC
+ * ============================================================
+ * Xem resources/views/components/admin/sort-header.blade.php.
+ *
+ * Liên kết nhưng KHÔNG trông như liên kết: nó nằm trong hàng tiêu đề
+ * bảng, và một hàng tiêu đề toàn chữ xanh gạch chân trông như bảng bị
+ * hỏng. Thừa hưởng màu chữ của <th>, chỉ đổi khi rê chuột.
+ */
+.admin-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3xs);
+    color: inherit;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.admin-sort:hover {
+    color: var(--semantic-primary);
+    text-decoration: underline;
+}
+
+/* Cột đang sắp: đậm lên để nhận ra ngay giữa hàng tiêu đề. */
+.admin-sort.is-active {
+    font-weight: 700;
+    color: var(--semantic-primary);
+}
+
+.admin-sort__icon {
+    font-size: 0.75em;
+    transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+/* Một icon duy nhất, xoay 180° cho hướng ngược lại — thay vì hai icon
+   khác nhau, để chuyển hướng có chuyển động liên tục thay vì nhảy cóc. */
+.admin-sort__icon.is-up {
+    transform: rotate(180deg);
+}
+
+/*
+ * THANH THAO TÁC HÀNG LOẠT
+ * ============================================================
+ * Xem resources/views/components/admin/bulk-bar.blade.php.
+ *
+ * DÍNH LÊN ĐẦU khi cuộn: bảng sản phẩm dài hơn màn hình, và người dùng
+ * tích chọn trong lúc cuộn xuống. Thanh cuộn mất theo thì họ phải cuộn
+ * ngược lên mới bấm được — mỗi lần, và với danh sách dài thì đó là
+ * quãng đường thật.
+ */
+.admin-bulk {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-content);
+
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2xs);
+
+    margin-bottom: var(--space-2xs);
+    padding: var(--space-2xs) var(--space-sm);
+
+    background: var(--brand-50);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+}
+
+.admin-bulk__count {
+    margin-right: auto;
+    font-size: var(--text-body-sm);
+}
+
+/* Ô tích trong bảng: vùng bấm rộng hơn chính cái ô, vì tích nhầm dòng
+   là lỗi tốn công nhất ở màn hình này. */
+.admin-check {
+    width: 1.05rem;
+    height: 1.05rem;
+    cursor: pointer;
+}
+
+/*
+ * DÒNG CỦA TÀI KHOẢN ĐANG BỊ KHOÁ
+ * ============================================================
+ * Làm mờ NHẸ, không gạch ngang và không tô đỏ cả dòng.
+ *
+ * Tài khoản bị khoá không phải là dữ liệu hỏng hay bị xoá — nó vẫn là
+ * một khách hàng thật, có đơn hàng thật, và rất có thể sẽ được mở lại.
+ * Tô như một cảnh báo đỏ làm mắt người đọc dừng lại ở đó mỗi lần lướt
+ * danh sách, cho một thông tin không cần chú ý đến thế. Huy hiệu "Đã
+ * khoá" ở cột vai trò đã nói đủ.
+ */
+.admin-row--locked {
+    opacity: 0.72;
+}
+
+/* Tên vẫn giữ độ tương phản đầy đủ: đó là thứ người ta đang tìm khi
+   cuộn danh sách, kể cả ở một dòng bị làm mờ. */
+.admin-row--locked td:first-child {
+    opacity: 1;
+}

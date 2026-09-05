@@ -1,0 +1,49 @@
+/*
+ * LAYOUT — container, nhịp section, khung trang.
+ */
+
+.container-shop {
+    width: 100%;
+    max-width: var(--container-max);
+    margin-inline: auto;
+    padding-inline: var(--space-sm);
+}
+
+.container-narrow {
+    width: 100%;
+    max-width: var(--container-narrow);
+    margin-inline: auto;
+    padding-inline: var(--space-sm);
+}
+
+.section {
+    padding-block: var(--space-xl);
+}
+
+.section-sm {
+    padding-block: var(--space-lg);
+}
+
+.section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-md);
+}
+
+.section-header__eyebrow {
+    display: block;
+    margin-bottom: var(--space-3xs);
+}
+
+.section-header__title {
+    margin: 0;
+}
+
+@media (max-width: 767.98px) {
+    .section {
+        padding-block: var(--space-lg);
+    }
+}

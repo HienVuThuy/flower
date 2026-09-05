@@ -1,0 +1,716 @@
+/*
+ * HOMEPAGE / EDITORIAL SECTION PATTERNS
+ * ============================================================
+ * Composition có chủ đích — không phải "container > row > col-md-4"
+ * lặp lại cho mọi section.
+ */
+
+.hero-section {
+    position: relative;
+    padding-block: var(--space-xl);
+    overflow: hidden;
+}
+
+.hero-section__grid {
+    display: grid;
+    gap: var(--space-lg);
+    align-items: center;
+}
+
+.hero-section__eyebrow {
+    margin-bottom: var(--space-2xs);
+}
+
+.hero-section__title {
+    margin-bottom: var(--space-sm);
+    max-width: 14ch;
+}
+
+.hero-section__title em {
+    font-style: italic;
+    color: var(--brand-500);
+}
+
+.hero-section__lead {
+    max-width: 40ch;
+    font-size: 1.0625rem;
+    color: var(--ink-700);
+    margin-bottom: var(--space-md);
+}
+
+.hero-section__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+/*
+ * position + z-index là bắt buộc, không phải trang trí: artwork của
+ * theme mùa vụ vẽ bằng .hero-section::before/::after ở --z-decoration.
+ * Nếu khối chữ này để static, nó nằm dưới artwork trong thứ tự vẽ và
+ * sẽ bị che ngay khi hero thấp đi (ít chữ, ảnh nhỏ, màn hình ngắn).
+ * Nâng lên --z-content để nội dung LUÔN nằm trên trang trí.
+ */
+.hero-section__copy {
+    position: relative;
+    z-index: var(--z-content);
+    animation: heroReveal 0.7s var(--ease-standard) both;
+}
+
+/* Ảnh hero — khối bo lệch một phía, tạo cảm giác biên tập
+   (editorial) thay vì một khung ảnh chữ nhật thông thường. */
+.hero-section__visual {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    border-radius: 200px 24px 24px 24px;
+    overflow: hidden;
+    background: var(--brand-100);
+    animation: heroImageIn 0.9s var(--ease-standard) both;
+}
+
+.hero-section__visual img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@keyframes heroReveal {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroImageIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-section__copy,
+    .hero-section__visual {
+        animation: none;
+    }
+}
+
+@media (min-width: 992px) {
+    .hero-section__grid {
+        grid-template-columns: 0.95fr 1.05fr;
+    }
+
+    .hero-section__visual {
+        border-radius: 260px 24px 24px 24px;
+
+        /*
+         * BỀ NGANG PHẢI KHAI RÕ, KHÔNG ĐỂ TỈ LỆ TỰ TÍNH RA.
+         * ============================================================
+         * LỖI ĐÃ SỬA, và nó là hệ quả trực tiếp của dòng `max-height`
+         * bên dưới.
+         *
+         * Khi khung ảnh CHỈ có `aspect-ratio` mà không có bề ngang khai
+         * rõ, trình duyệt lấy chiều cao làm gốc: chặn cao ở 560px thì nó
+         * tính ngược ra bề ngang 560 × 4/5 = 448px, dù làn grid dành cho
+         * nó rộng tới 615px.
+         *
+         * Đo được: ảnh co lại còn 435px và bỏ trống ~180px bên phải —
+         * ảnh nhỏ hẳn đi, lệch khỏi mép phải của trang, và khoảng trống
+         * thừa nằm ngay giữa hero.
+         *
+         * `width: 100%` bắt khung LUÔN lấp đầy làn của nó. Chiều cao mới
+         * là thứ bị chặn, đúng như ý định — và `object-fit: cover` ở thẻ
+         * <img> lo phần cắt ảnh nên không có gì bị méo.
+         */
+        width: 100%;
+
+        /*
+         * CHẶN CHIỀU CAO — hero không được cao hơn màn hình.
+         *
+         * `aspect-ratio: 4/5` là tỉ lệ đẹp cho khung dựng đứng, nhưng ở
+         * màn rộng thì làn ảnh rộng ~615px, và 615 × 5/4 = 769px. Cộng
+         * khoảng đệm của section thì cả hero cao 921px — đo trên màn
+         * 1400×900.
+         *
+         * Hậu quả: màn hình đầu tiên CHỈ có mỗi hero. Khách phải cuộn
+         * mới biết cửa hàng bán gì, mà người ta đánh giá một trang trong
+         * vài giây đầu.
+         *
+         * `min()` để vừa cả màn thấp (laptop 768px) vừa không phình vô
+         * hạn trên màn rất cao.
+         */
+        max-height: min(72vh, 620px);
+    }
+}
+
+/* Shop by intent — thẻ điều hướng theo nhu cầu, không phải thống kê */
+.intent-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-xs);
+}
+
+.intent-card {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    min-height: 9rem;
+    padding: var(--space-sm);
+    border-radius: var(--radius-lg);
+    background: var(--brand-500);
+    color: #fff;
+    overflow: hidden;
+    font-weight: 700;
+    font-size: 1.0625rem;
+}
+
+.intent-card__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s var(--ease-standard);
+}
+
+/*
+ * Lớp phủ tối dần về đáy. BẮT BUỘC phải có: ảnh do nguồn ngoài cung
+ * cấp nên độ sáng không đoán trước được, thiếu lớp này thì chữ trắng
+ * sẽ chìm mất trên ảnh sáng.
+ */
+.intent-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+        170deg,
+        rgba(12, 20, 15, 0.12) 0%,
+        rgba(12, 20, 15, 0.48) 55%,
+        rgba(12, 20, 15, 0.78) 100%
+    );
+}
+
+.intent-card span {
+    position: relative;
+    z-index: 2;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.intent-card:hover .intent-card__image {
+    transform: scale(1.06);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .intent-card__image,
+    .intent-card:hover .intent-card__image {
+        transition: none;
+        transform: none;
+    }
+}
+
+@media (min-width: 768px) {
+    .intent-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Editorial split — ảnh/artwork một bên, nội dung một bên */
+.editorial-split {
+    display: grid;
+    gap: var(--space-md);
+    align-items: center;
+}
+
+.editorial-split__media {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface-alt);
+}
+
+.editorial-split__media img,
+.editorial-split__media svg {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
+@media (min-width: 992px) {
+    .editorial-split {
+        grid-template-columns: 1.1fr 1fr;
+    }
+
+    .editorial-split--reverse {
+        grid-template-columns: 1fr 1.1fr;
+    }
+
+    .editorial-split--reverse .editorial-split__media {
+        order: 2;
+    }
+}
+
+/* Story / philosophy — nền tối, ảnh thật, dùng 1 lần trên trang chủ */
+.story-section {
+    background: var(--brand-700);
+    color: #fff;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+}
+
+.story-section__grid {
+    display: grid;
+}
+
+.story-section__media img {
+    width: 100%;
+    height: 100%;
+    min-height: 280px;
+    object-fit: cover;
+}
+
+.story-section__copy {
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.story-section__eyebrow {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.story-section__copy h2 {
+    color: #fff;
+    margin-block: var(--space-2xs) var(--space-sm);
+}
+
+.story-section__copy p {
+    color: rgba(255, 255, 255, 0.82);
+}
+
+@media (min-width: 768px) {
+    .story-section__grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Care/editorial content tiles */
+.care-tip {
+    display: flex;
+    gap: 0.9rem;
+    align-items: flex-start;
+}
+
+.care-tip__index {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    border: 1px solid var(--border-strong);
+    color: var(--brand-600);
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.care-tip__title {
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+}
+
+/* ============ KHỐI MỜI BÁO GIÁ SỰ KIỆN ============
+ * Tách hẳn khỏi .campaign-banner (chương trình khuyến mại). Hai thứ
+ * trông na ná nhau nhưng khác bản chất, và mỗi theme trang trí chúng
+ * theo cách khác nhau.
+ */
+.event-banner {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    background: var(--surface-alt);
+    border: 1px solid var(--border-soft);
+}
+
+.event-banner__content {
+    position: relative;
+    z-index: var(--z-content);
+    max-width: 34rem;
+}
+
+.event-banner__eyebrow {
+    color: var(--brand-600);
+}
+
+/* ============ KHUNG ẢNH HERO LUÂN PHIÊN ============
+ * Các ảnh xếp chồng tuyệt đối, chỉ ảnh .is-active hiện. Không dùng
+ * display:none để chuyển được mượt bằng opacity.
+ */
+.hero-carousel {
+    position: relative;
+}
+
+.hero-carousel__slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 900ms var(--ease-standard);
+}
+
+.hero-carousel__slide.is-active {
+    opacity: 1;
+}
+
+/*
+ * Ảnh đặt absolute nên khung mất chiều cao tự nhiên. .hero-section__visual
+ * đã có aspect-ratio 4/5 nên khung vẫn giữ đúng kích thước.
+ */
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-carousel__slide {
+        transition: none;
+    }
+}
+
+/* ============ CAM KẾT DỊCH VỤ ============
+ * Nội dung do admin nhập trong Cài đặt, không viết cứng ở đây.
+ */
+.commitments {
+    margin-top: var(--space-md);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-soft);
+}
+
+.commitments__title {
+    margin-bottom: var(--space-2xs);
+    font-size: 1rem;
+}
+
+.commitments__list {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2xs);
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.commitments__item {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+}
+
+.commitments__icon {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--brand-100);
+    color: var(--brand-600);
+}
+
+.commitments__label {
+    font-weight: 600;
+    font-size: var(--text-body-sm);
+}
+
+.commitments__note {
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+@media (min-width: 576px) {
+    .commitments__list {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ============ KHUNG BANNER LUÂN PHIÊN ============ */
+
+.banner-rotator {
+    position: relative;
+}
+
+/*
+ * Các slide xếp CHỒNG lên nhau chứ không trượt ngang.
+ *
+ * Dùng grid 1 ô: mọi slide vào cùng một ô, nên chiều cao khung tự bằng
+ * slide CAO NHẤT và không nhảy giật khi đổi slide — thứ mà position:
+ * absolute không làm được (khung sẽ sập về 0).
+ */
+.banner-rotator__track {
+    display: grid;
+}
+
+.banner-rotator__slide {
+    grid-area: 1 / 1;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--duration-slow) var(--ease-standard);
+}
+
+.banner-rotator__slide.is-active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/*
+ * Slide đang ẩn KHÔNG được bấm hay tab vào.
+ * visibility: hidden đã lo phần đó — dùng nó thay vì chỉ opacity: 0,
+ * nếu không bàn phím vẫn tab được vào nút của banner đang không hiện.
+ */
+
+.banner-rotator__dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: var(--space-sm);
+}
+
+/* Chấm hình THOI: hình vuông xoay 45 độ. */
+.banner-rotator__dot {
+    width: 0.6rem;
+    height: 0.6rem;
+    padding: 0;
+    border: 1px solid var(--brand-400);
+    background: transparent;
+    transform: rotate(45deg);
+    cursor: pointer;
+    transition: background-color var(--duration-base) var(--ease-standard),
+        transform var(--duration-base) var(--ease-standard);
+}
+
+.banner-rotator__dot:hover {
+    background: color-mix(in srgb, var(--brand-500) 45%, transparent);
+}
+
+.banner-rotator__dot.is-active {
+    background: var(--brand-500);
+    border-color: var(--brand-500);
+    transform: rotate(45deg) scale(1.25);
+}
+
+.banner-rotator__dot:focus-visible {
+    outline: 2px solid var(--brand-600);
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .banner-rotator__slide,
+    .banner-rotator__dot {
+        transition: none;
+    }
+}
+
+
+/*
+ * TRANG "CHỌN THEO NHU CẦU"
+ * ============================================================
+ * Bài viết hướng dẫn ở cột trái, ảnh + lối đi tiếp ở cột phải. Hướng dẫn
+ * đi TRƯỚC lưới sản phẩm: khách bấm vào đây vì chưa biết chọn gì, đưa
+ * hàng ra trước là trả lời câu hỏi họ chưa kịp hỏi.
+ */
+
+.intent-page {
+    max-width: 62ch;
+}
+
+.intent-page__lead {
+    font-size: 1.05rem;
+    line-height: var(--leading-normal);
+    color: var(--ink-700);
+    margin-bottom: var(--space-md);
+}
+
+.intent-page__heading {
+    margin: var(--space-md) 0 0.5rem;
+    font-size: var(--text-h4);
+    font-weight: 700;
+    color: var(--ink-900);
+}
+
+.intent-page__text,
+.intent-page__list {
+    margin: 0;
+    line-height: var(--leading-normal);
+    color: var(--ink-700);
+}
+
+.intent-page__text + .intent-page__text {
+    margin-top: 0.6rem;
+}
+
+.intent-page__list {
+    padding-inline-start: 1.25rem;
+}
+
+.intent-page__list li + li {
+    margin-top: 0.35rem;
+}
+
+/*
+ * Cột phải BÁM THEO khi cuộn.
+ *
+ * Bài hướng dẫn dài hơn ảnh nhiều; không sticky thì cuộn tới giữa bài là
+ * cột phải trống trơn, và ba lối đi tiếp trôi mất khỏi màn hình đúng lúc
+ * khách đọc xong và sẵn sàng bấm.
+ */
+.intent-page__aside {
+    position: sticky;
+    top: calc(var(--space-lg) + 3rem);
+}
+
+.intent-page__image {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-sm);
+}
+
+/* Dưới 992px hai cột xếp chồng, sticky không còn nghĩa gì. */
+@media (max-width: 991.98px) {
+    .intent-page__aside {
+        position: static;
+    }
+}
+
+/*
+ * Câu dẫn ngắn trên thẻ nhu cầu ở trang chủ.
+ * Chỉ có nhãn thì khách phải đoán bấm vào sẽ được gì.
+ */
+.intent-card__tagline {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.75rem;
+    font-weight: 400;
+    line-height: 1.35;
+    opacity: 0.85;
+}
+
+/*
+ * TRANG NỘI DUNG TĨNH (giới thiệu, liên hệ, chính sách)
+ * ============================================================
+ * Chữ dài để đọc, không phải để lướt. Giãn dòng rộng hơn phần còn lại
+ * của trang và giới hạn bề ngang — dòng quá dài thì mắt lạc hàng khi
+ * xuống dòng.
+ */
+
+.static-page {
+    font-size: var(--text-body);
+    line-height: 1.75;
+}
+
+.static-page .lead {
+    font-size: 1.05rem;
+    color: var(--ink-500);
+    margin-bottom: var(--space-lg);
+}
+
+.static-page h2 {
+    margin: var(--space-lg) 0 var(--space-sm);
+    font-size: var(--text-h4);
+}
+
+.static-page h3 {
+    margin: var(--space-md) 0 var(--space-2xs);
+    font-size: 1.02rem;
+}
+
+.static-page p,
+.static-page ul,
+.static-page ol {
+    margin-bottom: var(--space-sm);
+}
+
+.static-page li {
+    margin-bottom: 0.35rem;
+}
+
+/* Bảng thông tin dạng "nhãn — giá trị". */
+.static-page__facts {
+    display: grid;
+    gap: 0.1rem;
+    margin: 0 0 var(--space-sm);
+}
+
+.static-page__facts > div {
+    display: grid;
+    grid-template-columns: minmax(9rem, 14rem) 1fr;
+    gap: var(--space-sm);
+    padding: 0.55rem 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.static-page__facts dt {
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+.static-page__facts dd {
+    margin: 0;
+    color: var(--ink-500);
+}
+
+/* Trên điện thoại thì hai cột chồng lên nhau, không bóp cột nhãn. */
+@media (max-width: 575.98px) {
+    .static-page__facts > div {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+    }
+}
+
+.static-page__table {
+    width: 100%;
+    margin-bottom: var(--space-sm);
+    border-collapse: collapse;
+    font-size: var(--text-body-sm);
+}
+
+.static-page__table th,
+.static-page__table td {
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid var(--border-soft);
+    text-align: start;
+    vertical-align: top;
+}
+
+.static-page__table th {
+    color: var(--ink-500);
+    font-weight: 600;
+}
+
+/*
+ * Khối "đây là bài tập lớn".
+ *
+ * Phải khác hẳn phần chữ còn lại: nếu nó trông giống một đoạn văn nữa
+ * thì người đọc lướt qua, và cả điểm của việc nói ra là để họ KHÔNG lướt
+ * qua.
+ */
+.static-page__notice {
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
+    border: 1px dashed var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-2, color-mix(in srgb, var(--ink-500) 5%, transparent));
+    font-size: var(--text-body-sm);
+}
+
+.static-page__notice h2 {
+    margin-top: 0;
+    font-size: 1rem;
+}
+
+/* Lối ra ở cuối trang — trang chính sách là ngõ cụt nếu không có nó. */
+.static-page__more {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2xs);
+    margin-top: var(--space-xl);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border-soft);
+}

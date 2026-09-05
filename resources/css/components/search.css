@@ -1,0 +1,388 @@
+/*
+ * TÌM KIẾM — thông báo về từ khoá.
+ * ============================================================
+ * Ba biến thể ứng với ba mức can thiệp của hệ thống vào từ khoá của
+ * khách. Màu đi theo mức độ chứ không theo thẩm mỹ:
+ *
+ *   --corrected  hệ thống ĐÃ ĐỔI từ khoá  -> màu cảnh báo, phải thấy ngay
+ *   --relaxed    kết quả LỎNG hơn yêu cầu -> màu cảnh báo nhạt hơn
+ *   --hint       chỉ là câu hỏi thêm      -> màu trung tính, không gây động
+ *
+ * Dùng viền trái dày thay vì nền đậm: khối này nằm ngay trên lưới sản
+ * phẩm, một mảng màu lớn ở đó sẽ tranh mất sự chú ý với chính hàng hoá.
+ */
+
+.search-notice {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 0.7rem 0.9rem;
+    margin-bottom: var(--space-md);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--ink-500);
+    background: var(--surface-alt);
+    color: var(--ink-900);
+    font-size: 0.9rem;
+    line-height: 1.55;
+}
+
+.search-notice__icon {
+    flex: 0 0 auto;
+    width: 1.05rem;
+    height: 1.05rem;
+    /* Canh theo dòng chữ đầu tiên, không theo giữa khối: khối có thể
+       xuống hai dòng trên điện thoại và icon sẽ trôi xuống giữa. */
+    margin-top: 0.22rem;
+    color: currentColor;
+    opacity: 0.75;
+}
+
+.search-notice__text {
+    margin: 0;
+}
+
+.search-notice__text strong {
+    font-weight: 600;
+    /* Giữ nguyên chữ khách gõ, kể cả khoảng trắng lạ — đây là thứ đang
+       được trích dẫn lại, không phải văn bản của cửa hàng. */
+    white-space: pre-wrap;
+}
+
+.search-notice__text a {
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+.search-notice--corrected {
+    border-left-color: var(--semantic-warning);
+    background: color-mix(in srgb, var(--semantic-warning) 9%, var(--surface));
+}
+
+.search-notice--relaxed {
+    border-left-color: var(--semantic-warning);
+    background: color-mix(in srgb, var(--semantic-warning) 5%, var(--surface));
+}
+
+.search-notice--hint {
+    border-left-color: var(--brand-400);
+    background: color-mix(in srgb, var(--brand-400) 7%, var(--surface));
+}
+
+
+/*
+ * Ô TÌM KIẾM TRÊN THANH ĐẦU TRANG — CỐ ĐỊNH, KHÔNG BUNG RA.
+ * ============================================================
+ * Bản trước là một <details> bung ra phủ ngang cả thanh header. Hai vấn
+ * đề đo được:
+ *   - lúc đóng: nút rộng 106px nằm lệch bên phải, trong khi giữa thanh
+ *     còn cả một khoảng trống lớn;
+ *   - lúc mở: ô nhập rộng 1121px cho một dòng chữ ngắn, và nó che sạch
+ *     logo lẫn menu điều hướng.
+ *
+ * Nay ô nhập nằm sẵn với bề ngang cố định. Không cần bấm để mở, không
+ * che thứ gì, và khoảng trống giữa thanh được lấp đúng chỗ.
+ */
+
+.header-search {
+    /* Mốc định vị cho danh sách gợi ý thả xuống. */
+    position: relative;
+    flex: 0 1 auto;
+    margin-inline-start: auto;
+}
+
+.header-search__field {
+    position: relative;
+    width: 16.25rem; /* 260px */
+}
+
+/* Màn hình rất rộng thì nới thêm chút — nhưng có TRẦN, không kéo dài vô
+   hạn: một ô tìm kiếm 800px chỉ toàn khoảng trắng. */
+@media (min-width: 1400px) {
+    .header-search__field {
+        width: 17.5rem;
+    }
+}
+
+.header-search__icon {
+    position: absolute;
+    inset-inline-start: 0.8rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--ink-500);
+    /* Icon nằm đè lên ô nhập; không tắt sự kiện chuột thì bấm trúng nó
+       là không vào được ô. */
+    pointer-events: none;
+}
+
+.header-search__input {
+    height: 2.35rem;
+    padding-inline: 2.3rem 0.9rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-alt);
+    font-size: 0.875rem;
+}
+
+.header-search__input:focus {
+    background: var(--surface);
+}
+
+/*
+ * Bỏ nút "x" mà Chrome/Safari tự thêm cho input[type=search].
+ * Nó có kiểu dáng riêng của hệ điều hành và phá vỡ bố cục ô nhập.
+ */
+.header-search__input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/*
+ * DƯỚI 992px ẨN HẲN.
+ *
+ * Thanh header ở khổ đó phải nhường chỗ cho menu điều hướng. Khách vẫn
+ * tìm được: trang danh sách sản phẩm có ô tìm kiếm riêng trong bộ lọc,
+ * và bộ lọc đó mở được bằng nút "Bộ lọc & sắp xếp" ngay đầu trang.
+ */
+@media (max-width: 991.98px) {
+    .header-search {
+        display: none;
+    }
+}
+
+/* ---------- danh sách gợi ý ---------- */
+
+.header-search__results {
+    position: absolute;
+    /*
+     * Rộng HƠN ô nhập.
+     *
+     * Ô nhập chỉ 260px, nhưng mỗi dòng gợi ý có ảnh 40px + tên sản phẩm
+     * + danh mục + giá. Ép vào 260px thì tên nào cũng bị cắt bằng "…" và
+     * danh sách thành vô dụng. Neo mép PHẢI để không tràn ra ngoài màn
+     * hình, vì ô nhập nằm gần mép phải của thanh.
+     */
+    inset-inline-start: auto;
+    inset-inline-end: 0;
+    width: 22rem;
+    top: calc(100% + 0.45rem);
+    /* Trên mọi thứ khác trong header. */
+    z-index: calc(var(--z-nav) + 1);
+    max-height: min(24rem, 60vh);
+    overflow-y: auto;
+    padding: 0.3rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    background: var(--surface);
+}
+
+.header-search__note,
+.header-search__empty {
+    margin: 0;
+    padding: 0.5rem 0.6rem;
+    font-size: 0.8125rem;
+    color: var(--ink-500);
+}
+
+.header-search__note {
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.header-search__item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--ink-900);
+    text-decoration: none;
+}
+
+/*
+ * MỘT lớp `is-active` cho cả chuột lẫn bàn phím.
+ *
+ * Không dùng :hover riêng: nếu để chuột sáng theo :hover còn bàn phím
+ * sáng theo class thì lúc vừa rê chuột vừa bấm mũi tên sẽ có HAI mục
+ * cùng sáng, và không mục nào cho biết Enter sẽ mở cái nào. JavaScript
+ * đặt is-active cho cả hai đường vào.
+ */
+.header-search__item.is-active {
+    background: var(--surface-alt);
+}
+
+.header-search__thumb {
+    flex: 0 0 auto;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--surface-alt);
+}
+
+.header-search__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.header-search__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.header-search__name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.3;
+    /* Tên dài phải cắt bằng "..." chứ không được xuống dòng: mỗi mục
+       gợi ý cao bằng nhau thì mắt lướt danh sách mới nhanh. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.header-search__meta {
+    font-size: 0.75rem;
+    color: var(--ink-500);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.header-search__tag {
+    flex: 0 0 auto;
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--semantic-danger, #b3261e) 12%, transparent);
+    color: var(--semantic-danger, #b3261e);
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+/*
+ * TRÊN ĐIỆN THOẠI thu gọn phần thừa.
+ *
+ * Panel đã bám đúng bốn mép của thanh header nên không cần chỉnh vị trí;
+ * chỉ cần nhường chỗ cho ô nhập bằng cách rút gọn nút gửi.
+ */
+@media (max-width: 575.98px) {
+    .header-search__panel {
+        gap: 0.35rem;
+    }
+
+    .header-search__panel .btn {
+        padding-inline: 0.6rem;
+    }
+}
+
+
+/*
+ * TƯ VẤN CHỌN CÂY
+ * ============================================================
+ * Bộ lọc dạng thẻ bấm, mỗi thẻ là một LIÊN KẾT chứ không phải ô đánh dấu
+ * — xem ghi chú trong Blade. Thẻ đủ rộng để chứa cả tên lẫn dòng giải
+ * thích điều kiện thật ("Nắng trực tiếp, gió nhiều"), vì đó mới là thứ
+ * giúp khách đối chiếu với nhà mình.
+ */
+
+.advisor-filters {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.advisor-filters__label {
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+.advisor-filters__note {
+    font-weight: 400;
+    color: var(--ink-500);
+}
+
+.advisor-filters__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.advisor-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--ink-900);
+    text-decoration: none;
+}
+
+.advisor-chip:hover {
+    border-color: var(--brand-400);
+}
+
+.advisor-chip.is-active {
+    border-color: var(--brand-400);
+    background: color-mix(in srgb, var(--brand-400) 10%, var(--surface));
+}
+
+.advisor-chip__icon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--brand-400);
+    flex: 0 0 auto;
+}
+
+.advisor-chip__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.05rem;
+    min-width: 0;
+}
+
+.advisor-chip__name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.25;
+}
+
+.advisor-chip__hint {
+    font-size: 0.7rem;
+    color: var(--ink-500);
+    line-height: 1.3;
+}
+
+/*
+ * Số lượng hàng có thật trong mỗi lựa chọn.
+ *
+ * Hiện con số chứ không chỉ hiện nhãn: khách biết trước bấm vào sẽ có
+ * bao nhiêu kết quả, nên không bấm vào chỗ chỉ có một cây rồi thất vọng.
+ */
+.advisor-chip__count {
+    flex: 0 0 auto;
+    min-width: 1.4rem;
+    padding: 0.05rem 0.35rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-alt);
+    color: var(--ink-500);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.advisor-chip.is-active .advisor-chip__count {
+    background: var(--brand-400);
+    color: #fff;
+}

@@ -1,0 +1,1025 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Admin\Concerns\HandlesBulkAction;
+use App\Http\Controllers\Admin\Concerns\SortsAdminList;
+use App\Http\Controllers\Admin\Concerns\LogsAdminActivity;
+use App\Enums\TraitType;
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreProductRequest;
+use App\Http\Requests\Admin\UpdateProductRequest;
+use App\Models\Category;
+use App\Models\Product;
+use App\Services\Media\ImageStore;
+use App\Services\Product\ProductImageService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\View\View;
+
+class ProductController extends Controller
+{
+    use HandlesBulkAction;
+    use SortsAdminList;
+
+    use LogsAdminActivity;
+
+    /**
+     * Dưới ngưỡng này thì coi là sắp hết hàng.
+     *
+     * Một con số chung cho mọi sản phẩm là chưa đúng lắm — bó hoa bán
+     * mỗi ngày vài chục khác hẳn cây bonsai bán mỗi tháng một cây. Nhưng
+     * ngưỡng riêng cho từng sản phẩm cần thêm một cột và một ô nhập ở
+     * form; khi nào cửa hàng thấy con số này vướng thì làm.
+     */
+    private const LOW_STOCK = 5;
+
+    public function __construct(
+        private readonly ProductImageService $images,
+        private readonly ImageStore $anh,
+    ) {}
+
+    /*
+     * =========================================================
+     * DANH SÁCH PRODUCT
+     * =========================================================
+     */
+    public function index(Request $request): View
+    {
+        $products = Product::query()
+            ->with(['category', 'promotions'])
+
+            /*
+             * TÌM THEO TÊN HOẶC MÃ SẢN PHẨM.
+             *
+             * Hai cột này vì đó là hai thứ admin có trong tay khi cần
+             * tìm: khách đọc tên qua điện thoại, hoặc đọc mã trên đơn.
+             *
+             * Ghép LIKE hai đầu (`%tu%`) nên không dùng được chỉ mục —
+             * chấp nhận được ở bảng vài nghìn sản phẩm và là cái giá phải
+             * trả để tìm được cụm ở GIỮA tên ("tulip" trong "Hộp hoa
+             * tulip vàng"). Chỉ khớp đầu chuỗi thì gần như không tìm ra gì.
+             */
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $tu = trim((string) $request->query('q'));
+
+                $query->where(function ($q) use ($tu) {
+                    $q->where('name', 'like', '%'.$tu.'%')
+                        ->orWhere('product_code', 'like', '%'.$tu.'%');
+                });
+            })
+
+            ->when(
+                $request->filled('category'),
+                fn ($q) => $q->where('category_id', $request->integer('category'))
+            )
+
+            ->when(
+                $request->filled('status'),
+                fn ($q) => $q->where('status', $request->string('status'))
+            )
+
+            /*
+             * LỌC THEO TÌNH TRẠNG KHO — việc admin làm thường xuyên nhất.
+             *
+             * `het` chỉ tính hàng CÓ QUẢN LÝ TỒN KHO. Hàng làm theo đơn
+             * (track_inventory = false) có stock_quantity = 0 nhưng không
+             * hề hết hàng; gộp chung là mỗi lần lọc "hết hàng" lại thấy
+             * toàn hoa cưới.
+             */
+            ->when($request->query('kho') === 'het', fn ($q) => $q
+                ->where('track_inventory', true)
+                ->where('stock_quantity', '<=', 0))
+
+            ->when($request->query('kho') === 'sap-het', fn ($q) => $q
+                ->where('track_inventory', true)
+                ->whereBetween('stock_quantity', [1, self::LOW_STOCK]))
+
+            ->tap(fn ($q) => $this->applySort($q, $request, [
+                /*
+                 * CỘT NÀO SẮP ĐƯỢC — do trang này quyết định, không do
+                 * URL. Xem SortsAdminList để biết vì sao bắt buộc.
+                 */
+                'ten' => 'name',
+                'gia' => 'base_price',
+                // 'ton-kho' chứ không phải 'kho': trang này ĐÃ có bộ lọc
+                // ?kho=het. Trùng tên thì hai thứ khác nhau cùng đọc một
+                // tham số, và người sửa sau sẽ mất một buổi để hiểu.
+                'ton-kho' => 'stock_quantity',
+                'trang-thai' => 'status',
+                'ngay' => 'created_at',
+            ], fn ($q) => $q->latest()))
+
+            ->paginate(20)
+
+            /*
+             * withQueryString() — BẮT BUỘC khi có bộ lọc.
+             *
+             * Thiếu nó thì bấm sang trang 2 là mất sạch điều kiện lọc và
+             * admin quay về danh sách đầy đủ mà không hiểu vì sao.
+             */
+            ->withQueryString();
+
+        return view('admin.products.index', [
+            'products' => $products,
+            'categories' => Category::orderBy('name')->get(['id', 'name']),
+            'lowStock' => self::LOW_STOCK,
+        ]);
+    }
+
+
+    /*
+     * =========================================================
+     * FORM THÊM PRODUCT
+     * =========================================================
+     */
+    public function create(): View
+    {
+        $categories = Category::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        return view(
+            'admin.products.create',
+            compact('categories')
+        );
+    }
+
+
+    /*
+     * =========================================================
+     * LƯU PRODUCT + VARIANTS
+     * =========================================================
+     */
+    public function store(
+        StoreProductRequest $request
+    ): RedirectResponse {
+
+        /*
+         * Lấy dữ liệu đã validation.
+         */
+        $data = $request->validated();
+
+
+        /*
+         * Lấy Variant ra khỏi dữ liệu Product.
+         */
+        $variants =
+            $data['variants'] ?? [];
+
+        unset($data['variants'], $data['gallery'], $data['remove_images']);
+
+        /*
+         * Tách nhãn phân loại ra khỏi dữ liệu Product.
+         *
+         * `traits` KHÔNG phải cột của bảng products — để sót lại trong
+         * $data là Eloquent ném lỗi "column not found". Cùng lý do với
+         * variants/gallery ngay bên trên.
+         */
+        $traits = $data['traits'] ?? [];
+
+        unset($data['traits']);
+
+
+        /*
+         * Theo dõi ảnh mới để nếu transaction lỗi
+         * thì xóa file đã upload.
+         */
+        $storedImage = null;
+
+        // Ảnh phụ (gallery) — theo dõi riêng để rollback được.
+        $storedGallery = [];
+
+
+        try {
+
+            $product = DB::transaction(
+                function () use (
+                    $request,
+                    $data,
+                    $variants,
+                    &$storedImage,
+                    &$storedGallery
+                ) {
+
+                    /*
+                     * Upload ảnh.
+                     */
+                    if (
+                        $request->hasFile(
+                            'main_image'
+                        )
+                    ) {
+
+                        // ImageStore: lưu xong thì sinh luôn bản WebP.
+                        $storedImage =
+                            $this->anh->luu(
+                                $request->file('main_image'),
+                                'products'
+                            );
+
+                        $data['main_image'] =
+                            $storedImage;
+                    }
+
+
+                    /*
+                     * Tạo Product.
+                     */
+                    $product =
+                        Product::create(
+                            $data
+                        );
+
+                    /*
+                     * NHÃN PHÂN LOẠI (vị trí đặt, hợp mệnh, dùng kèm).
+                     *
+                     * Đặt ngay sau khi ghi sản phẩm và TRONG cùng
+                     * transaction: nhãn không có ý nghĩa nếu thiếu sản
+                     * phẩm, và ngược lại một sản phẩm ghi xong mà nhãn
+                     * hỏng thì nó biến mất khỏi trang tư vấn mà không ai
+                     * biết.
+                     *
+                     * syncTraits() tự loại giá trị không hợp lệ — xem
+                     * ProductTrait::isValid(). Đây là ràng buộc duy nhất,
+                     * vì cột trong cơ sở dữ liệu là varchar.
+                     */
+                    foreach (TraitType::cases() as $traitType) {
+                        $product->syncTraits(
+                            $traitType,
+                            (array) ($traits[$traitType->value] ?? []),
+                        );
+                    }
+
+
+                    /*
+                     * Tạo các Variant.
+                     */
+                    foreach (
+                        $variants
+                        as $variant
+                    ) {
+
+                        /*
+                         * Variant mới không cần
+                         * xử lý _delete.
+                         *
+                         * Tuy nhiên vẫn bỏ qua nếu
+                         * _delete = 1.
+                         */
+                        if (
+                            ($variant['_delete'] ?? false)
+                        ) {
+                            continue;
+                        }
+
+
+                        $product
+                            ->variants()
+                            ->create([
+                                'name' =>
+                                    $variant['name'],
+
+                                'code' =>
+                                    $variant['code']
+                                    ?? null,
+
+                                'price' =>
+                                    $variant['price']
+                                    ?? null,
+
+                                'description' =>
+                                    $variant['description']
+                                    ?? null,
+
+                                'is_active' =>
+                                    $variant['is_active']
+                                    ?? true,
+
+                                'sort_order' =>
+                                    $variant['sort_order']
+                                    ?? 0,
+
+                                'stock_quantity' =>
+                                    $variant['stock_quantity']
+                                    ?? null,
+
+                                'track_inventory' =>
+                                    isset($variant['stock_quantity'])
+                                    && $variant['stock_quantity'] !== '',
+                            ]);
+                    }
+
+
+                    /*
+                     * Ảnh phụ cho gallery.
+                     */
+                    if ($request->hasFile('gallery')) {
+                        $storedGallery = $this->images->attach(
+                            $product,
+                            $request->file('gallery')
+                        );
+                    }
+
+
+                    return $product;
+                }
+            );
+
+
+        } catch (\Throwable $e) {
+
+            /*
+             * Transaction lỗi:
+             * xóa ảnh vừa upload.
+             */
+            if ($storedImage) {
+
+                Storage::disk('public')
+                    ->delete(
+                        $storedImage
+                    );
+            }
+
+            $this->images->rollback($storedGallery);
+
+            throw $e;
+        }
+
+
+        $this->logCrud('product.created', $product, 'sản phẩm', $product->name);
+
+
+        return redirect()
+            ->route(
+                'admin.products.show',
+                $product
+            )
+            ->with(
+                'success',
+                'Thêm sản phẩm thành công.'
+            );
+    }
+
+
+    /*
+     * =========================================================
+     * XEM PRODUCT
+     * =========================================================
+     */
+    public function show(
+        Product $product
+    ): View {
+
+        $product->load([
+            'category',
+            'promotions',
+            'images',
+
+            'variants' => function ($query) {
+                $query
+                    ->orderBy('sort_order')
+                    ->orderBy('id');
+            },
+        ]);
+
+
+        return view(
+            'admin.products.show',
+            compact('product')
+        );
+    }
+
+
+    /*
+     * =========================================================
+     * FORM SỬA PRODUCT
+     * =========================================================
+     */
+    public function edit(
+        Product $product
+    ): View {
+
+        $categories = Category::query()
+            ->where('is_active', true)
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+
+        /*
+         * Load Variant để _form có thể
+         * hiển thị ngay.
+         */
+        $product->load([
+            'images',
+            'variants' => function ($query) {
+                $query
+                    ->orderBy('sort_order')
+                    ->orderBy('id');
+            },
+        ]);
+
+
+        return view(
+            'admin.products.edit',
+            compact(
+                'product',
+                'categories'
+            )
+        );
+    }
+
+
+    /*
+     * =========================================================
+     * UPDATE PRODUCT + VARIANTS
+     * =========================================================
+     */
+    public function update(
+        UpdateProductRequest $request,
+        Product $product
+    ): RedirectResponse {
+
+        // Chụp lại TRƯỚC khi ghi đè: sau update() thì hai giá trị
+        // này đã là giá trị mới, và nhật ký không còn gì để so.
+        $giaTruoc = $product->base_price;
+        $trangThaiTruoc = $product->status;
+
+        /*
+         * Dữ liệu đã validation.
+         */
+        $data =
+            $request->validated();
+
+
+        /*
+         * Tách Variant ra.
+         */
+        $variants =
+            $data['variants'] ?? [];
+
+        // gallery/remove_images không phải cột của products.
+        $removeImages = $data['remove_images'] ?? [];
+
+        unset($data['variants'], $data['gallery'], $data['remove_images']);
+
+        /*
+         * Tách nhãn phân loại ra khỏi dữ liệu Product.
+         *
+         * `traits` KHÔNG phải cột của bảng products — để sót lại trong
+         * $data là Eloquent ném lỗi "column not found". Cùng lý do với
+         * variants/gallery ngay bên trên.
+         */
+        $traits = $data['traits'] ?? [];
+
+        unset($data['traits']);
+
+
+        /*
+         * Ảnh cũ.
+         */
+        $oldImage =
+            $product->main_image;
+
+
+        /*
+         * Ảnh mới.
+         */
+        $newImage = null;
+
+        // Ảnh phụ vừa upload — dùng để rollback nếu transaction hỏng.
+        $storedGallery = [];
+
+
+        try {
+
+            DB::transaction(
+                function () use (
+                    $request,
+                    $data,
+                    $variants,
+                    $product,
+                    $removeImages,
+                    &$newImage,
+                    &$storedGallery
+                ) {
+
+                    /*
+                     * =========================
+                     * GALLERY
+                     * =========================
+                     *
+                     * Xoá trước rồi thêm, để admin vừa bỏ ảnh cũ vừa
+                     * thêm ảnh mới trong cùng một lần lưu.
+                     */
+                    $this->images->detach($product, $removeImages);
+
+                    if ($request->hasFile('gallery')) {
+                        $storedGallery = $this->images->attach(
+                            $product,
+                            $request->file('gallery')
+                        );
+                    }
+
+
+                    /*
+                     * =========================
+                     * UPDATE IMAGE
+                     * =========================
+                     */
+
+                    if (
+                        $request->hasFile(
+                            'main_image'
+                        )
+                    ) {
+
+                        $newImage =
+                            $this->anh->luu(
+                                $request->file('main_image'),
+                                'products'
+                            );
+
+                        $data['main_image'] =
+                            $newImage;
+                    }
+
+
+                    /*
+                     * =========================
+                     * UPDATE PRODUCT
+                     * =========================
+                     */
+
+                    $product->update(
+                        $data
+                    );
+
+                    /*
+                     * NHÃN PHÂN LOẠI (vị trí đặt, hợp mệnh, dùng kèm).
+                     *
+                     * Đặt ngay sau khi ghi sản phẩm và TRONG cùng
+                     * transaction: nhãn không có ý nghĩa nếu thiếu sản
+                     * phẩm, và ngược lại một sản phẩm ghi xong mà nhãn
+                     * hỏng thì nó biến mất khỏi trang tư vấn mà không ai
+                     * biết.
+                     *
+                     * syncTraits() tự loại giá trị không hợp lệ — xem
+                     * ProductTrait::isValid(). Đây là ràng buộc duy nhất,
+                     * vì cột trong cơ sở dữ liệu là varchar.
+                     */
+                    foreach (TraitType::cases() as $traitType) {
+                        $product->syncTraits(
+                            $traitType,
+                            (array) ($traits[$traitType->value] ?? []),
+                        );
+                    }
+
+
+                    /*
+                     * =========================
+                     * LẤY ID VARIANT HIỆN TẠI
+                     * =========================
+                     */
+
+                    $existingIds =
+                        $product
+                            ->variants()
+                            ->pluck('id')
+                            ->map(
+                                fn ($id) =>
+                                    (string) $id
+                            )
+                            ->all();
+
+
+                    /*
+                     * Các Variant vẫn còn tồn tại
+                     * sau khi submit.
+                     */
+                    $keptIds = [];
+
+
+                    /*
+                     * =========================
+                     * XỬ LÝ TỪNG VARIANT
+                     * =========================
+                     */
+
+                    foreach (
+                        $variants
+                        as $variant
+                    ) {
+
+                        /*
+                         * ID có thể rỗng nếu đây
+                         * là Variant mới.
+                         */
+                        $variantId =
+                            isset(
+                                $variant['id']
+                            )
+                                ? (string)
+                                    $variant['id']
+                                : null;
+
+
+                        /*
+                         * =========================
+                         * VARIANT CŨ
+                         * =========================
+                         */
+
+                        if ($variantId) {
+
+                            /*
+                             * Chống việc gửi ID Variant
+                             * thuộc Product khác.
+                             */
+                            if (
+                                !in_array(
+                                    $variantId,
+                                    $existingIds,
+                                    true
+                                )
+                            ) {
+
+                                abort(404);
+                            }
+
+
+                            /*
+                             * Tìm Variant thuộc
+                             * Product hiện tại.
+                             */
+                            $model =
+                                $product
+                                    ->variants()
+                                    ->findOrFail(
+                                        $variantId
+                                    );
+
+
+                            /*
+                             * =========================
+                             * XÓA VARIANT
+                             * =========================
+                             */
+
+                            if (
+                                ($variant['_delete'] ?? false)
+                            ) {
+
+                                $model->delete();
+
+                                /*
+                                 * Không đưa ID vào
+                                 * $keptIds vì Variant
+                                 * đã bị xóa.
+                                 */
+
+                                continue;
+                            }
+
+
+                            /*
+                             * Variant này vẫn tồn tại.
+                             */
+                            $keptIds[] =
+                                $variantId;
+
+
+                            /*
+                             * =========================
+                             * UPDATE VARIANT
+                             * =========================
+                             */
+
+                            $model->update([
+                                'name' =>
+                                    $variant['name'],
+
+                                'code' =>
+                                    $variant['code']
+                                    ?? null,
+
+                                'price' =>
+                                    $variant['price']
+                                    ?? null,
+
+                                'description' =>
+                                    $variant['description']
+                                    ?? null,
+
+                                'is_active' =>
+                                    $variant['is_active']
+                                    ?? true,
+
+                                'sort_order' =>
+                                    $variant['sort_order']
+                                    ?? 0,
+
+                                'stock_quantity' =>
+                                    $variant['stock_quantity']
+                                    ?? null,
+
+                                'track_inventory' =>
+                                    isset($variant['stock_quantity'])
+                                    && $variant['stock_quantity'] !== '',
+                            ]);
+
+
+                            continue;
+                        }
+
+
+                        /*
+                         * =========================
+                         * VARIANT MỚI
+                         * =========================
+                         */
+
+                        if (
+                            ($variant['_delete'] ?? false)
+                        ) {
+                            continue;
+                        }
+
+
+                        $product
+                            ->variants()
+                            ->create([
+                                'name' =>
+                                    $variant['name'],
+
+                                'code' =>
+                                    $variant['code']
+                                    ?? null,
+
+                                'price' =>
+                                    $variant['price']
+                                    ?? null,
+
+                                'description' =>
+                                    $variant['description']
+                                    ?? null,
+
+                                'is_active' =>
+                                    $variant['is_active']
+                                    ?? true,
+
+                                'sort_order' =>
+                                    $variant['sort_order']
+                                    ?? 0,
+
+                                'stock_quantity' =>
+                                    $variant['stock_quantity']
+                                    ?? null,
+
+                                'track_inventory' =>
+                                    isset($variant['stock_quantity'])
+                                    && $variant['stock_quantity'] !== '',
+                            ]);
+                    }
+
+
+                    /*
+                     * =========================
+                     * XÓA CÁC VARIANT BỊ BỎ KHỎI FORM
+                     * =========================
+                     *
+                     * Trường hợp này chủ yếu dùng để
+                     * đảm bảo database không giữ Variant
+                     * mà form không còn gửi.
+                     */
+                    $idsToDelete =
+                        array_diff(
+                            $existingIds,
+                            $keptIds
+                        );
+
+
+                    /*
+                     * Các Variant đã được xử lý
+                     * _delete = 1 thì đã xóa rồi.
+                     *
+                     * Các Variant không còn xuất hiện
+                     * trong request cũng bị xóa.
+                     */
+                    if (
+                        !empty($idsToDelete)
+                    ) {
+
+                        $product
+                            ->variants()
+                            ->whereIn(
+                                'id',
+                                $idsToDelete
+                            )
+                            ->delete();
+                    }
+                }
+            );
+
+
+        } catch (\Throwable $e) {
+
+            /*
+             * Nếu update thất bại:
+             * xóa ảnh mới.
+             */
+            if ($newImage) {
+
+                Storage::disk('public')
+                    ->delete(
+                        $newImage
+                    );
+            }
+
+            $this->images->rollback($storedGallery);
+
+            throw $e;
+        }
+
+
+        /*
+         * Update thành công:
+         * xóa ảnh cũ.
+         */
+        if (
+            $newImage &&
+            $oldImage
+        ) {
+
+            Storage::disk('public')
+                ->delete(
+                    $oldImage
+                );
+        }
+
+
+        /*
+         * GHI CẢ GIÁ CŨ VÀ GIÁ MỚI.
+         *
+         * Đổi giá là thao tác hay bị hỏi lại nhất, và bản ghi sản phẩm
+         * chỉ giữ giá HIỆN TẠI — nhìn vào không biết hôm qua nó bao
+         * nhiêu. Không ghi lại ở đây thì con số cũ mất vĩnh viễn.
+         */
+        $this->audit()->log(
+            'product.updated',
+            sprintf('Sửa sản phẩm "%s"', $product->name),
+            $product,
+            array_filter([
+                'gia_truoc' => $giaTruoc,
+                'gia_sau' => $product->base_price,
+                'trang_thai_truoc' => $trangThaiTruoc,
+                'trang_thai_sau' => $product->status,
+            ], fn ($v) => $v !== null),
+        );
+
+
+        return redirect()
+            ->route(
+                'admin.products.show',
+                $product
+            )
+            ->with(
+                'success',
+                'Cập nhật sản phẩm thành công.'
+            );
+    }
+
+
+    /*
+     * =========================================================
+     * DELETE PRODUCT
+     * =========================================================
+     */
+    public function destroy(
+        Product $product
+    ): RedirectResponse {
+
+        /*
+         * XOÁ MỀM — VÀ VÌ THẾ KHÔNG ĐỘNG VÀO FILE ẢNH.
+         *
+         * LỖI TRƯỚC KHI SỬA: chỗ này xoá file ảnh chính và toàn bộ ảnh
+         * phụ trên đĩa, RỒI mới gọi $product->delete(). Nhưng Product
+         * dùng SoftDeletes, nên delete() chỉ ghi một dấu thời gian —
+         * bản ghi vẫn nguyên, chờ được khôi phục.
+         *
+         * Hai việc đó ngược nhau: một nửa hành động thì hoàn tác được,
+         * nửa kia thì không. Khôi phục sản phẩm sẽ ra một trang hàng có
+         * đủ tên, giá, mô tả và không có lấy một tấm ảnh — chỉ còn những
+         * ô vỡ, vì bản ghi product_images vẫn trỏ vào file đã bị xoá.
+         *
+         * Xoá mềm tồn tại ở đây có lý do: order_items trỏ về product_id,
+         * và lịch sử đơn hàng phải đọc được sau nhiều năm. Nên thứ phải
+         * đổi là việc xoá file, không phải việc xoá mềm.
+         *
+         * File được dọn ở đúng lúc nó thật sự thành rác — khi sản phẩm
+         * bị xoá VĨNH VIỄN. Xem Product::booted().
+         */
+        // Ghi trước khi xoá, để dòng nhật ký còn giữ đúng khoá chính.
+        $this->logCrud('product.deleted', $product, 'sản phẩm', $product->name);
+
+        $product->delete();
+
+
+        return redirect()
+            ->route(
+                'admin.products.index'
+            )
+            ->with(
+                'success',
+                'Xóa sản phẩm thành công.'
+            );
+    }
+
+    /*
+     * =========================================================
+     * THAO TÁC HÀNG LOẠT
+     * =========================================================
+     */
+    public function bulk(Request $request): RedirectResponse
+    {
+        ['viec' => $viec, 'ids' => $ids] = $this->validateBulk(
+            $request,
+            ['ban', 'an', 'nhap', 'xoa'],
+            'products',
+        );
+
+        /*
+         * ĐỌC RA TRƯỚC KHI GHI.
+         *
+         * Cần bản ghi thật cho hai việc: đếm đúng số dòng ĐÃ đổi (chứ
+         * không phải số ô đã tích), và ghi được tên vào nhật ký. Xoá
+         * xong rồi mới đọc thì không còn gì để đọc.
+         *
+         * whereKey với mảng id đã qua kiểm tra `exists` ở validateBulk.
+         */
+        $products = Product::whereKey($ids)->get();
+
+        if ($products->isEmpty()) {
+            return back()->with('error', 'Không tìm thấy sản phẩm nào để cập nhật.');
+        }
+
+        $so = $products->count();
+
+        if ($viec === 'xoa') {
+            /*
+             * Xoá MỀM, đúng như nút Xoá của từng sản phẩm — và vì thế
+             * cũng KHÔNG đụng vào file ảnh. Xem ProductController::destroy()
+             * và Product::booted() để biết vì sao.
+             */
+            foreach ($products as $product) {
+                $product->delete();
+            }
+
+            $this->audit()->log(
+                'product.bulk_deleted',
+                sprintf('Xoá hàng loạt %d sản phẩm', $so),
+                null,
+                ['ids' => $ids, 'ten' => $products->pluck('name')->all()],
+            );
+
+            return back()->with('success', "Đã xoá {$so} sản phẩm.");
+        }
+
+        $trangThai = match ($viec) {
+            'ban' => 'active',
+            'an' => 'inactive',
+            'nhap' => 'draft',
+        };
+
+        /*
+         * MỘT CÂU UPDATE cho cả nhóm, không lặp save() từng bản ghi.
+         *
+         * Ba mươi lần save() là ba mươi lượt đi lại với cơ sở dữ liệu,
+         * và nếu đứt giữa chừng thì mười lăm cái đầu đã đổi còn mười
+         * lăm cái sau thì chưa — một trạng thái không ai muốn dọn.
+         */
+        Product::whereKey($ids)->update(['status' => $trangThai]);
+
+        $nhan = match ($viec) {
+            'ban' => 'đang bán',
+            'an' => 'tạm ẩn',
+            'nhap' => 'bản nháp',
+        };
+
+        $this->audit()->log(
+            'product.bulk_updated',
+            sprintf('Chuyển %d sản phẩm sang "%s"', $so, $nhan),
+            null,
+            ['ids' => $ids, 'trang_thai' => $trangThai],
+        );
+
+        // Nói RÕ SỐ LƯỢNG: "đã cập nhật" trống không thì người dùng phải
+        // tự đếm lại mới biết có sót cái nào không.
+        return back()->with('success', "Đã chuyển {$so} sản phẩm sang \"{$nhan}\".");
+    }
+}

@@ -1,0 +1,51 @@
+/*
+ * PRICE — hiển thị giá thống nhất toàn site.
+ * Giá cuối luôn có trọng lượng thị giác lớn nhất; giá gốc bị gạch
+ * và mờ đi; nhãn % nhỏ, không tranh chỗ với giá.
+ */
+
+.product-price {
+    display: inline-flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.price-badge {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    padding: 0.15rem 0.4rem;
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--accent-500) 14%, transparent);
+    color: var(--accent-600);
+    white-space: nowrap;
+}
+
+/*
+ * Dải thông tin chương trình khuyến mại trên trang sản phẩm —
+ * cho khách biết VÌ SAO sản phẩm đang được giảm giá.
+ */
+.promo-note {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    padding: 0.7rem 0.9rem;
+    border-radius: var(--radius-md);
+    background: var(--brand-50);
+    border: 1px solid var(--border-soft);
+    font-size: var(--text-body-sm);
+}
+
+.promo-note__name {
+    font-weight: 700;
+    color: var(--brand-700);
+}
+
+.promo-note__countdown {
+    margin-left: auto;
+    font-weight: 600;
+    color: var(--accent-600);
+    white-space: nowrap;
+}

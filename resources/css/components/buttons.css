@@ -1,0 +1,170 @@
+/*
+ * BUTTONS
+ * ============================================================
+ * Radius vừa phải (--radius-md) mặc định. Pill KHÔNG còn là radius
+ * default của button — pill chỉ dành cho .tag/.badge/.status-chip
+ * (xem badges.css). CTA có phân cấp: primary / secondary / ghost.
+ */
+
+.btn {
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    padding: 0.625rem 1.25rem;
+    transition:
+        background-color var(--duration-fast) var(--ease-standard),
+        border-color var(--duration-fast) var(--ease-standard),
+        color var(--duration-fast) var(--ease-standard),
+        transform var(--duration-fast) var(--ease-standard);
+}
+
+.btn:active {
+    transform: translateY(1px);
+}
+
+.btn-lg {
+    padding: 0.8rem 1.75rem;
+    font-size: 1.0625rem;
+}
+
+.btn-sm {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.875rem;
+}
+
+/* Primary — CTA chính, tối đa 1 trên mỗi khu vực nội dung */
+.btn-primary-brand {
+    background: var(--brand-500);
+    border: 1px solid var(--brand-500);
+    color: #fff;
+    box-shadow: var(--shadow-xs);
+}
+
+.btn-primary-brand:hover,
+.btn-primary-brand:focus-visible {
+    background: var(--brand-600);
+    border-color: var(--brand-600);
+    color: #fff;
+}
+
+/* Secondary — outline, dùng cho CTA phụ */
+.btn-secondary-brand {
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--ink-900);
+}
+
+.btn-secondary-brand:hover,
+.btn-secondary-brand:focus-visible {
+    background: var(--brand-50);
+    border-color: var(--brand-400);
+    color: var(--brand-700);
+}
+
+/* Ghost — không viền, dùng trong card/nav */
+.btn-ghost {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--ink-700);
+}
+
+.btn-ghost:hover,
+.btn-ghost:focus-visible {
+    color: var(--brand-600);
+    background: var(--brand-50);
+}
+
+/* Trên nền ảnh/artwork — kính mờ có chủ đích (accent, không mặc định) */
+.btn-on-media {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    color: var(--ink-900);
+}
+
+.btn-on-media:hover {
+    background: var(--surface);
+}
+
+/* Icon button — chỉ cho hành động chức năng (search/menu/close) */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border-radius: var(--radius-md);
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-700);
+    font-size: 1.1rem;
+}
+
+.btn-icon:hover {
+    background: var(--brand-50);
+    color: var(--brand-700);
+}
+
+/* Bootstrap semantic buttons — reskin qua biến cấp component, vì
+   Bootstrap hard-code giá trị vào --bs-btn-* thay vì tham chiếu
+   --bs-success trực tiếp (không remap được ở gốc). */
+.btn-outline-primary {
+    --bs-btn-color: var(--brand-600);
+    --bs-btn-border-color: var(--border-strong);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--brand-500);
+    --bs-btn-hover-border-color: var(--brand-500);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--brand-600);
+    --bs-btn-active-border-color: var(--brand-600);
+    border-radius: var(--radius-md);
+}
+
+.btn-outline-secondary {
+    --bs-btn-color: var(--ink-700);
+    --bs-btn-border-color: var(--border-strong);
+    --bs-btn-hover-color: var(--ink-900);
+    --bs-btn-hover-bg: var(--brand-50);
+    --bs-btn-hover-border-color: var(--border-strong);
+    --bs-btn-active-color: var(--ink-900);
+    --bs-btn-active-bg: var(--brand-100);
+    --bs-btn-active-border-color: var(--border-strong);
+    border-radius: var(--radius-md);
+}
+
+.btn-outline-success {
+    --bs-btn-color: var(--brand-600);
+    --bs-btn-border-color: var(--brand-300);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--semantic-success);
+    --bs-btn-hover-border-color: var(--semantic-success);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--semantic-success);
+    --bs-btn-active-border-color: var(--semantic-success);
+    border-radius: var(--radius-md);
+}
+
+.btn-outline-danger {
+    --bs-btn-color: var(--semantic-danger);
+    --bs-btn-border-color: color-mix(in srgb, var(--semantic-danger) 45%, transparent);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: var(--semantic-danger);
+    --bs-btn-hover-border-color: var(--semantic-danger);
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: var(--semantic-danger);
+    --bs-btn-active-border-color: var(--semantic-danger);
+    border-radius: var(--radius-md);
+}
+
+.btn-light {
+    --bs-btn-color: var(--ink-900);
+    --bs-btn-bg: var(--surface);
+    --bs-btn-border-color: var(--border-soft);
+    --bs-btn-hover-color: var(--ink-900);
+    --bs-btn-hover-bg: var(--brand-50);
+    --bs-btn-hover-border-color: var(--border-strong);
+    --bs-btn-active-color: var(--ink-900);
+    --bs-btn-active-bg: var(--brand-100);
+    border-radius: var(--radius-md);
+}

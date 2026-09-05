@@ -1,0 +1,112 @@
+/*
+ * CORE TOKENS — cấu trúc, không phải màu sắc.
+ * ============================================================
+ * Đây là các token KHÔNG đổi giữa các theme (radius, khoảng cách,
+ * đổ bóng, chuyển động, typography scale). Màu sắc — thứ ĐỔI theo
+ * theme — nằm ở resources/css/themes/*.css, không phải ở đây.
+ *
+ * Component/page CSS chỉ được tham chiếu var(--...), không hard-code
+ * số liệu, để toàn bộ hệ thống nhất quán và dễ điều chỉnh một chỗ.
+ */
+
+:root {
+
+    /* ============ SPACING SCALE ============ */
+    --space-3xs: 0.25rem;
+    --space-2xs: 0.5rem;
+    --space-xs: 0.75rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2.5rem;
+    --space-xl: 4rem;
+    --space-2xl: 6rem;
+    --space-3xl: 8rem;
+
+    /* ============ RADIUS SCALE ============
+       Vừa phải — KHÔNG mặc định pill cho mọi thứ.
+       Pill (--radius-pill) chỉ dùng cho tag/filter/status. */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.625rem;
+    --radius-lg: 1rem;
+    --radius-xl: 1.375rem;
+    --radius-pill: 999px;
+
+    /* ============ SHADOW SCALE — tinh tế, ấm ============ */
+    --shadow-xs: 0 1px 2px rgba(30, 35, 30, 0.05);
+    --shadow-sm: 0 2px 8px rgba(30, 35, 30, 0.06);
+    --shadow-md: 0 8px 24px rgba(30, 35, 30, 0.08);
+    --shadow-lg: 0 16px 40px rgba(30, 35, 30, 0.12);
+
+    /* ============ MOTION — tiết chế ============ */
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --duration-fast: 140ms;
+    --duration-base: 220ms;
+    --duration-slow: 400ms;
+
+    /* ============ TYPOGRAPHY ============
+       Serif chỉ dùng cho heading lớn ở public site (tính cách
+       "premium botanical editorial") — body/label/admin vẫn Inter
+       để dễ đọc, không biến toàn site thành trang tạp chí. */
+    --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+
+    --text-caption: 0.75rem;
+    --text-label: 0.8125rem;
+    --text-body-sm: 0.9375rem;
+    --text-body: 1rem;
+    --text-h4: clamp(1.15rem, 1rem + 0.6vw, 1.375rem);
+    --text-h3: clamp(1.375rem, 1.15rem + 1vw, 1.75rem);
+    --text-h2: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+    --text-h1: clamp(2.25rem, 1.7rem + 2.4vw, 3.5rem);
+    --text-display: clamp(2.75rem, 2rem + 3.4vw, 4.75rem);
+
+    --leading-tight: 1.15;
+    --leading-snug: 1.35;
+    --leading-normal: 1.6;
+
+    /* ============ LAYOUT ============ */
+    --container-max: 1280px;
+    --container-narrow: 780px;
+
+    /* ============ Z-INDEX SCALE ============ */
+    --z-decoration: 1;
+    --z-content: 10;
+    --z-nav: 100;
+    --z-overlay: 900;
+    --z-modal: 1000;
+    --z-effect: 1500;
+
+    /* ============ ADMIN — cố định, KHÔNG đổi theo theme cửa hàng.
+       Admin cần visual language riêng, ổn định bất kể theme mùa
+       nào đang bật ở storefront (mục 15 yêu cầu). ============ */
+    --admin-bg: #f4f5f3;
+    --admin-sidebar-bg: #1c211d;
+    --admin-border: #e4e2da;
+    --admin-text: #cdd1c8;
+    --admin-muted: #838f81;
+    --admin-hover-bg: #2a3128;
+
+    /*
+     * Bộ token đầy đủ cho admin. Trước đây chỉ có 6 dòng trên, còn
+     * admin.css vẫn tham chiếu --brand-*, --surface, --ink-* — mà đó
+     * là những token theme mùa vụ ghi đè. Kết quả: bật Tết thì trang
+     * quản trị chuyển đỏ, bật Noel thì chuyển xanh lá.
+     *
+     * Accent chọn màu xanh đá (slate teal) — lạnh và trung tính, khác
+     * hẳn tông botanical ấm của cửa hàng, để nhìn là biết đang ở khu
+     * vận hành chứ không phải trang bán hàng.
+     */
+    --admin-accent: #2f5d62;
+    --admin-accent-strong: #234a4e;
+    --admin-accent-soft: #e9f1f1;
+    --admin-surface: #ffffff;
+    --admin-surface-alt: #fafbfa;
+    --admin-ink: #1e231f;
+    --admin-ink-muted: #5d6660;
+
+    /* Màu ngữ nghĩa cố định: đỏ = nguy hiểm, xanh = thành công.
+       Không bao giờ đổi theo mùa, vì người dùng dựa vào đó để đọc
+       trạng thái. */
+    --admin-danger: #b3261e;
+    --admin-success: #2e6b43;
+}

@@ -1,0 +1,267 @@
+/* ============================================================
+   ĐÁNH GIÁ & YÊU THÍCH
+   ============================================================ */
+
+/* ---------- Dải sao hiển thị ---------- */
+
+.rating {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-3xs);
+    font-size: var(--text-body-sm);
+    line-height: 1;
+}
+
+.rating__stars {
+    display: inline-flex;
+    gap: 1px;
+}
+
+.rating__star {
+    /* Sao chưa đạt: cùng màu nhưng nhạt, không đổi sang xám lạnh —
+       giữ dải sao là MỘT khối thị giác, không phải hai màu rời. */
+    color: color-mix(in srgb, var(--semantic-warning) 28%, transparent);
+}
+
+.rating__star--on {
+    color: var(--semantic-warning);
+}
+
+.rating__value {
+    font-weight: 600;
+    color: var(--ink-700);
+}
+
+.rating__count {
+    color: var(--ink-500);
+}
+
+.rating--empty {
+    color: var(--ink-500);
+}
+
+/* ---------- Ô chấm sao trong form ---------- */
+
+.rating-input {
+    /* row-reverse + thứ tự 5→1 trong HTML: nhờ vậy dùng được bộ chọn
+       anh em ~ để tô cả những sao ĐỨNG TRƯỚC sao đang trỏ. CSS chỉ đi
+       xuôi được, nên phải đảo chiều bằng flex. */
+    display: inline-flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: var(--space-3xs);
+}
+
+.rating-input__radio {
+    /* Không dùng display:none — như thế bàn phím không tab tới được. */
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+}
+
+.rating-input__label {
+    cursor: pointer;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: color-mix(in srgb, var(--semantic-warning) 25%, transparent);
+    transition: color 0.12s ease, transform 0.12s ease;
+}
+
+.rating-input__label:hover,
+.rating-input__label:hover ~ .rating-input__label,
+.rating-input__radio:checked ~ .rating-input__label,
+.rating-input__radio:checked + .rating-input__label {
+    color: var(--semantic-warning);
+}
+
+.rating-input__label:hover {
+    transform: scale(1.08);
+}
+
+/* Viền khi di chuyển bằng bàn phím — radio ẩn nên phải vẽ lên nhãn. */
+.rating-input__radio:focus-visible + .rating-input__label {
+    outline: 2px solid var(--brand-600);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rating-input__label {
+        transition: none;
+    }
+
+    .rating-input__label:hover {
+        transform: none;
+    }
+}
+
+/* ---------- Danh sách đánh giá ---------- */
+
+.product-reviews {
+    scroll-margin-top: var(--space-xl);
+}
+
+.review-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.review-item {
+    padding: var(--space-sm) 0;
+    border-top: 1px solid var(--border-soft);
+}
+
+.review-item:first-child {
+    border-top: 0;
+}
+
+.review-item__head {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-3xs);
+}
+
+.review-item__author {
+    font-weight: 600;
+}
+
+.review-item__verified {
+    margin-left: var(--space-2xs);
+    font-size: var(--text-caption);
+    color: var(--semantic-success);
+    white-space: nowrap;
+}
+
+.review-item__date,
+.review-item__body {
+    color: var(--ink-500);
+}
+
+.review-item__date {
+    font-size: var(--text-caption);
+}
+
+.review-item__body {
+    color: var(--ink-700);
+    white-space: pre-line;
+}
+
+.btn-link-danger {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: var(--text-caption);
+    color: var(--semantic-danger);
+    cursor: pointer;
+}
+
+.btn-link-danger:hover {
+    text-decoration: underline;
+}
+
+/* ---------- Nút yêu thích ---------- */
+
+.btn-wishlist {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0;
+    border: 1px solid var(--border-soft);
+    border-radius: 50%;
+    background: var(--surface);
+    color: var(--ink-500);
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.btn-wishlist:hover {
+    color: var(--semantic-danger);
+    border-color: color-mix(in srgb, var(--semantic-danger) 45%, transparent);
+}
+
+.btn-wishlist.is-active {
+    color: var(--semantic-danger);
+    border-color: color-mix(in srgb, var(--semantic-danger) 45%, transparent);
+    background: color-mix(in srgb, var(--semantic-danger) 8%, var(--surface));
+}
+
+.btn-wishlist--sm {
+    width: 2.1rem;
+    height: 2.1rem;
+    font-size: 0.9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-wishlist {
+        transition: none;
+    }
+}
+
+/* Góc trên phải của ảnh trong card. */
+.product-card__wish {
+    position: absolute;
+    top: var(--space-2xs);
+    right: var(--space-2xs);
+    z-index: 2;
+}
+
+.product-card__rating {
+    margin-bottom: var(--space-3xs);
+}
+
+/* Khối "lưu để xem sau" ở trang chi tiết. */
+.product-info__wish {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+    margin-top: var(--space-sm);
+}
+
+.product-info__rating {
+    display: inline-block;
+    margin-bottom: var(--space-2xs);
+    text-decoration: none;
+}
+
+/*
+ * PHẢN HỒI CỦA CỬA HÀNG dưới một đánh giá.
+ * ============================================================
+ * Thụt vào và đổi nền để người đọc thấy NGAY đây là tiếng nói của bên
+ * bán, không phải của một khách khác. Không phân biệt được là chỗ dễ
+ * hiểu nhầm nhất trên trang đánh giá — nhất là khi cửa hàng đang trả
+ * lời một lời phàn nàn.
+ */
+
+.review-item__reply {
+    margin-top: 0.75rem;
+    margin-inline-start: var(--space-sm);
+    padding: 0.7rem 0.9rem;
+    border-inline-start: 3px solid var(--brand-400);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    background: color-mix(in srgb, var(--brand-400) 7%, var(--surface));
+    font-size: var(--text-body-sm);
+}
+
+.review-item__reply-head {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 0.3rem;
+    color: var(--brand-600, var(--brand-500));
+}
+
+/* Trên điện thoại, lề thụt ăn mất chỗ của chữ. */
+@media (max-width: 575.98px) {
+    .review-item__reply {
+        margin-inline-start: 0;
+    }
+}

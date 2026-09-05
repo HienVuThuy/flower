@@ -1,0 +1,238 @@
+/*
+ * SEASONAL: noel — Layer 2 (artwork tĩnh).
+ * Layer 3 (tuyết rơi) do resources/js/theme/effects/noel-effect.js.
+ *
+ * Scoped trong [data-theme="noel"] nên SVG chỉ tải khi theme bật.
+ *
+ * Mật độ thấp: cành thông + quả châu ở hero, cành thông ở banner,
+ * viền tuyết mảnh dưới header. Không phủ tuyết lên mọi card/button.
+ */
+
+/* ============ HEADER: viền tuyết mảnh ============ */
+
+[data-theme="noel"] .site-header {
+    border-bottom-color: var(--border-strong);
+}
+
+/* ============ HERO: cành thông + quả châu ============ */
+
+[data-theme="noel"] .hero-section::before {
+    content: "";
+    position: absolute;
+    top: -20px;
+    right: -10px;
+    width: 220px;
+    height: 170px;
+    background: url("../../images/themes/noel/pine-corner.svg") no-repeat;
+    background-size: contain;
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: var(--z-decoration);
+}
+
+[data-theme="noel"] .hero-section::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 4%;
+    width: 128px;
+    height: 160px;
+    background: url("../../images/themes/noel/ornaments.svg") no-repeat;
+    background-size: contain;
+    pointer-events: none;
+    z-index: var(--z-decoration);
+    transform-origin: 50% 0;
+    animation: noelOrnamentSway 6.5s ease-in-out infinite;
+}
+
+@keyframes noelOrnamentSway {
+    0%, 100% { transform: rotate(-1.4deg); }
+    50%      { transform: rotate(1.4deg); }
+}
+
+/* ============ BANNER CHIẾN DỊCH ============ */
+
+[data-theme="noel"] .campaign-banner {
+    background:
+        linear-gradient(120deg, rgba(138, 46, 46, 0.10), transparent 60%),
+        var(--surface-alt);
+    border: 1px solid var(--border-strong);
+}
+
+/* :not(--has-image): khi admin đã tải banner riêng thì không
+   vẽ thêm artwork góc, tránh hai lớp trang trí chồng nhau.
+   Dùng :not() thay vì một quy tắc ghi đè + !important. */
+[data-theme="noel"] .campaign-banner:not(.campaign-banner--has-image)::before {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: -10px;
+    width: 160px;
+    height: 130px;
+    background: url("../../images/themes/noel/pine-corner.svg") no-repeat;
+    background-size: contain;
+    /* Chỉ lật ngang; KHÔNG xoay, nếu không hàng thông sẽ nghiêng đổ. */
+    transform: scaleX(-1);
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+
+/* ============ CỤM ĐỒ VẬT Ở NỬA DƯỚI HERO ============
+ * Artwork góc nằm ở nửa TRÊN, nên nửa dưới bị trống một bên.
+ * Cụm này lấp phần đó để hai nửa cân nhau.
+ */
+[data-theme="noel"] .hero-section__copy::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -132px;
+    width: 430px;
+    height: 150px;
+    background: url("../../images/themes/noel/gift-cluster.svg") no-repeat;
+    background-size: contain;
+    opacity: 0.95;
+    pointer-events: none;
+    z-index: var(--z-decoration);
+}
+
+/* Màn hình thấp/hẹp không đủ chỗ — bỏ để không đè lên nút. */
+@media (max-width: 991.98px), (max-height: 760px) {
+    [data-theme="noel"] .hero-section__copy::after {
+        display: none;
+    }
+}
+
+
+/* ============ NÚT BẤM & CHỮ THEO THEME ============ */
+
+/*
+ * ĐÃ BỎ: lớp tuyết đọng trên nóc nút .btn-primary-brand.
+ *
+ * Hiệu ứng dùng snow-cap.svg đặt ở ::before, nhô lên trên mép nút. Bỏ
+ * theo yêu cầu — nút Giáng sinh nay chỉ khác màu, không có vật trang
+ * trí phủ lên. Tệp resources/images/themes/noel/snow-cap.svg vẫn giữ
+ * lại: tuyết rơi trong hiệu ứng nền vẫn dùng thư mục ảnh này, và nếu
+ * sau này muốn bật lại thì không phải vẽ lại.
+ *
+ * Cũng bỏ luôn `.hero-section__actions { margin-top: 6px }` — khoảng
+ * chừa đó chỉ tồn tại để lớp tuyết không bị xén, nay không còn tuyết
+ * thì giữ lại là đẩy lệch nút so với các theme khác.
+ */
+
+[data-theme="noel"] .section-header__title::after {
+    content: "";
+    display: block;
+    width: 46px;
+    height: 2px;
+    margin-top: 0.45rem;
+    background: linear-gradient(90deg, var(--brand-500), transparent);
+}
+
+/* ============ KHỐI MỜI BÁO GIÁ SỰ KIỆN ============ */
+
+/*
+ * Chữ và nút của khối này nằm bên TRÁI, nên trang trí đặt bên PHẢI —
+ * không bao giờ đè lên nút "Nhận tư vấn & báo giá".
+ */
+[data-theme="noel"] .event-banner::before {
+    content: "";
+    position: absolute;
+    top: -18px;
+    right: -14px;
+    width: 190px;
+    height: 146px;
+    background: url("../../images/themes/noel/pine-corner.svg") no-repeat;
+    background-size: contain;
+    transform: none;
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+/* Dưới 992px khối bị bó hẹp, trang trí sẽ chạm vào chữ — bỏ hẳn. */
+@media (max-width: 991.98px) {
+    [data-theme="noel"] .event-banner::before {
+        display: none;
+    }
+}
+
+/*
+ * Vật thể thứ hai ở phía ĐỐI DIỆN với artwork góc của banner.
+ * Banner chiến dịch trước đây chỉ có trang trí một bên nên nhìn lệch.
+ * ::after còn trống vì lớp phủ gradient chỉ dùng khi banner có ảnh.
+ */
+[data-theme="noel"] .campaign-banner:not(.campaign-banner--has-image)::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 18px;
+    width: 116px;
+    height: 110px;
+    background: url("../../images/themes/noel/reindeer.svg") no-repeat;
+    background-size: contain;
+    transform: scaleX(-1);
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+/* Banner hẹp lại thì chữ chạm vào trang trí — bỏ. */
+@media (max-width: 767.98px) {
+    [data-theme="noel"] .campaign-banner:not(.campaign-banner--has-image)::after {
+        display: none;
+    }
+}
+
+/* ============ ẢNH NỀN KHÔNG KHÍ ============
+ * Cố định sau toàn bộ nội dung, độ mờ rất thấp để KHÔNG cạnh tranh với
+ * chữ và với các vật thể trang trí ở lớp trên. Chỉ tải khi theme bật —
+ * quy tắc nằm trong [data-theme] nên theme khác không hề fetch ảnh này.
+ */
+[data-theme="noel"] body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: url("../../images/themes/noel/bg.jpg") center / cover no-repeat;
+    opacity: 0.16;
+    pointer-events: none;
+}
+
+/* Màn nhỏ thường là mạng yếu và ảnh nền gần như không thấy — bỏ hẳn
+   để không tốn băng thông. */
+@media (max-width: 767.98px) {
+    [data-theme="noel"] body::before {
+        display: none;
+    }
+}
+
+/* ============ THANH THÔNG BÁO ============ */
+
+[data-theme="noel"] .announcement-bar {
+    background: linear-gradient(90deg, var(--brand-700), var(--accent-600));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-theme="noel"] .hero-section::after {
+        animation: none;
+    }
+}
+
+/*
+ * Dưới 992px hero xếp về MỘT cột nên chữ dâng lên chiếm chỗ của vật
+ * thể treo — phải ẩn từ mốc này, không phải mốc 768px.
+ */
+@media (max-width: 991.98px) {
+    [data-theme="noel"] .hero-section::after {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+
+    [data-theme="noel"] .hero-section::before {
+        width: 140px;
+        height: 108px;
+        opacity: 0.5;
+    }
+}
+

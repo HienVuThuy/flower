@@ -1,0 +1,71 @@
+/*
+ * ENTRY POINT
+ * ============================================================
+ * Thứ tự nạp có ý nghĩa:
+ *   1. Bootstrap — nền tảng grid/utility (bắt buộc theo Guide).
+ *   2. core/fonts — @font-face tự host, woff2 + subset vietnamese.
+ *   3. core/tokens — token cấu trúc, không đổi theo theme.
+ *   4. themes/* — Layer 1 màu sắc từng theme.
+ *   5. core/reset, typography, layout, utilities — dùng biến ở (3)(4).
+ *   6. components/* — toàn bộ khối UI dùng lại được.
+ *   7. admin/admin.css — visual language riêng của khu vực quản trị.
+ *   8. seasonal/* — Layer 2 (artwork) của từng theme sự kiện.
+ *
+ * KHÔNG import 'bootstrap-icons/font/bootstrap-icons.css' nữa:
+ * nó kéo theo ~314KB font (woff+woff2) và ~2000 class icon, trong
+ * khi dự án chỉ dùng 27 icon. Đã thay bằng SVG sprite inline
+ * (resources/views/components/site/icon-sprite.blade.php, ~17KB).
+ */
+
+@import 'bootstrap/dist/css/bootstrap.min.css';
+
+@import './core/fonts.css';
+@import './core/tokens.css';
+@import './themes/default.css';
+@import './themes/tet.css';
+@import './themes/noel.css';
+@import './themes/valentine.css';
+
+@import './core/reset.css';
+@import './core/typography.css';
+@import './core/layout.css';
+@import './core/utilities.css';
+
+@import './components/buttons.css';
+@import './components/badges.css';
+@import './components/cards.css';
+@import './components/forms.css';
+@import './components/navigation.css';
+@import './components/footer.css';
+@import './components/breadcrumb.css';
+@import './components/pagination.css';
+@import './components/filters.css';
+@import './components/journal.css';
+@import './components/empty-state.css';
+@import './components/price.css';
+@import './components/product-card.css';
+@import './components/category-card.css';
+@import './components/product-detail.css';
+@import './components/sections.css';
+@import './components/auth.css';
+@import './components/seasonal.css';
+@import './components/icon.css';
+@import './components/cart.css';
+@import './components/reviews.css';
+@import './components/search.css';
+@import './components/voucher.css';
+@import './components/toast.css';
+@import './components/order-timeline.css';
+@import './admin/analytics.css';
+
+@import './admin/admin.css';
+
+/*
+ * Chế độ tối — nạp SAU mọi theme để ghi đè được biến của chúng.
+ * Xem resources/css/core/dark.css.
+ */
+@import './core/dark.css';
+
+@import './seasonal/tet.css';
+@import './seasonal/noel.css';
+@import './seasonal/valentine.css';

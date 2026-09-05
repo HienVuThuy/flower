@@ -1,0 +1,37 @@
+/*
+ * THEME: valentine — Layer 1 (màu sắc/identity).
+ * Layer 2: resources/css/seasonal/valentine.css.
+ * Layer 3: resources/js/theme/effects/valentine-effect.js (cánh hoa rơi rất nhẹ).
+ */
+
+[data-theme="valentine"] {
+    --brand-50:  #fbeef1;
+    --brand-100: #f6dbe0;
+    --brand-200: #e9adb9;
+    --brand-300: #d97e91;
+    --brand-400: #a94a5c;
+    --brand-500: #7a2436;
+    --brand-600: #5c1a28;
+    --brand-700: #43131d;
+    --brand-500-rgb: 122, 36, 54;
+
+    --accent-400: #d98a99;
+    --accent-500: #b5495f;
+    --accent-600: #8c3549;
+    --accent-500-rgb: 181, 73, 95;
+
+    --surface-page: #fdf3f1;
+    --surface: #fffbfa;
+    --surface-alt: #f8e7e5;
+    --ink-900: #331a20;
+    --ink-700: #563640;
+    --ink-500: #856a6f;
+    --border-soft: rgba(122, 36, 54, 0.16);
+    --border-strong: rgba(122, 36, 54, 0.3);
+
+    --glass-bg: rgba(255, 251, 250, 0.78);
+
+    --bs-primary: var(--brand-500);
+    --bs-primary-rgb: var(--brand-500-rgb);
+    --bs-body-bg: var(--surface-page);
+}

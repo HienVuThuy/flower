@@ -1,0 +1,84 @@
+/*
+ * THÔNG BÁO NỔI (toast)
+ * ============================================================
+ * Dùng cho những việc xảy ra MÀ TRANG KHÔNG TẢI LẠI — hiện chỉ có "thêm
+ * vào giỏ". Thông báo do máy chủ trả về vẫn nằm ở đầu trang như cũ.
+ *
+ * VÌ SAO PHẢI NEO THEO KHUNG NHÌN: cả tính năng thêm-không-tải-lại sinh
+ * ra vì khách đang ở giữa hoặc cuối trang. Một dòng chữ hiện ở đầu trang
+ * là một dòng chữ họ không bao giờ thấy.
+ */
+
+.toast-host {
+    position: fixed;
+
+    /*
+     * Góc dưới bên phải trên màn hình rộng.
+     *
+     * KHÔNG đặt ở trên: thanh tiêu đề đã dính ở đó, và toast đè lên nó
+     * sẽ che mất icon giỏ hàng — đúng thứ khách muốn nhìn để kiểm tra
+     * món vừa thêm.
+     */
+    inset-block-end: var(--space-md);
+    inset-inline-end: var(--space-md);
+
+    z-index: 1080;
+
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    width: min(22rem, calc(100vw - 2 * var(--space-md)));
+
+    /*
+     * Khung chứa KHÔNG nhận chuột, từng thông báo bên trong thì có.
+     *
+     * Không có dòng này thì một ô trong suốt rộng 22rem nằm đè lên góc
+     * màn hình và nuốt mọi cú bấm vào vùng đó, kể cả khi không có thông
+     * báo nào đang hiện.
+     */
+    pointer-events: none;
+}
+
+.toast-host__item {
+    margin: 0;
+    pointer-events: auto;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 18%);
+}
+
+/*
+ * Trên điện thoại: kéo ngang hết bề rộng và đẩy lên trên vùng an toàn.
+ *
+ * env(safe-area-inset-bottom) là dải cảm ứng ở đáy iPhone — không trừ ra
+ * thì thông báo nằm đúng chỗ ngón tay hay vuốt để về màn hình chính.
+ */
+@media (max-width: 575.98px) {
+    .toast-host {
+        inset-inline: var(--space-sm);
+        inset-block-end: calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
+        width: auto;
+    }
+}
+
+/*
+ * Nút vừa bấm nháy sang trạng thái "Đã thêm".
+ *
+ * Phản hồi NGAY TẠI CHỖ MẮT ĐANG NHÌN. Toast ở góc màn hình là để chắc
+ * chắn không bỏ sót, nhưng thứ khách nhìn lúc bấm là cái nút.
+ */
+.btn.is-added {
+    background: var(--brand-500);
+    border-color: var(--brand-500);
+    color: #fff;
+}
+
+/*
+ * Người bật "giảm chuyển động" vẫn cần thông báo, chỉ là không cần nó
+ * trượt vào. Bootstrap lo phần mờ dần; ở đây chỉ tắt hiệu ứng đổi màu
+ * của nút để không có gì nhấp nháy.
+ */
+@media (prefers-reduced-motion: reduce) {
+    .btn.is-added {
+        transition: none;
+    }
+}

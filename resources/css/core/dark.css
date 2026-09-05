@@ -1,0 +1,228 @@
+/*
+ * CHẾ ĐỘ TỐI — lựa chọn của TỪNG NGƯỜI DÙNG
+ * ============================================================
+ * KHÁC HẲN VỚI THEME THEO MÙA, và đây là điểm cần nắm trước tiên.
+ *
+ *   data-theme  = "Tết / Noel / Valentine"  → CỬA HÀNG chọn, cho mọi khách
+ *   data-scheme = "sáng / tối"              → TỪNG KHÁCH chọn, cho riêng họ
+ *
+ * Hai trục độc lập: theme Tết vẫn phải đọc được ở chế độ tối. Gộp chúng
+ * làm một thì hoặc cửa hàng ép mọi người dùng cùng một độ sáng, hoặc mỗi
+ * người tự tắt được không khí lễ hội mà cửa hàng đang muốn dựng.
+ *
+ * ĐẢO NGƯỢC THANG MÀU THƯƠNG HIỆU, KHÔNG SỬA TỪNG COMPONENT.
+ *
+ * Thang `--brand-50 … --brand-700` đi từ NHẠT tới ĐẬM. Mọi component đã
+ * dùng nó theo đúng nghĩa đó: `--brand-50` cho nền phủ nhẹ khi rê chuột,
+ * `--brand-700` cho chữ đậm trên nền ấy.
+ *
+ * Nên ở chế độ tối chỉ cần ĐẢO THỨ TỰ SÁNG-TỐI của thang mà giữ nguyên
+ * sắc: `--brand-50` thành xanh rất tối (nền phủ nhẹ trên nền đen),
+ * `--brand-700` thành xanh rất nhạt (chữ trên nền ấy). Không component
+ * nào phải sửa, và một component viết sau này cũng tự đúng.
+ *
+ * Cách còn lại — thêm `[data-scheme="toi"]` vào từng tệp component — là
+ * hàng chục chỗ phải nhớ, và chỗ bị quên sẽ là một mảng trắng loá giữa
+ * trang tối.
+ */
+
+:root[data-scheme="toi"] {
+
+    color-scheme: dark;
+
+    /* ============ BRAND — thang màu ĐẢO NGƯỢC ============ */
+
+    /*
+     * 50-200: nền phủ nhẹ. Ở chế độ sáng chúng gần trắng; ở đây chúng
+     * gần đen, vẫn giữ sắc xanh để nút rê chuột không thành xám chết.
+     */
+    --brand-50:  #24332a;
+    --brand-100: #2c3e32;
+    --brand-200: #364c3d;
+
+    /* 300-400: viền và trạng thái nhấn. */
+    --brand-300: #4a7355;
+    --brand-400: #6b9878;
+
+    /*
+     * 500: nền nút chính, LUÔN đi với chữ trắng.
+     * Sáng hơn bản ngày một chút để tách khỏi nền tối, nhưng vẫn đủ tối
+     * cho chữ trắng đọc được.
+     */
+    --brand-500: #3f6b4c;
+
+    /*
+     * 600: trạng thái rê chuột của nút chính — ở chế độ tối phải SÁNG
+     * HƠN 500, không phải tối hơn. Tối hơn thì nút như đang lún vào nền
+     * và người dùng tưởng nó bị vô hiệu hoá.
+     */
+    --brand-600: #4f8060;
+
+    /* 700: chữ đậm trên nền brand-50 tối → phải rất nhạt. */
+    --brand-700: #b5d2ba;
+
+    --brand-500-rgb: 63, 107, 76;
+
+    /* ============ ACCENT — sáng lên để không chìm ============ */
+    --accent-400: #e8a284;
+    --accent-500: #e0876a;
+    --accent-600: #f0a98f;
+    --accent-500-rgb: 224, 135, 106;
+
+    /* ============ NEUTRAL / SURFACE ============ */
+
+    /*
+     * KHÔNG DÙNG ĐEN TUYỆT ĐỐI (#000) — VÀ CŨNG ĐỪNG GẦN ĐEN QUÁ.
+     *
+     * Nền đen thuần với chữ trắng thuần cho độ tương phản cao nhất về lý
+     * thuyết, nhưng đọc lâu thì mỏi mắt: chữ sáng bị "loang" trên nền
+     * đen, và mắt phải liên tục điều tiết giữa hai cực.
+     *
+     * BẢN ĐẦU ĐI QUÁ XA VỀ PHÍA ĐEN. Đo được: nền #121511 có độ sáng
+     * 0,71% và tương phản với chữ là 15,1:1 — trong khi chuẩn AAA chỉ
+     * cần 7:1. Tức là dư gấp đôi mức cần, và phần dư đó không đổi lấy
+     * điều gì ngoài cảm giác gắt.
+     *
+     * Nay nâng lên #1f241d: độ sáng 1,64%, tương phản 13,0:1. Vẫn AAA
+     * với khoảng cách rộng, nhưng nền có sắc rõ ràng thay vì gần như
+     * đen, và các thẻ card tách khỏi nền dễ nhìn hơn.
+     *
+     * Ba mức nền giữ đúng khoảng cách cũ giữa chúng, để phần "nổi khối"
+     * của giao diện không bị dẹt đi.
+     */
+    --surface-page: #1f241d;
+    --surface: #262c24;
+    --surface-alt: #2f362d;
+
+    /*
+     * Chữ cũng KHÔNG trắng tuyệt đối, cùng lý do.
+     */
+    --ink-900: #e7eae4;
+    --ink-700: #c0c6ba;
+    --ink-500: #8f978a;
+
+    /*
+     * Viền ở chế độ tối phải dùng màu SÁNG mờ, không phải màu tối mờ:
+     * viền tối trên nền tối thì biến mất hoàn toàn và mọi thẻ card dính
+     * liền vào nhau thành một mảng.
+     */
+    --border-soft: rgba(198, 216, 200, 0.16);
+    --border-strong: rgba(198, 216, 200, 0.32);
+
+    /* ============ SEMANTIC ============ */
+    --semantic-primary: var(--brand-500);
+    --semantic-primary-rgb: var(--brand-500-rgb);
+    --semantic-success: #4c8050;
+    --semantic-success-rgb: 76, 128, 80;
+    --semantic-danger: #c25a45;
+    --semantic-danger-rgb: 194, 90, 69;
+    --semantic-warning: #c9974b;
+    --semantic-warning-rgb: 201, 151, 75;
+    --semantic-info: #4d7a94;
+    --semantic-info-rgb: 77, 122, 148;
+    --semantic-secondary: #8f978a;
+    --semantic-secondary-rgb: 143, 151, 138;
+
+    /*
+     * `light` là màu NỀN NHẠT trong bảng Bootstrap (badge text-bg-light,
+     * nền phụ). Ở chế độ tối nó phải là một mảng TỐI hơn nền chính, nếu
+     * không mọi huy hiệu "light" sẽ loé trắng giữa trang.
+     */
+    --semantic-light: #333a30;
+    --semantic-light-rgb: 51, 58, 48;
+
+    /* ============ GLASS ============ */
+    --glass-bg: rgba(38, 44, 36, 0.80);
+    --glass-border: rgba(198, 216, 200, 0.12);
+
+    /*
+     * BÓNG ĐỔ phải đậm hơn hẳn bản ngày.
+     *
+     * Bóng ở chế độ sáng là màu tối rất mờ trên nền sáng — nhìn thấy
+     * được nhờ tương phản. Trên nền tối, cùng cái bóng ấy hoàn toàn vô
+     * hình, và mọi thẻ card mất chiều sâu.
+     */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.40);
+    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.55);
+}
+
+/*
+ * Liên kết: KHÔNG để nó tự lấy --brand-600.
+ *
+ * Ở chế độ sáng, brand-600 vừa là màu chữ liên kết vừa là nền nút khi rê
+ * chuột — cả hai đều hợp vì nó là xanh đậm. Ở chế độ tối hai vai trò đó
+ * xung khắc: nền nút cần đủ TỐI để chữ trắng đọc được, còn chữ liên kết
+ * cần đủ SÁNG để đọc trên nền đen. Một giá trị không làm được cả hai.
+ *
+ * Nên tách ra: nút giữ brand-600, liên kết lấy màu riêng.
+ */
+:root[data-scheme="toi"] {
+    --bs-link-color: #8fb89a;
+    --bs-link-hover-color: #b5d2ba;
+}
+
+/*
+ * NHÃN TRẠNG THÁI (status-pill) — nền nhạt + chữ đậm.
+ *
+ * Sáu nhãn này khai màu thẳng bằng mã hex trong components/cart.css vì
+ * chúng là cặp nền-chữ đã cân sẵn, không suy ra được từ thang màu chung.
+ * Chính vì thế chúng KHÔNG tự đổi theo chế độ tối, và nếu bỏ qua thì sáu
+ * mảng phấn màu sẽ loé lên giữa một trang tối.
+ *
+ * Đảo lại đúng nguyên tắc cũ: nền thành sắc đó ở mức rất tối, chữ thành
+ * sắc đó ở mức rất nhạt.
+ */
+:root[data-scheme="toi"] .status-pill--warning   { background: #453823; color: #edcf9c; }
+:root[data-scheme="toi"] .status-pill--info      { background: #273944; color: #a9d4e6; }
+:root[data-scheme="toi"] .status-pill--primary   { background: #283546; color: #b2cbea; }
+:root[data-scheme="toi"] .status-pill--success   { background: #263d2e; color: #a8dab5; }
+:root[data-scheme="toi"] .status-pill--danger    { background: #452924; color: #f0b1a6; }
+:root[data-scheme="toi"] .status-pill--secondary { background: #30362e; color: #bfc5bb; }
+
+/*
+ * ẢNH SẢN PHẨM GIỮ NGUYÊN, KHÔNG LÀM MỜ.
+ *
+ * Một mẹo hay gặp là hạ độ sáng ảnh ở chế độ tối cho "đỡ chói". Ở cửa
+ * hàng bán hoa thì KHÔNG được: màu hoa chính là thứ khách dựa vào để
+ * chọn, và một bó hồng bị giảm sáng 20% là một bó hồng khác màu. Nếu
+ * ảnh chói quá thì đó là vấn đề của nền quanh nó, không phải của ảnh.
+ */
+
+/*
+ * ============================================================
+ * NÚT ĐỔI NỀN SÁNG / TỐI
+ * ============================================================
+ * Xem resources/views/components/site/scheme-toggle.blade.php.
+ *
+ * HAI ICON CÙNG NẰM TRONG DOM, CSS quyết định hiện cái nào theo
+ * [data-scheme] trên <html>. Đổi icon bằng JavaScript thì ở chế độ
+ * không có JS nút sẽ hiện sai biểu tượng mãi mãi.
+ *
+ * Icon hiện ra là CHẾ ĐỘ SẼ CHUYỂN TỚI, không phải chế độ đang dùng:
+ * đang nền sáng thì hiện mặt trăng ("bấm để sang nền tối"). Hiện cái
+ * đang dùng thì nút thành một cái nhãn trạng thái, và người ta không
+ * biết bấm vào sẽ ra gì.
+ */
+.scheme-toggle {
+    display: inline-flex;
+    margin: 0;
+}
+
+.scheme-toggle__icon--toi { display: none; }
+.scheme-toggle__icon--sang { display: none; }
+
+/* Đang nền sáng → mời sang nền tối. */
+:root[data-scheme="sang"] .scheme-toggle__icon--toi { display: inline-block; }
+
+/* Đang nền tối → mời về nền sáng. */
+:root[data-scheme="toi"] .scheme-toggle__icon--sang { display: inline-block; }
+
+/*
+ * Chưa có thuộc tính data-scheme (HTML dựng bởi bản cũ đang nằm trong
+ * bộ nhớ đệm của trình duyệt): coi như nền sáng, hiện mặt trăng. Không
+ * có dòng này thì nút trống trơn — một ô vuông bấm được mà không có
+ * hình gì bên trong.
+ */
+:root:not([data-scheme]) .scheme-toggle__icon--toi { display: inline-block; }

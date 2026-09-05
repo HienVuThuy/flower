@@ -1,0 +1,243 @@
+/*
+ * SEASONAL: valentine — Layer 2 (artwork tĩnh).
+ * Layer 3 (cánh hoa bay) do resources/js/theme/effects/valentine-effect.js.
+ *
+ * Scoped trong [data-theme="valentine"] nên SVG chỉ tải khi bật.
+ *
+ * Tinh thần: lãng mạn nhưng tiết chế — hoa hồng + nơ ruy băng,
+ * KHÔNG rải trái tim khắp trang.
+ */
+
+/* ============ HEADER ============ */
+
+[data-theme="valentine"] .site-header::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 2px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        var(--accent-500) 30%,
+        var(--brand-400) 50%,
+        var(--accent-500) 70%,
+        transparent 100%
+    );
+}
+
+/* ============ HERO: hoa hồng + nơ ============ */
+
+[data-theme="valentine"] .hero-section::before {
+    content: "";
+    position: absolute;
+    top: -10px;
+    right: -6px;
+    width: 190px;
+    height: 150px;
+    background: url("../../images/themes/valentine/rose-corner.svg") no-repeat;
+    background-size: contain;
+    opacity: 0.95;
+    pointer-events: none;
+    z-index: var(--z-decoration);
+}
+
+[data-theme="valentine"] .hero-section::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    left: 2%;
+    width: 112px;
+    height: 88px;
+    background: url("../../images/themes/valentine/ribbon.svg") no-repeat;
+    background-size: contain;
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: var(--z-decoration);
+    animation: valentineRibbonFloat 7s ease-in-out infinite;
+}
+
+/* Trôi lên xuống rất nhẹ — chỉ transform, không animation layout. */
+@keyframes valentineRibbonFloat {
+    0%, 100% { transform: translateY(0) rotate(-3deg); }
+    50%      { transform: translateY(-6px) rotate(-1deg); }
+}
+
+/* ============ BANNER CHIẾN DỊCH ============ */
+
+[data-theme="valentine"] .campaign-banner {
+    background:
+        linear-gradient(120deg, rgba(181, 73, 95, 0.12), transparent 60%),
+        var(--surface-alt);
+    border: 1px solid var(--border-soft);
+}
+
+/* :not(--has-image): khi admin đã tải banner riêng thì không
+   vẽ thêm artwork góc, tránh hai lớp trang trí chồng nhau.
+   Dùng :not() thay vì một quy tắc ghi đè + !important. */
+[data-theme="valentine"] .campaign-banner:not(.campaign-banner--has-image)::before {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: -8px;
+    width: 150px;
+    height: 120px;
+    background: url("../../images/themes/valentine/rose-corner.svg") no-repeat;
+    background-size: contain;
+    transform: scaleX(-1);
+    opacity: 0.95;
+    pointer-events: none;
+}
+
+
+/* ============ CỤM ĐỒ VẬT Ở NỬA DƯỚI HERO ============
+ * Artwork góc nằm ở nửa TRÊN, nên nửa dưới bị trống một bên.
+ * Cụm này lấp phần đó để hai nửa cân nhau.
+ */
+[data-theme="valentine"] .hero-section__copy::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -132px;
+    width: 430px;
+    height: 150px;
+    background: url("../../images/themes/valentine/gift-cluster.svg") no-repeat;
+    background-size: contain;
+    opacity: 0.9;
+    pointer-events: none;
+    z-index: var(--z-decoration);
+}
+
+/* Màn hình thấp/hẹp không đủ chỗ — bỏ để không đè lên nút. */
+@media (max-width: 991.98px), (max-height: 760px) {
+    [data-theme="valentine"] .hero-section__copy::after {
+        display: none;
+    }
+}
+
+
+/* ============ NÚT BẤM & CHỮ THEO THEME ============ */
+
+/* Quầng hồng rất nhạt quanh nút chính — không đổi màu nền nút. */
+[data-theme="valentine"] .btn-primary-brand {
+    box-shadow: 0 0 0 4px rgba(215, 139, 155, 0.22), var(--shadow-sm);
+}
+
+[data-theme="valentine"] .btn-primary-brand:hover {
+    box-shadow: 0 0 0 6px rgba(215, 139, 155, 0.28), var(--shadow-md);
+}
+
+[data-theme="valentine"] .section-header__title::after {
+    content: "";
+    display: block;
+    width: 46px;
+    height: 2px;
+    margin-top: 0.45rem;
+    background: linear-gradient(90deg, var(--accent-500), transparent);
+}
+
+/* ============ KHỐI MỜI BÁO GIÁ SỰ KIỆN ============ */
+
+/*
+ * Chữ và nút của khối này nằm bên TRÁI, nên trang trí đặt bên PHẢI —
+ * không bao giờ đè lên nút "Nhận tư vấn & báo giá".
+ */
+[data-theme="valentine"] .event-banner::before {
+    content: "";
+    position: absolute;
+    top: -18px;
+    right: -14px;
+    width: 190px;
+    height: 146px;
+    background: url("../../images/themes/valentine/rose-corner.svg") no-repeat;
+    background-size: contain;
+    transform: none;
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+/* Dưới 992px khối bị bó hẹp, trang trí sẽ chạm vào chữ — bỏ hẳn. */
+@media (max-width: 991.98px) {
+    [data-theme="valentine"] .event-banner::before {
+        display: none;
+    }
+}
+
+/*
+ * Vật thể thứ hai ở phía ĐỐI DIỆN với artwork góc của banner.
+ * Banner chiến dịch trước đây chỉ có trang trí một bên nên nhìn lệch.
+ * ::after còn trống vì lớp phủ gradient chỉ dùng khi banner có ảnh.
+ */
+[data-theme="valentine"] .campaign-banner:not(.campaign-banner--has-image)::after {
+    content: "";
+    position: absolute;
+    top: 10px;
+    right: 18px;
+    width: 108px;
+    height: 108px;
+    background: url("../../images/themes/valentine/cupid.svg") no-repeat;
+    background-size: contain;
+    transform: none;
+    opacity: 0.85;
+    pointer-events: none;
+}
+
+/* Banner hẹp lại thì chữ chạm vào trang trí — bỏ. */
+@media (max-width: 767.98px) {
+    [data-theme="valentine"] .campaign-banner:not(.campaign-banner--has-image)::after {
+        display: none;
+    }
+}
+
+/* ============ ẢNH NỀN KHÔNG KHÍ ============
+ * Cố định sau toàn bộ nội dung, độ mờ rất thấp để KHÔNG cạnh tranh với
+ * chữ và với các vật thể trang trí ở lớp trên. Chỉ tải khi theme bật —
+ * quy tắc nằm trong [data-theme] nên theme khác không hề fetch ảnh này.
+ */
+[data-theme="valentine"] body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: url("../../images/themes/valentine/bg.jpg") center / cover no-repeat;
+    opacity: 0.20;
+    pointer-events: none;
+}
+
+/* Màn nhỏ thường là mạng yếu và ảnh nền gần như không thấy — bỏ hẳn
+   để không tốn băng thông. */
+@media (max-width: 767.98px) {
+    [data-theme="valentine"] body::before {
+        display: none;
+    }
+}
+
+/* ============ THANH THÔNG BÁO ============ */
+
+[data-theme="valentine"] .announcement-bar {
+    background: linear-gradient(90deg, var(--brand-700), var(--accent-600));
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-theme="valentine"] .hero-section::after {
+        animation: none;
+    }
+}
+
+/*
+ * Dưới 992px hero xếp về MỘT cột nên chữ dâng lên chiếm chỗ của vật
+ * thể treo — phải ẩn từ mốc này, không phải mốc 768px.
+ */
+@media (max-width: 991.98px) {
+    [data-theme="valentine"] .hero-section::after {
+        display: none;
+    }
+}
+
+@media (max-width: 767.98px) {
+
+    [data-theme="valentine"] .hero-section::before {
+        width: 130px;
+        height: 102px;
+        opacity: 0.55;
+    }
+}

@@ -1,0 +1,70 @@
+/*
+ * CATEGORY CARD — ảnh full-bleed + overlay, khác product-card
+ * (product-card ưu tiên hiển thị giá nên tách ảnh khỏi phần chữ;
+ * category-card không có giá nên chữ đặt đè lên ảnh hợp lý hơn).
+ */
+
+.category-card {
+    position: relative;
+    display: block;
+    aspect-ratio: 3 / 4;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--brand-100);
+}
+
+.category-card__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--duration-slow) var(--ease-standard);
+}
+
+.category-card__placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-400);
+}
+
+.category-card__placeholder svg {
+    width: 32%;
+    height: 32%;
+    opacity: 0.6;
+}
+
+.category-card:hover .category-card__image {
+    transform: scale(1.05);
+}
+
+.category-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(15, 23, 18, 0.72), rgba(15, 23, 18, 0.05) 60%);
+}
+
+.category-card__content {
+    position: absolute;
+    z-index: 2;
+    left: var(--space-sm);
+    right: var(--space-sm);
+    bottom: var(--space-sm);
+    color: #fff;
+}
+
+.category-card__title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.category-card__meta {
+    font-size: 0.75rem;
+    letter-spacing: 0.04em;
+    opacity: 0.85;
+}

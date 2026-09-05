@@ -1,0 +1,37 @@
+/*
+ * THEME: noel — Layer 1 (màu sắc/identity).
+ * Layer 2: resources/css/seasonal/noel.css.
+ * Layer 3: resources/js/theme/effects/noel-effect.js (tuyết rơi).
+ */
+
+[data-theme="noel"] {
+    --brand-50:  #eaf0ec;
+    --brand-100: #d3e0d7;
+    --brand-200: #a3c0ab;
+    --brand-300: #71a07d;
+    --brand-400: #457354;
+    --brand-500: #2f4a37;
+    --brand-600: #223829;
+    --brand-700: #17281d;
+    --brand-500-rgb: 47, 74, 55;
+
+    --accent-400: #b8615e;
+    --accent-500: #8a2e2e;
+    --accent-600: #6a2222;
+    --accent-500-rgb: 138, 46, 46;
+
+    --surface-page: #f5f6f2;
+    --surface: #ffffff;
+    --surface-alt: #eceee7;
+    --ink-900: #1a231d;
+    --ink-700: #3c453e;
+    --ink-500: #6c766e;
+    --border-soft: rgba(47, 74, 55, 0.16);
+    --border-strong: rgba(47, 74, 55, 0.3);
+
+    --glass-bg: rgba(255, 255, 255, 0.8);
+
+    --bs-primary: var(--brand-500);
+    --bs-primary-rgb: var(--brand-500-rgb);
+    --bs-body-bg: var(--surface-page);
+}

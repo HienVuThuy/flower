@@ -1,0 +1,263 @@
+/*
+ * PRODUCT CARD — editorial commerce, không phải Bootstrap card.
+ * ============================================================
+ * Ảnh chiếm hierarchy chính (tỷ lệ cố định, object-fit cover).
+ * Metadata nhỏ/tinh tế. Tên rõ. Giá có trọng lượng thị giác mạnh
+ * nhất trong phần chữ. Badge chỉ hiện khi thật cần (sale/hết hàng).
+ * Hover: chỉ scale ảnh rất nhẹ — không bounce/rotate/glow.
+ */
+
+.product-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.product-card__media {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--surface-alt);
+    margin-bottom: var(--space-2xs);
+}
+
+.product-card__image {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    object-fit: cover;
+    transition: transform var(--duration-slow) var(--ease-standard);
+}
+
+.product-card:hover .product-card__image {
+    transform: scale(1.03);
+}
+
+.product-card__quick {
+    position: absolute;
+    left: var(--space-2xs);
+    right: var(--space-2xs);
+    bottom: var(--space-2xs);
+    display: flex;
+    justify-content: center;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity var(--duration-base) var(--ease-standard),
+        transform var(--duration-base) var(--ease-standard);
+}
+
+.product-card:hover .product-card__quick {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.product-card__quick-pill {
+    padding: 0.5rem 1.1rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    color: var(--brand-700);
+    font-size: 0.75rem;
+    font-weight: 700;
+    box-shadow: var(--shadow-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .product-card__quick {
+        transition: none;
+    }
+
+    .product-card__image {
+        transition: none;
+    }
+}
+
+.product-card__placeholder {
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-alt);
+    color: var(--brand-400);
+}
+
+.product-card__placeholder svg {
+    width: 34%;
+    height: 34%;
+    opacity: 0.55;
+}
+
+.product-card__category {
+    font-size: 0.75rem;
+    color: var(--ink-500);
+    margin-bottom: 0.15rem;
+}
+
+.product-card__title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--ink-900);
+    line-height: var(--leading-snug);
+    display: block;
+}
+
+.product-card__title:hover {
+    color: var(--brand-600);
+}
+
+.product-card__price-row {
+    margin-top: auto;
+    padding-top: 0.35rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+}
+
+@media (min-width: 576px) {
+    .product-card__image,
+    .product-card__placeholder {
+        aspect-ratio: 3 / 4;
+    }
+}
+
+/* CTA trên card — chỉ hiện khi rê chuột ở desktop để ảnh và giá
+   vẫn là trọng tâm; trên mobile (không có hover) thì luôn hiện. */
+.product-card__actions {
+    margin-top: 0.5rem;
+}
+
+@media (hover: hover) and (min-width: 768px) {
+    .product-card__actions {
+        opacity: 0;
+        transform: translateY(4px);
+        transition: opacity var(--duration-base) var(--ease-standard),
+            transform var(--duration-base) var(--ease-standard);
+    }
+
+    .product-card:hover .product-card__actions,
+    .product-card:focus-within .product-card__actions {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .product-card__actions {
+        transition: none;
+    }
+}
+
+/*
+ * Lý do gợi ý, đặt dưới thẻ sản phẩm.
+ * Cỡ nhỏ và màu nhạt có chủ đích: đây là chú thích giúp khách hiểu vì
+ * sao thấy sản phẩm này, không được tranh chỗ với tên và giá.
+ */
+.reco-reason {
+    margin: var(--space-2xs) 0 0;
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+    line-height: 1.35;
+}
+
+
+/*
+ * MUA KÈM (cross-sell)
+ * ============================================================
+ * Hàng ngang gọn, ảnh nhỏ. Cố ý KHÔNG dùng .product-card: phụ kiện là
+ * món phụ, để nó cùng cỡ với hàng chính thì khối "mua kèm" tranh mất sự
+ * chú ý với chính thứ khách đang mua.
+ */
+
+.cross-sell {
+    margin-top: var(--space-md);
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-alt);
+}
+
+.cross-sell__head {
+    margin-bottom: 0.75rem;
+}
+
+.cross-sell__note {
+    margin: 0.15rem 0 0;
+    font-size: 0.8rem;
+    color: var(--ink-500);
+}
+
+.cross-sell__list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr));
+    gap: 0.6rem;
+}
+
+.cross-sell__item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+}
+
+.cross-sell__media {
+    flex: 0 0 auto;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--surface-alt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cross-sell__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cross-sell__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.cross-sell__name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--ink-900);
+    text-decoration: none;
+}
+
+.cross-sell__name:hover {
+    color: var(--brand-700);
+}
+
+.cross-sell__desc {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--ink-500);
+    line-height: 1.35;
+    /* Cắt ở dòng thứ hai: mô tả phụ kiện dài ngắn khác nhau, không giới
+       hạn thì các ô trong cùng hàng cao thấp lệch nhau. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.cross-sell__price {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--brand-700);
+}
+
+.cross-sell__action {
+    flex: 0 0 auto;
+}

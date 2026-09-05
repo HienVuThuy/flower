@@ -1,0 +1,117 @@
+<IfModule mod_rewrite.c>
+    <IfModule mod_negotiation.c>
+        Options -MultiViews -Indexes
+    </IfModule>
+
+    RewriteEngine On
+
+    # Handle Authorization Header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+    # Handle X-XSRF-Token Header
+    RewriteCond %{HTTP:x-xsrf-token} .
+    RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+
+    # Redirect Trailing Slashes If Not A Folder...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send Requests To Front Controller...
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^ index.php [L]
+</IfModule>
+
+# ==========================================================
+# BỘ NHỚ ĐỆM CỦA TRÌNH DUYỆT CHO TỆP TĨNH
+# ==========================================================
+# Đo trước khi thêm: KHÔNG có header cache nào. Nghĩa là mỗi lần khách
+# mở một trang khác, trình duyệt tải lại toàn bộ CSS (336 KB), JS
+# (106 KB) và mọi ảnh — dù không có gì đổi.
+#
+# Đặt ở .htaccess chứ không ở middleware của Laravel: những tệp này do
+# Apache phục vụ THẲNG, request không đi qua PHP nên middleware không
+# bao giờ chạm tới được.
+#
+# Bọc trong IfModule để máy chủ thiếu mod_headers vẫn chạy bình thường,
+# chỉ là không có cache — thà mất tối ưu còn hơn lỗi 500.
+<IfModule mod_headers.c>
+
+    # ---------- /build: tên tệp có mã băm ----------
+    #
+    # Vite đặt tên dạng `app-CpFXTyiy.css`: đổi nội dung là đổi luôn tên
+    # tệp. Nên bản trong đệm KHÔNG BAO GIỜ cũ — nếu nội dung đổi, trình
+    # duyệt xin một địa chỉ khác.
+    #
+    # Vì vậy giữ được cả năm, và `immutable` nói với trình duyệt rằng
+    # đừng cả hỏi lại.
+    <FilesMatch "\.(css|js)$">
+        <If "%{REQUEST_URI} =~ m#^/.*build/#">
+            Header set Cache-Control "public, max-age=31536000, immutable"
+        </If>
+    </FilesMatch>
+
+    # ---------- Ảnh và phông ----------
+    #
+    # Ảnh trong /storage KHÔNG có mã băm trong tên: cửa hàng thay ảnh
+    # sản phẩm thì tên giữ nguyên. Nên KHÔNG dùng `immutable` — một tuần
+    # rồi hỏi lại là mức cân bằng: đủ lâu để khách lướt nhiều trang
+    # không tải lại, đủ ngắn để ảnh mới lên trong vài ngày.
+    <FilesMatch "\.(jpg|jpeg|png|gif|webp|avif|svg|ico)$">
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+
+    # Phông chữ do Vite đóng gói nên cũng có mã băm — giữ được cả năm.
+    <FilesMatch "\.(woff2?|ttf|otf|eot)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+
+</IfModule>
+
+# ==========================================================
+# NÉN NỘI DUNG TRƯỚC KHI GỬI
+# ==========================================================
+# ĐO ĐƯỢC TRÊN CHÍNH DỰ ÁN NÀY: toàn bộ CSS + JS + HTML của một trang
+# danh sách là 544 KB khi không nén, còn 100 KB khi bật gzip — giảm 82%
+# mà KHÔNG đụng một dòng mã nào.
+#
+# Riêng tệp CSS: 336 KB → 50 KB. Đó là mục nặng nhất trang, nặng hơn cả
+# JavaScript và phông chữ cộng lại.
+#
+# VÌ SAO ĐÂY LÀ VIỆC ĐÁNG LÀM TRƯỚC việc cắt nhỏ CSS:
+# Gói Bootstrap chiếm phần lớn 336 KB đó. Cắt bớt phần không dùng nghe
+# hấp dẫn, nhưng rủi ro thật: nhiều lớp CSS chỉ xuất hiện khi JavaScript
+# thêm vào lúc chạy (modal, dropdown, toast), nên công cụ quét mã tĩnh
+# không thấy và sẽ cắt nhầm — hỏng âm thầm, chỉ lộ ra khi khách bấm.
+# Nén thì không có rủi ro đó, và đã lấy được 85% phần lợi.
+#
+# KHÔNG NÉN LẠI THỨ ĐÃ NÉN. Ảnh JPEG/PNG/WebP và phông WOFF2 đều đã nén
+# sẵn; nén thêm chỉ tốn CPU mà kích thước gần như không đổi, đôi khi còn
+# to hơn.
+<IfModule mod_deflate.c>
+<IfModule mod_filter.c>
+
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css
+    # text/javascript PHẢI CÓ, và đây là chỗ dễ sót nhất.
+    #
+    # Apache 2.4 gửi tệp .js với kiểu `text/javascript`, KHÔNG phải
+    # `application/javascript`. Liệt kê thiếu nó thì mọi thứ khác được
+    # nén còn JavaScript thì không — đo được: CSS 335→49 KB nhưng JS
+    # vẫn nguyên 105 KB, và nhìn qua bảng tổng thì tưởng đã xong.
+    AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/javascript application/x-javascript
+    AddOutputFilterByType DEFLATE application/json application/xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+
+    # SVG là XML nên nén rất tốt; các định dạng ảnh khác thì không.
+    <IfModule mod_headers.c>
+        # Máy chủ trung gian phải biết bản nén và bản thường là hai thứ
+        # khác nhau, nếu không nó có thể gửi bản nén cho trình duyệt
+        # không hiểu nén.
+        Header append Vary Accept-Encoding
+    </IfModule>
+
+</IfModule>
+</IfModule>

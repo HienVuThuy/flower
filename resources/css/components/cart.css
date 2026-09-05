@@ -1,0 +1,1306 @@
+/*
+ * GIỎ HÀNG & THANH TOÁN
+ * ============================================================
+ * Dùng lại token và các lớp nút sẵn có, không tạo hệ màu riêng.
+ */
+
+/* ============ DÒNG TRONG GIỎ ============ */
+
+.cart-lines {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.cart-line {
+    display: grid;
+    grid-template-columns: 84px 1fr auto auto auto;
+    gap: var(--space-sm);
+    align-items: center;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.cart-line__media {
+    display: block;
+    width: 84px;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface-alt);
+}
+
+.cart-line__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cart-line__name {
+    display: block;
+    font-weight: 700;
+    color: var(--ink-900);
+}
+
+.cart-line__variant,
+.cart-line__unit {
+    font-size: var(--text-body-sm);
+    color: var(--ink-500);
+}
+
+.cart-line__warning {
+    margin: 0.35rem 0 0;
+    font-size: var(--text-caption);
+    color: var(--semantic-danger);
+}
+
+.cart-line__qty {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.cart-line__qty input {
+    width: 4.5rem;
+}
+
+.cart-line__total {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.cart-line__remove {
+    border: 0;
+    background: none;
+    color: var(--ink-500);
+    padding: 0.25rem;
+    line-height: 1;
+}
+
+.cart-line__remove:hover {
+    color: var(--semantic-danger);
+}
+
+/*
+ * Dưới 768px xếp dọc: năm cột chen nhau trên điện thoại làm ô số lượng
+ * bị bóp còn vài chục pixel.
+ */
+@media (max-width: 767.98px) {
+    .cart-line {
+        grid-template-columns: 64px 1fr auto;
+        row-gap: var(--space-2xs);
+    }
+
+    .cart-line__media {
+        width: 64px;
+    }
+
+    .cart-line__body {
+        grid-column: 2 / -1;
+    }
+
+    .cart-line__qty {
+        grid-column: 2;
+    }
+
+    .cart-line__total {
+        grid-column: 3;
+        text-align: right;
+    }
+}
+
+/* ============ TÓM TẮT ĐƠN ============ */
+
+.order-summary {
+    position: sticky;
+    top: calc(var(--space-lg) + 3rem);
+    padding: var(--space-md);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface-alt);
+}
+
+.order-summary__title {
+    margin-bottom: var(--space-sm);
+}
+
+.order-summary__lines {
+    margin: 0 0 var(--space-sm);
+}
+
+.order-summary__row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding-block: 0.4rem;
+}
+
+.order-summary__row dt {
+    font-weight: 400;
+    color: var(--ink-700);
+}
+
+.order-summary__row dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+.order-summary__row--total {
+    border-top: 1px solid var(--border-strong);
+    margin-top: 0.4rem;
+    padding-top: 0.7rem;
+    font-size: 1.125rem;
+}
+
+.order-summary__free {
+    color: #2e6b43;
+    font-weight: 700;
+}
+
+.order-summary__hint {
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+    margin-bottom: var(--space-sm);
+}
+
+/* ============ BA BƯỚC THANH TOÁN ============ */
+
+/*
+ * THANH BƯỚC THANH TOÁN.
+ *
+ * Ba bước chia đều bề ngang và có ĐƯỜNG NỐI giữa các bước, thay vì ba
+ * cụm chữ đứng cạnh nhau như trước. Đường nối là thứ nói cho khách biết
+ * đây là một hành trình có trước có sau, chứ không phải ba lựa chọn.
+ *
+ * Đường kẻ vẽ bằng ::before của từng mục và nằm DƯỚI vòng tròn số
+ * (z-index), nên không cần thêm phần tử rỗng nào trong HTML.
+ */
+.checkout-steps {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin-bottom: var(--space-md);
+    counter-reset: step;
+}
+
+.checkout-steps__item {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    text-align: center;
+    color: var(--ink-500);
+    font-size: var(--text-body-sm);
+}
+
+/* Đường nối: chạy ngang qua tâm vòng tròn. */
+.checkout-steps__item::before {
+    content: "";
+    position: absolute;
+    top: 0.95rem;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: var(--border-soft);
+    z-index: 0;
+}
+
+/* Nửa đường ở hai đầu — không để đường thò ra ngoài bước đầu/cuối. */
+.checkout-steps__item:first-child::before {
+    left: 50%;
+    width: 50%;
+}
+
+.checkout-steps__item:last-child::before {
+    width: 50%;
+}
+
+/* Đoạn dẫn tới bước đã xong thì tô màu thương hiệu. */
+.checkout-steps__item.is-done::before,
+.checkout-steps__item.is-current::before {
+    background: var(--brand-400);
+}
+
+.checkout-steps__number {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    border: 2px solid var(--border-soft);
+    background: var(--surface);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    transition: background-color var(--duration-base) var(--ease-standard),
+        border-color var(--duration-base) var(--ease-standard);
+}
+
+.checkout-steps__label {
+    max-width: 11rem;
+    line-height: 1.3;
+}
+
+.checkout-steps__item.is-current {
+    color: var(--ink-900);
+    font-weight: 600;
+}
+
+.checkout-steps__item.is-current .checkout-steps__number {
+    background: var(--brand-500);
+    border-color: var(--brand-500);
+    color: #fff;
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand-500) 18%, transparent);
+}
+
+.checkout-steps__item.is-done {
+    color: var(--brand-700);
+}
+
+.checkout-steps__item.is-done .checkout-steps__number {
+    background: var(--brand-100);
+    border-color: var(--brand-400);
+    color: var(--brand-700);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .checkout-steps__number {
+        transition: none;
+    }
+}
+
+/* Màn hình hẹp: giấu chữ, chỉ còn vòng tròn — ba nhãn tiếng Việt dài
+   xếp cạnh nhau ở 360px sẽ vỡ thành nhiều dòng lệch nhau. */
+@media (max-width: 575.98px) {
+    .checkout-steps__label {
+        font-size: 0.7rem;
+        max-width: 6rem;
+    }
+}
+
+/* ============ KHUNG FORM THANH TOÁN ============ */
+
+.checkout-panel {
+    padding: var(--space-md);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.checkout-panel__actions {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+}
+
+.checkout-panel__note {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: var(--space-sm);
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+.checkout-review {
+    padding-bottom: var(--space-sm);
+    margin-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.checkout-review:last-of-type {
+    border-bottom: 0;
+}
+
+.checkout-review__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-bottom: 0.5rem;
+}
+
+.checkout-review__body {
+    color: var(--ink-700);
+    line-height: var(--leading-normal);
+}
+
+.checkout-items {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.checkout-items__row {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    padding-block: 0.45rem;
+    border-bottom: 1px dashed var(--border-soft);
+}
+
+.checkout-items__row:last-child {
+    border-bottom: 0;
+}
+
+/* ============ CHỌN HÌNH THỨC THANH TOÁN ============ */
+
+.payment-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+}
+
+.payment-option {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.payment-option:hover {
+    border-color: var(--border-strong);
+}
+
+/*
+ * :has() cho phép tô sáng cả ô khi radio bên trong được chọn mà không
+ * cần thêm một dòng JavaScript nào.
+ */
+.payment-option:has(input:checked) {
+    border-color: var(--brand-500);
+    background: var(--brand-100);
+}
+
+.payment-option__body {
+    display: flex;
+    flex-direction: column;
+}
+
+.payment-option__label {
+    font-weight: 600;
+}
+
+.payment-option__hint {
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+/* ============ ĐƠN HÀNG ============ */
+
+.order-success {
+    text-align: center;
+    padding: var(--space-lg) var(--space-md);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-xl);
+    background: var(--surface-alt);
+}
+
+.order-success__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--brand-500);
+    margin-bottom: var(--space-2xs);
+}
+
+.order-item__promo {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-alt);
+    color: var(--accent-600);
+    font-size: var(--text-caption);
+}
+
+.order-history {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+}
+
+.order-history__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: inherit;
+}
+
+.order-history__row:hover {
+    border-color: var(--brand-400);
+}
+
+.order-history__main {
+    flex: 1;
+    min-width: 0;
+}
+
+.order-history__number {
+    font-weight: 700;
+}
+
+.order-history__meta {
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+.order-history__total {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ============ BADGE SỐ LƯỢNG TRÊN ICON GIỎ ============ */
+
+.btn-icon--cart {
+    position: relative;
+}
+
+.btn-icon__badge {
+    position: absolute;
+    top: -2px;
+    right: -4px;
+    min-width: 1.05rem;
+    height: 1.05rem;
+    padding-inline: 0.25rem;
+    border-radius: var(--radius-pill);
+    background: var(--accent-500);
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1.05rem;
+    text-align: center;
+}
+
+/*
+ * Hai nút mua hàng nay nằm trong form riêng. display:contents để form
+ * không tự tạo một hộp mới phá bố cục hàng ngang của cụm nút.
+ */
+.product-actions__form {
+    display: contents;
+}
+
+/* ============ NHÃN TRẠNG THÁI ============ */
+
+.status-pill {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-caption);
+    font-weight: 700;
+}
+
+.status-pill--warning { background: #fdf1d8; color: #8a6316; }
+.status-pill--info { background: #e2eef3; color: #245c6e; }
+.status-pill--primary { background: #e3ecf7; color: #27496d; }
+.status-pill--success { background: #e3f0e7; color: #2e6b43; }
+.status-pill--danger { background: #fbe6e4; color: #8f2018; }
+.status-pill--secondary { background: #eceeed; color: #55605a; }
+
+/* Số lượng món trong dòng "Tạm tính" — phụ, không cạnh tranh với nhãn */
+.order-summary__count {
+    color: var(--ink-500);
+    font-size: var(--text-caption);
+}
+
+.order-summary__row--discount dd {
+    color: var(--accent-600);
+}
+
+/* Nhấn phần khách tiết kiệm được — thông tin tích cực, tách khỏi bảng số */
+.order-summary__saved {
+    margin-bottom: var(--space-2xs);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-sm);
+    background: var(--brand-100);
+    color: var(--brand-700);
+    font-size: var(--text-body-sm);
+}
+
+/* ============ DÒNG HÀNG Ở BƯỚC XÁC NHẬN ============
+ * Có ảnh và đơn giá để khách nhận ra đúng món trước khi đặt.
+ */
+.checkout-items--detailed .checkout-items__row {
+    display: grid;
+    grid-template-columns: 56px 1fr auto;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+.checkout-items__thumb {
+    width: 56px;
+    aspect-ratio: 1;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--surface-alt);
+    display: grid;
+    place-items: center;
+}
+
+.checkout-items__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.checkout-items__info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.checkout-items__name {
+    font-weight: 600;
+}
+
+.checkout-items__meta {
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+.checkout-items__promo {
+    align-self: flex-start;
+    margin-top: 0.15rem;
+    padding: 0.05rem 0.45rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-alt);
+    color: var(--accent-600);
+    font-size: var(--text-caption);
+}
+
+.checkout-items__amount {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* ============ SỔ ĐỊA CHỈ ============ */
+
+.address-picker {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-sm);
+}
+
+.address-option,
+.address-card {
+    display: flex;
+    gap: 0.75rem;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.address-option {
+    cursor: pointer;
+}
+
+.address-option:hover {
+    border-color: var(--border-strong);
+}
+
+/* Cùng cách làm với ô chọn hình thức thanh toán: :has() thay cho JS. */
+.address-option:has(input:checked) {
+    border-color: var(--brand-500);
+    background: var(--brand-100);
+}
+
+.address-option__body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.address-option__head,
+.address-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.address-option__line,
+.address-card__line {
+    font-size: var(--text-body-sm);
+    color: var(--ink-700);
+}
+
+.address-option__tag {
+    padding: 0.05rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-alt);
+    color: var(--ink-500);
+    font-size: var(--text-caption);
+    font-weight: 600;
+}
+
+.address-option__tag--default {
+    background: var(--brand-100);
+    color: var(--brand-700);
+}
+
+.address-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+}
+
+.address-card {
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.address-card.is-default {
+    border-color: var(--brand-400);
+}
+
+.address-card__body {
+    flex: 1;
+    min-width: 0;
+}
+
+.address-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+/* Chọn loại địa chỉ: nhà riêng / văn phòng */
+.address-label-option {
+    padding: 0.35rem 0.9rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-size: var(--text-body-sm);
+}
+
+.address-label-option:has(input:checked) {
+    border-color: var(--brand-500);
+    background: var(--brand-100);
+    color: var(--brand-700);
+    font-weight: 600;
+}
+
+/* ============ Ô NHẬP MÃ GIẢM GIÁ ============ */
+
+.coupon-box__input {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.coupon-box__input input {
+    flex: 1;
+    min-width: 0;
+    text-transform: uppercase;
+}
+
+.coupon-box__applied {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-bottom: 0.5rem;
+    padding: var(--space-sm);
+    border: 1px solid var(--brand-400);
+    border-radius: var(--radius-md);
+    background: var(--brand-100);
+}
+
+.coupon-box__applied-code {
+    display: grid;
+    gap: 0.1rem;
+    min-width: 0;
+    font-size: var(--text-body-sm);
+}
+
+/* Mã dài không được đẩy nút "Bỏ mã" ra khỏi khung. */
+.coupon-box__applied-code strong {
+    overflow-wrap: anywhere;
+}
+
+.coupon-box__auto {
+    margin: 0.5rem 0 0;
+    font-size: 0.75rem;
+    color: var(--ink-500);
+}
+
+/*
+ * Nút trông như link.
+ *
+ * PHẢI LÀ <button>, không phải <a>: nó gửi biểu mẫu (bật lại tự chọn mã)
+ * chứ không dẫn đi đâu. Dùng thẻ <a> cho một hành động là nói dối trình
+ * đọc màn hình và làm hỏng cả việc mở bằng chuột giữa.
+ */
+.btn-link-inline {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--brand-600, var(--brand-400));
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.order-success__note {
+    margin-top: var(--space-2xs);
+    font-size: var(--text-body-sm);
+    color: var(--ink-500);
+}
+
+/* Khối huỷ đơn nằm cuối cột trạng thái, tách khỏi các nút điều hướng. */
+.order-cancel {
+    margin-bottom: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-soft);
+}
+
+/* ============ TÓM TẮT HỒ SƠ TÀI KHOẢN ============ */
+
+.profile-summary {
+    margin: 0 0 var(--space-sm) 0;
+}
+
+.profile-summary__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-sm);
+    padding: var(--space-2xs) 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.profile-summary__row:last-child {
+    border-bottom: 0;
+}
+
+.profile-summary__row dt {
+    color: var(--ink-500);
+    font-weight: 400;
+}
+
+.profile-summary__row dd {
+    margin: 0;
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+.profile-summary__links {
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px solid var(--border-soft);
+}
+
+/* ============ BẢNG GHI CÔNG ẢNH ============ */
+
+.credits-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--text-body-sm);
+}
+
+.credits-table th,
+.credits-table td {
+    padding: 0.55rem 0.75rem 0.55rem 0;
+    text-align: start;
+    vertical-align: top;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.credits-table th {
+    font-weight: 600;
+    color: var(--ink-500);
+    white-space: nowrap;
+}
+
+.credits-table tr:last-child td {
+    border-bottom: 0;
+}
+
+/* Nơi ảnh được dùng — phụ chú, không tranh chỗ với tiêu đề ảnh. */
+.credits-table__use {
+    display: block;
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+
+/*
+ * THIẾT BỊ ĐANG ĐĂNG NHẬP (trang Hồ sơ tài khoản)
+ * ============================================================
+ * Danh sách phiên đăng nhập. Mỗi dòng: mô tả thiết bị + IP + lần hoạt
+ * động cuối, và nút đăng xuất cho mọi thiết bị TRỪ thiết bị đang dùng.
+ *
+ * Thiết bị hiện tại được tô nền riêng chứ không chỉ gắn nhãn chữ. Đây là
+ * màn hình người ta vào khi đang lo lắng, nên "cái nào là mình" phải nhận
+ * ra được bằng mắt trước khi kịp đọc.
+ */
+
+.session-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.session-list__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.7rem 0.75rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+}
+
+.session-list__item + .session-list__item {
+    margin-top: 0.5rem;
+}
+
+.session-list__item.is-current {
+    border-color: var(--brand-400);
+    background: color-mix(in srgb, var(--brand-400) 7%, var(--surface));
+}
+
+.session-list__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.session-list__device {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink-900);
+}
+
+.session-list__badge {
+    display: inline-block;
+    margin-inline-start: 0.35rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: var(--radius-pill);
+    background: var(--brand-400);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
+.session-list__meta {
+    font-size: 0.78rem;
+    color: var(--ink-500);
+}
+
+/*
+ * Trên màn hình hẹp cho xuống hai dòng.
+ * Chuỗi "IP ... · hoạt động lúc ..." dài hơn nửa màn hình điện thoại,
+ * để cùng hàng với nút thì nút bị bóp còn vài chục pixel.
+ */
+@media (max-width: 420px) {
+    .session-list__item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+
+/*
+ * LỊCH CHĂM CÂY
+ * ============================================================
+ * Danh sách việc cần làm, sắp theo mức cấp bách (quá hạn lên đầu). Mỗi
+ * dòng: biểu tượng việc, tên cây, thời hạn, và hai nút.
+ *
+ * Dòng đã TẮT làm nhạt nhưng vẫn hiện đủ — ẩn đi thì khách không có
+ * đường bật lại, mà đó đúng là thứ họ sẽ cần khi mua lại cây đó.
+ */
+
+.care-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.care-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+}
+
+.care-item.is-off {
+    opacity: 0.55;
+}
+
+.care-item__icon {
+    flex: 0 0 auto;
+    width: 1.15rem;
+    height: 1.15rem;
+    color: var(--brand-400);
+}
+
+.care-item__body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.care-item__title {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--ink-900);
+    line-height: 1.3;
+}
+
+.care-item__meta {
+    margin: 0.1rem 0 0;
+    font-size: 0.78rem;
+    color: var(--ink-500);
+}
+
+/* Quá hạn và đến hạn hôm nay là VIỆC ĐANG TRỄ, không phải thông tin
+   tham khảo — phải bắt mắt hơn phần còn lại của dòng. */
+.care-item__late {
+    color: var(--semantic-danger);
+    font-weight: 700;
+}
+
+.care-item__today {
+    color: var(--semantic-warning);
+    font-weight: 700;
+}
+
+.care-item__actions {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 520px) {
+    .care-item {
+        flex-wrap: wrap;
+    }
+
+    .care-item__actions {
+        width: 100%;
+    }
+}
+
+
+/*
+ * CHỌN MÓN TRONG GIỎ ĐỂ THANH TOÁN
+ * ============================================================
+ * Thanh điều khiển đặt TRÊN danh sách hàng, không phải dưới: nó nói cho
+ * khách biết luật chơi ("chỉ món được tích mới thanh toán") trước khi họ
+ * bắt đầu tích, chứ không phải sau.
+ */
+
+.cart-select {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.6rem 0.85rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: var(--surface-alt);
+}
+
+.cart-select__all {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink-900);
+    cursor: pointer;
+    margin: 0;
+}
+
+.cart-select__count {
+    font-size: 0.82rem;
+    color: var(--ink-500);
+    margin-inline-start: auto;
+}
+
+/*
+ * ĐANG GỬI — làm mờ CẢ KHỐI GIỎ, không chỉ hàng nút chọn.
+ *
+ * Từ khi trang giỏ sửa được mà không tải lại (resources/js/cart-live.js),
+ * mọi thao tác đều làm đổi những con số ở khối tính tiền bên phải. Chỉ
+ * làm mờ hàng ô đánh dấu thì phần tiền vẫn hiện rõ ràng con số CŨ trong
+ * lúc máy chủ đang tính con số mới — nhìn như đã xong nhưng sai.
+ *
+ * `pointer-events: none` để cú bấm thứ hai trong lúc chờ không vào được;
+ * cart-live.js cũng khoá ở phía JavaScript, đây là lớp thứ hai cho
+ * trường hợp khối bị thay ngay giữa lúc bấm.
+ *
+ * Chuyển màu nhanh (120ms) chứ không tức thì: nháy đục rồi trong lại
+ * ngay khi mạng nhanh trông như trang bị giật.
+ */
+[data-cart-live].is-sending {
+    opacity: 0.6;
+    pointer-events: none;
+    transition: opacity 120ms ease-out;
+}
+
+.cart-line__pick {
+    display: flex;
+    align-items: center;
+    /* Đặt trước ảnh sản phẩm, không chiếm chiều cao riêng. */
+    flex: 0 0 auto;
+}
+
+/*
+ * Dòng KHÔNG được chọn: làm mờ nhưng vẫn đọc được.
+ *
+ * Đây là hàng khách CỐ Ý để lại, không phải hàng bị lỗi. Làm mờ quá tay
+ * hoặc gạch ngang sẽ đọc như "món này có vấn đề". Mức 0.55 đủ để phân
+ * biệt ngay bằng mắt mà vẫn xem được tên và giá.
+ */
+.cart-line.is-unselected {
+    opacity: 0.55;
+}
+
+
+/*
+ * DANH SÁCH TỪNG MÓN TRONG TÓM TẮT ĐƠN
+ * ============================================================
+ * Chỉ hiện ở bước thanh toán (xem prop `itemized`). Mỗi dòng ghi đủ tên,
+ * số lượng, đơn giá và thành tiền — chỉ ghi thành tiền thì khách không
+ * kiểm tra được đơn giá có đúng với giá đã thấy trên trang sản phẩm.
+ */
+
+.order-summary__items {
+    list-style: none;
+    margin: 0 0 var(--space-sm);
+    padding: 0 0 var(--space-sm);
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.order-summary__item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding-block: 0.4rem;
+}
+
+.order-summary__item + .order-summary__item {
+    border-top: 1px dashed var(--border-soft);
+}
+
+.order-summary__item-main {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.order-summary__item-name {
+    display: block;
+    font-size: 0.86rem;
+    font-weight: 500;
+    color: var(--ink-900);
+    line-height: 1.35;
+}
+
+.order-summary__item-variant {
+    /* Quy cách đi liền tên nhưng nhạt hơn: nó bổ nghĩa cho tên, không
+       phải một dòng riêng. */
+    color: var(--ink-500);
+    font-weight: 400;
+}
+
+.order-summary__item-calc {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.76rem;
+    color: var(--ink-500);
+}
+
+.order-summary__item-total {
+    flex: 0 0 auto;
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--ink-900);
+    white-space: nowrap;
+}
+
+
+/*
+ * TRANG THÔNG TIN & THANH TOÁN
+ * ============================================================
+ * Ba khối có đánh số ở cột trái, mã giảm giá + bảng tiền ở cột phải.
+ *
+ * Trước khi chia khối, cột trái là một biểu mẫu liền mạch cao 1184px với
+ * bốn tiêu đề trôi nổi — khách cuộn qua mà không biết còn bao nhiêu việc
+ * nữa mới xong. Số thứ tự trả lời đúng câu đó.
+ */
+
+.checkout-step {
+    padding: var(--space-sm) var(--space-md) var(--space-md);
+    margin-bottom: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.checkout-step__title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0 0 var(--space-sm);
+    font-size: var(--text-h4);
+    font-weight: 700;
+    color: var(--ink-900);
+}
+
+/*
+ * Số thứ tự trong vòng tròn. Dùng thẻ <span> có sẵn chứ không dùng
+ * CSS counter: counter đếm theo thứ tự xuất hiện trong DOM, mà khối địa
+ * chỉ có thể ẩn/hiện tuỳ khách đã đăng nhập hay chưa — số sẽ nhảy.
+ */
+.checkout-step__num {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--brand-600);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/*
+ * "không bắt buộc" — nói ngay ở tiêu đề.
+ * Khách nhìn thấy thì lướt qua được mà không áy náy, thay vì dừng lại
+ * nghĩ xem có phải điền không.
+ */
+.checkout-step__optional {
+    margin-inline-start: auto;
+    padding: 0.1rem 0.5rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-alt);
+    color: var(--ink-500);
+    font-size: 0.72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.checkout-step__lead {
+    margin: 0 0 0.75rem;
+    font-size: 0.88rem;
+    color: var(--ink-500);
+}
+
+/* ---------- cột phải ---------- */
+
+.checkout-aside {
+    position: sticky;
+    top: calc(var(--space-md) + 3rem);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.checkout-coupon {
+    padding: var(--space-sm) var(--space-md);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+}
+
+.checkout-coupon__title {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin: 0 0 0.6rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink-900);
+}
+
+.checkout-coupon__icon {
+    width: 1rem;
+    height: 1rem;
+    color: var(--brand-600);
+}
+
+@media (max-width: 991.98px) {
+    /* Hai cột xếp chồng thì không còn gì để dính vào. */
+    .checkout-aside {
+        position: static;
+    }
+}
+
+/*
+ * ---------- THANH TỔNG TIỀN DÍNH ĐÁY (chỉ điện thoại) ----------
+ *
+ * Trên màn hình rộng, bảng tóm tắt ở cột phải luôn nhìn thấy được. Trên
+ * điện thoại hai cột xếp chồng: biểu mẫu trước, tóm tắt sau — nghĩa là
+ * nút gửi nằm TRÊN bảng tiền, và khách bấm "Xem lại đơn hàng" trước khi
+ * kịp nhìn thấy mình phải trả bao nhiêu.
+ */
+.checkout-bar {
+    display: none;
+}
+
+@media (max-width: 991.98px) {
+    .checkout-bar {
+        position: fixed;
+        inset-inline: 0;
+        bottom: 0;
+        z-index: var(--z-nav);
+
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-sm);
+        padding: 0.6rem var(--space-sm);
+        /* Chừa chỗ cho thanh điều hướng của iOS/Android. */
+        padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+
+        border-top: 1px solid var(--border-soft);
+        background: var(--surface);
+        box-shadow: 0 -4px 16px rgba(30, 35, 30, 0.1);
+    }
+
+    .checkout-bar__label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--ink-500);
+    }
+
+    .checkout-bar__amount {
+        font-size: 1.1rem;
+        color: var(--brand-700);
+    }
+
+    /*
+     * Chừa chỗ cho thanh dính đáy, nếu không nó che mất nút cuối trang.
+     * Đặt trên .checkout-layout chứ không trên body: chỉ trang này có
+     * thanh đó.
+     */
+    .checkout-layout {
+        padding-bottom: 4.5rem;
+    }
+}

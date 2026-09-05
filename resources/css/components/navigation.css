@@ -1,0 +1,454 @@
+/*
+ * NAVIGATION — header công khai.
+ * ============================================================
+ * Nền đục nhẹ (không phải kính mờ mặc định) khi ở đầu trang, và
+ * chuyển sang nổi/kính mờ CHỈ khi cuộn (accent có chọn lọc, đúng
+ * vai trò "floating navigation" mà glassmorphism nên dùng).
+ */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-nav);
+    background: var(--surface-page);
+    border-bottom: 1px solid transparent;
+    transition: background-color var(--duration-base) var(--ease-standard),
+        border-color var(--duration-base) var(--ease-standard),
+        box-shadow var(--duration-base) var(--ease-standard);
+}
+
+.site-header.is-scrolled {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    border-bottom-color: var(--border-soft);
+    box-shadow: var(--shadow-sm);
+}
+
+.site-header__bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding-block: 0.85rem;
+}
+
+.site-header__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--ink-900);
+    min-width: 0;
+
+    /*
+     * Khoảng hở TỐI THIỂU với menu bên cạnh.
+     *
+     * `gap` của thanh header có thể bị nuốt khi chỗ chật, và khi ấy chữ
+     * của logo chạm sát chữ đầu tiên của menu. Padding thì không bị
+     * thương lượng, nên nó là đường biên cuối cùng.
+     */
+    padding-right: var(--space-2xs);
+
+    /*
+     * MÀN HÌNH RỘNG THÌ GIỮ NGUYÊN BỀ NGANG TỰ NHIÊN.
+     *
+     * `.site-header__nav` có `flex: 1` nên nó giành hết chỗ trống, và
+     * `min-width: 0` ở trên cho phép khối logo bị ép nhỏ tuỳ ý. Kết quả
+     * đo được sau khi mới sửa phần tràn chữ: tên thương hiệu bị cắt
+     * thành "Flower ..." ngay ở khổ 1280px — trong khi thanh header còn
+     * thừa chỗ.
+     *
+     * Cắt chữ là giải pháp cho màn hình HẸP, không phải cho màn hình
+     * rộng. `flex-shrink: 0` ở đây nói: chỗ chật thì lấy của thằng khác,
+     * đừng lấy của tên cửa hàng.
+     */
+    flex-shrink: 0;
+    /*
+     * KHÔNG đặt line-height chung ở đây nữa.
+     *
+     * line-height: 1.15 áp cho cả hai dòng làm hộp dòng của tagline bắt
+     * đầu ĐÚNG TẠI điểm dòng tên kết thúc — đo được khoảng hở bằng 0px.
+     * Chữ Latin thì còn qua được, nhưng "QUÀ TẶNG" có dấu huyền phía
+     * trên chữ À và dấu nặng phía dưới chữ Ặ, nên hai dòng dính vào
+     * nhau. Mỗi dòng nay tự khai chiều cao hợp với dấu tiếng Việt.
+     */
+}
+
+/*
+ * KHỐI CHỮ PHẢI CO ĐƯỢC, nếu không hai dòng bên trong tràn ra ngoài.
+ *
+ * Flex item mặc định có `min-width: auto`, nghĩa là nó KHÔNG chịu hẹp
+ * hơn nội dung. Dòng phụ dài hơn khối logo thì nó cứ đẩy rộng ra, và vì
+ * `.site-header__nav` nằm ngay bên phải nên chữ đè lên nhau.
+ *
+ * Đo được ở 1280px trước khi sửa: khối logo rộng 117px, nhưng dòng phụ
+ * kết thúc ở 204px — tràn 71px, và đè lên chữ "Trang chủ" (bắt đầu ở
+ * 165px) đúng 40px.
+ *
+ * `min-width: 0` cho phép nó hẹp lại, và khi ấy `text-overflow: ellipsis`
+ * bên dưới mới có việc để làm.
+ */
+.site-header__brand-text {
+    display: block;
+    min-width: 0;
+}
+
+.site-header__brand-name,
+.site-header__brand-tagline {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.site-header__brand svg {
+    width: 1.7rem;
+    height: 1.7rem;
+    color: var(--brand-600);
+    flex-shrink: 0;
+}
+
+.site-header__brand-name {
+    display: block;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+    line-height: 1.25;
+}
+
+.site-header__brand-tagline {
+    display: block;
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-500);
+    /* 1.45 chứ không phải 1.15: chừa chỗ cho dấu thanh nằm trên chữ hoa. */
+    line-height: 1.45;
+    margin-top: 0.1rem;
+}
+
+/*
+ * Máy hẹp thì bỏ dòng phụ đi.
+ *
+ * Đo ở 320px: khối logo bị ép còn 67px trong khi dòng tagline cần 151px,
+ * và nút "Đăng ký" bị cắt mất một nửa. Bỏ dòng này trả lại chỗ cho nút.
+ *
+ * QUY TẮC PHẢI ĐỨNG Ở ĐÂY, KHÔNG ĐƯỢC ĐẶT TRƯỚC KHỐI TRÊN.
+ * Trước đây nó nằm phía trên `display: block` nên KHÔNG BAO GIỜ có tác
+ * dụng: media query không cộng thêm độ ưu tiên, hai quy tắc cùng hạng
+ * thì quy tắc viết sau thắng. Chính trình duyệt đã xác nhận điều này —
+ * getComputedStyle ở 375px vẫn trả về "block".
+ */
+@media (max-width: 420px) {
+    .site-header__brand-tagline {
+        display: none;
+    }
+}
+
+/*
+ * Dưới 992px thì CHO PHÉP co lại.
+ *
+ * Ở khổ đó menu ngang đã ẩn đi và thanh header chỉ còn logo + vài nút,
+ * nhưng ô tìm kiếm và nút "Đăng ký" vẫn cần chỗ. Giữ cứng bề ngang logo
+ * ở đây là đẩy nút ra ngoài mép màn hình — đúng lỗi đã gặp ở 320px.
+ *
+ * Khi ấy `text-overflow: ellipsis` mới đúng việc: thà cắt tên cửa hàng
+ * còn hơn cắt nút bấm.
+ */
+/*
+ * Đồng bộ với điểm ngắt mới của thanh điều hướng (1200px).
+ *
+ * Trên 1200px thì menu ngang hiện đủ và logo phải giữ nguyên bề ngang —
+ * để nó co lại thì tên cửa hàng bị cắt thành "Flower ..." trong khi
+ * thanh còn thừa chỗ. Dưới 1200px menu đã thu vào ngăn kéo, và lúc đó
+ * thà cắt tên cửa hàng còn hơn đẩy nút bấm ra ngoài mép màn hình.
+ */
+@media (max-width: 1199.98px) {
+    .site-header__brand {
+        flex-shrink: 1;
+    }
+}
+
+.site-header__nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex: 1;
+    /*
+     * Chừa thêm chỗ giữa logo và menu.
+     *
+     * Khoảng cách cũ chỉ do `gap` của .site-header__bar (16px), đo
+     * chữ-tới-chữ được 28px. Nghe thì đủ, nhưng dòng tagline có
+     * letter-spacing: 0.14em nên chữ "TẶNG" vươn sát ra mép phải và
+     * dính vào "Danh mục". Cộng thêm 1rem ở đây thay vì tăng `gap` của
+     * cả thanh, để khoảng cách sang cụm nút bên phải giữ nguyên.
+     */
+    margin-left: 1rem;
+}
+
+.site-header__link {
+    position: relative;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--ink-700);
+    /*
+     * Không cho chữ tự xuống dòng. Thiếu dòng này, khi đăng nhập và
+     * "Đơn hàng"/"Sổ địa chỉ"/"Yêu thích" cùng hiện, flex co hẹp
+     * .site-header__nav xuống dưới độ rộng tự nhiên của nó — các nút
+     * .btn bên cạnh không vỡ chữ vì Bootstrap đã đặt white-space:nowrap
+     * cho .btn, còn link ở đây thì không, nên "Danh mục" tách thành
+     * "Danh" / "mục" trên hai dòng.
+     */
+    white-space: nowrap;
+}
+
+.site-header__link::after {
+    content: "";
+    position: absolute;
+    left: 0.75rem;
+    right: 100%;
+    bottom: 0.25rem;
+    height: 1px;
+    background: var(--brand-600);
+    transition: right var(--duration-base) var(--ease-standard);
+}
+
+.site-header__link:hover,
+.site-header__link.is-active {
+    color: var(--brand-700);
+}
+
+.site-header__link:hover::after,
+.site-header__link.is-active::after {
+    right: 0.75rem;
+}
+
+.site-header__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background: var(--brand-100);
+    color: var(--brand-700);
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+/*
+ * Menu tài khoản dựng trên <details> (xem chú thích trong header.blade).
+ * position: relative để bảng menu neo vào đúng nút, không đẩy layout.
+ */
+.site-header__account {
+    position: relative;
+}
+
+/*
+ * <summary> mặc định có tam giác nhỏ và hành xử như list-item.
+ * Cả hai đều phải bỏ, nếu không nút tài khoản sẽ có một mũi tên đen
+ * thò ra bên trái.
+ */
+.site-header__user {
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.3rem 0.6rem 0.3rem 0.3rem;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border-soft);
+    background: var(--surface);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--ink-700);
+    cursor: pointer;
+}
+
+.site-header__user::-webkit-details-marker {
+    display: none;
+}
+
+.site-header__user:hover,
+.site-header__account[open] > .site-header__user {
+    border-color: var(--brand-400);
+    color: var(--brand-700);
+}
+
+.site-header__user-caret {
+    font-size: 0.7rem;
+    opacity: 0.6;
+    transition: transform var(--duration-base) var(--ease-standard);
+}
+
+.site-header__account[open] .site-header__user-caret {
+    transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .site-header__user-caret {
+        transition: none;
+    }
+}
+
+.site-header__menu {
+    /* Bootstrap không còn định vị hộ nữa, tự neo dưới nút và canh phải. */
+    position: absolute;
+    inset-inline-end: 0;
+    top: calc(100% + 0.4rem);
+    z-index: var(--z-nav);
+    min-width: 15rem;
+    padding: 0.35rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    background: var(--surface);
+}
+
+.site-header__menu-name {
+    padding: 0.5rem 0.65rem 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ink-900);
+    line-height: 1.3;
+}
+
+.site-header__menu-name span {
+    display: block;
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: var(--ink-500);
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.site-header__menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0.5rem 0.65rem;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: none;
+    font-size: 0.875rem;
+    color: var(--ink-700);
+    text-align: start;
+}
+
+.site-header__menu .dropdown-item:hover,
+.site-header__menu .dropdown-item:focus {
+    background: var(--brand-50);
+    color: var(--brand-700);
+}
+
+.site-header__menu .dropdown-item svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.site-header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.site-header__toggle {
+    display: none;
+}
+
+/*
+ * ĐIỂM NGẮT CỦA THANH ĐIỀU HƯỚNG: 1200px, KHÔNG PHẢI 992px.
+ * ============================================================
+ * LỖI ĐÃ SỬA — thanh đầu trang TRÀN RA NGOÀI màn hình ở dải 992–1200px.
+ *
+ * Đo được ở khổ 1024×800:
+ *
+ *     chỗ có           977px
+ *     logo             186px  (flex-shrink: 0)
+ *     menu ngang       513px  (5 mục + menu "Khác")
+ *     cụm bên phải     510px  (tìm kiếm 260 + 3 nút + tài khoản 150)
+ *     ------------------------------------------------------
+ *     tổng           1.209px  -> tràn 279px, cả trang có thanh cuộn ngang
+ *
+ * Không có gì co lại được: logo khai `flex-shrink: 0`, ô tìm kiếm có bề
+ * ngang cố định 260px, còn menu ngang thì `min-width: auto` giữ nó không
+ * hẹp hơn nội dung.
+ *
+ * Siết từng thứ một (thu ô tìm kiếm, bỏ chữ ở nút) chỉ tiết kiệm được
+ * vài chục pixel trong khi cần hơn 270 — và mỗi lần siết là một thứ khó
+ * bấm hơn. Vấn đề thật là ĐIỂM NGẮT ĐẶT SAI: giao diện ngang được thiết
+ * kế cho màn rộng nhưng lại bật lên từ 992px, chỗ nó chưa bao giờ vừa.
+ *
+ * Từ 1200px trở xuống dùng ngăn kéo — thứ đã có sẵn và đang chạy tốt ở
+ * khổ điện thoại.
+ */
+@media (max-width: 1199.98px) {
+    .site-header__nav {
+        display: none;
+    }
+
+    .site-header__toggle {
+        display: inline-flex;
+    }
+}
+
+/* Mobile drawer */
+.mobile-drawer .offcanvas-body {
+    background: var(--surface-page);
+}
+
+.mobile-drawer .site-header__link {
+    display: block;
+    padding: 0.75rem 0.25rem;
+}
+
+
+/*
+ * MENU "KHÁC" TRÊN THANH ĐIỀU HƯỚNG
+ * ============================================================
+ * Gom hai mục ít dùng nhất (Phụ kiện & vật tư, Sự kiện & số lượng lớn)
+ * cùng với Voucher vào một chỗ. Xem ghi chú trong header.blade.php về
+ * việc vì sao chỉ gom hai mục này chứ không gom hết.
+ *
+ * Dùng lại .site-header__menu của menu tài khoản: hai menu trông giống
+ * hệt nhau là đúng — người dùng chỉ phải học một lần.
+ */
+
+.site-header__more {
+    position: relative;
+}
+
+.site-header__more-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    list-style: none;
+    cursor: pointer;
+}
+
+.site-header__more-toggle::-webkit-details-marker {
+    display: none;
+}
+
+.site-header__more[open] .site-header__user-caret {
+    transform: rotate(180deg);
+}
+
+/* Menu thả xuống ở đây neo mép TRÁI (menu tài khoản neo mép phải): nó
+   nằm giữa thanh, canh phải sẽ đẩy hộp ra khỏi chỗ nút. */
+.site-header__more .site-header__menu {
+    inset-inline-start: 0;
+    inset-inline-end: auto;
+}
+
+/*
+ * Menu "Khác" tự sáng khi trang hiện tại nằm bên trong.
+ * Không có dấu này thì khách đang ở trang phụ kiện mà thanh điều hướng
+ * trông như chưa chọn mục nào.
+ */
+.site-header__more.is-active > .site-header__more-toggle {
+    color: var(--brand-700);
+    font-weight: 600;
+}

@@ -1,0 +1,92 @@
+/*
+ * SURFACES
+ * ============================================================
+ * `.surface-card` là mặt phẳng MẶC ĐỊNH — nền đục, viền mảnh, đổ
+ * bóng tinh tế. Glassmorphism (`.glass-accent`) chỉ dùng làm điểm
+ * nhấn có chọn lọc (nav nổi, banner chiến dịch, modal) — KHÔNG phải
+ * mặc định cho card/bảng/form.
+ */
+
+.surface-card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+}
+
+.surface-card--hover {
+    transition: transform var(--duration-base) var(--ease-standard),
+        box-shadow var(--duration-base) var(--ease-standard);
+}
+
+.surface-card--hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.glass-accent {
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+}
+
+.stat-card__figure {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+    border-radius: var(--radius-md);
+    background: var(--brand-50);
+    color: var(--brand-600);
+    font-size: 1.25rem;
+}
+
+.stat-card__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ink-900);
+    line-height: 1.1;
+}
+
+.stat-card__label {
+    font-size: var(--text-body-sm);
+    color: var(--ink-500);
+}
+
+.card-hover {
+    transition: transform var(--duration-base) var(--ease-standard),
+        box-shadow var(--duration-base) var(--ease-standard);
+}
+
+.card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+/*
+ * THẺ "VÙNG NGUY HIỂM" — viền cảnh báo, nền vẫn bình thường.
+ * ============================================================
+ * Dùng cho khối Xoá tài khoản ở trang Hồ sơ.
+ *
+ * CHỈ ĐỔI VIỀN, KHÔNG TÔ ĐỎ CẢ KHỐI. Một mảng đỏ lớn giữa trang kéo mắt
+ * về đúng cái thứ người dùng KHÔNG nên bấm nhầm, và biến nó thành thứ
+ * nổi bật nhất màn hình. Viền đủ để nói "khu vực này khác", còn sức nặng
+ * nằm ở chữ và ở nút.
+ */
+.surface-card--danger {
+    border-color: color-mix(in srgb, var(--semantic-danger) 40%, transparent);
+}

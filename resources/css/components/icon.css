@@ -1,0 +1,11 @@
+/*
+ * ICON — SVG sprite, thay cho icon font.
+ * Kích thước theo font-size của phần tử cha (1em), màu theo
+ * currentColor, nên dùng ở đâu cũng khớp với chữ bên cạnh.
+ */
+
+.icon {
+    display: inline-block;
+    vertical-align: -0.125em;
+    flex-shrink: 0;
+}

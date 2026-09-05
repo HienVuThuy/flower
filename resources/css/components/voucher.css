@@ -1,0 +1,412 @@
+/*
+ * VOUCHER
+ * ============================================================
+ * Thẻ hình VÉ XÉ: nửa trái là con số giảm trên nền đậm, nửa phải là điều
+ * kiện và nút. Hình dạng này là quy ước ai mua hàng trên mạng cũng đã
+ * quen — nhìn là biết phiếu giảm giá, không nhầm với một mảng quảng cáo.
+ */
+
+.voucher-grid {
+    display: grid;
+    /* auto-fill + minmax: một cột trên điện thoại, hai hoặc ba cột trên
+       màn hình rộng, không cần một dòng media query nào. */
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 20rem), 1fr));
+    gap: var(--space-sm);
+}
+
+.voucher-card {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    overflow: hidden;
+}
+
+/* ---------- nửa trái: con số ---------- */
+
+.voucher-card__amount {
+    flex: 0 0 7rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: var(--space-xs);
+    background: var(--brand-400);
+    color: #fff;
+    text-align: center;
+
+    /*
+     * Răng cưa ở mép phải — phần làm nên hình dạng "vé xé".
+     *
+     * Dùng radial-gradient chứ không dùng ảnh: co giãn theo chiều cao
+     * thẻ, đổi màu theo theme, và không thêm một request tải ảnh nào.
+     * Vòng tròn cùng màu nền trang nên trông như bị khoét thủng.
+     */
+    -webkit-mask-image: radial-gradient(circle 5px at 100% 0, transparent 5px, #000 5.5px),
+                        radial-gradient(circle 5px at 100% 100%, transparent 5px, #000 5.5px);
+    -webkit-mask-composite: source-in;
+    mask-image: radial-gradient(circle 5px at 100% 0, transparent 5px, #000 5.5px),
+                radial-gradient(circle 5px at 100% 100%, transparent 5px, #000 5.5px);
+    mask-composite: intersect;
+}
+
+.voucher-card__value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    /* Số tiền dài (500.000đ) phải co lại chứ không được tràn ra ngoài
+       nửa thẻ. */
+    overflow-wrap: anywhere;
+}
+
+.voucher-card__unit {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    opacity: 0.85;
+}
+
+/* ---------- nửa phải: nội dung ---------- */
+
+.voucher-card__body {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.75rem 0.9rem;
+    /* Đường đứt nét thay cho mép xé, nối hai lỗ khoét ở trên và dưới. */
+    border-left: 1px dashed var(--border-soft);
+}
+
+.voucher-card__name {
+    margin: 0;
+    font-weight: 600;
+    font-size: 0.95rem;
+    line-height: 1.35;
+    color: var(--ink-900);
+}
+
+.voucher-card__terms,
+.voucher-card__meta {
+    margin: 0;
+    font-size: 0.78rem;
+    color: var(--ink-500);
+    line-height: 1.45;
+}
+
+.voucher-card__meta strong {
+    color: var(--ink-900);
+    /* Mã là thứ khách có thể muốn bôi đen để chép — dùng font đều nét
+       cho dễ đọc và khỏi nhầm O với 0. */
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    letter-spacing: 0.02em;
+}
+
+.voucher-card__low {
+    color: var(--semantic-warning);
+    font-weight: 600;
+}
+
+.voucher-card__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    /* margin-top: auto đẩy hàng nút xuống đáy thẻ, nên các thẻ cạnh nhau
+       có nút thẳng hàng dù phần chữ dài ngắn khác nhau. */
+    margin-top: auto;
+    padding-top: 0.5rem;
+}
+
+.voucher-card__state {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--brand-700);
+}
+
+/*
+ * Đã dùng hết suất: làm nhạt nhưng KHÔNG ẩn.
+ *
+ * Ẩn đi thì khách tưởng mình chưa từng có mã đó và đi tìm lại. Để đấy và
+ * nói rõ "đã dùng hết lượt" trả lời luôn câu hỏi trước khi họ kịp hỏi.
+ */
+.voucher-card.is-spent {
+    opacity: 0.6;
+}
+
+.voucher-card.is-spent .voucher-card__amount {
+    background: var(--ink-500);
+}
+
+.voucher-card.is-spent .voucher-card__state {
+    color: var(--ink-500);
+}
+
+
+/*
+ * CHỌN MÃ GIẢM GIÁ Ở BƯỚC THANH TOÁN
+ * ============================================================
+ * Danh sách mã khách đang sở hữu, mở ra bằng <details> nên không cần
+ * JavaScript. Đặt DƯỚI ô nhập tay chứ không thay thế nó: mã in trên
+ * phiếu mua hàng vẫn phải nhập được.
+ *
+ * Thay cho .coupon-wallet cũ — bản đó là một hàng chip nhỏ chỉ chứa mã
+ * DÙNG ĐƯỢC. Khách lưu mã xong tới đây không thấy nó đâu thì kết luận
+ * hệ thống nuốt mất mã của mình, nên nay hiện đủ và nói rõ lý do.
+ */
+
+.coupon-picker {
+    margin-top: 0.75rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+}
+
+.coupon-picker__toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+    padding: 0.5rem 0.7rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ink-900);
+    cursor: pointer;
+    list-style: none;
+}
+
+/* Mũi tên mặc định của Safari/Chrome nằm sai chỗ trong bố cục flex. */
+.coupon-picker__toggle::-webkit-details-marker {
+    display: none;
+}
+
+/* Tam giác tự vẽ, xoay khi mở — dấu hiệu duy nhất cho biết còn nội dung
+   bên trong, nên không được bỏ. */
+.coupon-picker__toggle::after {
+    content: "";
+    flex: none;
+    width: 0.42rem;
+    height: 0.42rem;
+    margin-inline-start: 0.2rem;
+    border-inline-end: 2px solid currentColor;
+    border-block-end: 2px solid currentColor;
+    transform: rotate(45deg) translate(-0.1rem, -0.1rem);
+    transition: transform 0.15s ease;
+}
+
+.coupon-picker[open] .coupon-picker__toggle::after {
+    transform: rotate(-135deg);
+}
+
+/*
+ * Giới hạn chiều cao đặt trên CẢ phần mở ra, không trên từng nhóm.
+ *
+ * Ví có thể tới vài chục mã. Không kẹp lại thì danh sách đẩy bảng tiền
+ * xuống dưới màn hình — đúng thứ vừa được chuyển lên đây cho gần. Kẹp
+ * trên từng nhóm thì mỗi nhóm cuộn riêng, còn tệ hơn.
+ */
+.coupon-picker[open] {
+    max-height: 22rem;
+    overflow-y: auto;
+}
+
+/* Nhãn bấm để mở phải đứng yên khi cuộn phần bên dưới. */
+.coupon-picker__toggle {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--surface);
+}
+
+.coupon-picker__count {
+    margin-inline-start: auto;
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--ink-500);
+}
+
+.coupon-picker__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin: 0;
+    padding: 0 0.7rem 0.6rem;
+    list-style: none;
+
+    /*
+     * Ví có thể tới vài chục mã. Không giới hạn thì danh sách đẩy bảng
+     * tiền xuống dưới màn hình — đúng thứ vừa bị chuyển lên đây cho gần.
+     */
+    max-height: none;
+    overflow: visible;
+}
+
+.coupon-picker__pick {
+    display: grid;
+    gap: 0.1rem;
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: 1px dashed var(--brand-400);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--brand-400) 6%, var(--surface));
+    color: var(--ink-900);
+    text-align: start;
+    cursor: pointer;
+}
+
+.coupon-picker__pick:hover:not(:disabled),
+.coupon-picker__pick:focus-visible:not(:disabled) {
+    background: color-mix(in srgb, var(--brand-400) 14%, var(--surface));
+}
+
+/*
+ * Mã chưa dùng được VẪN HIỆN nhưng không bấm được.
+ *
+ * Làm mờ chứ không ẩn: dòng lý do bên dưới ("cần đơn từ 500.000đ") là
+ * thông tin có ích — khách biết mua thêm chút nữa là được giảm.
+ */
+.coupon-picker__pick:disabled {
+    border-style: solid;
+    border-color: var(--border-soft);
+    background: var(--surface-2, transparent);
+    color: var(--ink-500);
+    cursor: not-allowed;
+}
+
+.coupon-picker__code {
+    font-size: 0.82rem;
+    font-weight: 700;
+    /* Font đều nét để không nhầm O với 0 khi khách đối chiếu mã. */
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+.coupon-picker__name {
+    font-size: 0.78rem;
+}
+
+.coupon-picker__terms,
+.coupon-picker__why {
+    font-size: 0.7rem;
+    color: var(--ink-500);
+}
+
+.coupon-picker__why {
+    font-style: italic;
+}
+
+.coupon-picker__more {
+    margin: 0;
+    padding: 0 0.7rem 0.6rem;
+    font-size: 0.75rem;
+}
+
+
+/*
+ * THANH TIẾN ĐỘ, LINK ĐIỀU KIỆN, TRẠNG THÁI HẾT MÃ
+ * ============================================================
+ * Ba thứ tách một thẻ voucher "trông được" khỏi một thẻ voucher thật.
+ */
+
+/*
+ * Thanh tiến độ chỉ hiện khi mã CÓ giới hạn lượt (xem Blade).
+ * Gradient cam→đỏ là quy ước quen thuộc cho "đang cạn dần".
+ */
+.voucher-card__progress {
+    height: 5px;
+    margin: 0.35rem 0 0.15rem;
+    border-radius: var(--radius-pill);
+    background: var(--surface-alt);
+    overflow: hidden;
+}
+
+.voucher-card__progress-fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #f59e0b, #dc2626);
+}
+
+.voucher-card__terms-link {
+    /* Đẩy về cuối hàng nút, tách khỏi nút hành động chính: đây là đường
+       đọc thêm, không phải việc khách cần làm. */
+    margin-inline-start: auto;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--brand-700);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    white-space: nowrap;
+}
+
+.voucher-card__terms-link:hover {
+    color: var(--brand-600);
+}
+
+/*
+ * "Đã hết mã" — nút xám và KHOÁ HẲN.
+ *
+ * Một nút bấm được nhưng luôn báo lỗi thì tệ hơn một nút rõ ràng là
+ * không bấm được: khách bấm, đọc lỗi, rồi bấm lại lần nữa vì tưởng mình
+ * làm sai.
+ */
+.voucher-card__spent {
+    background: #e0e0e0;
+    border-color: #e0e0e0;
+    color: #8a8a8a;
+    cursor: not-allowed;
+}
+
+
+/*
+ * TRANG ĐIỀU KIỆN ĐẦY ĐỦ
+ * ============================================================
+ * Danh sách điều khoản. Cố ý là VĂN BẢN THUẦN, không phải thẻ hay hộp
+ * màu: đây là thứ khách cần đọc kỹ, và mỗi mảng màu thêm vào là một chỗ
+ * mắt dừng lại không vì lý do gì.
+ */
+
+.voucher-terms {
+    margin-top: var(--space-md);
+}
+
+.voucher-terms__heading {
+    margin: var(--space-md) 0 0.4rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink-900);
+}
+
+.voucher-terms__text,
+.voucher-terms__list {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: var(--ink-700);
+}
+
+.voucher-terms__list {
+    padding-inline-start: 1.15rem;
+}
+
+.voucher-terms__list li + li {
+    margin-top: 0.2rem;
+}
+
+.voucher-terms__note {
+    margin: 0.35rem 0 0;
+    font-size: 0.82rem;
+    color: var(--ink-500);
+}
+
+.voucher-terms__expired {
+    display: block;
+    margin-top: 0.2rem;
+    color: var(--semantic-danger);
+}
+
+.voucher-terms__code {
+    font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    letter-spacing: 0.03em;
+}

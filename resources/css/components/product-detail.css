@@ -1,0 +1,409 @@
+/*
+ * PRODUCT DETAIL
+ * ============================================================
+ */
+
+/* ============ GALLERY ============ */
+
+.product-gallery__main {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--surface-alt);
+}
+
+.product-gallery__main img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.product-gallery__placeholder {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand-400);
+}
+
+.product-gallery__placeholder svg {
+    width: 30%;
+    height: 30%;
+    opacity: 0.5;
+}
+
+.product-gallery__thumbs {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+}
+
+.product-gallery__thumb {
+    flex: 0 0 auto;
+    width: 72px;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface-alt);
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-standard);
+}
+
+.product-gallery__thumb img {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+}
+
+.product-gallery__thumb:hover {
+    border-color: var(--brand-300);
+}
+
+.product-gallery__thumb.is-active {
+    border-color: var(--brand-500);
+}
+
+/* ============ THÔNG TIN ============ */
+
+.product-info__eyebrow {
+    font-size: var(--text-label);
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--brand-600);
+}
+
+.product-info__title {
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.product-info__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+    margin-bottom: var(--space-sm);
+}
+
+.product-info__price {
+    margin-bottom: 0.75rem;
+}
+
+/* ============ VARIANT ============ */
+
+.variant-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.variant-option {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.55rem 0.9rem;
+    border: 1.5px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color var(--duration-fast) var(--ease-standard),
+        background-color var(--duration-fast) var(--ease-standard);
+}
+
+.variant-option:hover {
+    border-color: var(--brand-300);
+}
+
+.variant-option.is-selected {
+    border-color: var(--brand-500);
+    background: var(--brand-50);
+}
+
+.variant-option:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.variant-option__name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+.variant-option__price {
+    font-size: 0.75rem;
+    color: var(--ink-500);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============ SỐ LƯỢNG ============ */
+
+.qty-control {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface);
+}
+
+.qty-control__btn {
+    width: 2.4rem;
+    height: 2.4rem;
+    border: 0;
+    background: transparent;
+    color: var(--ink-700);
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.qty-control__btn:hover:not(:disabled) {
+    background: var(--brand-50);
+    color: var(--brand-700);
+}
+
+.qty-control__btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.qty-control__input {
+    width: 3rem;
+    height: 2.4rem;
+    border: 0;
+    border-inline: 1px solid var(--border-soft);
+    text-align: center;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: transparent;
+    color: var(--ink-900);
+    -moz-appearance: textfield;
+}
+
+.qty-control__input::-webkit-outer-spin-button,
+.qty-control__input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+/* ============ CTA ============ */
+
+.product-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: var(--space-sm);
+}
+
+.product-actions--compact {
+    margin-top: 0;
+}
+
+.product-actions .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.product-actions__note {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.7rem 0.9rem;
+    border-radius: var(--radius-md);
+    background: var(--surface-alt);
+    font-size: var(--text-body-sm);
+    color: var(--ink-700);
+}
+
+.product-actions__note a {
+    color: var(--brand-600);
+    font-weight: 600;
+    text-decoration: underline;
+}
+
+/* ============ CARE GUIDE ============ */
+
+.care-guide {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-sm) var(--space-md);
+}
+
+.care-guide__item {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+}
+
+.care-guide__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--brand-50);
+    color: var(--brand-600);
+}
+
+.care-guide__label {
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+.care-guide__value {
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+/* ============ THÔNG SỐ ============ */
+
+.spec-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.spec-list__row {
+    display: flex;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border-soft);
+    font-size: var(--text-body-sm);
+}
+
+.spec-list__label {
+    flex: 0 0 40%;
+    color: var(--ink-500);
+}
+
+.spec-list__value {
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+/* ============ STICKY CTA (mobile) ============ */
+
+.product-sticky-cta {
+    display: none;
+}
+
+@media (max-width: 767.98px) {
+    .product-sticky-cta {
+        display: flex;
+        position: sticky;
+        bottom: 0;
+        z-index: var(--z-nav);
+        gap: 0.5rem;
+        padding: var(--space-2xs) 0;
+        background: var(--surface-page);
+        border-top: 1px solid var(--border-soft);
+        margin-top: var(--space-sm);
+    }
+
+    .product-sticky-cta .btn {
+        flex: 1;
+    }
+}
+
+/*
+ * TÔ SÁNG QUY CÁCH ĐANG CHỌN — hai đường, một khối khai báo.
+ * ============================================================
+ * `.is-selected` do máy chủ dựng sẵn và do JavaScript dời đi khi khách
+ * bấm. `:has(input:checked)` để CSS tự làm việc đó mà không cần
+ * JavaScript nào — nhờ nó, hộp chọn quy cách dựng động (variant-dialog.js)
+ * không phải chép lại logic tô sáng.
+ *
+ * Gộp vào MỘT khối khai báo chứ không viết hai lần: hai bản sao của
+ * cùng một bộ màu thì sớm muộn sẽ lệch, và lúc đó hai chỗ trên trang
+ * hiện hai kiểu "đang chọn" khác nhau.
+ */
+.variant-option:has(input:checked) {
+    border-color: var(--brand-500);
+    background: var(--brand-50);
+}
+
+/*
+ * HỘP CHỌN QUY CÁCH mở từ thẻ sản phẩm ở trang danh sách.
+ * ============================================================
+ * Xem resources/js/variant-dialog.js. Dùng <dialog> của trình duyệt chứ
+ * không tự dựng lớp phủ: nó khoá tiêu điểm bàn phím bên trong, đóng
+ * được bằng phím Esc, và chặn tương tác với phần nền — ba việc mà một
+ * <div> tự chế phải viết tay và thường viết thiếu.
+ */
+.variant-dialog {
+    width: min(26rem, calc(100vw - 2rem));
+
+    /*
+     * CUỘN DỌC KHI CẦN, KHÔNG BAO GIỜ CUỘN NGANG.
+     *
+     * Mặc định <dialog> để overflow: auto cho cả hai chiều. Trên màn
+     * hình thấp — điện thoại nằm ngang, hoặc sản phẩm có bảy tám quy
+     * cách — nội dung vượt chiều cao, thanh cuộn dọc hiện ra và ăn mất
+     * 15px bề ngang, đủ để đẩy hàng nút tràn và sinh thêm một thanh
+     * cuộn NGANG. Hai thanh cuộn trong một hộp thoại nhỏ trông như giao
+     * diện bị vỡ.
+     *
+     * Chiều ngang không bao giờ cần cuộn: mọi thứ bên trong đều co giãn
+     * theo bề rộng hộp.
+     */
+    max-height: min(85vh, calc(100% - 2rem));
+    overflow-x: hidden;
+    overflow-y: auto;
+
+    padding: var(--space-md);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: var(--ink-900);
+    box-shadow: var(--shadow-lg);
+}
+
+.variant-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+.variant-dialog__title {
+    margin: 0 2rem var(--space-sm) 0;
+    font-size: var(--text-h4);
+    line-height: var(--leading-snug);
+}
+
+.variant-dialog__close-form {
+    float: right;
+    margin: calc(var(--space-2xs) * -1) calc(var(--space-2xs) * -1) 0 0;
+}
+
+.variant-dialog__close {
+    border: 0;
+    background: transparent;
+    color: var(--ink-500);
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: var(--space-3xs) var(--space-2xs);
+}
+
+.variant-dialog__close:hover {
+    color: var(--ink-900);
+}
+
+.variant-dialog__actions {
+    display: flex;
+    gap: var(--space-2xs);
+}
+
+/* Hai nút chia đôi chiều ngang: không nút nào "chính" hơn nút kia —
+   khách đã quyết định mua, chỉ còn chọn đi tiếp bằng đường nào. */
+.variant-dialog__actions .btn {
+    flex: 1 1 0;
+}
