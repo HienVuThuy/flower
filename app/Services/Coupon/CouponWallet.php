@@ -80,19 +80,81 @@ class CouponWallet
         }
     }
 
-    /** Bỏ một mã khỏi ví. */
-    public function discard(User $user, Coupon $coupon): bool
+    /**
+     * Bỏ một mã khỏi ví — MỌI mã trong ví đều bỏ được.
+     * ============================================================
+     * HAI ĐƯỜNG, TUỲ MÃ ĐÃ DÙNG HAY CHƯA.
+     *
+     * Trước đây hàm này chỉ xoá được mã `used_count = 0`, và giao diện
+     * thì chỉ hiện nút cho mã ĐANG CÒN HẠN. Kết quả là một mã đã lưu mà
+     * hết hạn nằm lại trong ví vĩnh viễn — không nút nào chạm tới nó
+     * được, và ví đầy dần bằng những mã không dùng được nữa.
+     *
+     *   - CHƯA DÙNG LẦN NÀO -> xoá hàng thật. Chưa dùng thì không có
+     *     bằng chứng nào để giữ, và xoá hẳn cho phép khách lưu lại sau
+     *     này nếu đổi ý.
+     *
+     *   - ĐÃ DÙNG -> chỉ đánh dấu `hidden_at`. Hàng `coupon_user` là
+     *     bằng chứng khách đã dùng mã mấy lần và `per_user_limit` đếm
+     *     dựa vào nó; xoá đi là họ dùng lại được từ đầu. Ẩn thì màn hình
+     *     gọn mà phép đếm vẫn đúng.
+     *
+     * Khách chỉ muốn dọn ví cho gọn, không đòi xoá lịch sử của chính
+     * mình. Đáp ứng đúng nhu cầu đó thì không phải nới lỏng gì cả.
+     *
+     * @return 'deleted'|'hidden'|null null khi mã không có trong ví
+     */
+    public function discard(User $user, Coupon $coupon): ?string
     {
-        /*
-         * KHÔNG cho bỏ mã đã dùng: hàng `coupon_user` là bằng chứng khách
-         * đã dùng mã này mấy lần, và per_user_limit dựa vào đó. Xoá đi là
-         * họ dùng lại được từ đầu.
-         */
+        $row = DB::table('coupon_user')
+            ->where('user_id', $user->id)
+            ->where('coupon_id', $coupon->id)
+            ->first(['used_count']);
+
+        if ($row === null) {
+            return null;
+        }
+
+        if ((int) $row->used_count === 0) {
+            DB::table('coupon_user')
+                ->where('user_id', $user->id)
+                ->where('coupon_id', $coupon->id)
+                ->delete();
+
+            return 'deleted';
+        }
+
+        DB::table('coupon_user')
+            ->where('user_id', $user->id)
+            ->where('coupon_id', $coupon->id)
+            ->update(['hidden_at' => now(), 'updated_at' => now()]);
+
+        return 'hidden';
+    }
+
+    /**
+     * Đưa lại một mã đã ẩn về ví.
+     *
+     * PHẢI CÓ ĐƯỜNG QUAY LẠI. Một nút chỉ đi một chiều là cái bẫy: bấm
+     * nhầm rồi thì mã biến mất và khách không biết nó đi đâu, cũng không
+     * có cách nào tìm lại.
+     */
+    public function unhide(User $user, Coupon $coupon): bool
+    {
         return DB::table('coupon_user')
             ->where('user_id', $user->id)
             ->where('coupon_id', $coupon->id)
-            ->where('used_count', 0)
-            ->delete() > 0;
+            ->whereNotNull('hidden_at')
+            ->update(['hidden_at' => null, 'updated_at' => now()]) > 0;
+    }
+
+    /** Số mã đang bị ẩn — để giao diện có chỗ mời xem lại. */
+    public function hiddenCount(?User $user): int
+    {
+        return $user === null ? 0 : DB::table('coupon_user')
+            ->where('user_id', $user->id)
+            ->whereNotNull('hidden_at')
+            ->count();
     }
 
     /**
@@ -100,10 +162,15 @@ class CouponWallet
      *
      * @return Collection<int, array{coupon: Coupon, usedCount: int, exhaustedForUser: bool}>
      */
-    public function forUser(User $user): Collection
+    public function forUser(User $user, bool $daAn = false): Collection
     {
         $rows = DB::table('coupon_user')
             ->where('user_id', $user->id)
+            // Mặc định chỉ lấy mã ĐANG hiện. Mã đã ẩn vẫn còn nguyên
+            // hàng — xem chú thích ở discard() — nhưng không chen vào
+            // danh sách chính nữa.
+            ->when($daAn, fn ($q) => $q->whereNotNull('hidden_at'))
+            ->when(! $daAn, fn ($q) => $q->whereNull('hidden_at'))
             ->orderByDesc('claimed_at')
             ->get(['coupon_id', 'used_count']);
 
@@ -173,7 +240,13 @@ class CouponWallet
             ->values();
     }
 
-    /** Mã này có trong ví của khách không. */
+    /**
+     * Mã này có trong ví của khách không.
+     *
+     * TÍNH CẢ MÃ ĐÃ ẨN. Hàng vẫn tồn tại nên nút "Lưu mã" bấm vào sẽ
+     * đụng ràng buộc UNIQUE; hiện nút đó ra là mời khách bấm một nút
+     * không làm gì. Giao diện phải mời "đưa lại về ví" thay vì "lưu mã".
+     */
     public function has(?User $user, Coupon $coupon): bool
     {
         return $user !== null && DB::table('coupon_user')

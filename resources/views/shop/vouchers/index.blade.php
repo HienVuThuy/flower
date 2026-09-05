@@ -39,6 +39,51 @@
                     @endforeach
                 </div>
             @endif
+
+            {{--
+                MÃ ĐÃ ẨN — cửa quay lại cho nút "Ẩn khỏi ví".
+                ============================================================
+                CHỈ HIỆN KHI THẬT SỰ CÓ MÃ BỊ ẨN.
+
+                Bày một mục "đã ẩn (0)" cho mọi người là thêm một thứ để
+                đọc mà không thêm thông tin nào — và với người chưa bao giờ
+                ẩn mã nào, nó còn gợi ý một tính năng họ không dùng.
+
+                Nhưng khi ĐÃ có mã bị ẩn thì phải hiện: một nút chỉ đi một
+                chiều là cái bẫy. Bấm nhầm rồi thì mã biến mất và khách
+                không biết nó đi đâu.
+            --}}
+            @if($hiddenCount > 0)
+                <div class="mb-5">
+                    @if($xemDaAn)
+                        <div class="section-header">
+                            <div>
+                                <h2 class="text-h4 mb-0">Mã đã ẩn ({{ $hiddenCount }})</h2>
+                                <p class="text-body-sm mb-0">
+                                    Những mã này bạn đã dùng rồi nên lượt sử dụng vẫn được giữ lại.
+                                </p>
+                            </div>
+                            <a href="{{ route('shop.vouchers.index') }}" class="btn btn-ghost btn-sm">Đóng</a>
+                        </div>
+
+                        <div class="voucher-grid">
+                            @foreach($daAn as $row)
+                                <x-shop.voucher-card
+                                    :coupon="$row['coupon']"
+                                    :saved="true"
+                                    :hidden="true"
+                                    :used-count="$row['usedCount']"
+                                    :exhausted-for-user="$row['exhaustedForUser']" />
+                            @endforeach
+                        </div>
+                    @else
+                        <a href="{{ route('shop.vouchers.index', ['da-an' => 1]) }}"
+                           class="btn btn-ghost btn-sm">
+                            Xem {{ $hiddenCount }} mã đã ẩn
+                        </a>
+                    @endif
+                </div>
+            @endif
         @endauth
 
         {{-- ============ ĐANG MỜI ============ --}}

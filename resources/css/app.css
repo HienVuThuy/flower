@@ -41,6 +41,7 @@
 @import './components/pagination.css';
 @import './components/filters.css';
 @import './components/journal.css';
+@import './components/blog.css';
 @import './components/empty-state.css';
 @import './components/price.css';
 @import './components/product-card.css';

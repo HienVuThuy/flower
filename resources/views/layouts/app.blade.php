@@ -22,6 +22,20 @@
     <title>@yield('title', 'Trang chủ') - {{ \App\Services\Shop\StoreProfile::name() }}</title>
 
     {{--
+        MÔ TẢ CHO KẾT QUẢ TÌM KIẾM.
+
+        Trang nào không khai thì lấy câu giới thiệu chung của cửa hàng —
+        vẫn hơn để trống, vì không có mô tả thì Google tự cắt một đoạn
+        trong trang, và nó cắt tệ hơn.
+
+        @yield chứ không @stack: mỗi trang có ĐÚNG MỘT mô tả, và stack
+        cho phép nhiều mảnh chồng lên nhau — thứ sinh ra hai thẻ
+        description trên cùng một trang mà không ai để ý.
+    --}}
+    <meta name="description"
+          content="@yield('meta_description', \App\Services\Shop\StoreProfile::name() . ' — ' . \App\Services\Shop\StoreProfile::get('site_tagline'))">
+
+    {{--
         ĐÁNH DẤU "TRANG NÀY CÓ JAVASCRIPT".
 
         CSS dùng `html:not(.has-js)` để ẩn những nút chỉ hoạt động nhờ

@@ -54,6 +54,22 @@
                     Chọn cây
                 </a>
 
+                {{--
+                    CẨM NANG RA THANH CHÍNH, không nhét vào menu "Khác".
+
+                    Đây là cửa vào của khách đến từ Google — họ tìm "cây nào
+                    hợp bàn làm việc", đọc bài, rồi mới biết cửa hàng này
+                    tồn tại. Giấu nó sau một menu bung ra là giấu đúng lối
+                    đi mà cả khu vực đó sinh ra để mở.
+
+                    "Góc cây của bạn" thì ngược lại — vào menu Khác. Nó là
+                    nội dung khách xem SAU khi đã biết cửa hàng, không phải
+                    lối vào.
+                --}}
+                <a href="{{ route('shop.blog.index') }}" class="site-header__link {{ request()->routeIs('shop.blog.*') ? 'is-active' : '' }}">
+                    Cẩm nang
+                </a>
+
                 @php
                     /*
                      * Menu "Khác" tự sáng khi trang hiện tại nằm bên trong —
@@ -63,7 +79,8 @@
                     $inMore = request()->routeIs('shop.supplies.*')
                         || request()->routeIs('shop.bulk-inquiry.*')
                         || request()->routeIs('shop.taxa.*')
-                        || request()->routeIs('shop.vouchers.*');
+                        || request()->routeIs('shop.vouchers.*')
+                        || request()->routeIs('shop.community.*');
                 @endphp
 
                 <details class="site-header__more {{ $inMore ? 'is-active' : '' }}" data-account-menu>
@@ -91,6 +108,9 @@
                         </a>
                         <a class="dropdown-item" href="{{ route('shop.supplies.index') }}">
                             <x-site.icon name="bag" /> Phụ kiện &amp; vật tư
+                        </a>
+                        <a class="dropdown-item" href="{{ route('shop.community.index') }}">
+                            <x-site.icon name="people" /> Góc cây của bạn
                         </a>
                         <a class="dropdown-item" href="{{ route('shop.vouchers.index') }}">
                             <x-site.icon name="tags" /> Voucher

@@ -96,6 +96,16 @@
                     <span>Đơn hàng</span>
                 </a>
             @endif
+            <a href="{{ route('admin.blog.index') }}" class="admin-nav-link {{ request()->routeIs('admin.blog.*') ? 'is-active' : '' }}">
+                <x-site.icon name="list" />
+                <span>Cẩm nang</span>
+            </a>
+
+            <a href="{{ route('admin.community.index') }}" class="admin-nav-link {{ request()->routeIs('admin.community.*') ? 'is-active' : '' }}">
+                <x-site.icon name="people" />
+                <span>Góc cây của bạn</span>
+            </a>
+
             <a href="{{ route('admin.promotions.index') }}" class="admin-nav-link {{ request()->routeIs('admin.promotions.*') ? 'is-active' : '' }}">
                 <x-site.icon name="megaphone" />
                 <span>Khuyến mại</span>

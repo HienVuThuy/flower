@@ -3,6 +3,9 @@
     'saved' => false,
     'usedCount' => 0,
     'exhaustedForUser' => false,
+    // Mã đang bị ẩn khỏi ví — hàng dữ liệu còn nguyên, chỉ không hiện ở
+    // danh sách chính. Xem CouponWallet::discard().
+    'hidden' => false,
     // Trang chi tiết đã LÀ điều kiện — không tự trỏ về chính nó.
     'showTermsLink' => true,
 ])
@@ -139,14 +142,6 @@
                     @endif
                 </span>
 
-                @if($usedCount === 0)
-                    <form method="POST" action="{{ route('shop.vouchers.discard', $coupon) }}">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-ghost btn-sm">Bỏ khỏi ví</button>
-                    </form>
-                @endif
-
             @elseif(auth()->check())
 
                 <form method="POST" action="{{ route('shop.vouchers.claim', $coupon) }}">
@@ -171,6 +166,54 @@
                     Đăng nhập để lưu
                 </a>
 
+            @endif
+
+            {{--
+                NÚT BỎ KHỎI VÍ — ĐỨNG NGOÀI CHUỖI @elseif Ở TRÊN.
+                ============================================================
+                LỖI ĐÃ SỬA, và nó nằm đúng ở chỗ này.
+
+                Trước đây nút bỏ nằm bên trong nhánh `@elseif($saved)`.
+                Nhưng ba nhánh đứng TRƯỚC nó — "đã dùng hết lượt", "đã hết
+                mã", "hết hạn sử dụng" — bắt trước, nên một mã đã lưu mà
+                hết hạn không bao giờ chạy tới nhánh `$saved`.
+
+                Hậu quả: mã hết hạn nằm lại trong ví VĨNH VIỄN. Không nút
+                nào chạm tới nó được, ví đầy dần bằng mã không dùng được
+                nữa, và mã còn dùng được thì lẫn vào giữa.
+
+                Trạng thái và hành động là hai câu hỏi khác nhau: *"mã này
+                còn dùng được không"* và *"tôi có muốn giữ nó không"*. Gộp
+                vào một chuỗi điều kiện thì câu thứ hai bị câu thứ nhất
+                nuốt mất.
+
+                Nay: đã ở trong ví thì bỏ được, bất kể trạng thái.
+            --}}
+            @if($saved && ! $hidden)
+                <form method="POST" action="{{ route('shop.vouchers.discard', $coupon) }}">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-ghost btn-sm voucher-card__discard">
+                        {{--
+                            Chữ trên nút nói ĐÚNG chuyện sắp xảy ra.
+
+                            Mã chưa dùng lần nào thì xoá hẳn; mã đã dùng
+                            thì chỉ ẩn đi, vì hàng dữ liệu đó là bằng
+                            chứng chống dùng quá suất (xem CouponWallet).
+                            Viết "Xoá" cho cả hai là hứa một việc mà hệ
+                            thống cố ý không làm.
+                        --}}
+                        {{ $usedCount > 0 ? 'Ẩn khỏi ví' : 'Bỏ khỏi ví' }}
+                    </button>
+                </form>
+            @endif
+
+            @if($hidden)
+                <form method="POST" action="{{ route('shop.vouchers.unhide', $coupon) }}">
+                    @csrf
+                    @method('PATCH')
+                    <button type="submit" class="btn btn-ghost btn-sm">Đưa lại về ví</button>
+                </form>
             @endif
 
             @if($showTermsLink)

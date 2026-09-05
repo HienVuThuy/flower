@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\BlogPostController;
+use App\Http\Controllers\Admin\CommunityModerationController;
 use App\Http\Controllers\Admin\PricingAdvisorController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
@@ -24,7 +26,9 @@ use App\Http\Controllers\Shop\PlantTaxonController;
 use App\Http\Controllers\Shop\BulkInquiryController;
 use App\Http\Controllers\Shop\CareController;
 use App\Http\Controllers\Shop\CartController;
+use App\Http\Controllers\Shop\BlogController;
 use App\Http\Controllers\Shop\CheckoutController;
+use App\Http\Controllers\Shop\CommunityController;
 use App\Http\Controllers\Shop\OrderController as ShopOrderController;
 use App\Http\Controllers\Shop\PageController;
 use App\Http\Controllers\Shop\CreditsController;
@@ -465,6 +469,27 @@ Route::get('nguon-anh', [CreditsController::class, 'index'])->name('shop.credits
  * Nhưng ví voucher gắn với một tài khoản cụ thể nên hai thao tác ghi
  * bắt buộc phải có `auth`.
  */
+/*
+ * =========================
+ * CẨM NANG (blog) — công khai
+ * =========================
+ * Đường dẫn tiếng Việt không dấu như mọi trang khác. `cam-nang` chứ
+ * không `blog`: đó là chữ khách đọc trên menu, và URL nên nói cùng một
+ * thứ với menu.
+ */
+Route::get('cam-nang', [BlogController::class, 'index'])->name('shop.blog.index');
+Route::get('cam-nang/{post}', [BlogController::class, 'show'])->name('shop.blog.show');
+
+/*
+ * =========================
+ * GÓC CÂY CỦA BẠN — xem công khai, đăng phải đăng nhập
+ * =========================
+ * Xem thì mở cho mọi người: cả điểm của mục này là khách chưa mua nhìn
+ * thấy cây người khác đã mua. Bắt đăng nhập để XEM là đóng đúng cánh cửa
+ * mình vừa mở.
+ */
+Route::get('goc-cay', [CommunityController::class, 'index'])->name('shop.community.index');
+
 Route::get('voucher', [VoucherController::class, 'index'])->name('shop.vouchers.index');
 
 /*
@@ -529,8 +554,18 @@ Route::get('trang/{slug}', [PageController::class, 'show'])
  * Trang XEM voucher vẫn công khai — xem thì không lấy mất của ai cái gì.
  */
 Route::middleware(['auth', 'verified'])->group(function () {
+    // Đăng bài và xoá bài của chính mình — cần đăng nhập.
+    Route::post('goc-cay', [CommunityController::class, 'store'])
+        ->name('shop.community.store');
+
+    Route::delete('goc-cay/{post}', [CommunityController::class, 'destroy'])
+        ->name('shop.community.destroy');
+
     Route::post('voucher/{coupon}/luu', [VoucherController::class, 'claim'])
         ->name('shop.vouchers.claim');
+
+    Route::patch('voucher/{coupon}/luu', [VoucherController::class, 'unhide'])
+        ->name('shop.vouchers.unhide');
 
     Route::delete('voucher/{coupon}/luu', [VoucherController::class, 'discard'])
         ->name('shop.vouchers.discard');
@@ -825,6 +860,28 @@ Route::prefix('admin')
          */
         Route::get('de-xuat-gia', [PricingAdvisorController::class, 'index'])
             ->name('pricing-advisor.index');
+
+        /*
+         * CẨM NANG — quản trị.
+         *
+         * Nội dung bài được in ra trang dưới dạng HTML thô (chỗ duy nhất
+         * trong dự án làm vậy), nên route ghi PHẢI nằm trong nhóm
+         * `role:admin`. Xem chú thích đầu BlogPostController.
+         */
+        Route::resource('cam-nang', BlogPostController::class)
+            ->parameters(['cam-nang' => 'post'])
+            ->except(['show'])
+            ->names('blog');
+
+        /* DUYỆT BÀI "Góc cây của bạn". */
+        Route::get('goc-cay', [CommunityModerationController::class, 'index'])
+            ->name('community.index');
+        Route::patch('goc-cay/{post}/duyet', [CommunityModerationController::class, 'approve'])
+            ->name('community.approve');
+        Route::patch('goc-cay/{post}/tu-choi', [CommunityModerationController::class, 'reject'])
+            ->name('community.reject');
+        Route::delete('goc-cay/{post}', [CommunityModerationController::class, 'destroy'])
+            ->name('community.destroy');
 
         Route::get('phan-tich/xuat-csv', [AnalyticsController::class, 'export'])
             ->name('analytics.export');

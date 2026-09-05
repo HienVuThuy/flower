@@ -36,9 +36,19 @@ class VoucherController extends Controller
     {
         $user = Auth::user();
 
+        /*
+         * Mã đã ẩn chỉ nạp KHI KHÁCH BẤM XEM, không nạp sẵn mỗi lần mở
+         * trang: phần lớn người dùng không có mã nào bị ẩn, và một truy
+         * vấn thừa cho mọi lượt xem để phục vụ số ít là đổi sai chiều.
+         */
+        $xemDaAn = request()->boolean('da-an');
+
         return view('shop.vouchers.index', [
             'mine' => $user ? $this->wallet->forUser($user) : collect(),
             'claimable' => $this->wallet->claimableFor($user),
+            'hiddenCount' => $this->wallet->hiddenCount($user),
+            'daAn' => $xemDaAn && $user ? $this->wallet->forUser($user, daAn: true) : collect(),
+            'xemDaAn' => $xemDaAn,
         ]);
     }
 
@@ -104,10 +114,33 @@ class VoucherController extends Controller
 
     public function discard(Coupon $coupon): RedirectResponse
     {
-        $removed = $this->wallet->discard(Auth::user(), $coupon);
+        $ket = $this->wallet->discard(Auth::user(), $coupon);
 
-        return back()->with($removed ? 'success' : 'error', $removed
-            ? 'Đã bỏ mã '.$coupon->code.' khỏi ví.'
-            : 'Không bỏ được mã này — có thể bạn đã dùng nó rồi.');
+        /*
+         * BA KẾT QUẢ, BA CÂU KHÁC NHAU.
+         *
+         * Nói "đã xoá" cho một mã chỉ bị ẩn là nói sai — hàng dữ liệu vẫn
+         * còn và giới hạn mỗi tài khoản vẫn tính. Khách cần biết đúng
+         * chuyện gì vừa xảy ra, nhất là khi họ định lưu lại mã đó.
+         */
+        return match ($ket) {
+            'deleted' => back()->with('success', 'Đã bỏ mã '.$coupon->code.' khỏi ví.'),
+            'hidden' => back()->with(
+                'success',
+                'Đã ẩn mã '.$coupon->code.'. Mã đã dùng nên lượt sử dụng vẫn được giữ; '
+                .'bạn xem lại được ở mục mã đã ẩn.',
+            ),
+            default => back()->with('error', 'Mã này không có trong ví của bạn.'),
+        };
+    }
+
+    /** Đưa lại một mã đã ẩn về ví — đường quay lại cho nút ẩn. */
+    public function unhide(Coupon $coupon): RedirectResponse
+    {
+        $ok = $this->wallet->unhide(Auth::user(), $coupon);
+
+        return back()->with($ok ? 'success' : 'error', $ok
+            ? 'Đã đưa mã '.$coupon->code.' trở lại ví.'
+            : 'Mã này không nằm trong mục đã ẩn.');
     }
 }

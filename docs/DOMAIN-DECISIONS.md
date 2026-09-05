@@ -4969,3 +4969,223 @@ hẹp), còn trang chi tiết không dùng ảnh nút.
 Cả 15 họ đều đã có ảnh. Nên 31 nút kia không phải việc còn thiếu — chúng
 là dữ liệu không có chỗ hiển thị. Tải ảnh cho chúng là tốn băng thông và
 tốn chỗ trong ASSETS.md để đổi lấy đúng con số không.
+
+---
+
+## QĐ-160. Voucher hết hạn kẹt trong ví vĩnh viễn — lỗi nằm ở thứ tự @elseif
+
+Nút "Bỏ khỏi ví" nằm bên trong nhánh `@elseif($saved)` của một chuỗi
+điều kiện. Ba nhánh đứng TRƯỚC nó — "đã dùng hết lượt", "đã hết mã",
+"hết hạn sử dụng" — bắt trước, nên một mã đã lưu mà hết hạn **không bao
+giờ chạy tới** nhánh `$saved`.
+
+Kết quả: ví đầy dần bằng mã không dùng được nữa, và mã còn dùng được thì
+lẫn vào giữa. Mọi bài kiểm thử lúc đó đều xanh, vì không bài nào mở
+trang ví với một mã vừa đã-lưu vừa đã-hết-hạn.
+
+**Trạng thái và hành động là hai câu hỏi khác nhau**: *"mã này còn dùng
+được không"* và *"tôi có muốn giữ nó không"*. Gộp vào một chuỗi điều
+kiện thì câu thứ hai bị câu thứ nhất nuốt mất. Nút bỏ nay đứng ngoài
+chuỗi: đã ở trong ví thì bỏ được, bất kể trạng thái.
+
+---
+
+## QĐ-161. Bỏ mã đã dùng thì ẨN, không xoá — và phải có đường quay lại
+
+Hàng `coupon_user` là **bằng chứng** khách đã dùng mã mấy lần, và
+`per_user_limit` đếm dựa vào nó. Xoá hàng của một mã đã dùng là cho họ
+dùng lại từ đầu — một mã "mỗi người một lần" thành mã không giới hạn cho
+ai biết bấm nút xoá.
+
+Nhưng nhu cầu của khách là **dọn ví**, không phải **xoá bằng chứng**. Nên
+tách hai đường:
+
+| | Hành động | Vì sao |
+|---|---|---|
+| Chưa dùng lần nào | xoá hàng thật | không có gì để giữ, và lưu lại được nếu đổi ý |
+| Đã dùng | đánh dấu `hidden_at` | hàng còn nguyên, `per_user_limit` vẫn đếm đúng |
+
+Đáp ứng đúng nhu cầu thì không phải nới lỏng gì cả.
+
+**Phải có đường quay lại.** Một nút chỉ đi một chiều là cái bẫy: bấm nhầm
+rồi thì mã biến mất và khách không biết nó đi đâu. Mục "mã đã ẩn" chỉ
+hiện khi thật sự có mã bị ẩn — bày "đã ẩn (0)" cho mọi người là thêm thứ
+để đọc mà không thêm thông tin.
+
+---
+
+## QĐ-162. Ảnh công khai PHẢI bị tước metadata — GPS là địa chỉ nhà khách
+
+Ảnh chụp bằng điện thoại mang theo khối EXIF chứa **GPSLatitude /
+GPSLongitude chính xác tới vài mét** — tức là địa chỉ nhà người chụp —
+cùng giờ chụp, loại máy, đôi khi cả tên chủ máy.
+
+Khách chụp cây trên ban công rồi đăng lên "Góc cây của bạn" là đăng luôn
+chỗ mình ở, nếu không ai tước. Đây không phải rủi ro lý thuyết; đó là
+cách người ta bị tìm ra địa chỉ từ một bức ảnh đăng công khai.
+
+**Bản WebP vốn đã sạch** — `ImageOptimizer` dựng chúng bằng GD, mà GD chỉ
+chép pixel. Nhưng **ảnh gốc** được lưu nguyên xi trong đĩa `public`, truy
+cập thẳng được bằng `/storage/…`, và `<x-site.image>` cũng lùi về nó khi
+chưa có WebP. Chỉ dựa vào WebP là để hở đúng tệp nguy hiểm nhất.
+
+`ImageMetadataStripper` ghi đè chính ảnh gốc. Ba lựa chọn:
+
+- **Tước cho MỌI ảnh, không có cờ bật/tắt.** Một cờ là một thứ để quên,
+  và chỗ quên sẽ là chỗ mới thêm sau này. Không có trường hợp nào cửa
+  hàng cần giữ toạ độ GPS của khách.
+- **XOAY ẢNH TRƯỚC KHI XOÁ EXIF.** Điện thoại lưu ảnh ngang rồi ghi cờ
+  `Orientation` bảo trình xem xoay 90°. Xoá EXIF mà không xoay pixel
+  trước thì mọi ảnh chụp dọc nằm nghiêng vĩnh viễn. Thứ tự bắt buộc: đọc
+  cờ, xoay pixel, rồi mới ghi lại không EXIF.
+- **Tước hỏng thì ghi log mức `error`, không phải `warning`.** Ảnh không
+  tối ưu được chỉ nặng hơn; ảnh không tước được là dữ liệu vị trí của
+  khách còn nằm trên máy chủ.
+
+Bài kiểm thử dựng một JPEG có **khối EXIF GPS thật**, ghép bằng tay ở mức
+byte (PHP không có hàm ghi exif), và có một bài **tự bảo hiểm** khẳng
+định tệp mẫu thật sự có GPS — không có nó thì mọi bài "đã xoá GPS" xanh
+một cách vô nghĩa.
+
+---
+
+## QĐ-163. Blog là nền tảng chính, social là tầng phụ — theo đúng thứ tự đó
+
+Ba tầng, ưu tiên giảm dần:
+
+1. **Cẩm nang** (`/cam-nang`) — người mua cây gần như luôn tìm hiểu trước
+   khi mua, và họ gõ câu hỏi vào Google. Một bài "7 loại cây để bàn ít
+   cần ánh sáng" kéo khách suốt nhiều tháng; một bài kiểu mạng xã hội
+   sống được vài ngày.
+2. **Góc cây của bạn** (`/goc-cay`) — social **nhẹ**, cố ý nhẹ.
+3. Đánh giá sản phẩm — đã có sẵn từ trước.
+
+**Không dựng một Facebook thứ hai.** Không follower, không bảng tin theo
+thuật toán, không nhắn tin, không story. Lý do không phải lười: khu vực
+social mới sinh ra gặp bài toán con gà–quả trứng — không có người thì
+trống trơn, mà trống trơn thì không ai vào. Một dòng ảnh khách đăng thì
+dùng được ngay từ ngày đầu và không cần ai theo dõi ai.
+
+**Cẩm nang ra thanh menu chính; Góc cây vào menu "Khác".** Cẩm nang là
+cửa vào của khách đến từ Google — họ đọc bài rồi mới biết cửa hàng tồn
+tại. Giấu nó sau một menu bung ra là giấu đúng lối đi mà nó sinh ra để
+mở. Góc cây thì ngược lại: khách xem nó SAU khi đã biết cửa hàng.
+
+**Bảng `blog_post_product` là thứ biến blog thành doanh thu.** Không có
+nó thì bài viết chỉ là chữ, và khách đọc xong phải tự đi tìm cây. Dùng
+bảng nối thay vì dán link vào nội dung: link dán tay chết khi sản phẩm
+đổi slug hoặc ngừng bán, và không có gì báo.
+
+Cột `note` trong bảng nối là lý do RIÊNG của bài này khi nhắc cây đó
+("chịu bóng tốt nhất danh sách"). Cùng một cây ở ba bài có ba lý do khác
+nhau; lấy mô tả chung của sản phẩm thì cả ba chỗ đọc như nhau.
+
+---
+
+## QĐ-164. Bài viết là chỗ DUY NHẤT in HTML thô — chỉ an toàn nhờ hai điều kiện
+
+Mọi nơi khác trong dự án đều escape. Bài hướng dẫn thì cần đoạn văn, tiêu
+đề phụ, danh sách — escape hết thì admin nhìn thấy thẻ `p` hiện ra thành
+chữ.
+
+An toàn được nhờ **cả hai** điều kiện, và cả hai phải giữ:
+
+1. **Chỉ admin viết được.** Route ghi nằm sau `role:admin`. Nội dung
+   người lạ gửi lên nằm ở "Góc cây của bạn", và ở đó nó được escape.
+2. **Đi qua `HtmlSanitizer` LÚC LƯU**, không lúc hiện. Làm sạch lúc hiện
+   thì mọi chỗ in bài phải nhớ gọi — trang bài, xem trước ở quản trị, thẻ
+   mô tả, bản RSS về sau — và chỗ thứ ba sẽ quên.
+
+**Danh sách CHO PHÉP, không phải danh sách cấm.** Cấm thẻ `script` thì
+còn `iframe`, cấm cả hai thì còn `object`, `embed`, `svg onload`… không
+bao giờ liệt kê hết. Danh sách cho phép thì thứ chưa nghĩ tới mặc định bị
+gỡ — sai về phía an toàn.
+
+**Lỗi đã sửa: thứ tự gỡ vỏ.** Bản đầu quyết định giữ/gỡ TRƯỚC rồi mới đệ
+quy. Với `div > section > p` thì `div` bị gỡ vỏ, `section` được đẩy lên
+chỉ số mà vòng lặp **vừa đi qua**, và không bao giờ được kiểm. Một thẻ
+không được phép vẫn lọt ra trang, chỉ cần bọc nó trong một thẻ cũng không
+được phép. Sửa: làm sạch cây con TRƯỚC, rồi mới gỡ vỏ.
+
+Cũng ở đây: `loadHTML` mặc định đoán bảng mã ISO-8859-1 nên tiếng Việt có
+dấu biến thành ký tự lạ — hỏng **lặng lẽ**, chữ vẫn hiện chỉ sai dấu.
+
+---
+
+## QĐ-165. Duyệt trước khi hiện, và từ chối phải có lý do
+
+Nội dung người lạ đăng lên một trang bán hàng. Hiện ngay rồi gỡ sau nghĩa
+là trong khoảng giữa hai việc đó, trang của cửa hàng đang hiển thị bất kỳ
+thứ gì vừa được gửi lên — kể cả lúc 2 giờ sáng khi không ai trực.
+
+Số bài mỗi ngày của một cửa hàng nhỏ đếm trên đầu ngón tay, nên duyệt tay
+không phải gánh nặng. Khi nào nhiều tới mức không duyệt xuể thì đó là lúc
+bàn tới tự động — không phải bây giờ.
+
+- **`approved_at` / `rejected_at` thay cho cột trạng thái chuỗi.** Ba
+  trạng thái suy ra được, và mỗi mốc kèm luôn thời điểm — thứ cần khi
+  khách hỏi "bài tôi gửi hôm kia sao rồi".
+- **Duyệt thì xoá dấu từ chối và ngược lại.** Một trạng thái phải là MỘT
+  trạng thái, không phải hai dấu chồng nhau để `statusText()` đoán cái
+  nào mới hơn.
+- **Lý do từ chối bắt buộc, và hiện lại cho chính người đăng.** Từ chối
+  im lặng thì khách đăng lại y hệt, rồi lại bị từ chối, và họ kết luận là
+  trang bị hỏng.
+- **Người đăng vẫn thấy bài của mình kèm trạng thái.** Gửi xong mà màn
+  hình không đổi gì thì họ tưởng hỏng và gửi lại — rồi admin có ba bài
+  giống hệt để duyệt.
+
+---
+
+## QĐ-166. Slug bài viết KHÔNG đổi theo tiêu đề
+
+Sửa tiêu đề mà slug đổi theo là làm chết mọi link đã chia sẻ và mọi thứ
+hạng Google đã có — **đúng thứ cả khu vực Cẩm nang sinh ra để xây**.
+
+Slug sinh một lần lúc tạo bài rồi giữ nguyên. Admin đổi được bằng tay nếu
+thật sự cần, nhưng nó không tự đổi sau lưng họ.
+
+Kiểm trùng phải dùng `withTrashed()`: bài xoá mềm vẫn giữ slug, nên tạo
+bài mới trùng tên sẽ đụng ràng buộc UNIQUE nếu không tính tới nó.
+
+`published_at` là **trạng thái**, không chỉ là ngày: null = bản nháp,
+quá khứ = đang hiển thị, tương lai = đã hẹn giờ. Một cột trả lời ba câu.
+`scopePublished` phải kiểm cả `<= now()` — bỏ vế đó thì cả tính năng hẹn
+giờ thành vô nghĩa mà không có gì báo.
+
+Bài nổi bật ở trang danh sách xét theo **số trang yêu cầu**, không xét
+trạng thái của đối tượng truy vấn: bản đầu kiểm `$query->getQuery()->
+offset`, nhưng `paginate()` ở dòng trên đã đặt offset lên chính đối tượng
+đó, nên điều kiện luôn sai và khối nổi bật không bao giờ hiện. Lỗi phụ
+thuộc vào THỨ TỰ các khoá trong mảng — thứ không ai đọc code mà đoán ra.
+
+Thời gian đọc đếm theo **khoảng trắng**, không dùng `str_word_count`: hàm
+đó viết cho bảng chữ Latin không dấu, và với tiếng Việt mỗi ký tự có dấu
+nằm ngoài danh sách sẽ cắt đôi từ.
+
+---
+
+## QĐ-167. Ba bài kiểm thử suýt vô nghĩa, và cách phát hiện
+
+Lần thứ ba trong dự án gặp đúng kiểu này (xem QĐ-124, QĐ-144). Ghi lại vì
+nó vẫn tái diễn:
+
+**1. Ảnh giả không có EXIF.** Bài "ảnh đăng lên bị tước metadata" dùng
+`UploadedFile::fake()->image()` — ảnh đó **không có EXIF ngay từ đầu**.
+Chèn đột biến cho controller gọi thẳng `$file->store()` (bỏ qua toàn bộ
+lớp tước) thì bài **vẫn xanh**. Sửa: dựng JPEG có EXIF GPS thật, và thêm
+một bài tự bảo hiểm khẳng định tệp mẫu có GPS.
+
+**2. Bài tin vào chính hàm kiểm của mình.** Bài "GPS biến mất" chỉ gọi
+`metadataConLai()` của dự án. Cho hàm đó luôn trả mảng rỗng thì bài vẫn
+xanh. Sửa: đọc thẳng bằng `exif_read_data` của PHP.
+
+**3. Nhắm sai tầng khi chèn đột biến.** Hai bài về gán hàng loạt vẫn xanh
+khi phá `$fillable`, vì controller dựng model bằng mảng tường minh — có
+**hai lớp chặn độc lập**, và phá một lớp thì lớp kia giữ. Đó là chủ ý,
+nhưng phải ghi rõ trong bài, vì người đọc dễ tưởng nó canh đúng một dòng.
+
+**Quy tắc:** một đột biến sống sót không có nghĩa là mã sai — nó có nghĩa
+là **bài kiểm thử chưa đo cái nó tuyên bố**, hoặc có một lớp bảo vệ khác
+mà mình chưa biết. Cả hai trường hợp đều phải tìm ra bằng được lý do,
+không được bỏ qua.

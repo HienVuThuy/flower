@@ -41,12 +41,35 @@ use Illuminate\Support\Facades\Storage;
  */
 class ImageStore
 {
-    public function __construct(private readonly ImageOptimizer $optimizer)
-    {
+    public function __construct(
+        private readonly ImageOptimizer $optimizer,
+        private readonly ImageMetadataStripper $stripper,
+    ) {
     }
 
     /**
-     * Lưu một ảnh tải lên và sinh sẵn bản WebP.
+     * Lưu một ảnh tải lên, TƯỚC METADATA, rồi sinh sẵn bản WebP.
+     * ============================================================
+     * TƯỚC METADATA CHO MỌI ẢNH, KHÔNG CÓ CỜ BẬT/TẮT.
+     *
+     * Ảnh chụp bằng điện thoại mang theo toạ độ GPS chính xác tới vài mét
+     * — tức là địa chỉ nhà người chụp. Xem chú thích đầu
+     * `ImageMetadataStripper`.
+     *
+     * Có thể lập luận rằng chỉ ảnh ĐĂNG CÔNG KHAI mới cần tước. Nhưng:
+     *
+     *   - một cờ là một thứ để quên, và chỗ quên sẽ là chỗ mới thêm sau
+     *     này — đúng cùng lý do lớp này tồn tại (xem chú thích đầu tệp);
+     *   - không có trường hợp nào cửa hàng CẦN giữ toạ độ GPS của khách,
+     *     kể cả với ảnh riêng tư trong nhật ký;
+     *   - ảnh gốc nằm trong đĩa `public` nên truy cập thẳng được bằng
+     *     `/storage/…`, "riêng tư" ở đây chỉ là không có link dẫn tới.
+     *
+     * Tước hỏng KHÔNG làm hỏng việc lưu ảnh — cùng nguyên tắc với bước
+     * tối ưu bên dưới. Nhưng khác một điểm quan trọng: nếu tước hỏng thì
+     * GHI LOG MỨC error, không phải warning. Một ảnh không tối ưu được
+     * chỉ nặng hơn; một ảnh không tước được là dữ liệu vị trí của khách
+     * còn nằm trên máy chủ.
      *
      * @param  string  $thuMuc  thư mục trong đĩa `public`, ví dụ `products`
      * @return string đường dẫn tương đối đã lưu
@@ -54,6 +77,15 @@ class ImageStore
     public function luu(UploadedFile $file, string $thuMuc): string
     {
         $path = $file->store($thuMuc, 'public');
+
+        try {
+            $this->stripper->tuoc($path);
+        } catch (\Throwable $e) {
+            Log::error('KHÔNG TƯỚC ĐƯỢC METADATA của ảnh vừa tải lên', [
+                'path' => $path,
+                'loi' => $e->getMessage(),
+            ]);
+        }
 
         $this->toiUu($path);
 

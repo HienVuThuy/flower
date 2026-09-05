@@ -1,0 +1,325 @@
+/*
+ * ============================================================
+ * CẨM NANG (blog) và GÓC CÂY CỦA BẠN
+ * ============================================================
+ */
+
+/* ---------- Thẻ bài viết ---------- */
+
+.post-card {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: inherit;
+    text-decoration: none;
+    overflow: hidden;
+    transition: border-color 150ms ease, transform 150ms ease;
+}
+
+.post-card:hover,
+.post-card:focus-visible {
+    border-color: var(--brand-200);
+    transform: translateY(-2px);
+}
+
+.post-card__img {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+}
+
+.post-card__img--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-alt);
+    color: var(--ink-500);
+}
+
+.post-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    padding: 1rem 1.1rem;
+}
+
+.post-card__cat,
+.post-feature__cat,
+.post-header__cat {
+    color: var(--brand-500);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+}
+
+.post-card__title {
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.35;
+    margin-block: 0.35rem;
+}
+
+.post-card__excerpt {
+    font-size: 0.9rem;
+    color: var(--ink-500);
+    /* Cắt ở ba dòng: thẻ trong lưới phải cao bằng nhau, và một tóm tắt
+       dài gấp đôi làm cả hàng lệch. */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.post-card__meta {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--ink-500);
+}
+
+.post-card--compact .post-card__body {
+    padding: 0.85rem 0.95rem;
+}
+
+/* ---------- Bài nổi bật ---------- */
+
+.post-feature {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 0;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: inherit;
+    text-decoration: none;
+    overflow: hidden;
+}
+
+@media (max-width: 767.98px) {
+    .post-feature {
+        grid-template-columns: 1fr;
+    }
+}
+
+.post-feature__img {
+    width: 100%;
+    height: 100%;
+    min-height: 14rem;
+    object-fit: cover;
+}
+
+.post-feature__body {
+    padding: 1.6rem;
+    align-self: center;
+}
+
+.post-feature__title {
+    margin-block: 0.4rem 0.6rem;
+}
+
+.post-feature__excerpt {
+    color: var(--ink-500);
+    margin-bottom: 0.75rem;
+}
+
+/* ---------- Trang bài ---------- */
+
+.post-header {
+    margin-bottom: 1.25rem;
+}
+
+.post-header__title {
+    margin-block: 0.4rem 0.5rem;
+}
+
+.post-header__meta {
+    font-size: 0.9rem;
+    color: var(--ink-500);
+    margin: 0;
+}
+
+.post-cover {
+    width: 100%;
+    max-height: 24rem;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.75rem;
+}
+
+/*
+ * NỘI DUNG BÀI — bề rộng dòng và khoảng cách dòng đọc được.
+ *
+ * Cỡ chữ lớn hơn phần còn lại của trang và dòng thưa hơn: đây là chỗ
+ * duy nhất người ta đọc liên tục vài phút, khác với mọi trang khác trong
+ * cửa hàng vốn để quét mắt.
+ */
+.post-body {
+    font-size: 1.05rem;
+    line-height: 1.75;
+}
+
+.post-body h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-block: 2rem 0.75rem;
+}
+
+.post-body h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-block: 1.5rem 0.6rem;
+}
+
+.post-body p {
+    margin-bottom: 1.1rem;
+}
+
+.post-body ul,
+.post-body ol {
+    margin-bottom: 1.1rem;
+    padding-left: 1.5rem;
+}
+
+.post-body li {
+    margin-bottom: 0.4rem;
+}
+
+.post-body blockquote {
+    margin: 1.5rem 0;
+    padding: 0.75rem 1.1rem;
+    border-left: 3px solid var(--brand-500);
+    background: var(--surface-alt);
+    font-style: italic;
+}
+
+.post-body a {
+    color: var(--brand-500);
+}
+
+.post-body table {
+    width: 100%;
+    margin-bottom: 1.1rem;
+    border-collapse: collapse;
+}
+
+.post-body th,
+.post-body td {
+    padding: 0.5rem 0.7rem;
+    border: 1px solid var(--border-soft);
+    text-align: left;
+}
+
+.post-products,
+.post-related {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-soft);
+}
+
+.post-products__note {
+    margin-top: 0.4rem;
+    font-size: 0.85rem;
+    color: var(--ink-500);
+}
+
+/* ---------- Góc cây của bạn ---------- */
+
+.community-card {
+    height: 100%;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.community-card__img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+}
+
+.community-card__body {
+    padding: 0.9rem 1rem;
+}
+
+.community-card__text {
+    margin-bottom: 0.5rem;
+    /* `white-space: pre-line` giữ xuống dòng khách gõ, nhưng KHÔNG giữ
+       khoảng trắng thừa — nếu không thì một người gõ mười dòng trống làm
+       vỡ cả lưới. */
+    white-space: pre-line;
+}
+
+.community-card__product {
+    display: inline-block;
+    margin-bottom: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.community-card__meta {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--ink-500);
+}
+
+.community-compose__privacy {
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    background: var(--surface-alt);
+}
+
+.my-post {
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.my-post:last-child {
+    margin-bottom: 0;
+    border-bottom: 0;
+}
+
+.my-post__text {
+    margin-block: 0.35rem;
+    font-size: 0.9rem;
+}
+
+.my-post__reason {
+    font-size: 0.8rem;
+    color: var(--danger, #b3261e);
+}
+
+@media (min-width: 992px) {
+    .community-compose {
+        position: sticky;
+        top: 1rem;
+    }
+}
+
+/* ---------- Ảnh nhỏ ở trang quản trị ---------- */
+
+.admin-thumb {
+    width: 100%;
+    max-width: 12rem;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.admin-thumb-lg {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+}
+
+.filter-chip__count {
+    margin-left: 0.25rem;
+    opacity: 0.7;
+    font-size: 0.85em;
+}
