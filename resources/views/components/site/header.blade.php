@@ -55,21 +55,22 @@
                 </a>
 
                 {{--
-                    CẨM NANG RA THANH CHÍNH, không nhét vào menu "Khác".
+                    CẨM NANG NẰM TRONG MENU "KHÁC" — đổi ngày 07/09/2026.
 
-                    Đây là cửa vào của khách đến từ Google — họ tìm "cây nào
-                    hợp bàn làm việc", đọc bài, rồi mới biết cửa hàng này
-                    tồn tại. Giấu nó sau một menu bung ra là giấu đúng lối
-                    đi mà cả khu vực đó sinh ra để mở.
+                    Trước đây nó ở ngoài thanh chính với lý do SEO: khách
+                    đến từ Google đọc bài rồi mới biết cửa hàng, nên lối
+                    vào đó đáng được thấy ngay.
 
-                    "Góc cây của bạn" thì ngược lại — vào menu Khác. Nó là
-                    nội dung khách xem SAU khi đã biết cửa hàng, không phải
-                    lối vào.
+                    Nhưng đo trên máy thật: ở khung 1280px, sáu mục ngoài
+                    thanh chính làm nội dung rộng 1419px — TRÀN NGANG 139px,
+                    và cả trang trượt sang hai bên. Một lối vào đẹp trên lý
+                    thuyết mà làm hỏng thanh điều hướng ở độ phân giải phổ
+                    biến nhất thì không đáng.
+
+                    Vào menu Khác nó vẫn bấm được sau một cú bấm, và khách
+                    đến từ Google thì vốn đã ở TRONG bài rồi — họ không cần
+                    thanh điều hướng để tìm ra nó.
                 --}}
-                <a href="{{ route('shop.blog.index') }}" class="site-header__link {{ request()->routeIs('shop.blog.*') ? 'is-active' : '' }}">
-                    Cẩm nang
-                </a>
-
                 @php
                     /*
                      * Menu "Khác" tự sáng khi trang hiện tại nằm bên trong —
@@ -80,7 +81,8 @@
                         || request()->routeIs('shop.bulk-inquiry.*')
                         || request()->routeIs('shop.taxa.*')
                         || request()->routeIs('shop.vouchers.*')
-                        || request()->routeIs('shop.community.*');
+                        || request()->routeIs('shop.community.*')
+                        || request()->routeIs('shop.blog.*');
                 @endphp
 
                 <details class="site-header__more {{ $inMore ? 'is-active' : '' }}" data-account-menu>
@@ -91,6 +93,16 @@
                     </summary>
 
                     <div class="site-header__menu">
+                        {{--
+                            Cẩm nang đứng ĐẦU menu: trong sáu mục ở đây, đây
+                            là mục nhiều người vào nhất, và nó vừa từ thanh
+                            chính chuyển vào — người quen vị trí cũ tìm thấy
+                            ngay dòng đầu tiên.
+                        --}}
+                        <a class="dropdown-item" href="{{ route('shop.blog.index') }}">
+                            <x-site.icon name="list" /> Cẩm nang
+                        </a>
+
                         {{--
                             "Cây theo loài" đặt trong menu Khác, KHÔNG đặt
                             ngoài thanh chính.
@@ -370,10 +382,35 @@
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Đóng"></button>
     </div>
 
+    {{--
+        NGĂN KÉO PHẢI CÓ ĐỦ MỌI MỤC CỦA THANH ĐIỀU HƯỚNG.
+        ============================================================
+        Dưới 1200px thanh điều hướng ẩn hẳn, nên đây là LỐI ĐI DUY NHẤT.
+        Thiếu một mục ở đây nghĩa là mục đó không tồn tại với người dùng
+        điện thoại — không phải "khó tìm hơn", mà là không có đường nào.
+
+        Bản trước chỉ có bốn liên kết và thiếu sáu: Chọn cây, Cẩm nang,
+        Cây theo loài, Phụ kiện, Góc cây, Voucher. "Sản phẩm" thì lệch
+        tên với thanh chính (ở đó gọi là "Hoa & cây cảnh") — hai tên cho
+        cùng một trang làm người ta tưởng là hai chỗ khác nhau.
+
+        Chia hai nhóm có tiêu đề thay vì một dãy mười liên kết phẳng:
+        mười dòng giống hệt nhau thì phải đọc hết mới tìm được dòng cần.
+    --}}
     <div class="offcanvas-body">
         <a href="{{ route('welcome') }}" class="site-header__link">Trang chủ</a>
+        <a href="{{ route('shop.products.index') }}" class="site-header__link">Hoa &amp; cây cảnh</a>
         <a href="{{ route('shop.categories.index') }}" class="site-header__link">Danh mục</a>
-        <a href="{{ route('shop.products.index') }}" class="site-header__link">Sản phẩm</a>
+        <a href="{{ route('shop.advisor.index') }}" class="site-header__link">Chọn cây</a>
+
+        <div class="mobile-drawer__heading">Tìm hiểu</div>
+        <a href="{{ route('shop.blog.index') }}" class="site-header__link">Cẩm nang</a>
+        <a href="{{ route('shop.taxa.index') }}" class="site-header__link">Cây theo loài</a>
+        <a href="{{ route('shop.community.index') }}" class="site-header__link">Góc cây của bạn</a>
+
+        <div class="mobile-drawer__heading">Khác</div>
+        <a href="{{ route('shop.supplies.index') }}" class="site-header__link">Phụ kiện &amp; vật tư</a>
+        <a href="{{ route('shop.vouchers.index') }}" class="site-header__link">Voucher</a>
         <a href="{{ route('shop.bulk-inquiry.create') }}" class="site-header__link">Sự kiện &amp; số lượng lớn</a>
     </div>
 

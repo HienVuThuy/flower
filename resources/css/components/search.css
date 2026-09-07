@@ -88,11 +88,47 @@
     position: relative;
     flex: 0 1 auto;
     margin-inline-start: auto;
+
+    /*
+     * `min-width: 0` LÀ BẮT BUỘC — sửa ngày 07/09/2026.
+     *
+     * Flex item mặc định là `min-width: auto`, tức là KHÔNG co nhỏ hơn
+     * nội dung của mình. Nên `flex: 0 1 auto` ở trên tuy khai "co được"
+     * mà thực tế không co được milimét nào.
+     *
+     * Đo được ở khung 1280px: khối bên phải co từ 556px xuống 487px,
+     * nhưng các con bên trong vẫn cần 556px và TRÀN RA NGOÀI hộp cha
+     * 70px — nút "Đăng ký" nằm ở toạ độ 1319 trong khi khung nhìn chỉ
+     * rộng 1265. Cả trang trượt ngang.
+     *
+     * Đúng cái bẫy đã ghi ở đầu `.site-header__brand-text` trong
+     * navigation.css. Cùng một luật CSS, cắn ở hai chỗ khác nhau.
+     */
+    min-width: 0;
 }
 
 .header-search__field {
     position: relative;
+
+    /*
+     * `width` là kích thước MONG MUỐN, `max-width: 100%` là trần thật.
+     *
+     * Chỉ đặt `width` thì ô nhập giữ nguyên 260px kể cả khi cha đã co
+     * lại — và nó tràn ra ngoài. Thêm trần theo cha thì lúc rộng rãi nó
+     * vẫn đúng 260px, lúc chật thì nhường chỗ.
+     */
     width: 16.25rem; /* 260px */
+    max-width: 100%;
+}
+
+/*
+ * Ô nhập cũng cần `min-width: 0`.
+ *
+ * `<input>` có kích thước nội tại riêng (thuộc tính `size` mặc định ~20
+ * ký tự), nên nó cũng không tự co dưới ngưỡng đó nếu không nói rõ.
+ */
+.header-search__input {
+    min-width: 0;
 }
 
 /* Màn hình rất rộng thì nới thêm chút — nhưng có TRẦN, không kéo dài vô

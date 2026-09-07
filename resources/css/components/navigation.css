@@ -347,10 +347,43 @@
     opacity: 0.7;
 }
 
+/*
+ * KHỐI BÊN PHẢI PHẢI CO ĐƯỢC — sửa ngày 07/09/2026.
+ * ============================================================
+ * Trước đây là `flex-shrink: 0`, tức là "không bao giờ nhường chỗ". Kết
+ * quả đo ở khung 1280px:
+ *
+ *   thương hiệu 186 + điều hướng 613 + khối phải 556 = 1419px
+ *   -> TRÀN NGANG 139px, cả trang trượt sang hai bên.
+ *
+ * Ô tìm kiếm bên trong vốn đã khai `flex: 0 1 auto` (co được), nhưng cha
+ * đặt `flex-shrink: 0` nên nó không có cơ hội co. Một thành phần co được
+ * nằm trong một khối không co được thì cũng như không.
+ *
+ * Nay khối này nhường chỗ khi thiếu, và ô tìm kiếm là thứ DUY NHẤT trong
+ * đó co lại: các nút và biểu tượng giữ nguyên kích thước (xem
+ * `flex-shrink: 0` bên dưới). Ô tìm kiếm hẹp bớt vài chục pixel vẫn gõ
+ * được; một cái nút bị bóp méo thì không bấm trúng.
+ *
+ * `min-width: 0` là bắt buộc: flex item mặc định không co nhỏ hơn nội
+ * dung của mình (`min-width: auto`), nên thiếu dòng này thì `flex-shrink`
+ * ở trên không có tác dụng gì cả.
+ */
 .site-header__actions {
     display: flex;
     align-items: center;
     gap: 0.4rem;
+    flex-shrink: 1;
+    min-width: 0;
+}
+
+/*
+ * Mọi thứ trong khối phải GIỮ NGUYÊN cỡ, trừ ô tìm kiếm.
+ *
+ * Nút "Đăng nhập" / "Đăng ký" bị bóp lại thì chữ xuống dòng hoặc bị cắt;
+ * biểu tượng giỏ hàng bị bóp thì mất vùng bấm 40px tối thiểu.
+ */
+.site-header__actions > *:not(.header-search) {
     flex-shrink: 0;
 }
 
@@ -451,4 +484,24 @@
 .site-header__more.is-active > .site-header__more-toggle {
     color: var(--brand-700);
     font-weight: 600;
+}
+
+/*
+ * Tiêu đề nhóm trong ngăn kéo di động.
+ *
+ * Mười liên kết giống hệt nhau xếp dọc thì phải đọc hết mới tìm được
+ * dòng cần. Hai tiêu đề chia chúng thành ba cụm ngắn, và mắt nhảy tới
+ * đúng cụm.
+ */
+.mobile-drawer__heading {
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+    font-size: var(--text-label, 0.72rem);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-500);
+}
+
+.mobile-drawer__heading:first-child {
+    margin-top: 0;
 }

@@ -5189,3 +5189,120 @@ nhưng phải ghi rõ trong bài, vì người đọc dễ tưởng nó canh đ�
 là **bài kiểm thử chưa đo cái nó tuyên bố**, hoặc có một lớp bảo vệ khác
 mà mình chưa biết. Cả hai trường hợp đều phải tìm ra bằng được lý do,
 không được bỏ qua.
+
+---
+
+## QĐ-168. Thanh điều hướng tối đa NĂM mục — đo được, không phải sở thích
+
+Đảo lại một phần QĐ-163. Ở đó Cẩm nang được đưa ra thanh chính với lý do
+SEO: khách đến từ Google đọc bài rồi mới biết cửa hàng, nên lối vào đó
+đáng được thấy ngay.
+
+Lý do vẫn đúng, nhưng **cái giá đo được thì lớn hơn**. Ở khung 1280px —
+độ phân giải laptop phổ biến nhất:
+
+```
+thương hiệu 186 + điều hướng 613 + khối phải 556 = 1419px
+khung nhìn                                       = 1280px
+                                        tràn ngang  139px
+```
+
+Cả trang trượt sang hai bên. Một lối vào đẹp trên lý thuyết mà làm hỏng
+thanh điều hướng ở độ phân giải phổ biến nhất thì không đáng.
+
+Bốn liên kết phẳng + menu "Khác" = năm mục là **ngưỡng đo được** của bố
+cục hiện tại, không phải một con số chọn cho tròn. Muốn thêm mục thứ sáu
+thì phải bớt chỗ ở nơi khác trước, và sửa cả hằng số trong
+`HeaderNavTest` kèm phép đo mới.
+
+Cẩm nang vào menu Khác vẫn bấm được sau một cú bấm, và khách đến từ
+Google thì vốn đã ở TRONG bài rồi — họ không cần thanh điều hướng để tìm
+ra nó.
+
+---
+
+## QĐ-169. `flex-shrink` vô hiệu nếu quên `min-width: 0` — lần thứ hai
+
+Gỡ Cẩm nang chỉ giải quyết 100 trong 139px. 39px còn lại đến từ một lỗi
+khác, và nó là lỗi **đã được ghi trong chính tệp CSS đó** cho một phần tử
+khác (`.site-header__brand-text`).
+
+Chuỗi lỗi:
+
+1. `.site-header__actions` đặt `flex-shrink: 0` — "không bao giờ nhường
+   chỗ". Khối phải cứng ở 556px.
+2. Sửa thành `flex-shrink: 1`: khối co từ 556 xuống 487px — nhưng **các
+   con bên trong vẫn cần 556px và tràn ra ngoài hộp cha 70px**. Nút "Đăng
+   ký" nằm ở toạ độ 1319 trong khi khung nhìn rộng 1265.
+3. Nguyên nhân: `.header-search` khai `flex: 0 1 auto` (co được) nhưng để
+   nguyên `min-width: auto` — mặc định của flex item, nghĩa là **không co
+   nhỏ hơn nội dung của mình**. Khai co được mà không cho phép co thì
+   cũng như không.
+
+Ba dòng phải đi cùng nhau, thiếu một là hỏng:
+
+```css
+.site-header__actions { flex-shrink: 1; min-width: 0; }
+.site-header__actions > *:not(.header-search) { flex-shrink: 0; }
+.header-search { flex: 0 1 auto; min-width: 0; }
+.header-search__field { width: 16.25rem; max-width: 100%; }
+```
+
+Dòng thứ hai quan trọng không kém: **chỉ ô tìm kiếm được co**. Ô tìm
+kiếm hẹp bớt vài chục pixel vẫn gõ được; một cái nút bị bóp méo thì không
+bấm trúng, và biểu tượng giỏ hàng bị bóp thì mất vùng bấm 40px tối thiểu.
+
+Đo sau khi sửa — tràn ngang **0px ở mọi khổ**: 1920, 1440, 1280, 1210,
+1180, 768, 375. Ô tìm kiếm nhường đúng phần thiếu (260 → 190px ở 1280,
+→ 120px ở 1210) rồi ẩn hẳn dưới 992px.
+
+---
+
+## QĐ-170. Ngăn kéo di động phải có ĐỦ mọi mục — thiếu là mục đó không tồn tại
+
+Tìm ra khi dọn thanh điều hướng: ngăn kéo chỉ có **bốn** liên kết và
+thiếu **sáu** — Chọn cây, Cẩm nang, Cây theo loài, Phụ kiện, Góc cây,
+Voucher.
+
+Dưới 1200px thanh điều hướng ẩn HẲN, nên ngăn kéo là lối đi **duy nhất**.
+Thiếu một mục ở đó không phải là "khó tìm hơn": với người dùng điện
+thoại, mục đó **không tồn tại**. Cẩm nang — cả một khu vực vừa dựng xong
+— chưa từng có đường vào nào trên di động.
+
+Cũng sửa một chỗ lệch tên: ngăn kéo gọi trang sản phẩm là "Sản phẩm"
+trong khi thanh chính gọi là "Hoa & cây cảnh". Hai tên cho cùng một trang
+làm người ta tưởng là hai chỗ khác nhau.
+
+Mười liên kết xếp dọc thì phải đọc hết mới tìm được dòng cần, nên chia ba
+cụm có tiêu đề.
+
+`HeaderNavTest::moi_muc_dieu_huong_deu_vao_duoc_tu_dien_thoai` canh việc
+này. Nó quan trọng hơn bài đếm số mục: "dọn gọn thanh điều hướng" là thao
+tác sẽ còn lặp lại, và mỗi lần lặp là một cơ hội âm thầm xoá một khu vực
+khỏi bản di động.
+
+---
+
+## QĐ-171. Hai lỗi trong chính hàm phụ trợ của bài kiểm thử
+
+Cả hai bài mới đều ĐỎ ngay lần chạy đầu, và cả hai lần đều do hàm phụ trợ
+sai chứ không phải mã sai. Ghi lại vì đây là kiểu lỗi làm người ta nghi
+oan cho mã nguồn:
+
+**1. Đếm nhầm nút "Khác" hai lần.** Nút đó là một `<summary>` mang luôn
+lớp `site-header__link`, nên `substr_count(..., 'site-header__link ')` +
+`substr_count(..., 'more-toggle')` cộng nó hai lần — ra 6 trong khi thanh
+chỉ có 5 mục. Phải trừ số nút menu ra khỏi số liên kết trước khi cộng.
+
+**2. Cắt chuỗi ngăn kéo ở `</div>` đầu tiên.** Bên trong ngăn kéo có các
+thẻ `<div class="mobile-drawer__heading">` — chính những tiêu đề nhóm vừa
+thêm — nên phép cắt dừng ngay ở tiêu đề thứ nhất và bỏ sót sáu liên kết
+phía sau. Bài báo "thiếu Cẩm nang" trong khi Cẩm nang vẫn ở đó.
+
+Mốc cắt nay là `<main` — thẻ mở ngay sau header. Chắc chắn nằm ngoài ngăn
+kéo, và **không lấn sang chân trang**: chân trang cũng có link Cẩm nang,
+lấy nhầm thì bài xanh một cách vô nghĩa.
+
+Bài học chung với QĐ-167: khi một bài kiểm thử mới báo đỏ, phải xác định
+lỗi nằm ở **mã** hay ở **phép đo** trước khi sửa bất cứ thứ gì. Sửa mã
+theo một phép đo sai là cách hỏng thêm một chỗ đang đúng.
