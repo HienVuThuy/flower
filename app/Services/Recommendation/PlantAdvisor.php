@@ -325,12 +325,8 @@ class PlantAdvisor
      */
     private function onlyDifficulty(Builder $query, CareDifficulty $difficulty): Builder
     {
-        return $query
-            ->where('care_info->difficulty', $difficulty->value)
-            ->whereIn('selling_form', [
-                SellingForm::Pot->value,
-                SellingForm::Original->value,
-                SellingForm::Set->value,
-            ]);
+        // Luật thật nằm ở Product::scopeWithCareDifficulty() — một nơi
+        // sở hữu duy nhất, vì trang sản phẩm cũng lọc theo độ khó.
+        return $query->withCareDifficulty($difficulty);
     }
 }

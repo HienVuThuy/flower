@@ -45,6 +45,32 @@
             </div>
         </div>
 
+        {{--
+            LỐI VÀO "CHỌN CÂY THEO NHU CẦU".
+            ============================================================
+            "Chọn cây" nay là cửa vào có hướng dẫn cho chính trang này
+            (QĐ-172), nên nó rời khỏi thanh điều hướng — và lối vào phải
+            xuất hiện ở đây, đúng chỗ khách đang bối rối.
+
+            CHỈ HIỆN KHI CHƯA LỌC GÌ. Người đã chọn bộ lọc là người biết
+            mình muốn gì; mời họ đi trả lời câu hỏi là mời họ quay lại
+            điểm xuất phát. Cũng ẩn khi đang xem một chương trình khuyến
+            mại hoặc đang tìm kiếm — lúc đó họ tới đây có mục đích rõ.
+        --}}
+        @if(! request()->hasAny($moiThamSoLoc))
+            <a href="{{ route('shop.advisor.index') }}" class="advisor-invite">
+                <x-site.icon name="sliders" class="advisor-invite__icon" />
+
+                <span class="advisor-invite__text">
+                    <strong>Chưa biết chọn cây nào?</strong>
+                    Trả lời vài câu về chỗ đặt và kinh nghiệm chăm cây —
+                    chúng tôi lọc sẵn cho bạn.
+                </span>
+
+                <span class="advisor-invite__cta">Chọn theo nhu cầu</span>
+            </a>
+        @endif
+
         <div class="row g-4">
 
             <div class="col-lg-3">

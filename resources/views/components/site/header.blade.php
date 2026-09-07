@@ -50,10 +50,19 @@
                 <a href="{{ route('shop.categories.index') }}" class="site-header__link {{ request()->routeIs('shop.categories.*') ? 'is-active' : '' }}">
                     Danh mục
                 </a>
-                <a href="{{ route('shop.advisor.index') }}" class="site-header__link {{ request()->routeIs('shop.advisor.*') ? 'is-active' : '' }}">
-                    Chọn cây
-                </a>
+                {{--
+                    "CHỌN CÂY" VÀO MENU KHÁC — đổi ngày 07/09/2026.
 
+                    Nó và "Hoa & cây cảnh" từng là hai mục nghe như hai
+                    chức năng, trong khi sáu trong bảy tiêu chí của nó
+                    trùng với bộ lọc trang sản phẩm. Nay nó là CỬA VÀO có
+                    hướng dẫn cho chính trang đó (QĐ-172), nên đứng cạnh
+                    trang đó ở thanh chính là mời khách chọn giữa hai lối
+                    dẫn tới cùng một nơi.
+
+                    Lối vào vẫn rõ: nút ở khung hero, khối mời ngay đầu
+                    trang sản phẩm, menu Khác, và ngăn kéo di động.
+                --}}
                 {{--
                     CẨM NANG NẰM TRONG MENU "KHÁC" — đổi ngày 07/09/2026.
 
@@ -82,7 +91,8 @@
                         || request()->routeIs('shop.taxa.*')
                         || request()->routeIs('shop.vouchers.*')
                         || request()->routeIs('shop.community.*')
-                        || request()->routeIs('shop.blog.*');
+                        || request()->routeIs('shop.blog.*')
+                        || request()->routeIs('shop.advisor.*');
                 @endphp
 
                 <details class="site-header__more {{ $inMore ? 'is-active' : '' }}" data-account-menu>
@@ -99,6 +109,9 @@
                             chính chuyển vào — người quen vị trí cũ tìm thấy
                             ngay dòng đầu tiên.
                         --}}
+                        <a class="dropdown-item" href="{{ route('shop.advisor.index') }}">
+                            <x-site.icon name="sliders" /> Chọn cây theo nhu cầu
+                        </a>
                         <a class="dropdown-item" href="{{ route('shop.blog.index') }}">
                             <x-site.icon name="list" /> Cẩm nang
                         </a>
@@ -110,10 +123,10 @@
                             Đây là cách tìm của người đã biết cây — số ít
                             trong khách hàng, dù họ mua nhiều và mua đúng.
                             Đưa ra thanh chính là chiếm chỗ của "Danh mục"
-                            và "Chọn cây", hai lối đi mà phần đông dùng, để
-                            đổi lấy một lối đi ít người dùng. Nhưng KHÔNG
-                            có lối vào nào cả thì cả cây phân loại thành ra
-                            chỉ tồn tại trong cơ sở dữ liệu.
+                            và "Hoa & cây cảnh", hai lối đi mà phần đông
+                            dùng, để đổi lấy một lối đi ít người dùng. Nhưng
+                            KHÔNG có lối vào nào cả thì cả cây phân loại
+                            thành ra chỉ tồn tại trong cơ sở dữ liệu.
                         --}}
                         <a class="dropdown-item" href="{{ route('shop.taxa.index') }}">
                             <x-site.icon name="diagram-3" /> Cây theo loài

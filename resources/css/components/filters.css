@@ -405,3 +405,81 @@
     align-items: flex-start;
     line-height: 1.55;
 }
+
+/* ---------- Nút chuyển sang kết quả ở trang Chọn cây ---------- */
+
+.advisor-go {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-soft);
+    text-align: center;
+}
+
+.advisor-go__note {
+    margin: 0.6rem auto 0;
+    max-width: 42ch;
+    font-size: 0.875rem;
+    color: var(--ink-500);
+}
+
+/*
+ * Ghi chú nhỏ dưới một nhóm bộ lọc.
+ * Dùng ở nhóm "Độ khó chăm sóc" để nói vì sao hoa cắt cành không có mặt.
+ */
+.filter-panel__note {
+    margin: 0.4rem 0 0;
+    font-size: 0.78rem;
+    color: var(--ink-500);
+}
+
+/* ---------- Khối mời "Chọn cây theo nhu cầu" ---------- */
+
+.advisor-invite {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    margin-bottom: 1.5rem;
+    padding: 0.9rem 1.1rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--brand-500) 5%, transparent);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 150ms ease;
+}
+
+.advisor-invite:hover,
+.advisor-invite:focus-visible {
+    border-color: var(--brand-200);
+}
+
+.advisor-invite__icon {
+    flex-shrink: 0;
+    width: 1.4rem;
+    height: 1.4rem;
+    color: var(--brand-600);
+}
+
+.advisor-invite__text {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 0.9rem;
+}
+
+.advisor-invite__cta {
+    flex-shrink: 0;
+    font-weight: 600;
+    color: var(--brand-700);
+    white-space: nowrap;
+}
+
+/* Màn hẹp: xếp dọc, nút xuống dòng riêng cho đủ vùng bấm. */
+@media (max-width: 575.98px) {
+    .advisor-invite {
+        flex-wrap: wrap;
+    }
+
+    .advisor-invite__cta {
+        width: 100%;
+        text-align: right;
+    }
+}

@@ -38,6 +38,23 @@ class AutoOptimizeUploadTest extends TestCase
         if (! extension_loaded('gd') || ! function_exists('imagewebp')) {
             $this->markTestSkipped('Máy chạy kiểm thử chưa bật GD/WebP.');
         }
+
+        /*
+         * ĐĨA GIẢ — BẮT BUỘC.
+         *
+         * Bài này gọi `ImageStore::luu()` bốn lần, và trước khi có dòng
+         * này chúng ghi thẳng vào `storage/app/public/products/` THẬT.
+         * Mỗi lần chạy bộ kiểm thử là thêm vài tệp ảnh tên băm mà không
+         * bản ghi nào trỏ tới — rác tích lại trong chính thư mục được
+         * đưa lên kho lưu trữ.
+         *
+         * Đã phải dọn tay hai lần trước khi commit mới nhận ra quy luật.
+         *
+         * `Storage::fake` vẫn là một đĩa cục bộ thật trong thư mục tạm,
+         * nên GD, getimagesize() và imagewebp() chạy y hệt — bài kiểm thử
+         * không mất tính chân thực, chỉ đổi chỗ ghi.
+         */
+        Storage::fake('public');
     }
 
     /** Ảnh JPEG thật, đủ rộng để sinh được cả hai cỡ. */

@@ -28,6 +28,18 @@ class StoreSettingsTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        /*
+         * Bài này tải logo lên, và trước khi có dòng này nó ghi thẳng vào
+         * thư mục storage THẬT — mỗi lần chạy để lại một tệp không ai trỏ
+         * tới. Xem chú thích dài hơn ở AutoOptimizeUploadTest.
+         */
+        Storage::fake('public');
+    }
+
     private function admin(): User
     {
         $u = User::factory()->create();

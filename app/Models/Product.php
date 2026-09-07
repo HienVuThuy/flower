@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\CareDifficulty;
 use App\Enums\CareProfile;
 use App\Enums\ProductType;
 use App\Enums\SellingForm;
@@ -292,6 +293,34 @@ class Product extends Model
      * kệ thì nút tắt là một lời hứa suông, và cửa hàng phát hiện ra
      * bằng cách có người đặt đúng thứ mình vừa ngừng bán.
      */
+
+    /**
+     * Lọc theo ĐỘ KHÓ CHĂM SÓC.
+     * ============================================================
+     * MỘT NƠI SỞ HỮU DUY NHẤT cho luật này — trước đây nó nằm riêng
+     * trong `PlantAdvisor::onlyDifficulty()`, và khi trang sản phẩm cũng
+     * cần lọc theo độ khó thì luật sẽ bị chép sang bản thứ hai.
+     *
+     * Chép thì bản thứ hai gần như chắc chắn quên vế thứ hai bên dưới,
+     * và không có gì báo — kết quả chỉ đơn giản là sai.
+     *
+     * ============================================================
+     * ĐIỀU KIỆN HÌNH THỨC BÁN LÀ BẮT BUỘC, KHÔNG PHẢI TÙY CHỌN.
+     *
+     * Hoa cắt cành không có khái niệm "dễ chăm" hay "khó chăm" — chúng
+     * tàn sau vài ngày dù chăm kiểu gì. Để lọt vào đây thì bộ lọc "tôi
+     * mới trồng cây" trả về một đống bó hoa, đúng thứ khách KHÔNG hỏi.
+     */
+    public function scopeWithCareDifficulty(Builder $query, CareDifficulty $difficulty): Builder
+    {
+        return $query
+            ->where('care_info->difficulty', $difficulty->value)
+            ->whereIn('selling_form', [
+                SellingForm::Pot->value,
+                SellingForm::Original->value,
+                SellingForm::Set->value,
+            ]);
+    }
 
     /**
      * Lọc theo một nhãn. Dùng cho trang tư vấn chọn cây.

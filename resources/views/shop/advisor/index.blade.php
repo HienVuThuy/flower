@@ -174,42 +174,49 @@
 
         </div>
 
-        {{-- ============ KẾT QUẢ ============ --}}
-        <div class="mt-4">
+        {{--
+            ============ XEM KẾT QUẢ ============
+            KẾT QUẢ HIỆN Ở TRANG SẢN PHẨM, KHÔNG HIỆN Ở ĐÂY.
 
-            <h2 class="text-h4 mb-3">
-                @if($hasFilter)
-                    {{ $products->count() }} cây phù hợp
-                @else
-                    Dễ chăm nhất, hợp người mới
-                @endif
-            </h2>
+            Trước đây trang này tự đổ kết quả ra, và sáu trong bảy tiêu chí
+            của nó trùng với bộ lọc trang sản phẩm — hai bộ máy kết quả cho
+            cùng một câu hỏi. Trang này lại thiếu hẳn sắp xếp, lọc giá và
+            phân trang, nên khách trả lời xong vẫn phải sang trang kia để
+            làm nốt.
 
-            @if($products->isEmpty())
-                <x-site.empty-state
-                    title="Chưa có cây nào khớp đủ điều kiện này"
-                    {{--
-                        Nói rõ đây là giới hạn của KHO HÀNG, không phải
-                        khách chọn sai. Và chỉ ra đường đi tiếp cụ thể —
-                        bỏ bớt một điều kiện — thay vì để họ tự mò.
-                    --}}
-                    text="Cửa hàng chưa có cây nào vừa khớp tất cả những gì bạn chọn. Thử bỏ bớt một điều kiện."
-                >
-                    <x-slot:actions>
-                        <a href="{{ route('shop.advisor.index') }}" class="btn btn-secondary-brand btn-sm">Bỏ hết điều kiện</a>
-                        <a href="{{ route('shop.products.index') }}" class="btn btn-ghost btn-sm">Xem tất cả sản phẩm</a>
-                    </x-slot:actions>
-                </x-site.empty-state>
+            Nay bấm một nút là sang thẳng, mang theo đúng những gì đã chọn.
+            Cái riêng của trang này — CÁCH HỎI theo ngôn ngữ người mua —
+            giữ nguyên. Xem QĐ-172.
+        --}}
+        <div class="advisor-go mt-4">
+            @if($hasFilter)
+                <a href="{{ $ketQuaUrl }}" class="btn btn-primary-brand btn-lg">
+                    Xem cây phù hợp
+                </a>
+
+                {{--
+                    KHÔNG in trước số lượng ở đây.
+
+                    Muốn có con số thì phải đếm bằng một câu truy vấn thứ
+                    hai, và câu đó sẽ lệch với danh sách thật ngay khi
+                    trang sản phẩm đổi cách lọc — đúng kiểu trùng lặp mà cả
+                    thay đổi này sinh ra để bỏ. Con số thật nằm ở trang kết
+                    quả, nơi nó đếm chính tập đang hiển thị.
+                --}}
+                <p class="advisor-go__note">
+                    Sang trang sản phẩm với đúng điều kiện bạn vừa chọn —
+                    ở đó lọc thêm được theo giá, và sắp xếp được.
+                </p>
             @else
-                <div class="row g-4">
-                    @foreach($products as $product)
-                        <div class="col-6 col-md-3">
-                            <x-product.card :product="$product" ref="tu-van" />
-                        </div>
-                    @endforeach
-                </div>
-            @endif
+                <a href="{{ route('shop.products.index', ['kinh-nghiem' => \App\Enums\CareDifficulty::Easy->value]) }}"
+                   class="btn btn-secondary-brand btn-lg">
+                    Chưa biết chọn gì? Xem cây dễ chăm
+                </a>
 
+                <p class="advisor-go__note">
+                    Hoặc chọn vài điều kiện ở trên rồi bấm xem kết quả.
+                </p>
+            @endif
         </div>
 
         <p class="text-caption mt-4 mb-0">

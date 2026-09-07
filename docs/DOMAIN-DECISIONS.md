@@ -5306,3 +5306,170 @@ lấy nhầm thì bài xanh một cách vô nghĩa.
 Bài học chung với QĐ-167: khi một bài kiểm thử mới báo đỏ, phải xác định
 lỗi nằm ở **mã** hay ở **phép đo** trước khi sửa bất cứ thứ gì. Sửa mã
 theo một phép đo sai là cách hỏng thêm một chỗ đang đúng.
+
+---
+
+## QĐ-172. "Chọn cây" là CỬA VÀO của trang sản phẩm, không phải trang thứ hai
+
+Hai mục trên thanh điều hướng nghe như hai chức năng. Đo lại thì chúng
+gần trùng nhau:
+
+| Tiêu chí | Hoa & cây cảnh | Chọn cây |
+|---|---|---|
+| Vị trí đặt, Hợp mệnh, Môi trường, Dạng sống, Dáng, Màu | ✅ | ✅ |
+| Danh mục, Giá, Tìm kiếm, Sắp xếp, Phân trang | ✅ | ❌ |
+| Độ khó chăm sóc | ❌ | ✅ |
+
+**Sáu trong bảy tiêu chí trùng nhau**, và cả hai đổ kết quả ra cùng một
+`<x-product.card>`. Hai bộ máy kết quả cho cùng một câu hỏi: sửa cách xếp
+hạng ở một nơi thì nơi kia vẫn xếp kiểu cũ. Tệ hơn, trang Chọn cây thiếu
+hẳn sắp xếp, lọc giá và phân trang — khách trả lời xong **vẫn phải sang
+trang kia làm nốt**.
+
+Nhưng nó có một thứ thật sự riêng: **CÁCH HỎI**. Trang sản phẩm sắp theo
+cách cửa hàng nghĩ về hàng hoá (danh mục, hình thức bán, giá). Người mua
+cây lần đầu không nghĩ theo trục nào trong đó — họ nghĩ "tôi có cái ban
+công đầy nắng", "tôi hay quên tưới".
+
+**Giữ cách hỏi, bỏ bộ máy kết quả.** Trả lời xong thì chuyển sang
+`/san-pham` kèm đúng những tham số đó.
+
+Ba việc phải làm để gộp được:
+
+1. **Chuyển tiêu chí còn thiếu sang.** Độ khó chăm sóc là tiêu chí duy
+   nhất trang sản phẩm chưa có. Không chuyển thì gộp xong là mất một
+   chức năng.
+2. **Tên tham số đã trùng sẵn** (`vi-tri`, `menh`, `kinh-nghiem`, và các
+   `queryKey()` của nhãn), nên không cần bảng dịch ở giữa. Một bảng dịch
+   là chỗ thứ hai để lệch nhau.
+3. **Lối vào phải rõ.** "Chọn cây" rời thanh điều hướng (nay còn 4 mục),
+   nhưng vào được từ: nút ở khung hero, khối mời ngay đầu trang sản phẩm,
+   menu Khác, và ngăn kéo di động.
+
+**KHÔNG in trước số lượng kết quả** trên trang Chọn cây. Muốn có con số
+thì phải đếm bằng một câu truy vấn thứ hai, và câu đó sẽ lệch với danh
+sách thật ngay khi trang sản phẩm đổi cách lọc — đúng kiểu trùng lặp mà
+cả thay đổi này sinh ra để bỏ.
+
+Khối mời chỉ hiện khi **chưa lọc gì**: người đã chọn bộ lọc là người biết
+mình muốn gì, mời họ đi trả lời câu hỏi là mời họ quay lại điểm xuất phát.
+
+---
+
+## QĐ-173. Luật "độ khó chăm sóc" có hai vế, và vế thứ hai dễ mất khi chép
+
+```php
+public function scopeWithCareDifficulty(Builder $query, CareDifficulty $d): Builder
+{
+    return $query
+        ->where('care_info->difficulty', $d->value)
+        ->whereIn('selling_form', [Pot, Original, Set]);   // <- vế hay bị quên
+}
+```
+
+Vế thứ hai không phải tối ưu, nó là **nghiệp vụ**: hoa cắt cành không có
+khái niệm "dễ chăm" hay "khó chăm" — chúng tàn sau vài ngày dù chăm kiểu
+gì. Để lọt vào thì bộ lọc "tôi mới trồng cây" trả về một đống bó hoa,
+đúng thứ khách KHÔNG hỏi.
+
+Luật này từng nằm riêng trong `PlantAdvisor::onlyDifficulty()`. Khi trang
+sản phẩm cũng cần lọc theo độ khó, chép sang là bản thứ hai gần như chắc
+chắn quên vế đó — và **không có gì báo**, kết quả chỉ đơn giản là sai.
+
+Nay nó là một scope trên `Product`, và `PlantAdvisor` gọi chính scope đó.
+Một nơi sở hữu duy nhất.
+
+Giao diện nói thẳng ra giới hạn: *"Chỉ áp dụng cho cây trồng chậu, không
+tính hoa cắt cành."* Không nói thì khách lọc "dễ chăm" rồi thấy bó hoa
+biến mất và tưởng bộ lọc hỏng.
+
+---
+
+## QĐ-174. Bộ lọc chip bay sạch khi bấm "Áp dụng" — lỗi có sẵn, tìm ra khi gộp
+
+Các bộ lọc chip ở trang sản phẩm là thẻ `<a href>` chứ không phải ô nhập:
+chúng đổi URL, không nằm trong form. Nên khi khách bấm **"Áp dụng"** (gửi
+form GET), trình duyệt chỉ gửi những ô THẬT SỰ trong form.
+
+Đo được: form chỉ gửi `q` và `sort`. **Danh mục, hình thức, và cả sáu
+nhãn sinh thái biến mất** — và không có gì báo.
+
+Nghĩa là: chọn "màu trắng" + "cây leo", rồi gõ thêm từ khoá và bấm Áp
+dụng — hai bộ lọc kia bay sạch. Lỗi có từ trước, và bộ lọc độ khó vừa
+thêm làm nó nặng thêm một bậc.
+
+Sửa bằng input ẩn dựng từ **một danh sách tham số duy nhất** do
+`ProductController` giữ. Ba nơi cần đúng danh sách đó:
+
+- input ẩn giữ chip khi bấm "Áp dụng";
+- nút "Xoá bộ lọc";
+- khối mời "Chọn cây theo nhu cầu" (chỉ hiện khi chưa lọc gì).
+
+Trước đó danh sách được chép tay trong Blade và **đã lệch**: nó liệt kê
+`care_difficulty` — một tên tham số chưa bao giờ tồn tại ở đâu — đúng thứ
+chú thích ngay trên nó cảnh báo sẽ xảy ra.
+
+---
+
+## QĐ-175. Hai phép khẳng định đo nhầm chỗ
+
+Hai bài mới đỏ ngay lần chạy đầu, và cả hai lần đều do **phép đo sai chứ
+không phải mã sai**. Lần thứ hai liên tiếp gặp kiểu này (xem QĐ-171).
+
+**1. Đo cả trang thay vì đo cái cần đo.** Bài "tham số lạ bị bỏ, không
+đẩy tiếp sang trang sau" khẳng định cả trang không chứa chuỗi rác. Nhưng
+mọi link chip đều dùng `fullUrlWithQuery()`, nên chúng giữ nguyên chuỗi
+truy vấn hiện tại — kể cả phần rác. Controller làm đúng; phép đo sai. Nay
+bài trích riêng `href` của nút chuyển tiếp rồi mới khẳng định.
+
+**2. Kiểm bằng tên tham số thay vì nhãn người đọc thấy.** Bài "trang vẫn
+hỏi đủ tiêu chí" khẳng định trang chứa chuỗi `vi-tri`. Chuỗi đó xuất hiện
+trong mọi link chip nên nó có mặt **kể cả khi câu hỏi đã bị xoá khỏi
+trang** — bài sẽ xanh trong khi tính năng đã mất. Nay kiểm bằng nhãn
+tiếng Việt mà người dùng nhìn thấy.
+
+Quy tắc: một phép khẳng định trên **toàn bộ HTML** gần như luôn quá rộng.
+Thu hẹp về đúng phần tử đang xét trước khi kết luận mã sai.
+
+---
+
+## QĐ-176. Bài kiểm thử tải tệp phải `Storage::fake` — nếu không nó đổ rác vào kho thật
+
+Hai lần liên tiếp, ngay trước khi commit, `git status` hiện những tệp ảnh
+tên băm không ai đặt vào:
+
+```
+?? storage/app/public/categories/k8iXs1gvIi4a...jpg
+?? storage/app/public/products/4TcZ5rjOFM5d...jpg
+?? storage/app/public/products/Naq5wj1EZnyE...jpg
+?? storage/app/public/products/oqvNQlJkR6aV...jpg
+```
+
+Lần đầu tôi chỉ xoá đi. Lần thứ hai thì đi tìm nguyên nhân.
+
+**Thủ phạm: bài kiểm thử.** Quét những bài dùng `UploadedFile` mà không
+gọi `Storage::fake` ra đúng hai chỗ:
+
+- `AutoOptimizeUploadTest` — bốn lần ghi ảnh (ba lần gọi thẳng
+  `ImageStore::luu(..., 'products')`, một lần qua `POST /admin/categories`);
+- `StoreSettingsTest` — hai lần tải logo cửa hàng lên.
+
+Không có `Storage::fake('public')` thì `Storage::disk('public')` là đĩa
+THẬT. `RefreshDatabase` cuộn lại cơ sở dữ liệu, nên hàng đã tạo biến mất
+— nhưng **tệp trên đĩa thì ở lại**, và không còn bản ghi nào trỏ tới nó.
+Mỗi lần chạy toàn bộ bộ kiểm thử là thêm bốn tệp mồ côi.
+
+**Đo được:** bỏ đúng một dòng `Storage::fake('public')` rồi chạy lại một
+mình tệp đó → bốn tệp mới xuất hiện, bài vẫn xanh 5/5. Trả dòng đó lại,
+chạy cả 510 bài → không sinh tệp nào. Đây là loại lỗi bộ kiểm thử **không
+bao giờ tự báo**: nó không làm bài nào đỏ, nó chỉ âm thầm làm bẩn kho.
+
+Chú ý: `Storage::fake` KHÔNG phải một đĩa ảo trong bộ nhớ — nó vẫn là một
+thư mục thật, chỉ nằm trong thư mục tạm và bị xoá giữa các bài. Nên GD,
+`getimagesize()` và `imagewebp()` vẫn chạy y như thật; bài vẫn kiểm được
+đúng thứ nó sinh ra để kiểm. Đổi sang đĩa giả không làm phép đo yếu đi.
+
+**Quy tắc từ nay:** bài nào chạm tới `UploadedFile` hoặc
+`Storage::disk('public')` thì `Storage::fake('public')` trong `setUp()`.
+Bốn tệp mồ côi cũ đã kiểm chứng không có bản ghi nào trong toàn bộ cơ sở
+dữ liệu trỏ tới (quét mọi cột văn bản của mọi bảng) trước khi dọn.

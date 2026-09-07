@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Enums\CareDifficulty;
 use App\Enums\SellingForm;
 use App\Enums\UserEventType;
 use App\Http\Controllers\Controller;
@@ -104,6 +105,23 @@ class ProductController extends Controller
 
             $query->withTrait($type, $value);
             $traitFilters[$type->queryKey()] = $value;
+        }
+
+        /*
+         * LỌC THEO ĐỘ KHÓ CHĂM SÓC — tiêu chí đến từ trang "Chọn cây".
+         *
+         * Đây là tiêu chí DUY NHẤT mà trang chọn cây có còn trang này
+         * thì không, nên nó là thứ phải chuyển sang khi gộp hai trang
+         * (xem QĐ-172). Sáu tiêu chí còn lại đã trùng sẵn.
+         *
+         * Luật lọc nằm ở Product::scopeWithCareDifficulty(), không viết
+         * lại ở đây: luật đó gồm hai vế, và vế thứ hai (chỉ tính hàng
+         * trồng chậu) là thứ một bản chép tay sẽ quên.
+         */
+        $careDifficulty = CareDifficulty::tryFrom((string) $request->query('kinh-nghiem', ''));
+
+        if ($careDifficulty) {
+            $query->withCareDifficulty($careDifficulty);
         }
 
         /*
@@ -222,6 +240,7 @@ class ProductController extends Controller
             'searchRelaxed',
             'traitFilters',
             'activeTaxon',
+            'careDifficulty',
         ) + [
             /*
              * CHỈ HIỆN NHỮNG NHÃN THẬT SỰ CÓ HÀNG.
@@ -235,6 +254,31 @@ class ProductController extends Controller
              * truy vấn.
              */
             'traitOptions' => $this->traitOptionsInUse(),
+
+            /*
+             * CHỈ HIỆN ĐỘ KHÓ THẬT SỰ CÓ HÀNG — cùng nguyên tắc với các
+             * nhãn ở trên. `availableDifficulties()` đã lọc sẵn những
+             * mức có 0 sản phẩm.
+             */
+            'careDifficulties' => app(\App\Services\Recommendation\PlantAdvisor::class)->availableDifficulties(),
+
+            /*
+             * MỌI THAM SỐ LỌC — MỘT DANH SÁCH DUY NHẤT.
+             *
+             * Ba nơi cần đúng danh sách này: input ẩn giữ chip khi bấm
+             * "Áp dụng", nút "Xoá bộ lọc", và khối mời "Chọn cây theo
+             * nhu cầu" (chỉ hiện khi CHƯA lọc gì).
+             *
+             * Ba bản chép tay thì chúng lệch nhau, và lệch ở đây nghĩa là
+             * một bộ lọc âm thầm không xoá được, hoặc khối mời hiện ra
+             * đúng lúc khách đã biết mình muốn gì.
+             *
+             * Phần nhãn lấy từ TraitType::filterable(), không liệt kê tay.
+             */
+            'moiThamSoLoc' => array_merge(
+                ['q', 'category', 'selling_form', 'sort', 'kinh-nghiem', 'loai', 'promotion'],
+                array_map(fn (TraitType $t) => $t->queryKey(), TraitType::filterable()),
+            ),
         ]);
     }
 

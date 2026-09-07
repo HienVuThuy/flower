@@ -1,4 +1,31 @@
+{{-- $moiThamSoLoc do ProductController dựng — một nơi sở hữu duy nhất,
+     dùng chung với khối mời "Chọn cây" ở trang cha. --}}
 <form method="GET" action="{{ route('shop.products.index') }}" class="filter-panel">
+
+    {{--
+        GIỮ LẠI CHIP ĐÃ CHỌN KHI BẤM "ÁP DỤNG".
+        ============================================================
+        LỖI ĐÃ SỬA, và nó có sẵn từ trước.
+
+        Các bộ lọc chip là thẻ `<a href>`, không phải ô nhập — chúng đổi
+        URL chứ không nằm trong form. Nên khi khách bấm "Áp dụng" (gửi
+        form), trình duyệt chỉ gửi những ô THẬT SỰ trong form.
+        Đo được: form chỉ gửi `q` và `sort`; danh mục, hình thức, độ khó
+        và cả sáu nhãn sinh thái BIẾN MẤT.
+
+        Nghĩa là: chọn "dễ chăm" + "màu trắng", rồi gõ thêm từ khoá và
+        bấm Áp dụng — hai bộ lọc kia bay sạch, và không có gì báo.
+
+        Input ẩn mang chúng theo. Bỏ qua `q` và `sort` vì chúng đã có ô
+        thật trong form; lặp lại sẽ gửi hai giá trị cho một tham số.
+    --}}
+    @foreach($moiThamSoLoc as $thamSo)
+        @continue(in_array($thamSo, ['q', 'sort'], true))
+        @continue(! request()->filled($thamSo))
+
+        <input type="hidden" name="{{ $thamSo }}" value="{{ request($thamSo) }}">
+    @endforeach
+
 
     <div class="filter-panel__group">
         <label class="filter-panel__label" for="filter-q">Tìm kiếm</label>
@@ -43,6 +70,45 @@
             @endforeach
         </div>
     </div>
+
+    {{--
+        ĐỘ KHÓ CHĂM SÓC — tiêu chí chuyển từ trang "Chọn cây" sang.
+        ============================================================
+        KHÔNG nằm trong vòng lặp `TraitType::filterable()` bên dưới, vì
+        nó không phải một nhãn: độ khó lưu ở `care_info->difficulty`
+        (một giá trị mỗi sản phẩm), còn nhãn thì nhiều giá trị và nằm ở
+        bảng `product_traits`.
+
+        Đặt TRƯỚC các tiêu chí sinh thái vì nó là câu hỏi người mua cây
+        lần đầu hỏi sớm nhất — trước cả màu và dáng.
+    --}}
+    @if($careDifficulties->isNotEmpty())
+        <div class="filter-panel__group">
+            <span class="filter-panel__label">Độ khó chăm sóc</span>
+            <div class="filter-chip-group">
+                <a href="{{ request()->fullUrlWithQuery(['kinh-nghiem' => null]) }}"
+                   class="filter-chip {{ ! request('kinh-nghiem') ? 'is-active' : '' }}">Tất cả</a>
+
+                @foreach($careDifficulties as $row)
+                    <a href="{{ request()->fullUrlWithQuery(['kinh-nghiem' => $row['difficulty']->value]) }}"
+                       class="filter-chip {{ request('kinh-nghiem') === $row['difficulty']->value ? 'is-active' : '' }}"
+                       title="{{ $row['difficulty']->hint() }}">
+                        {{ $row['difficulty']->label() }}
+                        <span class="filter-chip__count">{{ $row['total'] }}</span>
+                    </a>
+                @endforeach
+            </div>
+
+            {{--
+                Nói rõ vì sao danh sách này ngắn hơn tổng số hàng.
+
+                Không nói thì khách lọc "dễ chăm" rồi thấy bó hoa biến
+                mất và tưởng bộ lọc hỏng. Hoa cắt cành không có khái niệm
+                dễ hay khó chăm — chúng tàn sau vài ngày dù chăm kiểu gì.
+            --}}
+            <p class="filter-panel__note">Chỉ áp dụng cho cây trồng chậu, không tính hoa cắt cành.</p>
+        </div>
+    @endif
 
     {{--
         NHÓM TIÊU CHÍ SINH THÁI — màu, dạng sống, môi trường sống, dáng,
@@ -114,19 +180,8 @@
 
     <button type="submit" class="btn btn-primary-brand w-100 mt-2">Áp dụng</button>
 
-    {{--
-        Danh sách tham số lấy từ TraitType::filterable(), không chép tay.
-        Chép tay thì thêm một tiêu chí mới là nút "Xoá bộ lọc" lặng lẽ
-        không nhận ra nó nữa — khách lọc xong không có cách nào quay lại.
-    --}}
-    @php
-        $moiThamSo = array_merge(
-            ['q', 'category', 'selling_form', 'sort', 'care_difficulty', 'loai'],
-            array_map(fn ($t) => $t->queryKey(), \App\Enums\TraitType::filterable()),
-        );
-    @endphp
-
-    @if(request()->hasAny($moiThamSo))
+    {{-- Danh sách tham số do ProductController dựng — xem chú thích ở đó. --}}
+    @if(request()->hasAny($moiThamSoLoc))
         <a href="{{ route('shop.products.index') }}" class="btn btn-ghost w-100 mt-2">Xóa bộ lọc</a>
     @endif
 
