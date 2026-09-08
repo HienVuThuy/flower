@@ -37,6 +37,15 @@
      * ký hiệu thì không.
      */
     $money = fn (string $v) => \App\Services\Shop\Money::format($v);
+
+    /*
+     * THUẾ ĐỌC TỪ CHÍNH GIỎ NÀY, không tự tính ở đây.
+     *
+     * CheckoutBasket là nơi duy nhất chịu trách nhiệm về tiền; Blade chỉ
+     * hỏi. Tính lại trong template là dựng bản thứ hai của luật thuế
+     * ngay tại chỗ khó kiểm thử nhất.
+     */
+    $thue = $basket->tax();
 @endphp
 
 <div class="order-summary">
@@ -200,6 +209,13 @@
             <dd data-grand-total
                 data-items-total="{{ $basket->payableItemsTotal() }}">{{ $money($basket->grandTotal()) }}</dd>
         </div>
+
+        {{--
+            THUẾ GTGT — nằm dưới dòng tổng vì nó NẰM TRONG dòng tổng.
+            Toàn bộ cách trình bày ở x-order.tax-lines, dùng chung với
+            trang đơn hàng của khách.
+        --}}
+        <x-order.tax-lines :total="$thue->total()" :rows="$thue->byRate()" />
 
     </dl>
 

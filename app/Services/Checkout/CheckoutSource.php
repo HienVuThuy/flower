@@ -335,7 +335,18 @@ class CheckoutSource
 
     public function cartBasket(): CheckoutBasket
     {
-        $lines = $this->cart->current()->items
+        $gio = $this->cart->current();
+
+        /*
+         * NẠP SẴN NHÓM THUẾ CÙNG SẢN PHẨM.
+         *
+         * Thuế nay tính theo TỪNG DÒNG, nên mỗi dòng phải biết nhóm thuế
+         * của sản phẩm mình. Không nạp sẵn thì mỗi món trong giỏ là một
+         * câu truy vấn nữa — và màn hình thanh toán gọi tới nó vài lần.
+         */
+        $gio->items->loadMissing('product.taxClass');
+
+        $lines = $gio->items
             /*
              * CHỈ LẤY MÓN ĐÃ CHỌN.
              *
@@ -362,7 +373,7 @@ class CheckoutSource
     {
         $data = session(self::DIRECT_KEY);
 
-        $product = Product::with(['promotions', 'category'])->find($data['product_id'] ?? null);
+        $product = Product::with(['promotions', 'category', 'taxClass'])->find($data['product_id'] ?? null);
 
         /*
          * Sản phẩm bị xoá hoặc ngừng bán trong lúc khách đang thanh

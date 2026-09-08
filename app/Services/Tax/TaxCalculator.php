@@ -2,6 +2,7 @@
 
 namespace App\Services\Tax;
 
+use App\Models\Product;
 use App\Models\Setting;
 
 /**
@@ -61,6 +62,66 @@ class TaxCalculator
         }
 
         return (string) (float) config('tax.default_rate', 0.08);
+    }
+
+    /**
+     * Thuế suất áp cho MỘT sản phẩm cụ thể.
+     * ============================================================
+     * VÌ SAO KHÔNG DÙNG CHUNG rate() CHO TẤT CẢ: cửa hàng này bán hoa
+     * tươi, cây giống, chậu sứ và giá thể — bốn thứ có bản chất thuế
+     * khác nhau. Một con số duy nhất ép cả bốn vào cùng một mức, và mức
+     * nào cũng sai với ba loại còn lại.
+     *
+     * BA KẾT QUẢ, KHÔNG PHẢI HAI:
+     *
+     *   '0.08'  sản phẩm có nhóm thuế, chịu mức đó
+     *   '0.08'  sản phẩm CHƯA phân loại  -> lùi về mức mặc định cửa hàng
+     *   null    nhóm thuế ghi "không chịu VAT" (rate NULL trong DB)
+     *
+     * null KHÁC '0'. '0' là "chịu thuế suất 0%" — vẫn là hàng chịu thuế,
+     * vẫn lên hoá đơn với dòng thuế suất 0%. null là "không thuộc đối
+     * tượng chịu thuế". Hai thứ ghi khác nhau trên hoá đơn, nên mã nguồn
+     * không được gộp.
+     *
+     * CHƯA PHÂN LOẠI THÌ LÙI VỀ MẶC ĐỊNH, KHÔNG THÀNH MIỄN THUẾ. Cùng
+     * nguyên tắc với rate(): một ô để trống là "chưa điền", không phải
+     * "miễn thuế". Nếu để trống thành miễn thuế thì mọi sản phẩm đang có
+     * bỗng nhiên không chịu thuế ngay khi bảng nhóm thuế ra đời — một
+     * thay đổi kế toán khổng lồ mà không ai bấm nút nào.
+     */
+    public function rateFor(?Product $product): ?string
+    {
+        if (! $this->enabled()) {
+            return null;
+        }
+
+        $nhom = $product?->taxClass;
+
+        if (! $nhom || ! $nhom->is_active) {
+            return $this->rate();
+        }
+
+        return $nhom->rateString();
+    }
+
+    /**
+     * Thuế suất thành chữ cho người đọc: '0.08000' -> "8%".
+     *
+     * MỘT NƠI ĐỊNH DẠNG DUY NHẤT. Trước khi có hàm này, đoạn
+     * `rtrim(rtrim(number_format(...)))` nằm rải rác trong Blade — mỗi
+     * bản một kiểu làm tròn, và không bản nào biết phải viết gì khi mức
+     * thuế là null.
+     *
+     * null KHÔNG phải "0%": nó là "không thuộc đối tượng chịu VAT".
+     */
+    public static function formatRate(?string $rate): string
+    {
+        if ($rate === null) {
+            return 'Không chịu VAT';
+        }
+
+        // rtrim hai lần: '8,00' -> '8' nhưng '8,50' -> '8,5'.
+        return rtrim(rtrim(number_format((float) $rate * 100, 2, ',', '.'), '0'), ',') . '%';
     }
 
     public function enabled(): bool

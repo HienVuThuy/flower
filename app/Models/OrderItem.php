@@ -27,6 +27,18 @@ class OrderItem extends Model
         'unit_price',
         'quantity',
         'line_total',
+
+        /*
+         * BẢN CHỤP THUẾ CỦA DÒNG NÀY — xem migration
+         * add_tax_snapshot_to_order_items_table.
+         *
+         * `tax_rate` NULL nghĩa là "không có số liệu thuế": hàng không
+         * thuộc diện chịu VAT, hoặc đơn đặt lúc tính thuế đang tắt. KHÁC
+         * với 0 ("chịu thuế suất 0%").
+         */
+        'discount_amount',
+        'tax_rate',
+        'tax_amount',
     ];
 
     protected function casts(): array
@@ -36,6 +48,9 @@ class OrderItem extends Model
             'unit_base_price' => 'decimal:2',
             'unit_price' => 'decimal:2',
             'line_total' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
+            'tax_rate' => 'decimal:5',
+            'tax_amount' => 'decimal:2',
         ];
     }
 
@@ -60,6 +75,22 @@ class OrderItem extends Model
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
+    }
+
+    /** Tiền hàng CHƯA thuế của dòng này — con số hoá đơn phải ghi. */
+    public function netTotal(): string
+    {
+        return bcsub(
+            bcsub((string) $this->line_total, (string) $this->discount_amount, 2),
+            (string) ($this->tax_amount ?? '0.00'),
+            2,
+        );
+    }
+
+    /** Dòng này thuộc diện chịu VAT không (khác với "chịu 0%"). */
+    public function isTaxed(): bool
+    {
+        return $this->tax_rate !== null;
     }
 
     /** Dòng này có được giảm giá lúc đặt không. */

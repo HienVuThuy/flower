@@ -35,6 +35,19 @@ return [
     | — đó là lý do con số này sửa được từ giao diện quản trị chứ không
     | nằm chết trong mã nguồn.
     |
+    | ============================================================
+    | ĐÂY CHỈ CÒN LÀ MỨC MẶC ĐỊNH — không phải mức của cả cửa hàng.
+    |
+    | Từ khi có bảng `tax_classes`, mỗi sản phẩm gán được một nhóm thuế
+    | riêng. Con số ở đây chỉ áp cho hai thứ:
+    |
+    |   - PHÍ VẬN CHUYỂN (một dịch vụ của cửa hàng, không mượn mức của
+    |     bất kỳ sản phẩm nào trong giỏ);
+    |   - sản phẩm CHƯA được phân loại (`tax_class_id` NULL).
+    |
+    | Xem App\Services\Tax\TaxCalculator::rateFor() và
+    | App\Services\Tax\BasketTax.
+    |
     */
 
     /*

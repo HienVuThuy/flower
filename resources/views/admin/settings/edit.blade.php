@@ -433,7 +433,88 @@
                     </div>
                 </div>
 
+                {{--
+                    ============ NHÓM THUẾ SUẤT ============
+
+                    MỘT MỨC CHO CẢ CỬA HÀNG LÀ KHÔNG ĐỦ. Cửa hàng bán hoa
+                    tươi, cây giống, chậu sứ và giá thể — bốn thứ có bản
+                    chất thuế khác nhau. Ô "Thuế suất" bên trên chỉ còn là
+                    mức MẶC ĐỊNH: nó áp cho phí vận chuyển và cho những
+                    sản phẩm chưa được phân loại.
+
+                    Gán nhóm cho từng sản phẩm ở trang sửa sản phẩm; ở đây
+                    chỉ chỉnh mức của từng nhóm khi chính sách thay đổi.
+                --}}
+                <h3 class="h6 fw-bold mt-4 mb-2">Nhóm thuế suất</h3>
+
+                <p class="text-muted small mb-3">
+                    Gán nhóm cho từng sản phẩm ở trang <strong>sửa sản phẩm</strong>.
+                    Sản phẩm chưa gán nhóm dùng mức mặc định ở trên.
+                </p>
+
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Nhóm</th>
+                                <th style="width: 9rem;">Thuế suất (%)</th>
+                                <th style="width: 7rem;">Đang dùng</th>
+                                <th>Ghi chú</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($taxClasses as $nhom)
+                                <tr>
+                                    <td class="fw-semibold">{{ $nhom->name }}</td>
+
+                                    <td>
+                                        <input type="number"
+                                               name="tax_classes[{{ $nhom->id }}][rate_percent]"
+                                               step="0.001" min="0" max="99.999"
+                                               class="form-control form-control-sm"
+                                               value="{{ old('tax_classes.' . $nhom->id . '.rate_percent', $nhom->rate === null ? '' : rtrim(rtrim(number_format((float) $nhom->rate * 100, 3, '.', ''), '0'), '.')) }}">
+                                    </td>
+
+                                    <td>
+                                        {{--
+                                            Ô ẩn đi kèm: trình duyệt KHÔNG gửi
+                                            checkbox chưa tích, nên không có nó
+                                            thì bỏ tích một nhóm sẽ không lưu
+                                            được — ô biến mất khỏi dữ liệu gửi
+                                            lên và máy chủ hiểu là "không đổi".
+                                        --}}
+                                        <input type="hidden" name="tax_classes[{{ $nhom->id }}][is_active]" value="0">
+                                        <input type="checkbox" class="form-check-input"
+                                               name="tax_classes[{{ $nhom->id }}][is_active]" value="1"
+                                               @checked(old('tax_classes.' . $nhom->id . '.is_active', $nhom->is_active))>
+                                    </td>
+
+                                    <td class="text-muted small">{{ $nhom->note }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                {{--
+                    Ý NGHĨA CỦA Ô TRỐNG Ở ĐÂY KHÁC Ô "THUẾ SUẤT" BÊN TRÊN,
+                    và đó là một cái bẫy thật nên phải nói ra:
+
+                        ô trên  — trống = "dùng mức mặc định trong cấu hình"
+                        bảng này — trống = "KHÔNG thuộc diện chịu VAT"
+
+                    "Không chịu VAT" khác "chịu thuế suất 0%": hàng 0% vẫn
+                    là hàng chịu thuế và vẫn lên hoá đơn với dòng thuế suất
+                    0%. Muốn 0% thì gõ số 0, đừng để trống.
+                --}}
+                <p class="form-text mt-2">
+                    Để trống ô thuế suất nghĩa là <strong>không thuộc diện chịu VAT</strong> —
+                    khác với <strong>chịu thuế suất 0%</strong> (gõ số <code>0</code>).
+                    Hai trường hợp này ghi khác nhau trên hoá đơn.
+                </p>
+
             </div>
+
 
             {{--
                 ============================================================

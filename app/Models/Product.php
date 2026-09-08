@@ -62,6 +62,11 @@ class Product extends Model
         'product_type',
         'selling_form',
         'base_price',
+        /*
+         * Nhóm thuế suất. NULL = "chưa phân loại, dùng mức mặc định của
+         * cửa hàng" — xem App\Services\Tax\TaxCalculator::rateFor().
+         */
+        'tax_class_id',
         'main_image',
         'status',
         'track_inventory',
@@ -100,6 +105,19 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * Nhóm thuế suất của sản phẩm.
+     *
+     * NULL là trạng thái BÌNH THƯỜNG, không phải dữ liệu thiếu: nó nghĩa
+     * là "dùng mức mặc định của cửa hàng". Đừng đọc thẳng `rate` từ đây
+     * để tính tiền — đi qua TaxCalculator::rateFor(), nơi biết cả luật
+     * lùi về mặc định lẫn luật bật/tắt thuế.
+     */
+    public function taxClass(): BelongsTo
+    {
+        return $this->belongsTo(TaxClass::class);
     }
 
     public function variants(): HasMany

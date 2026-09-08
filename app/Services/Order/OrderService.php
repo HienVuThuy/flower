@@ -3,7 +3,6 @@
 namespace App\Services\Order;
 
 use App\Enums\OrderStatus;
-use App\Services\Tax\TaxCalculator;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderStatusEvent;
@@ -14,6 +13,7 @@ use App\Services\Checkout\CheckoutLine;
 use App\Services\Audit\ActivityLogger;
 use App\Services\Care\CareScheduler;
 use App\Services\Coupon\CouponService;
+use App\Services\Invoice\InvoiceService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -40,6 +40,7 @@ class OrderService
         private readonly CareScheduler $care,
         private readonly OrderRiskScorer $risk,
         private readonly ActivityLogger $audit,
+        private readonly InvoiceService $invoices,
     ) {
     }
 
@@ -105,10 +106,19 @@ class OrderService
      */
     private function createOrder(CheckoutBasket $basket, array $checkout, ?string $idempotencyKey): Order
     {
+        /*
+         * THUẾ TÍNH THEO TỪNG DÒNG, không tính trên tổng đơn.
+         *
+         * Mỗi sản phẩm có thể thuộc một nhóm thuế riêng (bó hoa không
+         * chịu VAT, chậu sứ chịu 10%), nên một phép tính trên tổng là
+         * sai ngay ở đơn hỗn hợp. Xem App\Services\Tax\BasketTax.
+         */
+        $tax = $basket->tax();
+
         $lines = [];
 
-        foreach ($basket->lines as $line) {
-            $lines[] = $this->buildLine($line);
+        foreach ($basket->lines->values() as $i => $line) {
+            $lines[] = $this->buildLine($line, $tax->lines[$i] ?? null);
         }
 
         /*
@@ -120,19 +130,6 @@ class OrderService
         $discountTotal = $basket->discountTotal();
         $shippingFee = $basket->shippingFee();
 
-        /*
-         * THUẾ — TÁCH RA từ tổng, KHÔNG cộng thêm vào.
-         *
-         * Giá niêm yết đã bao gồm VAT (xem config/tax.php), nên
-         * `grand_total` ở dưới KHÔNG đổi một đồng nào vì mấy dòng này.
-         * Chúng chỉ ghi lại: trong số tiền khách trả, bao nhiêu là thuế.
-         *
-         * CHỤP CẢ THUẾ SUẤT vào đơn. Nhà nước đổi thuế suất thì đơn cũ
-         * phải giữ mức đã áp lúc đặt — nếu không, báo cáo quý trước tự
-         * nhiên khác đi mỗi lần chính sách thay đổi.
-         */
-        $tax = app(TaxCalculator::class);
-        $taxRate = $tax->rate();
         $grandTotal = $basket->grandTotal();
 
         $order = Order::create([
@@ -178,18 +175,55 @@ class OrderService
             'grand_total' => $grandTotal,
 
             /*
+             * THUẾ — TÁCH RA từ tổng, KHÔNG cộng thêm vào.
+             *
+             * Giá niêm yết đã bao gồm VAT (xem config/tax.php), nên
+             * `grand_total` ở trên KHÔNG đổi một đồng nào vì mấy dòng
+             * này. Chúng chỉ ghi lại: trong số tiền khách trả, bao nhiêu
+             * là thuế.
+             *
              * NULL khi tính thuế đang tắt — KHÔNG phải 0.
              *
              * NULL đọc ra là "không có số liệu", 0 đọc ra là "thuế bằng
              * không". Hai điều khác hẳn nhau khi đối chiếu sổ sách, và
              * gộp chúng lại là làm mất khả năng phân biệt "chưa cấu hình"
              * với "hàng miễn thuế".
+             *
+             * `tax_rate` ở ĐẦU ĐƠN nay có nghĩa hẹp hơn trước: nó là MỨC
+             * MẶC ĐỊNH CỦA CỬA HÀNG lúc đặt — mức áp cho phí vận chuyển
+             * và cho sản phẩm chưa phân loại. Mức thật của từng mặt hàng
+             * nằm ở `order_items.tax_rate`, vì một đơn có thể mang nhiều
+             * mức cùng lúc.
+             *
+             * Đẳng thức đối soát luôn đúng:
+             *     tax_amount = SUM(items.tax_amount) + shipping_tax_amount
              */
-            'tax_rate' => $tax->enabled() ? $taxRate : null,
-            'tax_amount' => $tax->enabled() ? $tax->extract($grandTotal, $taxRate) : null,
+            'tax_rate' => $tax->shippingRate,
+            'tax_amount' => $tax->total(),
+            'shipping_tax_amount' => $tax->shippingTax,
         ]);
 
         $order->items()->createMany($lines);
+
+        /*
+         * DỮ LIỆU HOÁ ĐƠN — TRONG CÙNG TRANSACTION VỚI ĐƠN.
+         *
+         * Cùng lý do với việc ghi nhận lượt dùng mã giảm giá ngay bên
+         * dưới: nếu bước này chạy sau khi transaction đã commit và nó
+         * ngã, đơn ĐÃ ghi xong và không cuộn lại được. Kết quả là một
+         * đơn nói "khách có yêu cầu xuất hoá đơn" mà không có dữ liệu
+         * hoá đơn nào — và chỉ phát hiện khi khách gọi điện hỏi.
+         *
+         * `load('items')` trước khi lập: hoá đơn cần bảng tách theo mức
+         * thuế, mà bảng đó dựng từ các dòng vừa ghi. Không nạp lại thì
+         * quan hệ `items` vẫn rỗng và bảng tách ra rỗng theo — âm thầm,
+         * không lỗi nào.
+         *
+         * Khách không yêu cầu hoá đơn thì hàm trả về null và không có
+         * bản ghi nào được tạo. Đó là trường hợp thường gặp nhất.
+         */
+        $order->load('items');
+        $this->invoices->taoTuDon($order, $checkout);
 
         /*
          * CHẤM ĐIỂM RỦI RO — sau khi đơn đã có id và đã có dòng hàng.
@@ -259,7 +293,13 @@ class OrderService
      *
      * @return array<string, mixed>
      */
-    private function buildLine(CheckoutLine $line): array
+    /**
+     * @param  array{line: CheckoutLine, discount: string, taxable: string, rate: ?string, tax: ?string}|null  $thue
+     *   Số liệu thuế của chính dòng này, do BasketTax tính. null khi
+     *   tính thuế đang tắt — khi đó ba cột thuế của dòng để trống, đúng
+     *   nghĩa "không có số liệu".
+     */
+    private function buildLine(CheckoutLine $line, ?array $thue = null): array
     {
         $product = $line->product;
         $variant = $line->variant;
@@ -277,6 +317,22 @@ class OrderService
             'unit_price' => $line->unitPrice(),
             'quantity' => $line->quantity,
             'line_total' => $line->lineTotal(),
+
+            /*
+             * CHỤP THUẾ VÀO DÒNG HÀNG.
+             *
+             * Admin đổi phân loại thuế của sản phẩm, hay Nhà nước đổi
+             * mức, thì đơn cũ vẫn phải giữ nguyên con số đã áp lúc đặt.
+             * Không chụp thì báo cáo quý trước tự đổi mỗi lần ai đó sửa
+             * một dòng cấu hình.
+             *
+             * `discount_amount` là phần mã giảm giá PHÂN BỔ cho dòng
+             * này — cần để giải thích vì sao tiền chịu thuế của dòng nhỏ
+             * hơn `line_total`.
+             */
+            'discount_amount' => $thue['discount'] ?? '0.00',
+            'tax_rate' => $thue['rate'] ?? null,
+            'tax_amount' => $thue['tax'] ?? null,
         ];
     }
 

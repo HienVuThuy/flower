@@ -172,7 +172,32 @@
                             <dd><x-site.money :amount="(float) $order->grand_total" /></dd>
                         </div>
 
+                        {{--
+                            THUẾ GTGT ĐÃ NẰM TRONG SỐ TIỀN TRÊN.
+
+                            Trước đây khách không nhìn thấy con số này.
+                            Nay hiện ra vì hoá đơn GTGT phải ghi giá chưa
+                            thuế, thuế suất và tiền thuế — mà khách thì
+                            cần đối chiếu được đơn của mình với hoá đơn
+                            họ nhận. Giấu đi làm hai chứng từ có vẻ nói
+                            hai chuyện khác nhau.
+
+                            Đọc từ BẢN CHỤP trong đơn, không tính lại từ
+                            cấu hình hiện tại: mức thuế có thể đã đổi từ
+                            lúc đặt.
+                        --}}
+                        <x-order.tax-lines :total="$order->tax_amount" :rows="$order->taxByRate()" />
+
                     </dl>
+
+                    {{--
+                        HOÁ ĐƠN GTGT — chỉ hiện khi khách đã yêu cầu.
+
+                        Không yêu cầu thì không hiện gì: một khối trống
+                        ghi "chưa có hoá đơn" chỉ làm khách tưởng mình
+                        thiếu một bước nào đó.
+                    --}}
+                    <x-order.invoice-card :invoice="$order->invoice" />
 
                     {{--
                         HUỶ ĐƠN.

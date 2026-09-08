@@ -7,6 +7,7 @@ use App\Services\Shop\Money;
 use App\Services\Tax\TaxCalculator;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\TaxClass;
 use App\Services\Shop\Provinces;
 use App\Services\Shop\StoreProfile;
 use App\Services\Shop\ServiceCommitments;
@@ -79,6 +80,15 @@ class SettingsController extends Controller
                 'enabled' => app(TaxCalculator::class)->enabled(),
                 'rate_percent' => app(TaxCalculator::class)->ratePercent(),
             ],
+
+            /*
+             * NHÓM THUẾ SUẤT — kể cả nhóm đang tắt.
+             *
+             * Khác trang sửa sản phẩm (chỉ mời chọn nhóm còn bật): đây là
+             * chỗ DUY NHẤT bật lại được một nhóm đã tắt. Lọc mất nó ở đây
+             * thì tắt nhầm một nhóm là mất hẳn, không có đường quay lại.
+             */
+            'taxClasses' => TaxClass::orderBy('id')->get(),
 
             /*
              * HÌNH THỨC THANH TOÁN — hiện trạng thái, KHÔNG cho bật tắt
@@ -191,6 +201,21 @@ class SettingsController extends Controller
              * nhập 8 thay vì 0.08 thì mọi đơn ghi 800% thuế.
              */
             'tax_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:99.999'],
+
+            /*
+             * MỨC CỦA TỪNG NHÓM THUẾ.
+             *
+             * Ô TRỐNG Ở ĐÂY NGHĨA KHÁC ô `tax_rate_percent` bên trên:
+             *
+             *     tax_rate_percent  trống = "dùng mức mặc định trong config"
+             *     nhóm thuế         trống = "KHÔNG thuộc diện chịu VAT"
+             *
+             * Hai nghĩa khác nhau trên cùng một trang là một cái bẫy thật,
+             * nên giao diện phải nói rõ — xem chú thích ở edit.blade.php.
+             */
+            'tax_classes' => ['nullable', 'array'],
+            'tax_classes.*.rate_percent' => ['nullable', 'numeric', 'min:0', 'max:99.999'],
+            'tax_classes.*.is_active' => ['nullable', 'boolean'],
         ], [
             'theme.required' => 'Vui lòng chọn theme.',
             'theme.in' => 'Theme không hợp lệ.',
@@ -201,6 +226,8 @@ class SettingsController extends Controller
             'site_logo.max' => 'Logo tối đa 512KB.',
             'currency_code.regex' => 'Mã tiền tệ gồm đúng 3 chữ cái in hoa, ví dụ VND.',
             'tax_rate_percent.max' => 'Thuế suất phải nhỏ hơn 100%.',
+            'tax_classes.*.rate_percent.max' => 'Thuế suất của nhóm phải nhỏ hơn 100%.',
+            'tax_classes.*.rate_percent.numeric' => 'Thuế suất của nhóm phải là số.',
         ]);
 
         Setting::set('theme', $data['theme']);
@@ -225,6 +252,7 @@ class SettingsController extends Controller
         $this->saveLogo($request, $data);
         $this->saveCurrency($data);
         $this->saveTaxRate($data);
+        $this->saveTaxClasses($data);
 
         ServiceCommitments::save($data['commitments'] ?? []);
 
@@ -308,6 +336,51 @@ class SettingsController extends Controller
                 ? null
                 : bcdiv((string) $phanTram, '100', 5),
         );
+    }
+
+    /**
+     * Mức và trạng thái của từng nhóm thuế.
+     *
+     * ============================================================
+     * CHỈ ĐỘNG VÀO NHỮNG NHÓM CÓ TRONG DỮ LIỆU GỬI LÊN.
+     *
+     * Duyệt toàn bộ bảng rồi lấy giá trị từ `$data` sẽ biến mọi nhóm
+     * vắng mặt thành "không chịu VAT, đang tắt" — và một biểu mẫu gửi
+     * thiếu (mạng chập, người dùng bấm nút khác) sẽ xoá sạch cấu hình
+     * thuế của cửa hàng mà không có lỗi nào.
+     *
+     * TRA THEO ID TỪ CƠ SỞ DỮ LIỆU, không tin id trên biểu mẫu: một id
+     * bịa ra chỉ đơn giản không tìm thấy và bị bỏ qua.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function saveTaxClasses(array $data): void
+    {
+        foreach ($data['tax_classes'] ?? [] as $id => $dong) {
+            $nhom = TaxClass::find((int) $id);
+
+            if (! $nhom) {
+                continue;
+            }
+
+            $phanTram = $dong['rate_percent'] ?? null;
+
+            $nhom->update([
+                /*
+                 * TRỐNG = NULL = "không thuộc diện chịu VAT".
+                 *
+                 * KHÁC hẳn 0 ("chịu thuế suất 0%"): hàng 0% vẫn là hàng
+                 * chịu thuế và vẫn lên hoá đơn với dòng thuế suất 0%.
+                 * Gộp hai thứ này là làm mất một phân biệt nghiệp vụ mà
+                 * hoá đơn bắt buộc phải thể hiện.
+                 */
+                'rate' => ($phanTram === null || $phanTram === '')
+                    ? null
+                    : bcdiv((string) $phanTram, '100', 5),
+
+                'is_active' => (bool) ($dong['is_active'] ?? false),
+            ]);
+        }
     }
 
     private function saveHeroImages(Request $request, array $data): void

@@ -6,6 +6,7 @@ use App\Models\Coupon;
 use App\Services\Coupon\CouponService;
 use App\Services\Shipping\ShippingQuote;
 use App\Services\Shipping\ShippingRates;
+use App\Services\Tax\BasketTax;
 use Illuminate\Support\Collection;
 
 /**
@@ -301,6 +302,25 @@ final readonly class CheckoutBasket
     public function grandTotal(): string
     {
         return bcadd($this->payableItemsTotal(), $this->shippingFee(), 2);
+    }
+
+    /**
+     * Phần thuế GTGT NẰM TRONG số tiền trên.
+     *
+     * ============================================================
+     * GỌI HÀM NÀY KHÔNG LÀM ĐỔI MỘT ĐỒNG NÀO Ở grandTotal().
+     *
+     * Giá niêm yết của cửa hàng đã bao gồm VAT (xem config/tax.php), nên
+     * thuế được TÁCH RA khỏi tổng chứ không cộng thêm vào. Nếu một ngày
+     * nào đó bật/tắt thuế làm đổi số tiền khách phải trả thì đó là lỗi,
+     * không phải tính năng — và bài kiểm thử canh đúng điều đó.
+     *
+     * Tính lại mỗi lần gọi thay vì nhớ sẵn: lớp này là readonly, và
+     * phép tính chỉ là vài phép cộng trên số dòng của một giỏ hàng.
+     */
+    public function tax(): BasketTax
+    {
+        return BasketTax::for($this);
     }
 
     /**

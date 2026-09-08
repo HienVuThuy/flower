@@ -144,16 +144,31 @@ class OrderTaxTest extends TestCase
     }
 
     #[Test]
-    public function khach_khong_nhin_thay_con_so_thue(): void
+    public function khach_nhin_thay_phan_thue_nam_trong_tong(): void
     {
-        // Người dùng nói rõ: thuế là số liệu cho admin phân tích và đối
-        // soát, không cần bày ra cho khách.
+        /*
+         * ĐẢO NGƯỢC MỘT QUYẾT ĐỊNH CŨ — có chủ ý.
+         *
+         * Bản trước bài này khẳng định điều NGƯỢC LẠI: khách không được
+         * nhìn thấy con số thuế, vì lúc đó thuế chỉ là số liệu nội bộ để
+         * admin đối soát.
+         *
+         * Nay cửa hàng đã có dữ liệu hoá đơn GTGT, mà hoá đơn thì bắt
+         * buộc ghi giá chưa thuế, thuế suất và tiền thuế. Khách phải đối
+         * chiếu được đơn của mình với hoá đơn họ nhận; giấu con số đi
+         * làm hai chứng từ có vẻ nói hai chuyện khác nhau.
+         *
+         * ĐIỀU KHÔNG ĐỔI: con số này nằm DƯỚI dòng tổng và mang chữ
+         * "Trong đó" — nó là phần nằm trong tổng, không phải khoản cộng
+         * thêm. Bài kế bên canh đúng điều đó.
+         */
         Setting::set(TaxCalculator::SETTING_KEY, '0.08');
         $order = $this->datHang();
 
         $this->get('/don-hang/' . $order->order_number)
             ->assertOk()
-            ->assertDontSee('VAT');
+            ->assertSee('Trong đó thuế GTGT')
+            ->assertSee('8%');
     }
 
     #[Test]

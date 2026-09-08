@@ -226,7 +226,23 @@ class CheckoutController extends Controller
                 return back()->with('error', 'Địa chỉ không hợp lệ.');
             }
 
-            $data = $address->toCheckoutData() + ['address_id' => $address->id];
+            /*
+             * GIỮ LẠI NHỮNG Ô KHÔNG THUỘC VỀ ĐỊA CHỈ.
+             *
+             * `toCheckoutData()` chỉ trả về thông tin người nhận. Gán đè
+             * cả `$data` thì mọi thứ khách vừa điền ở các bước khác —
+             * hình thức thanh toán, ngày giao, ghi chú, và cả khối hoá
+             * đơn GTGT — biến mất không dấu vết. Khách tích "cần hoá đơn",
+             * chọn một địa chỉ trong sổ, rồi đặt hàng xong mới phát hiện
+             * không có hoá đơn nào.
+             *
+             * `+` giữ giá trị của vế TRÁI khi trùng khoá, nên địa chỉ
+             * trong sổ vẫn thắng ở phần thông tin người nhận — đúng như
+             * trước.
+             */
+            $data = $address->toCheckoutData()
+                + ['address_id' => $address->id]
+                + $data;
         } elseif (Auth::check() && $request->boolean('save_address')) {
             $this->saveAddress($data);
         }

@@ -73,6 +73,21 @@ class StoreProductRequest extends FormRequest
                 'exists:categories,id',
             ],
 
+            /*
+             * NHÓM THUẾ SUẤT — để trống là hợp lệ.
+             *
+             * Trống nghĩa là "dùng mức mặc định của cửa hàng", không
+             * phải dữ liệu thiếu. Nhưng CÓ giá trị thì phải là một dòng
+             * có thật: một id bịa trên biểu mẫu không được phép chui vào
+             * cột khoá ngoại rồi làm hỏng phép tính thuế của mọi đơn sau
+             * đó.
+             */
+            'tax_class_id' => [
+                'nullable',
+                'integer',
+                'exists:tax_classes,id',
+            ],
+
             'name' => [
                 'required',
                 'string',
@@ -339,6 +354,9 @@ class StoreProductRequest extends FormRequest
 
             'category_id.exists' =>
                 'Danh mục không tồn tại.',
+
+            'tax_class_id.exists' =>
+                'Nhóm thuế suất không tồn tại.',
 
             'name.required' =>
                 'Vui lòng nhập tên sản phẩm.',

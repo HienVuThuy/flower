@@ -1025,6 +1025,59 @@
             </div>
 
             {{--
+                ============ NHÓM THUẾ SUẤT ============
+
+                ĐẶT NGAY DƯỚI Ô GIÁ, có chủ ý: giá của cửa hàng này ĐÃ
+                BAO GỒM VAT, nên hai ô này nói về cùng một con số. Đặt
+                nhóm thuế ở một thẻ khác thì người nhập giá không nhìn
+                thấy nó, và mọi sản phẩm sẽ nằm mãi ở mức mặc định.
+
+                ĐỂ TRỐNG LÀ MỘT LỰA CHỌN HỢP LỆ, không phải dữ liệu
+                thiếu. Nó nghĩa là "dùng mức mặc định của cửa hàng" —
+                đúng hành vi trước khi có bảng nhóm thuế, nên sản phẩm cũ
+                không đổi gì cả.
+            --}}
+            <div class="mb-3">
+
+                <label class="form-label" for="tax_class_id">
+                    Nhóm thuế suất
+                </label>
+
+                <select name="tax_class_id" id="tax_class_id" class="form-select">
+                    <option value="">
+                        Dùng mức mặc định của cửa hàng ({{ app(\App\Services\Tax\TaxCalculator::class)->ratePercent() }}%)
+                    </option>
+
+                    @foreach($taxClasses as $nhom)
+                        <option value="{{ $nhom->id }}"
+                                @selected((string) old('tax_class_id', $product->tax_class_id ?? '') === (string) $nhom->id)>
+                            {{ $nhom->name }}
+                        </option>
+                    @endforeach
+                </select>
+
+                <div class="form-text">
+                    {{--
+                        NÓI THẲNG RA GIỚI HẠN CỦA PHẦN MỀM.
+
+                        Danh sách này là cấu hình, KHÔNG phải lời tư vấn
+                        thuế. Mã nguồn không biết mặt hàng của cửa hàng
+                        thuộc diện nào — hoa tươi, cây giống, chậu sứ và
+                        dịch vụ chăm cây có thể mỗi thứ một mức. Chọn bừa
+                        thì con số sai đi thẳng vào hoá đơn mà không có
+                        gì báo.
+                    --}}
+                    Giá đã bao gồm VAT, nên mức này quyết định phần thuế
+                    <strong>tách ra</strong> từ giá, không cộng thêm vào.
+                    Việc phân loại phải theo mặt hàng thực tế và quy định
+                    áp dụng — hỏi kế toán trước khi đổi.
+                </div>
+
+                <x-form-error name="tax_class_id"/>
+
+            </div>
+
+            {{--
                 Khuyến mại KHÔNG còn nhập tại đây.
                 Giá giảm do Chương trình khuyến mại quyết định, nên
                 admin không phải mở từng sản phẩm để sửa giá dịp lễ.

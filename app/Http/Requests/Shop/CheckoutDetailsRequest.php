@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Shop;
 
+use App\Enums\InvoiceBuyerType;
 use App\Enums\PaymentMethod;
 use App\Services\Shop\Provinces;
 use Illuminate\Foundation\Http\FormRequest;
@@ -124,6 +125,65 @@ class CheckoutDetailsRequest extends FormRequest
              * được. values() chỉ trả về những hình thức dùng thật được.
              */
             'payment_method' => ['required', Rule::in(PaymentMethod::values())],
+
+            /* ---------- xuất hoá đơn GTGT ---------- */
+
+            /*
+             * ============================================================
+             * KHÔNG BẮT BUỘC — và đó là điểm quan trọng nhất của khối này.
+             *
+             * Phần lớn khách mua một bó hoa không lấy hoá đơn. Bắt cả
+             * nhóm đó điền mã số thuế là dựng thêm một bức tường ngay
+             * trước nút thanh toán, để phục vụ thiểu số.
+             *
+             * Nhưng KHI ĐÃ TÍCH thì các trường phải đủ và đúng: một hoá
+             * đơn thiếu mã số thuế là hoá đơn công ty không khấu trừ
+             * được, và lúc phát hiện thì hàng đã giao xong.
+             */
+            'want_invoice' => ['nullable', 'boolean'],
+
+            'invoice_buyer_type' => [
+                Rule::requiredIf(fn () => $this->boolean('want_invoice')),
+                Rule::enum(InvoiceBuyerType::class),
+            ],
+
+            'invoice_buyer_name' => [
+                Rule::requiredIf(fn () => $this->boolean('want_invoice')),
+                'nullable', 'string', 'max:200',
+            ],
+
+            /*
+             * EMAIL NHẬN HOÁ ĐƠN — bắt buộc khi lấy hoá đơn.
+             *
+             * Hoá đơn điện tử được gửi tới đây, và nó THƯỜNG KHÁC email
+             * đặt hàng: đơn do thư ký đặt, hoá đơn phải về kế toán.
+             * Không có ô riêng thì mọi hoá đơn công ty đi nhầm chỗ.
+             */
+            'invoice_email' => [
+                Rule::requiredIf(fn () => $this->boolean('want_invoice')),
+                'nullable', 'email', 'max:255',
+            ],
+
+            /*
+             * MÃ SỐ THUẾ chỉ bắt buộc với tổ chức.
+             *
+             * Dạng Việt Nam: 10 chữ số, hoặc 10 chữ số + "-" + 3 chữ số
+             * cho đơn vị trực thuộc. Kiểm dạng ở đây KHÔNG chứng minh mã
+             * đó có thật — chỉ chặn được lỗi gõ thiếu số, là lỗi phổ
+             * biến nhất. Xác minh mã có tồn tại là việc của khâu phát
+             * hành hoá đơn, và cửa hàng chưa tích hợp bước đó.
+             */
+            'invoice_tax_code' => [
+                Rule::requiredIf(fn () => $this->boolean('want_invoice')
+                    && $this->input('invoice_buyer_type') === InvoiceBuyerType::Company->value),
+                'nullable', 'string', 'regex:/^\d{10}(-\d{3})?$/',
+            ],
+
+            'invoice_address' => [
+                Rule::requiredIf(fn () => $this->boolean('want_invoice')
+                    && $this->input('invoice_buyer_type') === InvoiceBuyerType::Company->value),
+                'nullable', 'string', 'max:300',
+            ],
         ];
     }
 
@@ -142,6 +202,11 @@ class CheckoutDetailsRequest extends FormRequest
             'delivery_date' => 'ngày giao',
             'delivery_note' => 'ghi chú',
             'payment_method' => 'hình thức thanh toán',
+            'invoice_buyer_type' => 'đối tượng xuất hoá đơn',
+            'invoice_buyer_name' => 'tên trên hoá đơn',
+            'invoice_email' => 'email nhận hoá đơn',
+            'invoice_tax_code' => 'mã số thuế',
+            'invoice_address' => 'địa chỉ trên hoá đơn',
         ];
     }
 
@@ -150,6 +215,7 @@ class CheckoutDetailsRequest extends FormRequest
         return [
             'recipient_phone.regex' => 'Số điện thoại phải gồm 10 chữ số và bắt đầu bằng 0.',
             'delivery_date.after_or_equal' => 'Ngày giao không thể là ngày đã qua.',
+            'invoice_tax_code.regex' => 'Mã số thuế gồm 10 chữ số, hoặc 10 chữ số kèm 3 số chi nhánh (ví dụ 0101234567-001).',
         ];
     }
 }

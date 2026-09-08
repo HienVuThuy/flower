@@ -171,7 +171,7 @@
                     <div><dt>Tổng cộng</dt><dd class="fw-bold"><x-site.money :amount="(float) $order->grand_total" /></dd></div>
 
                     {{--
-                        THUẾ — CHỈ HIỆN Ở TRANG QUẢN TRỊ.
+                        THUẾ GTGT — CHI TIẾT ĐẦY ĐỦ Ở TRANG QUẢN TRỊ.
 
                         Giá niêm yết đã bao gồm VAT, nên con số này KHÔNG
                         cộng vào tổng: nó là phần thuế NẰM TRONG tổng ở
@@ -183,18 +183,45 @@
                         tax_amount = NULL, và khi ấy KHÔNG hiện gì cả.
                         Hiện "0₫" là nói rằng đơn đó miễn thuế — sai hẳn
                         với "không có số liệu".
+
+                        BẢNG TÁCH THEO MỨC là thứ hoá đơn GTGT bắt buộc
+                        phải ghi: 5.000.000₫ chịu 8% và 2.000.000₫ chịu
+                        10% là hai dòng khác nhau, không phải một dòng
+                        "thuế hỗn hợp". Từ khi mỗi sản phẩm có nhóm thuế
+                        riêng, một đơn có thể mang nhiều mức cùng lúc.
                     --}}
                     @if($order->tax_amount !== null)
                         <div class="admin-money__tax">
                             <dt>
                                 Trong đó thuế VAT
                                 <span class="text-muted small">
-                                    ({{ rtrim(rtrim(number_format((float) $order->tax_rate * 100, 3, ',', '.'), '0'), ',') }}%,
+                                    ({{ \App\Services\Tax\TaxCalculator::formatRate((string) $order->tax_rate) }},
                                     đã gồm trong tổng)
                                 </span>
                             </dt>
                             <dd><x-site.money :amount="(float) $order->tax_amount" /></dd>
                         </div>
+
+                        <div class="admin-money__tax">
+                            <dt>Tiền hàng chưa thuế</dt>
+                            <dd><x-site.money :amount="(float) $order->netTotal()" /></dd>
+                        </div>
+
+                        @php($cacMuc = $order->taxByRate())
+
+                        @if(count($cacMuc) > 1)
+                            @foreach($cacMuc as $muc)
+                                <div class="admin-money__tax">
+                                    <dt>
+                                        <span class="text-muted small">
+                                            {{ \App\Services\Tax\TaxCalculator::formatRate($muc['rate']) }}
+                                            trên <x-site.money :amount="(float) $muc['net']" />
+                                        </span>
+                                    </dt>
+                                    <dd><x-site.money :amount="(float) $muc['tax']" /></dd>
+                                </div>
+                            @endforeach
+                        @endif
                     @endif
                     <div><dt>Hình thức</dt><dd>{{ $order->payment_method->label() }}</dd></div>
 
@@ -207,6 +234,15 @@
                         </dd>
                     </div>
                 </dl>
+
+                {{--
+                    HOÁ ĐƠN GTGT — CÙNG MỘT KHỐI VỚI TRANG CỦA KHÁCH.
+
+                    Nhân viên và khách phải đọc đúng một bộ thông tin:
+                    lệch nhau ở đây là hai bên tranh cãi về mã số thuế
+                    trong lúc hàng đã giao. Xem x-order.invoice-card.
+                --}}
+                <x-order.invoice-card :invoice="$order->invoice" />
 
                 {{--
                     ĐƠN ĐÃ HUỶ MÀ KHÁCH ĐÃ TRẢ TIỀN = CỬA HÀNG ĐANG NỢ KHÁCH.

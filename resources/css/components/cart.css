@@ -1304,3 +1304,231 @@
         padding-bottom: 4.5rem;
     }
 }
+
+/* ============ THUẾ GTGT TRONG BẢNG TÓM TẮT ============
+ *
+ * ĐÂY LÀ CHÚ THÍCH CHO DÒNG TỔNG, KHÔNG PHẢI MỘT DÒNG CỘNG.
+ *
+ * Giá niêm yết đã bao gồm VAT, nên con số này NẰM TRONG tổng chứ không
+ * cộng thêm vào. Kiểu dáng phải nói được điều đó trước khi khách kịp
+ * đọc chữ:
+ *
+ *   - nằm DƯỚI dòng tổng, ngoài nhóm các dòng cộng trừ;
+ *   - chữ nhỏ và nhạt hơn hẳn, không in đậm;
+ *   - không có dấu + hay − nào.
+ *
+ * Làm ngược lại — đặt lên trên, cùng cỡ chữ với các dòng khác — là mời
+ * khách cộng nhầm, và nỗi sợ "phát sinh phút chót" là lý do hàng đầu
+ * khiến người ta bỏ giỏ hàng ở bước cuối.
+ */
+.order-summary__tax {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 var(--space-2xs);
+    margin-top: var(--space-2xs);
+    padding-top: var(--space-2xs);
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+.order-summary__tax-label {
+    flex: 1 1 auto;
+    /* min-width: 0 để nhãn co được khi hàng chật — flex-shrink một mình
+       không đủ, vì flex item mặc định min-width: auto. */
+    min-width: 0;
+}
+
+.order-summary__tax-value {
+    font-variant-numeric: tabular-nums;
+}
+
+.order-summary__tax-note {
+    flex: 1 0 100%;
+}
+
+/* Bảng tách theo mức thuế — chỉ hiện khi đơn có nhiều hơn một mức. */
+.order-summary__tax-rates {
+    flex: 1 0 100%;
+    list-style: none;
+    margin: var(--space-3xs) 0 0;
+    padding: 0;
+}
+
+.order-summary__tax-rates li {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+}
+
+.order-summary__tax-rates li span:last-child {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ============ HOÁ ĐƠN GTGT Ở BƯỚC THANH TOÁN ============
+ *
+ * MẶC ĐỊNH ẨN CÁC Ô, và mở ra bằng CSS THUẦN chứ không bằng JavaScript.
+ *
+ * Phần lớn khách mua một bó hoa không lấy hoá đơn. Bày sẵn năm ô mã số
+ * thuế trước mặt họ là dựng thêm một bức tường ngay trước nút thanh
+ * toán — bước đắt nhất để làm khách chùn tay.
+ *
+ * Vì sao không dùng JavaScript: khách tắt JS vẫn phải lấy được hoá đơn.
+ * Với `:has()` thì trình duyệt cũ không hiểu sẽ hiện luôn cả khối — hơi
+ * dài nhưng vẫn dùng được, chứ không phải một ô bấm vào không có gì xảy
+ * ra. Máy chủ mới là nơi quyết định trường nào bắt buộc.
+ */
+.invoice-toggle {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.invoice-toggle:hover {
+    border-color: var(--border-strong);
+}
+
+.invoice-toggle:has(input:checked) {
+    border-color: var(--brand-500);
+    background: var(--brand-100);
+}
+
+.invoice-toggle__body {
+    display: flex;
+    flex-direction: column;
+    /* min-width: 0 để phần chữ co được — flex item mặc định
+       min-width: auto, và khi ấy flex-shrink không có tác dụng. */
+    min-width: 0;
+}
+
+.invoice-toggle__name {
+    font-weight: 600;
+}
+
+.invoice-toggle__hint {
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+/* Các ô chỉ hiện khi ô đánh dấu ở trên được tích. */
+.checkout-step__body:has(input[name="want_invoice"]:not(:checked)) .invoice-fields {
+    display: none;
+}
+
+.invoice-fields {
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
+    border-top: 1px dashed var(--border-soft);
+}
+
+.invoice-buyer {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: var(--space-2xs) var(--space-xs);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+
+.invoice-buyer + .invoice-buyer {
+    margin-top: var(--space-3xs);
+}
+
+.invoice-buyer:has(input:checked) {
+    border-color: var(--brand-500);
+    background: var(--brand-100);
+}
+
+.invoice-buyer__body {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.invoice-buyer__name {
+    font-weight: 600;
+}
+
+.invoice-buyer__hint {
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+/*
+ * Câu nói rõ cửa hàng làm được đến đâu.
+ *
+ * Website ghi nhận yêu cầu; việc phát hành hoá đơn điện tử hợp lệ đi qua
+ * nhà cung cấp dịch vụ. Câu này phải đủ nổi để khách đọc được, nhưng
+ * không được trông như một cảnh báo lỗi.
+ */
+.invoice-fields__note {
+    margin: 0;
+    padding: var(--space-2xs) var(--space-xs);
+    border-radius: var(--radius-sm);
+    background: var(--surface-alt);
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}
+
+/* ============ HOÁ ĐƠN TRÊN TRANG ĐƠN HÀNG ============ */
+
+.invoice-card {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-alt);
+}
+
+.invoice-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-2xs);
+}
+
+.invoice-card__title {
+    margin: 0;
+    font-size: var(--text-body);
+    font-weight: 700;
+}
+
+.invoice-card__list {
+    margin: 0;
+    font-size: var(--text-body-sm);
+}
+
+.invoice-card__list div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+    padding: 0.15rem 0;
+}
+
+.invoice-card__list dt {
+    font-weight: 400;
+    color: var(--ink-700);
+}
+
+.invoice-card__list dd {
+    margin: 0;
+    text-align: right;
+    font-weight: 600;
+    /* Chữ dài (địa chỉ, mã số thuế) phải xuống dòng chứ không đẩy ngang. */
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.invoice-card__note {
+    margin: var(--space-2xs) 0 0;
+    font-size: var(--text-caption);
+    color: var(--ink-500);
+}

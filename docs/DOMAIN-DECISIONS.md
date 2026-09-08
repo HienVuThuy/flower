@@ -5473,3 +5473,247 @@ thư mục thật, chỉ nằm trong thư mục tạm và bị xoá giữa các 
 `Storage::disk('public')` thì `Storage::fake('public')` trong `setUp()`.
 Bốn tệp mồ côi cũ đã kiểm chứng không có bản ghi nào trong toàn bộ cơ sở
 dữ liệu trỏ tới (quét mọi cột văn bản của mọi bảng) trước khi dọn.
+
+---
+
+## QĐ-177. Thuế tính theo TỪNG DÒNG HÀNG, không tính trên tổng đơn
+
+Bản trước làm đúng một phép tính cho cả đơn:
+
+```php
+tax_amount = extract(grand_total, mức_của_cửa_hàng)
+```
+
+Nó đúng khi cả cửa hàng chỉ có một mức. Nhưng cửa hàng này bán **bốn thứ
+có bản chất thuế khác nhau**: hoa tươi, cây giống, chậu sứ, và dịch vụ
+chăm cây. Một con số duy nhất ép cả bốn vào cùng một mức, và mức nào cũng
+sai với ba loại còn lại.
+
+Đo trên một đơn hỗn hợp thật:
+
+```
+Bó hoa   300.000₫  (không chịu VAT)
+Chậu sứ  220.000₫  (VAT 10%)
+------------------------------------------------
+Tính trên tổng 8%:  520.000 → 38.518₫    ✗
+Tính theo dòng:      0 + 20.000 = 20.000₫  ✓
+```
+
+Con số sai **không làm gãy trang nào**. Nó chỉ lặng lẽ đi vào sổ kế toán
+và chỉ lộ ra ở kỳ quyết toán — đúng loại lỗi phải canh bằng bài kiểm thử
+chứ không bằng mắt.
+
+Nay `Product` có `tax_class_id`, và `BasketTax` tách thuế cho từng dòng
+theo mức của chính dòng đó.
+
+**Bảng `tax_classes` chỉ là CẤU HÌNH, không phải lời tư vấn thuế.**
+Seeder dựng sẵn năm nhóm nhưng **không gán cho một sản phẩm nào** — tất
+cả vẫn để `tax_class_id` NULL. Mã nguồn không biết mặt hàng của cửa hàng
+thuộc diện nào; đoán giúp rồi ghi vào cơ sở dữ liệu là bịa ra một dữ kiện
+kế toán, và nó sẽ đi thẳng lên hoá đơn mà không ai kiểm lại.
+
+---
+
+## QĐ-178. Ba trạng thái, không phải hai: có mức / chưa phân loại / không chịu thuế
+
+```
+'0.08'  →  sản phẩm có nhóm thuế, chịu mức đó
+'0.08'  →  sản phẩm CHƯA phân loại  →  lùi về mức mặc định cửa hàng
+null    →  nhóm ghi "không chịu VAT"
+```
+
+Hai phân biệt dễ mất, và mất cái nào cũng không có gì báo:
+
+**1. `null` khác `'0'`.** `'0'` là *"chịu thuế suất 0%"* — vẫn là hàng
+chịu thuế, vẫn lên hoá đơn với một dòng thuế suất 0% (hàng xuất khẩu đủ
+điều kiện). `null` là *"không thuộc đối tượng chịu VAT"*. Trên hoá đơn hai
+trường hợp ghi khác nhau.
+
+**2. Chưa phân loại KHÔNG thành miễn thuế.** Một ô để trống là "chưa
+điền". Nếu để trống thành miễn thuế thì **mọi sản phẩm đang có bỗng nhiên
+không chịu thuế** ngay khi bảng nhóm thuế ra đời — một thay đổi kế toán
+khổng lồ mà không ai bấm nút nào. Đây cũng chính là lý do thay đổi này
+không làm lệch một đồng nào trong đơn đã có: hành vi cũ (một mức cho tất
+cả) chính là trường hợp NULL.
+
+Cái bẫy này lặp lại ở trang Cấu hình, nơi có **hai ô thuế suất mang hai
+nghĩa khác nhau khi để trống**:
+
+| Ô | Để trống nghĩa là |
+|---|---|
+| "Thuế suất" (mức cửa hàng) | dùng mặc định trong `config/tax.php` |
+| bảng nhóm thuế | KHÔNG thuộc diện chịu VAT |
+
+Không nói ra thì người cấu hình chắc chắn lẫn. Giao diện viết thẳng cả
+hai nghĩa, và có bài kiểm thử riêng cho từng nghĩa.
+
+---
+
+## QĐ-179. Mã giảm giá phải được CHIA cho các dòng, và dòng cuối gánh phần lẻ
+
+Mã giảm giá áp cho **cả đơn**, còn thuế thì tính theo **từng dòng** với
+mức riêng. Muốn biết dòng nào còn chịu thuế trên bao nhiêu tiền thì bắt
+buộc phải biết dòng đó gánh bao nhiêu phần của mã.
+
+Thứ tự cũng quan trọng:
+
+```
+giá niêm yết (đã gồm VAT)
+   ↓ trừ khuyến mại
+   ↓ trừ mã giảm giá        ← phải trừ TRƯỚC
+   ↓ tách VAT theo mức của dòng
+   ↓ cộng thuế phí vận chuyển
+tổng thuế của đơn
+```
+
+Tách thuế trên giá gốc rồi mới trừ mã là ghi **nhiều thuế hơn số cửa hàng
+thật sự thu được**, và cửa hàng nộp thừa phần chênh.
+
+**Dòng cuối nhận đúng phần còn lại**, không phải chia rồi làm tròn. Chia
+100.000₫ cho ba dòng bằng nhau: mỗi dòng 33.333,33₫, cộng lại còn thiếu
+0,01₫. Làm tròn từng dòng thì:
+
+```
+SUM(order_items.discount_amount)  ≠  orders.coupon_discount
+```
+
+Kế toán đối chiếu ra ngay và không ai giải thích được phần chênh.
+
+Bài kiểm thử đầu tiên viết cho luật này **đo bằng một giỏ chia hết**
+(333.333 + 333.333 + 333.334), nên nó vẫn xanh khi bỏ hẳn luật — đo mà
+không đo gì. Đã đổi sang ba dòng bằng nhau để phép chia thật sự để lại
+phần lẻ, và kiểm lại bằng cách phá.
+
+---
+
+## QĐ-180. Phí vận chuyển có phần thuế của nó, và phải tách riêng cột
+
+Vận chuyển là một **dịch vụ**, nó chịu thuế. Bỏ qua phần này là ghi thiếu
+thuế trên mọi đơn có phí giao — âm thầm, và đúng bằng một tỉ lệ cố định
+nên rất khó phát hiện bằng mắt.
+
+Nó chịu **mức mặc định của cửa hàng**, không mượn mức của sản phẩm nào
+trong giỏ: lấy mức của món đầu giỏ thì cùng một quãng đường sẽ mang thuế
+suất khác nhau tuỳ khách mua gì.
+
+Cột `orders.shipping_tax_amount` tách riêng để đẳng thức đối soát luôn
+đúng:
+
+```
+orders.tax_amount = SUM(order_items.tax_amount) + orders.shipping_tax_amount
+```
+
+Gộp vào `tax_amount` tổng thì tổng thuế của đơn không bao giờ bằng tổng
+thuế các dòng, mà không có gì giải thích phần chênh.
+
+`orders.tax_rate` ở đầu đơn vì thế **hẹp nghĩa lại**: nó là mức mặc định
+của cửa hàng lúc đặt — mức áp cho phí vận chuyển và cho hàng chưa phân
+loại. Mức thật của từng mặt hàng nằm ở `order_items.tax_rate`, vì một đơn
+mang được nhiều mức cùng lúc.
+
+---
+
+## QĐ-181. Đơn hàng KHÔNG phải hoá đơn, và website này không phát hành hoá đơn
+
+```
+Order   — dữ liệu THƯƠNG MẠI: khách đặt gì, trả bao nhiêu, giao tới đâu
+Invoice — chứng từ THUẾ: bán cho ai (mã số thuế), chưa thuế bao nhiêu
+```
+
+Ba lý do buộc phải tách bảng:
+
+1. **Phần lớn đơn không có hoá đơn.** Khách lẻ mua bó hoa thường không
+   lấy. Tạo sẵn một bản ghi cho mọi đơn là dựng ra hàng nghìn chứng từ
+   chưa ai yêu cầu.
+2. **Người mua trên hoá đơn khác người nhận hàng.** Công ty mua hoa tặng
+   đối tác: hàng giao tới đối tác, hoá đơn đứng tên công ty.
+3. **Đơn sửa được, hoá đơn thì không.** Mọi con số của `Invoice` là bản
+   chụp; đơn còn sửa được (đổi phí giao, huỷ một dòng) nhưng chứng từ
+   phải đứng yên kể từ lúc lập.
+
+**Bẫy tên cột:** `Invoice::subtotal` là tiền **chưa** thuế, còn
+`Order::subtotal` là tiền **đã gồm** thuế (vì giá niêm yết đã gồm thuế).
+Cùng tên khác nghĩa — ghi ra ở cả hai nơi và có bài kiểm thử canh.
+
+**⚠️ HỆ THỐNG DỰNG DỮ LIỆU HOÁ ĐƠN, KHÔNG PHÁT HÀNH HOÁ ĐƠN ĐIỆN TỬ.**
+Hoá đơn điện tử hợp lệ phải phát hành theo quy trình và định dạng của quy
+định về hoá đơn điện tử, thường qua một nhà cung cấp dịch vụ. Xuất một
+tệp PDF từ Laravel không làm nên một hoá đơn hợp pháp.
+
+Vì thế:
+
+- mọi hoá đơn tạo ra đều mang trạng thái `draft`, `issued_at` để trống;
+- `issued_at` cố ý **không** nằm trong `$fillable` — một mốc thời gian chỉ
+  được đặt bởi hành động thật đã xảy ra;
+- **không có nút "Phát hành"** nào trong giao diện, và sẽ không có cho
+  tới khi việc phát hành là thật. Một nút chỉ đổi một chữ trong cơ sở dữ
+  liệu là nói dối người dùng về một chứng từ pháp lý;
+- giao diện ghi thẳng "Chưa phát hành" kèm câu giải thích, không giấu sau
+  một dấu hỏi. Để khách tưởng đã có hoá đơn thì họ yên tâm không đòi nữa,
+  rồi tới kỳ quyết toán mới phát hiện không có chứng từ nào.
+
+`invoice_number` là số hiệu **nội bộ**. Khi phát hành qua nhà cung cấp,
+số thật do bên đó cấp và phải lưu ở một cột riêng — không ghi đè, vì hai
+con số phải đối chiếu được với nhau.
+
+---
+
+## QĐ-182. Khách ĐƯỢC nhìn thấy phần thuế — đảo ngược một quyết định cũ
+
+Trước đây thuế là số liệu nội bộ: bài kiểm thử
+`khach_khong_nhin_thay_con_so_thue` khẳng định trang đơn hàng của khách
+**không** chứa chữ "VAT".
+
+Nay đảo lại. Lý do: cửa hàng đã có dữ liệu hoá đơn GTGT, mà hoá đơn thì
+bắt buộc ghi giá chưa thuế, thuế suất và tiền thuế. Khách phải đối chiếu
+được đơn của mình với hoá đơn họ nhận; giấu con số đi làm hai chứng từ có
+vẻ nói hai chuyện khác nhau.
+
+**Điều không đổi, và là điều quan trọng nhất:** con số này nằm **dưới**
+dòng tổng và mang chữ "Trong đó" — nó là phần *nằm trong* tổng, không
+phải khoản cộng thêm. Kiểu dáng phải nói được điều đó trước khi khách kịp
+đọc chữ: chữ nhỏ và nhạt hơn hẳn, ngoài nhóm các dòng cộng trừ, không có
+dấu `+` hay `−` nào. Đặt lên trên dòng tổng là mời khách cộng nhầm, và
+nỗi sợ "phát sinh phút chót" là lý do hàng đầu khiến người ta bỏ giỏ hàng
+ở bước cuối.
+
+Bảng tách theo mức chỉ hiện khi đơn có **nhiều hơn một** mức. Cả đơn cùng
+một mức thì bảng tách chỉ là tiếng ồn.
+
+---
+
+## QĐ-183. Lỗi có sẵn: chọn địa chỉ trong sổ xoá sạch mọi thứ vừa điền
+
+Tìm ra khi làm khối hoá đơn. `CheckoutController::storeDetails()` gán đè
+cả mảng dữ liệu:
+
+```php
+$data = $address->toCheckoutData() + ['address_id' => $address->id];
+```
+
+`toCheckoutData()` **chỉ** trả về thông tin người nhận. Nên mọi thứ khách
+vừa điền ở các bước khác — hình thức thanh toán, ngày giao, ghi chú, và
+cả khối hoá đơn GTGT — biến mất không dấu vết.
+
+Kịch bản: khách tích "cần hoá đơn", điền mã số thuế, chọn một địa chỉ
+trong sổ cho nhanh, đặt hàng xong **mới phát hiện không có hoá đơn nào**.
+
+Sửa bằng cách nối thêm `+ $data` ở cuối. `+` giữ giá trị của vế trái khi
+trùng khoá, nên địa chỉ trong sổ vẫn thắng ở phần thông tin người nhận —
+đúng như trước.
+
+---
+
+## QĐ-184. Bài kiểm thử đo trên dữ liệu tự gửi không thay được bài đo trên HTML
+
+Bài "bỏ tích thì nhóm thuế bị tắt" gửi thẳng `is_active => '0'` qua HTTP
+và xanh. Nhưng nó **vẫn xanh** khi xoá ô ẩn đi kèm checkbox khỏi biểu mẫu
+— đã kiểm bằng cách xoá thật.
+
+Vì trình duyệt **không gửi checkbox chưa tích**. Không có ô ẩn thì admin
+bỏ tích, bấm Lưu, trang tải lại và ô vẫn tích — họ tưởng nút hỏng. Bài
+kiểm thử tự dựng dữ liệu gửi lên không bao giờ gặp cách hỏng đó, vì nó
+không đi qua trình duyệt.
+
+Phải có thêm một bài **đo trên chính HTML** rằng ô ẩn có mặt. Đây là lần
+thứ ba trong dự án gặp kiểu "phép đo sai chỗ" (xem QĐ-171, QĐ-175).

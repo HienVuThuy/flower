@@ -11,6 +11,7 @@ use App\Http\Requests\Admin\StoreProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\TaxClass;
 use App\Services\Media\ImageStore;
 use App\Services\Product\ProductImageService;
 use Illuminate\Http\RedirectResponse;
@@ -143,9 +144,17 @@ class ProductController extends Controller
             ->orderBy('name')
             ->get();
 
+        /*
+         * NHÓM THUẾ SUẤT ĐANG BẬT.
+         *
+         * Chỉ lấy dòng còn hoạt động: nhóm đã tắt vẫn phải giữ lại vì
+         * đơn cũ trỏ tới nó, nhưng không được mời admin chọn tiếp.
+         */
+        $taxClasses = TaxClass::active()->orderBy('id')->get();
+
         return view(
             'admin.products.create',
-            compact('categories')
+            compact('categories', 'taxClasses')
         );
     }
 
@@ -425,11 +434,20 @@ class ProductController extends Controller
         ]);
 
 
+        /*
+         * NHÓM THUẾ SUẤT ĐANG BẬT.
+         *
+         * Chỉ lấy dòng còn hoạt động: nhóm đã tắt vẫn phải giữ lại vì
+         * đơn cũ trỏ tới nó, nhưng không được mời admin chọn tiếp.
+         */
+        $taxClasses = TaxClass::active()->orderBy('id')->get();
+
         return view(
             'admin.products.edit',
             compact(
                 'product',
-                'categories'
+                'categories',
+                'taxClasses'
             )
         );
     }

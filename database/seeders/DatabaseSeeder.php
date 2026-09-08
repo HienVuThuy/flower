@@ -49,5 +49,14 @@ class DatabaseSeeder extends Seeder
          */
         $this->call(PlantTaxonomySeeder::class);
         $this->call(PlantTraitSeeder::class);
+
+        /*
+         * NHÓM THUẾ SUẤT — chỉ dựng LỰA CHỌN, không gán cho sản phẩm nào.
+         *
+         * Xem chú thích ở TaxClassSeeder: mã nguồn không biết mặt hàng
+         * của cửa hàng thuộc diện thuế nào, và đoán giúp là bịa ra một
+         * dữ kiện kế toán.
+         */
+        $this->call(TaxClassSeeder::class);
     }
 }

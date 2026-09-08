@@ -358,6 +358,128 @@
                         </div>
                     </section>
 
+                    {{-- ============ 4. HOÁ ĐƠN GTGT ============ --}}
+                    <section class="checkout-step">
+                        <h2 class="checkout-step__title">
+                            <span class="checkout-step__num">4</span>
+                            Hoá đơn GTGT
+                        </h2>
+
+                        <div class="checkout-step__body">
+
+                            {{--
+                                MẶC ĐỊNH KHÔNG TÍCH, VÀ CÁC Ô ẨN ĐI.
+
+                                Phần lớn khách mua một bó hoa không lấy hoá
+                                đơn. Bày sẵn năm ô mã số thuế trước mặt họ là
+                                dựng một bức tường ngay trước nút thanh toán để
+                                phục vụ thiểu số — và bước cuối là chỗ đắt nhất
+                                để làm khách chùn tay.
+
+                                Ẩn/hiện bằng CSS thuần (:has), KHÔNG bằng
+                                JavaScript: khách tắt JS vẫn phải lấy được hoá
+                                đơn. Máy chủ mới là nơi quyết định trường nào
+                                bắt buộc — xem CheckoutDetailsRequest.
+                            --}}
+                            <label class="invoice-toggle">
+                                <input type="checkbox" name="want_invoice" value="1"
+                                       @checked(old('want_invoice', $values['want_invoice'] ?? false))>
+                                <span class="invoice-toggle__body">
+                                    <span class="invoice-toggle__name">Tôi cần xuất hoá đơn GTGT</span>
+                                    <span class="invoice-toggle__hint">
+                                        Giá đã bao gồm VAT nên tổng tiền không đổi.
+                                        Hoá đơn được gửi tới email bạn điền bên dưới.
+                                    </span>
+                                </span>
+                            </label>
+
+                            <div class="invoice-fields">
+
+                                <div class="mb-3">
+                                    <span class="form-label d-block">Xuất cho</span>
+
+                                    @foreach(\App\Enums\InvoiceBuyerType::cases() as $loai)
+                                        <label class="invoice-buyer">
+                                            <input type="radio" name="invoice_buyer_type" value="{{ $loai->value }}"
+                                                   @checked(old('invoice_buyer_type', $values['invoice_buyer_type'] ?? 'personal') === $loai->value)>
+                                            <span class="invoice-buyer__body">
+                                                <span class="invoice-buyer__name">{{ $loai->label() }}</span>
+                                                <span class="invoice-buyer__hint">{{ $loai->hint() }}</span>
+                                            </span>
+                                        </label>
+                                    @endforeach
+
+                                    <x-form-error name="invoice_buyer_type" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="invoice_buyer_name">Tên trên hoá đơn</label>
+                                    <input type="text" id="invoice_buyer_name" name="invoice_buyer_name" maxlength="200"
+                                           class="form-control @error('invoice_buyer_name') is-invalid @enderror"
+                                           value="{{ old('invoice_buyer_name', $values['invoice_buyer_name'] ?? '') }}"
+                                           placeholder="Họ tên của bạn, hoặc tên công ty theo đăng ký">
+                                    <x-form-error name="invoice_buyer_name" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="invoice_tax_code">
+                                        Mã số thuế
+                                        <span class="text-muted small">— bắt buộc với công ty / tổ chức</span>
+                                    </label>
+                                    <input type="text" id="invoice_tax_code" name="invoice_tax_code" maxlength="20"
+                                           inputmode="numeric"
+                                           class="form-control @error('invoice_tax_code') is-invalid @enderror"
+                                           value="{{ old('invoice_tax_code', $values['invoice_tax_code'] ?? '') }}"
+                                           placeholder="0101234567 hoặc 0101234567-001">
+                                    <x-form-error name="invoice_tax_code" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="invoice_address">Địa chỉ trên hoá đơn</label>
+                                    <input type="text" id="invoice_address" name="invoice_address" maxlength="300"
+                                           class="form-control @error('invoice_address') is-invalid @enderror"
+                                           value="{{ old('invoice_address', $values['invoice_address'] ?? '') }}"
+                                           placeholder="Địa chỉ đăng ký kinh doanh">
+                                    <x-form-error name="invoice_address" />
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label" for="invoice_email">Email nhận hoá đơn</label>
+                                    <input type="email" id="invoice_email" name="invoice_email" maxlength="255"
+                                           class="form-control @error('invoice_email') is-invalid @enderror"
+                                           value="{{ old('invoice_email', $values['invoice_email'] ?? '') }}"
+                                           placeholder="ketoan@congty.vn">
+                                    {{--
+                                        Ô RIÊNG, KHÔNG DÙNG LẠI EMAIL ĐẶT HÀNG.
+
+                                        Đơn thường do thư ký hoặc trợ lý đặt,
+                                        còn hoá đơn phải về kế toán. Dùng chung
+                                        một ô là gửi hoá đơn nhầm chỗ cho gần
+                                        như mọi đơn của công ty.
+                                    --}}
+                                    <div class="form-text">Hoá đơn điện tử sẽ được gửi tới địa chỉ này.</div>
+                                    <x-form-error name="invoice_email" />
+                                </div>
+
+                                {{--
+                                    NÓI THẲNG RA CỬA HÀNG LÀM ĐƯỢC ĐẾN ĐÂU.
+
+                                    Website ghi nhận yêu cầu và dữ liệu; việc
+                                    phát hành hoá đơn điện tử hợp lệ đi qua nhà
+                                    cung cấp dịch vụ hoá đơn. Để khách tưởng
+                                    hoá đơn có ngay sau khi bấm đặt hàng là hứa
+                                    một điều hệ thống chưa làm được.
+                                --}}
+                                <p class="invoice-fields__note">
+                                    Cửa hàng ghi nhận yêu cầu ngay khi bạn đặt hàng.
+                                    Hoá đơn điện tử được phát hành sau đó và gửi tới email trên.
+                                </p>
+
+                            </div>
+
+                        </div>
+                    </section>
+
                     <div class="checkout-panel__actions">
                         <a href="{{ route('shop.cart.index') }}" class="btn btn-ghost">Về giỏ hàng</a>
                         <button type="submit" class="btn btn-primary-brand">Xem lại đơn hàng</button>

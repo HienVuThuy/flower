@@ -38,7 +38,7 @@ class OrderController extends Controller
         $this->authorizeView($order);
 
         return view('shop.orders.show', [
-            'order' => $order->load('items'),
+            'order' => $order->load('items', 'invoice'),
         ]);
     }
 
