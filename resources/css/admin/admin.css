@@ -968,3 +968,35 @@
 .admin-row--locked td:first-child {
     opacity: 1;
 }
+
+/* ============ THANH BÊN: BỎ THANH CUỘN ============
+ *
+ * `overflow-y: auto` vẽ một thanh cuộn nằm ngay giữa các mục điều hướng
+ * và khung nội dung. Nó chiếm chỗ, cắt ngang mắt nhìn, và với danh sách
+ * mục hiện tại thì gần như không bao giờ cần dùng tới.
+ *
+ * ẨN THANH, KHÔNG TẮT CUỘN: `scrollbar-width: none` chỉ giấu thanh đi,
+ * lăn chuột và vuốt vẫn cuộn được. Tắt hẳn `overflow` thì màn hình thấp
+ * hoặc menu dài thêm là mất luôn mấy mục cuối, không cách nào tới được.
+ */
+.admin-sidebar {
+    scrollbar-width: none;
+}
+
+.admin-sidebar::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+/* ============ THAY RUỘT KHÔNG TẢI LẠI TRANG ============
+ *
+ * Chỉ làm mờ nhẹ trong lúc chờ. KHÔNG che bằng lớp phủ hay vòng xoay:
+ * lấy về đúng phần nội dung thường xong trong vài trăm mili giây, và
+ * một vòng xoay chớp qua nhanh hơn mắt kịp nhận ra chỉ làm màn hình
+ * giật.
+ */
+.admin-content.is-loading {
+    opacity: 0.55;
+    transition: opacity 120ms ease-out;
+    pointer-events: none;
+}

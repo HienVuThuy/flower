@@ -55,7 +55,7 @@
         </div>
 
         <nav class="d-flex flex-column gap-1">
-            <a href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'is-active' : '' }}">
                 <x-site.icon name="speedometer2" />
                 <span>Dashboard</span>
             </a>
@@ -63,11 +63,11 @@
 
         <div class="admin-nav-heading">Cửa hàng</div>
         <nav class="d-flex flex-column gap-1">
-            <a href="{{ route('admin.categories.index') }}" class="admin-nav-link {{ request()->routeIs('admin.categories.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.categories.index') }}" class="admin-nav-link {{ request()->routeIs('admin.categories.*') ? 'is-active' : '' }}">
                 <x-site.icon name="tags" />
                 <span>Danh mục</span>
             </a>
-            <a href="{{ route('admin.products.index') }}" class="admin-nav-link {{ request()->routeIs('admin.products.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.products.index') }}" class="admin-nav-link {{ request()->routeIs('admin.products.*') ? 'is-active' : '' }}">
                 <x-site.icon name="flower1" />
                 <span>Sản phẩm</span>
             </a>
@@ -75,7 +75,7 @@
 
         <div class="admin-nav-heading">Bán hàng</div>
         <nav class="d-flex flex-column gap-1">
-            <a href="{{ route('admin.bulk-inquiries.index') }}" class="admin-nav-link {{ request()->routeIs('admin.bulk-inquiries.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.bulk-inquiries.index') }}" class="admin-nav-link {{ request()->routeIs('admin.bulk-inquiries.*') ? 'is-active' : '' }}">
                 <x-site.icon name="envelope-paper" />
                 <span>Yêu cầu số lượng lớn</span>
                 @if($pendingInquiryCount ?? 0)
@@ -84,7 +84,7 @@
             </a>
             {{-- Module đơn hàng đã chạy; mục này chỉ tắt khi cờ giỏ hàng tắt. --}}
             @if(config('features.cart'))
-                <a href="{{ route('admin.orders.index') }}"
+                <a data-admin-link href="{{ route('admin.orders.index') }}"
                    class="admin-nav-link {{ request()->routeIs('admin.orders.*') ? 'is-active' : '' }}">
                     <x-site.icon name="bag" />
                     <span>Đơn hàng</span>
@@ -96,17 +96,17 @@
                     <span>Đơn hàng</span>
                 </a>
             @endif
-            <a href="{{ route('admin.blog.index') }}" class="admin-nav-link {{ request()->routeIs('admin.blog.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.blog.index') }}" class="admin-nav-link {{ request()->routeIs('admin.blog.*') ? 'is-active' : '' }}">
                 <x-site.icon name="list" />
                 <span>Cẩm nang</span>
             </a>
 
-            <a href="{{ route('admin.community.index') }}" class="admin-nav-link {{ request()->routeIs('admin.community.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.community.index') }}" class="admin-nav-link {{ request()->routeIs('admin.community.*') ? 'is-active' : '' }}">
                 <x-site.icon name="people" />
                 <span>Góc cây của bạn</span>
             </a>
 
-            <a href="{{ route('admin.promotions.index') }}" class="admin-nav-link {{ request()->routeIs('admin.promotions.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.promotions.index') }}" class="admin-nav-link {{ request()->routeIs('admin.promotions.*') ? 'is-active' : '' }}">
                 <x-site.icon name="megaphone" />
                 <span>Khuyến mại</span>
             </a>
@@ -119,13 +119,13 @@
                 "nên làm gì tiếp" — và việc làm tiếp đó là tạo một chương
                 trình khuyến mại, ngay ở mục bên trên.
             --}}
-            <a href="{{ route('admin.pricing-advisor.index') }}" class="admin-nav-link {{ request()->routeIs('admin.pricing-advisor.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.pricing-advisor.index') }}" class="admin-nav-link {{ request()->routeIs('admin.pricing-advisor.*') ? 'is-active' : '' }}">
                 <x-site.icon name="speedometer2" />
                 <span>Đề xuất giá</span>
             </a>
 
             @if(config('features.cart'))
-                <a href="{{ route('admin.coupons.index') }}"
+                <a data-admin-link href="{{ route('admin.coupons.index') }}"
                    class="admin-nav-link {{ request()->routeIs('admin.coupons.*') ? 'is-active' : '' }}">
                     <x-site.icon name="tags" />
                     <span>Mã giảm giá</span>
@@ -135,11 +135,11 @@
 
         <div class="admin-nav-heading">Khách hàng</div>
         <nav class="d-flex flex-column gap-1">
-            <a href="{{ route('admin.users.index') }}" class="admin-nav-link {{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.users.index') }}" class="admin-nav-link {{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}">
                 <x-site.icon name="people" />
                 <span>Người dùng</span>
             </a>
-            <a href="{{ route('admin.reviews.index') }}" class="admin-nav-link {{ request()->routeIs('admin.reviews.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.reviews.index') }}" class="admin-nav-link {{ request()->routeIs('admin.reviews.*') ? 'is-active' : '' }}">
                 <x-site.icon name="star" />
                 <span>Đánh giá</span>
             </a>
@@ -147,7 +147,7 @@
 
         <div class="admin-nav-heading">Hệ thống</div>
         <nav class="d-flex flex-column gap-1">
-            <a href="{{ route('admin.analytics.index') }}" class="admin-nav-link {{ request()->routeIs('admin.analytics.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.analytics.index') }}" class="admin-nav-link {{ request()->routeIs('admin.analytics.*') ? 'is-active' : '' }}">
                 <x-site.icon name="bar-chart" />
                 <span>Phân tích</span>
             </a>
@@ -157,11 +157,11 @@
                 Không đặt cạnh Đơn hàng hay Sản phẩm: nó không thuộc về
                 một loại dữ liệu nào cả, nó nói về NGƯỜI DÙNG HỆ THỐNG.
             --}}
-            <a href="{{ route('admin.activity-logs.index') }}" class="admin-nav-link {{ request()->routeIs('admin.activity-logs.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.activity-logs.index') }}" class="admin-nav-link {{ request()->routeIs('admin.activity-logs.*') ? 'is-active' : '' }}">
                 <x-site.icon name="clock-history" />
                 <span>Nhật ký</span>
             </a>
-            <a href="{{ route('admin.settings.edit') }}" class="admin-nav-link {{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.settings.edit') }}" class="admin-nav-link {{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">
                 <x-site.icon name="gear" />
                 <span>Cài đặt</span>
             </a>
@@ -223,7 +223,15 @@
             </div>
         </header>
 
-        <section class="admin-content">
+        {{--
+            KHUNG THAY RUỘT.
+
+            `data-admin-content` là chỗ resources/js/admin/nav.js đặt
+            HTML mới do máy chủ vẽ, thay vì tải lại cả trang. Không có
+            JavaScript thì thuộc tính này chỉ nằm im và mọi thứ chạy như
+            cũ — mỗi cú bấm là một lần tải trang đầy đủ.
+        --}}
+        <section class="admin-content" data-admin-content>
 
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert" data-auto-dismiss="success">

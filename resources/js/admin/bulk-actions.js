@@ -23,6 +23,18 @@
 
 export function initBulkActions() {
     document.querySelectorAll('[data-bulk-form]').forEach((form) => {
+        /*
+         * GẮN ĐÚNG MỘT LẦN CHO MỖI BIỂU MẪU.
+         *
+         * Điều hướng quản trị thay ruột trang rồi gọi lại hàm này (xem
+         * admin/nav.js). Không có dấu này thì một biểu mẫu còn nằm lại
+         * sau lần thay sẽ bị gắn sự kiện lần thứ hai — và một cú bấm
+         * "Xoá đã chọn" chạy hai lượt.
+         */
+        if (form.dataset.bulkReady) return;
+
+        form.dataset.bulkReady = '1';
+
         const bar = form.querySelector('[data-bulk-bar]');
 
         if (!bar) return;
