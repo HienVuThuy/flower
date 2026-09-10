@@ -5941,3 +5941,89 @@ Component `x-order.pay-again` vì thế bị gỡ — một nơi, không phải 
 Bài học chung: **một thông báo tự tắt không thay được trạng thái hiển
 thị thường trực trên trang.** Flash message là để báo *việc vừa xảy ra*;
 tình trạng *hiện tại của đơn* phải nằm trong chính trang đó.
+
+---
+
+## QĐ-192. Tiền về qua cổng thì đơn tự chạy tiếp; COD thì không
+
+Đảo lại một nửa của QĐ-189 mục 5, theo yêu cầu của người dùng. Nhưng
+không đảo hết, và ranh giới nằm ở **tiền đã về hay chưa**.
+
+Tạo vận đơn là một **cam kết** với GHN: họ cử người tới lấy hàng và tính
+tiền cửa hàng.
+
+| | Cái gì đứng sau đơn | Ai bấm nút |
+|---|---|---|
+| **COD** | lời hứa của khách | cửa hàng, sau khi nhìn đơn |
+| **Đã trả qua cổng** | tiền đã nằm trong tài khoản | không ai — tự động |
+
+Với COD, tự động hoá nghĩa là mọi đơn đặt nhầm, đơn hết hàng, đơn huỷ
+sau ba phút đều thành một chuyến xe có thật. Với đơn đã trả tiền thì
+ngược lại: bắt khách đợi một nhân viên bấm nút là kéo dài thời gian giao
+hàng vì một bước không còn tác dụng gì.
+
+Sau khi MoMo báo thành công, `hoanTatSauThanhToan()` làm hai việc:
+
+1. `changeStatus(Confirmed)` — kèm theo đó là thư "đã xác nhận" gửi khách;
+2. `GHNOrderService::create()` — bàn giao, và `cod_amount` tự về 0 vì
+   `GHNOrderService` đọc `payment_status` của chính đơn.
+
+**CHẠY SAU KHI TRANSACTION ĐÃ COMMIT.** Hai việc này gọi ra ngoài (gửi
+thư, gọi API GHN). Để bên trong thì một cuộc gọi HTTP chậm giữ khoá hàng
+của đơn suốt thời gian đó, và tệ hơn: thư có thể đã bay đi trong khi
+transaction sau đó bị cuộn lại.
+
+**KHÔNG BAO GIỜ NÉM LỖI RA NGOÀI.** Tiền đã ghi nhận xong; một cuộc gọi
+GHN hỏng không được phép biến thành trang lỗi trước mặt khách vừa trả
+tiền. Hỏng thì ghi log, và nút tạo vận đơn thủ công ở trang quản trị vẫn
+còn nguyên làm đường lui.
+
+**Chạy cả với kết quả `already`, không chỉ `paid`.** Nếu lần callback đầu
+ghi tiền xong nhưng GHN lỗi mạng, IPN về sau còn một cơ hội nữa. Không có
+điều này thì một lần chập mạng là đơn nằm lại chờ người thật, dù IPN đã
+về ngay sau đó.
+
+---
+
+## QĐ-193. Việc hệ thống tự làm phải ghi tên là "Hệ thống"
+
+`changeStatus()` ghi `changed_by` từ `Auth::id()`. Nhưng đường callback
+của cổng thanh toán **chạy trong phiên của khách** — nên mốc thời gian sẽ
+ghi *"Rin đã xác nhận đơn"*, trong khi khách không hề bấm gì và cửa hàng
+thì tưởng có người đã duyệt đơn này.
+
+Thêm tham số `tuDong: true` để `changed_by` là NULL, và
+`OrderStatusEvent::actorLabel()` đọc ra "Hệ thống" — đúng như việc đã xảy
+ra. Đây là dòng thời gian **khách cũng đọc được**, nên nó phải nói thật
+về ai làm gì.
+
+---
+
+## QĐ-194. Hai mutation sống sót, và chúng nói hai chuyện khác nhau
+
+**1. Bỏ chốt "đơn đã huỷ" trong `hoanTatSauThanhToan()` — bài vẫn xanh.**
+Vì bài đang có (`đơn đã huỷ thì không tự xác nhận dù tiền về`) huỷ đơn
+**trước** khi tiền về, nên `setPaymentStatus()` đã chặn từ sớm và phần
+hoàn tất không bao giờ chạy tới. Chốt đó chỉ có tác dụng trong một trình
+tự khác hẳn:
+
+```
+1. khách trả xong        → đơn "Đã xác nhận"
+2. GHN đang lỗi          → chưa có vận đơn
+3. khách huỷ đơn
+4. IPN về muộn           → kết quả 'already' → chạy lại phần hoàn tất
+```
+
+Không có chốt, bước 4 bàn giao GHN một đơn vừa bị huỷ: xe tới lấy hàng,
+cửa hàng trả cước, hàng đi tới người không còn chờ nó. Đã viết bài riêng
+cho đúng trình tự này. → **phép đo sai chỗ, phải sửa bài.**
+
+**2. Bỏ chốt "đã có vận đơn" trong controller — bài vẫn xanh.** Lần này
+không phải bài sai: `GHNOrderService::create()` đã tự chặn từ trước, và
+phá chốt ở *lớp dưới* thì bài đỏ ngay. Tức là chốt trong controller là
+**bản sao thứ hai của cùng một luật** — và bản thứ hai sẽ lệch vào đúng
+ngày ai đó sửa bản thứ nhất. → **mã thừa, phải xoá.**
+
+Cùng một hiện tượng (mutation sống sót), hai kết luận ngược nhau. Cách
+phân biệt: phá tiếp ở lớp dưới. Đỏ → có lớp bảo vệ thật, chốt trên là
+thừa. Vẫn xanh → chưa ai canh, bài đo sai chỗ.

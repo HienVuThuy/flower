@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Concerns\AuthorizesOrderAccess;
@@ -12,6 +13,7 @@ use App\Services\Order\OrderException;
 use App\Services\Order\OrderService;
 use App\Services\Payment\MomoGateway;
 use App\Services\Payment\PaymentException;
+use App\Services\Shipping\GHNOrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,6 +31,10 @@ use Illuminate\Support\Facades\Log;
  *          ┌─────────────────────┴─────────────────────┐
  *      callback (trình duyệt quay về)            ipn (MoMo gọi máy chủ)
  *          └──────────────► ghiNhanThanhToan() ◄──────┘
+ *                                │
+ *                                └─► hoanTatSauThanhToan()
+ *                                      ├─ xác nhận đơn (gửi thư cho khách)
+ *                                      └─ tạo vận đơn GHN
  *
  * HAI ĐƯỜNG VỀ, MỘT KẾT QUẢ. Cả hai đều phải kiểm chữ ký rồi mới ghi,
  * và cả hai đi qua cùng một hàm nên chạy đường nào kết quả cũng như
@@ -46,6 +52,7 @@ class MomoController extends Controller
     public function __construct(
         private readonly MomoGateway $momo,
         private readonly OrderService $orders,
+        private readonly GHNOrderService $ghn,
     ) {
     }
 
@@ -122,7 +129,10 @@ class MomoController extends Controller
             : redirect()->route('shop.orders.index');
 
         return match ($ketQua) {
-            'paid', 'already' => $ve->with('success', 'Thanh toán MoMo thành công.'),
+            'paid', 'already' => $ve->with(
+                'success',
+                'Thanh toán MoMo thành công. Đơn hàng đã được xác nhận và đang chuẩn bị giao.',
+            ),
             'mismatch' => $ve->with('error', 'Số tiền MoMo báo về không khớp với đơn hàng. Cửa hàng sẽ liên hệ với bạn.'),
             'cancelled' => $ve->with('error', 'Đơn đã huỷ nên không ghi nhận thanh toán. Cửa hàng sẽ liên hệ để hoàn tiền.'),
             'invalid' => $ve->with('error', 'Không tìm thấy lượt thanh toán tương ứng.'),
@@ -160,7 +170,7 @@ class MomoController extends Controller
      */
     private function ghiNhanThanhToan(array $payload): string
     {
-        return DB::transaction(function () use ($payload): string {
+        $ketQua = DB::transaction(function () use ($payload): string {
             $transaction = PaymentTransaction::where('gateway', MomoGateway::GATEWAY)
                 ->where('gateway_order_id', (string) ($payload['orderId'] ?? ''))
                 ->lockForUpdate()
@@ -223,6 +233,103 @@ class MomoController extends Controller
 
             return 'paid';
         });
+
+        /*
+         * XÁC NHẬN ĐƠN VÀ TẠO VẬN ĐƠN — SAU KHI TRANSACTION ĐÃ COMMIT.
+         *
+         * Hai việc này gọi ra ngoài (gửi thư, gọi API GHN). Để bên trong
+         * transaction thì một cuộc gọi HTTP chậm sẽ giữ khoá hàng của đơn
+         * suốt thời gian đó, và tệ hơn: thư có thể đã bay đi trong khi
+         * transaction sau đó bị cuộn lại.
+         *
+         * Chạy cả với 'already' chứ không chỉ 'paid': nếu lần callback
+         * đầu ghi tiền xong nhưng GHN lỗi mạng, thì IPN về sau còn một
+         * cơ hội nữa. Cả hai bước bên trong đều tự bỏ qua nếu đã làm rồi.
+         */
+        if (in_array($ketQua, ['paid', 'already'], true)) {
+            $this->hoanTatSauThanhToan($payload);
+        }
+
+        return $ketQua;
+    }
+
+    /**
+     * Việc phải làm ngay sau khi tiền về: xác nhận đơn, rồi bàn giao GHN.
+     *
+     * ============================================================
+     * VÌ SAO ĐƠN ĐÃ TRẢ TIỀN THÌ TỰ ĐỘNG, CÒN COD THÌ KHÔNG.
+     *
+     * Tạo vận đơn là CAM KẾT với GHN: họ cử người tới lấy hàng và tính
+     * tiền cửa hàng. Với đơn COD, thứ duy nhất đứng sau lời hứa của
+     * khách là lời hứa đó — nên cửa hàng phải nhìn đơn trước khi cam kết.
+     *
+     * Đơn đã trả tiền thì khác hẳn: khách đã bỏ tiền ra, và bắt họ đợi
+     * một nhân viên bấm nút là kéo dài thời gian giao hàng vì một bước
+     * không còn tác dụng gì. Vì thế xác nhận và bàn giao ngay.
+     *
+     * KHÔNG BAO GIỜ NÉM LỖI RA NGOÀI. Tiền đã ghi nhận xong rồi; một
+     * cuộc gọi GHN hỏng không được phép biến thành trang lỗi trước mặt
+     * khách vừa trả tiền. Hỏng thì ghi log, và nút tạo vận đơn thủ công
+     * ở trang quản trị vẫn còn nguyên.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function hoanTatSauThanhToan(array $payload): void
+    {
+        $order = $this->timDon($payload);
+
+        if (! $order) {
+            return;
+        }
+
+        // Đơn đã bị huỷ trước khi tiền về: không xác nhận, không bàn
+        // giao. Trường hợp này cần người thật xử lý hoàn tiền.
+        if ($order->status === OrderStatus::Cancelled) {
+            return;
+        }
+
+        if ($order->status === OrderStatus::Pending) {
+            try {
+                $this->orders->changeStatus(
+                    $order,
+                    OrderStatus::Confirmed,
+                    'Đã nhận thanh toán qua MoMo.',
+                    tuDong: true,
+                );
+            } catch (OrderException $e) {
+                Log::warning('Không tự xác nhận được đơn sau thanh toán.', [
+                    'order' => $order->order_number,
+                    'ly_do' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        /*
+         * KHÔNG kiểm "đã có vận đơn chưa" ở đây.
+         *
+         * GHNOrderService::create() đã tự chặn: có mã rồi thì nó trả về
+         * ngay, không gọi ra GHN. Kiểm lại lần nữa ở đây là dựng bản thứ
+         * hai của cùng một luật — và bản thứ hai sẽ lệch vào đúng ngày ai
+         * đó sửa bản thứ nhất.
+         *
+         * Đã kiểm bằng cách bỏ chốt cũ đi: bài kiểm thử đếm số lời gọi
+         * GHN vẫn xanh, tức là lớp dưới thật sự đang gánh việc đó.
+         */
+        try {
+            $ketQua = $this->ghn->create($order->refresh());
+
+            if (($ketQua['code'] ?? null) !== 200) {
+                Log::error('Không tạo được vận đơn GHN sau thanh toán MoMo.', [
+                    'order' => $order->order_number,
+                    'ghn' => $ketQua['message'] ?? null,
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Lỗi khi tạo vận đơn GHN sau thanh toán MoMo.', [
+                'order' => $order->order_number,
+                'exception' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

@@ -224,15 +224,17 @@ class OrderController extends Controller
     /**
      * Bàn giao đơn cho GHN và nhận về mã vận đơn.
      *
-     * ĐẶT Ở TRANG QUẢN TRỊ, KHÔNG TỰ ĐỘNG LÚC KHÁCH ĐẶT.
+     * NÚT NÀY DÀNH CHO ĐƠN CHƯA TRẢ TIỀN, và cho lúc tạo tự động hỏng.
      *
      * Tạo vận đơn là cam kết với GHN: họ sẽ cử người tới lấy hàng, và
-     * tính tiền cửa hàng. Làm việc đó ngay khi khách bấm đặt nghĩa là
-     * mọi đơn — kể cả đơn đặt nhầm, đơn hết hàng, đơn khách huỷ sau ba
-     * phút — đều thành một chuyến xe có thật.
+     * tính tiền cửa hàng. Với đơn COD, thứ duy nhất đứng sau lời hứa của
+     * khách là lời hứa đó — nên cửa hàng phải nhìn đơn trước khi cam
+     * kết. Làm tự động lúc khách bấm đặt nghĩa là mọi đơn đặt nhầm, hết
+     * hàng, hay huỷ sau ba phút đều thành một chuyến xe có thật.
      *
-     * Cửa hàng phải xác nhận đơn và gói hàng xong rồi mới bàn giao. Đó
-     * cũng là lý do nút này chỉ hiện với đơn đã qua bước chuẩn bị.
+     * Đơn đã trả tiền qua cổng thì KHÁC: vận đơn được tạo tự động ngay
+     * khi tiền về — xem MomoController::hoanTatSauThanhToan(). Nút này
+     * vẫn giữ nguyên làm đường lui khi lần tạo tự động đó lỗi mạng.
      */
     public function createShipment(Order $order, GHNOrderService $ghnOrders): RedirectResponse
     {

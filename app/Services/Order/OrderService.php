@@ -491,14 +491,29 @@ class OrderService
      *
      * @throws OrderException
      */
-    public function changeStatus(Order $order, OrderStatus $target, ?string $reason = null): void
-    {
+    public function changeStatus(
+        Order $order,
+        OrderStatus $target,
+        ?string $reason = null,
+        /*
+         * ĐỔI TRẠNG THÁI DO HỆ THỐNG TỰ LÀM, không do ai bấm nút.
+         *
+         * Mốc thời gian ghi `changed_by` từ Auth::id(). Với đường
+         * callback của cổng thanh toán thì người đang đăng nhập là
+         * KHÁCH — và dòng thời gian ở trang quản trị sẽ ghi "Rin đã xác
+         * nhận đơn", trong khi thật ra khách không hề bấm gì.
+         *
+         * Cờ này để `changed_by` là NULL, và OrderStatusEvent::actorLabel()
+         * đọc ra "Hệ thống" — đúng như việc đã xảy ra.
+         */
+        bool $tuDong = false,
+    ): void {
         // Giữ lại để nhật ký nói được "từ đâu sang đâu". Đọc sau
         // transaction thì đã là trạng thái mới, và câu nhật ký thành
         // "Đã giao → Đã giao".
         $truocDo = $order->status;
 
-        DB::transaction(function () use ($order, $target, $reason) {
+        DB::transaction(function () use ($order, $target, $reason, $tuDong) {
             /*
              * KHOÁ ĐƠN RỒI ĐỌC LẠI, TRƯỚC KHI KIỂM.
              *
@@ -566,7 +581,7 @@ class OrderService
             OrderStatusEvent::create([
                 'order_id' => $order->id,
                 'status' => $target->value,
-                'changed_by' => Auth::id(),
+                'changed_by' => $tuDong ? null : Auth::id(),
                 'note' => $reason,
             ]);
 
