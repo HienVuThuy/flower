@@ -498,6 +498,21 @@
     border-radius: var(--radius-pill);
     font-size: var(--text-caption);
     font-weight: 700;
+
+    /*
+     * NHÃN TRẠNG THÁI KHÔNG BAO GIỜ XUỐNG DÒNG.
+     *
+     * Nó là một viên thuốc bo tròn — chữ ngắt làm hai dòng bên trong thì
+     * hình bo tròn phình ra thành một khối méo, và bảng bị đội cao lên
+     * theo ô cao nhất.
+     *
+     * Đo được ở bảng Mã giảm giá và Đánh giá: "Đang diễn ra" trong ô
+     * rộng 98px thành viên thuốc CAO 43px (một dòng chỉ cần ~22px).
+     *
+     * Chữ dài hơn ô thì để nó tràn ra ngoài — ô trạng thái luôn là ô
+     * cuối cùng đáng bị co, và bảng đã có `overflow-x: auto` để cuộn.
+     */
+    white-space: nowrap;
 }
 
 .status-pill--warning { background: #fdf1d8; color: #8a6316; }
