@@ -119,7 +119,22 @@
                             </td>
                             <td>{{ $so($d['sold']) }}</td>
                             <td class="text-end">
-                                <a data-admin-link href="{{ route('admin.products.edit', $d['product']) }}"
+                                {{--
+                                    DẪN THẲNG SANG PHIẾU NHẬP, mang theo
+                                    đúng mặt hàng.
+
+                                    Trước đây nút này dẫn sang trang sửa
+                                    sản phẩm, nơi chỉ có một ô số để gán
+                                    đè tồn kho — không ai biết ai nhập,
+                                    khi nào, giá bao nhiêu.
+
+                                    Trang này biết chính xác món nào đang
+                                    thiếu; bắt người dùng đi tìm lại nó
+                                    trong danh sách vài chục mặt hàng là
+                                    vứt đi thông tin vừa có trong tay.
+                                --}}
+                                <a data-admin-link
+                                   href="{{ route('admin.stock-receipts.create', ['mat-hang' => $d['product']->id . ':' . ($d['variant_id'] ?? '')]) }}"
                                    class="btn btn-outline-admin btn-sm">Nhập thêm</a>
                             </td>
                         </tr>
@@ -179,7 +194,22 @@
                                 </span>
                             </td>
                             <td class="text-end">
-                                <a data-admin-link href="{{ route('admin.products.edit', $d['product']) }}"
+                                {{--
+                                    DẪN THẲNG SANG PHIẾU NHẬP, mang theo
+                                    đúng mặt hàng.
+
+                                    Trước đây nút này dẫn sang trang sửa
+                                    sản phẩm, nơi chỉ có một ô số để gán
+                                    đè tồn kho — không ai biết ai nhập,
+                                    khi nào, giá bao nhiêu.
+
+                                    Trang này biết chính xác món nào đang
+                                    thiếu; bắt người dùng đi tìm lại nó
+                                    trong danh sách vài chục mặt hàng là
+                                    vứt đi thông tin vừa có trong tay.
+                                --}}
+                                <a data-admin-link
+                                   href="{{ route('admin.stock-receipts.create', ['mat-hang' => $d['product']->id . ':' . ($d['variant_id'] ?? '')]) }}"
                                    class="btn btn-outline-admin btn-sm">Nhập thêm</a>
                             </td>
                         </tr>

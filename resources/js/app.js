@@ -22,6 +22,7 @@ import { initWishlist } from './wishlist';
 import { initJournalForm } from './journal-form';
 import { initAdminNav } from './admin/nav';
 import { initExportPicker } from './admin/export-picker';
+import { initReceiptLines } from './admin/receipt-lines';
 
 /*
  * Header đổi trạng thái khi cuộn — glass chỉ bật lúc cần (accent),
@@ -70,6 +71,7 @@ export function bootUi() {
     initWishlist();
     initJournalForm();
     initExportPicker();
+    initReceiptLines();
 }
 
 bootUi();

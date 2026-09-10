@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\StockReceiptController;
 use App\Http\Controllers\Admin\BlogPostController;
 use App\Http\Controllers\Admin\CommunityModerationController;
 use App\Http\Controllers\Admin\PricingAdvisorController;
@@ -960,6 +961,33 @@ Route::prefix('admin')
          */
         Route::get('ton-kho', [InventoryController::class, 'index'])
             ->name('inventory.index');
+
+        /*
+         * PHIẾU NHẬP KHO.
+         *
+         * KHÔNG CÓ `update`: ghi sổ là hành động có tác động thật (kho đã
+         * cộng thêm), và sửa một chứng từ sau khi nó đã tác động là làm
+         * sổ sách không khớp thực tế. Nhập nhầm thì lập phiếu điều chỉnh
+         * với số lượng âm.
+         *
+         * `destroy` chỉ dùng được cho phiếu còn NHÁP — controller chặn.
+         */
+        Route::resource('nhap-kho', StockReceiptController::class)
+            ->parameters(['nhap-kho' => 'stockReceipt'])
+            ->except(['edit', 'update'])
+            ->names('stock-receipts');
+
+        /*
+         * GHI SỔ — POST chứ không GET: nó CỘNG vào kho và không lùi
+         * được. Không được phép xảy ra chỉ vì ai đó mở một đường dẫn.
+         *
+         * throttle: một cú bấm liên tục không được biến thành nhiều lượt
+         * ghi sổ. Bản thân service cũng khoá hàng và chặn ghi hai lần,
+         * nhưng chặn từ sớm thì rẻ hơn.
+         */
+        Route::post('nhap-kho/{stockReceipt}/ghi-so', [StockReceiptController::class, 'post'])
+            ->middleware('throttle:20,1')
+            ->name('stock-receipts.post');
 
         Route::get('phan-tich/xuat', [AnalyticsController::class, 'exportForm'])
             ->name('analytics.export-form');

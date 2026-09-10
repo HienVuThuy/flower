@@ -6495,3 +6495,100 @@ Thừa     tồn  4, .07/ngày →  còn 60 ngày (ngoài ngưỡng)
 ```
 
 Xếp theo số lượng thì "Đủ dùng" (tồn 2) lên đầu — sai. Mutation đỏ ngay.
+
+---
+
+## QĐ-212. Nhập kho là một PHIẾU, không phải một ô nhập số
+
+Trang Tồn kho trả lời "phải nhập gì" nhưng chưa có chỗ nào để *nhập*.
+Cách duy nhất đổi kho là ô `stock_quantity` ở trang sản phẩm — một phép
+**gán đè**. Sau đó không ai trả lời được ba câu hỏi:
+
+1. **Vì sao tồn là 47?** Không có gì ghi lại đã cộng vào bao nhiêu, lúc
+   nào, do ai. Kho lệch thực tế thì không có đường lần ngược.
+2. **Mua vào bao nhiêu tiền?** Cả hệ thống không lưu giá vốn ở đâu — nên
+   không tính được lãi/lỗ (QĐ‑210).
+3. **Ai ghi đè của ai?** Hai người cùng mở trang sản phẩm, cùng sửa tồn:
+   người bấm Lưu sau ghi đè hoàn toàn người trước. Không lỗi, không cảnh
+   báo, và số hàng vừa nhập của người kia biến mất.
+
+Phiếu nhập giải quyết cả ba: một bản ghi **cộng thêm** có ngày, có người,
+có giá.
+
+**`stock_quantity` VẪN là nguồn sự thật cho việc bán.** Không tính tồn
+bằng cách cộng dồn phiếu trừ đi đơn đã bán: phép đó chạy qua toàn bộ lịch
+sử mỗi lần ai đó xem một sản phẩm, và sai ngay khi có một lần điều chỉnh
+không đi qua phiếu.
+
+---
+
+## QĐ-213. Ba luật của việc ghi sổ
+
+**1. CỘNG THÊM, không gán đè.** `increment()` chứ không
+`update(['stock_quantity' => $n])`. Giữa lúc admin mở phiếu và lúc bấm
+ghi sổ, có thể đã có đơn hàng trừ kho — gán đè là xoá luôn phần đã bán.
+
+**2. Ghi sổ đúng MỘT lần.** `lockForUpdate()` rồi mới kiểm trạng thái.
+Kiểm bằng bản đã nạp từ trước là vô nghĩa khi hai request cùng chạy:
+
+```
+A đọc "draft" → được ghi sổ      B đọc "draft" → được ghi sổ
+A cộng kho, đánh dấu posted      B cộng kho LẦN NỮA
+```
+
+Bấm hai lần vì trang chậm là đủ để tái hiện.
+
+**3. Cả phiếu trong MỘT transaction.** Phiếu 10 dòng lỗi ở dòng 7 thì sáu
+dòng đầu đã vào kho, phiếu vẫn là nháp, và bấm lại cộng sáu dòng đó lần
+nữa.
+
+**Tạo phiếu KHÔNG cộng vào kho** — còn một bước ghi sổ. Cộng luôn thì một
+lần gõ nhầm số lượng đi thẳng vào kho, không có bước nào để phát hiện.
+Giao diện nói trước điều đó, nếu không người lập bấm Lưu, đi kiểm kho,
+thấy số không đổi và tưởng hệ thống hỏng.
+
+**Phiếu đã ghi sổ là BẤT BIẾN** — không sửa, không xoá. Kho đã cộng theo
+nó. Nhập nhầm thì lập phiếu điều chỉnh với **số lượng âm**, y như cách kế
+toán làm với hoá đơn đã phát hành. Vì thế `quantity` cố ý cho phép số âm:
+chặn nó thì cách duy nhất còn lại là sửa tay cột tồn kho — đúng thứ tính
+năng này sinh ra để thay thế.
+
+**Cộng vào đúng chỗ giữ tồn.** Sản phẩm có quy cách thì
+`products.stock_quantity` không phải thứ khách mua; cộng vào đó là cộng
+vào một con số không ai đọc, còn quy cách thì vẫn hết hàng.
+
+---
+
+## QĐ-214. Giá vốn: NULL là "chưa biết", 0 là "nhận không mất tiền"
+
+`stock_receipt_items.unit_cost` nullable, và ô để trống lưu **NULL** chứ
+không phải 0.
+
+Có lô hàng thật sự không biết giá: hàng tặng, hàng mẫu, cây tự nhân
+giống. Gộp chúng vào 0 thì giá vốn bình quân bị kéo xuống bởi những lô
+chưa ai điền — và con số đó sẽ được dùng để định giá bán.
+
+Hệ quả ở mọi nơi hiển thị:
+
+- Tổng tiền phiếu **bỏ qua** dòng chưa điền giá, không tính bằng 0.
+- Giao diện **nói ra** là đã bỏ qua. Im lặng thì con số đọc như đã đủ.
+
+Đây là bước đầu để có báo cáo lợi nhuận: từ nay giá vốn *được ghi lại*
+mỗi lần nhập. Nhưng **chưa có báo cáo lãi/lỗ** — hàng tồn từ trước không
+có phiếu nào nên không có giá vốn, và tính lãi trên một phần dữ liệu rồi
+gọi nó là lãi của cửa hàng vẫn là bịa.
+
+---
+
+## QĐ-215. Không tin chuỗi "id:idQuyCach" từ biểu mẫu
+
+Ô chọn mặt hàng gửi lên một chuỗi ghép `"12:34"`. Nó đến từ trình duyệt,
+ai cũng sửa được — nên controller **tra lại cả hai** trong cơ sở dữ liệu
+trước khi ghi, và đọc **tên từ bản ghi thật** chứ không nhận từ biểu mẫu.
+
+Không làm vậy thì một id bịa chui thẳng vào khoá ngoại, và phiếu ghi được
+một cái tên do người gửi tự đặt.
+
+Ô chọn cũng **chỉ liệt kê mặt hàng có bật theo dõi tồn**: bày ra một lựa
+chọn mà lúc ghi sổ sẽ bị từ chối là để người dùng gõ xong cả phiếu rồi
+mới biết mình chọn sai.

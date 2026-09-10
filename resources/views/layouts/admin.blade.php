@@ -84,6 +84,13 @@
                 <x-site.icon name="box-arrow-right" />
                 <span>Tồn kho</span>
             </a>
+
+            {{-- Tồn kho là XEM, nhập kho là GHI — hai việc khác nhau nên
+                 hai mục khác nhau. --}}
+            <a data-admin-link href="{{ route('admin.stock-receipts.index') }}" class="admin-nav-link {{ request()->routeIs('admin.stock-receipts.*') ? 'is-active' : '' }}">
+                <x-site.icon name="plus" />
+                <span>Nhập kho</span>
+            </a>
         </nav>
 
         <div class="admin-nav-heading">Bán hàng</div>
