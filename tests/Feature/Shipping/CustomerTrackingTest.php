@@ -173,7 +173,93 @@ class CustomerTrackingTest extends TestCase
             ->assertDontSee('Đang vận chuyển');
     }
 
-    /* ================= 4. KHÔNG XEM ĐƯỢC ĐƠN NGƯỜI KHÁC ================= */
+    /* ================= 4. ĐƯỜNG TRA CỨU PHẢI ĐÚNG MÔI TRƯỜNG ================= */
+
+    #[Test]
+    public function moi_truong_THU_thi_KHONG_hien_nut_tra_cuu(): void
+    {
+        /*
+         * LỖI ĐÃ SỬA, đo được trên GHN thật.
+         *
+         * Vận đơn tạo trên cổng `dev-online-gateway` KHÔNG tra được ở
+         * `donhang.ghn.vn` — đó là trang của môi trường THẬT. Khách nhập
+         * đúng 4 số cuối vẫn nhận "Thông tin không chính xác", vì trang
+         * đó không hề biết mã vận đơn kia tồn tại.
+         *
+         * Một đường dẫn luôn báo sai còn tệ hơn không có đường dẫn: nó
+         * làm khách nghi ngờ chính đơn hàng của mình.
+         */
+        config(['services.ghn.tracking_url' => null]);
+
+        $order = $this->don([
+            'ghn_order_code' => 'L8WA3V',
+            'shipping_status' => 'ready_to_pick',
+        ]);
+
+        $this->get('/don-hang/' . $order->order_number)
+            ->assertOk()
+            ->assertSee('Tình trạng giao hàng')
+            ->assertDontSee('Tra cứu trên Giao Hàng Nhanh')
+            ->assertDontSee('donhang.ghn.vn')
+            // Không có nút thì phải nói rõ khách hỏi ai.
+            ->assertSee('liên hệ cửa hàng theo số', escape: false);
+    }
+
+    #[Test]
+    public function cau_hinh_xong_thi_nut_tra_cuu_tro_dung_ma_van_don(): void
+    {
+        config(['services.ghn.tracking_url' => 'https://donhang.ghn.vn/']);
+
+        $order = $this->don([
+            'ghn_order_code' => 'L8WA3V',
+            'shipping_status' => 'delivering',
+        ]);
+
+        $this->get('/don-hang/' . $order->order_number)
+            ->assertOk()
+            ->assertSee('Tra cứu trên Giao Hàng Nhanh')
+            ->assertSee('https://donhang.ghn.vn/?order_code=L8WA3V', escape: false);
+    }
+
+    /* ================= 5. DỰ KIẾN GIAO ================= */
+
+    #[Test]
+    public function hien_khoang_du_kien_giao_khi_GHN_da_bao(): void
+    {
+        /*
+         * In cả KHOẢNG chứ không một ngày: cam kết của bên vận chuyển là
+         * một khoảng, và rút nó thành một ngày là hứa chặt hơn thứ mình
+         * nhận được.
+         */
+        $order = $this->don([
+            'ghn_order_code' => 'GHN7777',
+            'shipping_status' => 'delivering',
+            'ghn_expected_from' => '2026-09-12 16:59:59',
+            'ghn_expected_to' => '2026-09-13 16:59:59',
+        ]);
+
+        $this->get('/don-hang/' . $order->order_number)
+            ->assertOk()
+            ->assertSee('Dự kiến giao')
+            ->assertSee('12/09', escape: false)
+            ->assertSee('13/09/2026', escape: false);
+    }
+
+    #[Test]
+    public function chua_co_du_kien_giao_thi_KHONG_hua_gi(): void
+    {
+        // Thà không hứa còn hơn hứa một ngày tự nghĩ ra.
+        $order = $this->don([
+            'ghn_order_code' => 'GHN8888',
+            'shipping_status' => 'ready_to_pick',
+        ]);
+
+        $this->get('/don-hang/' . $order->order_number)
+            ->assertOk()
+            ->assertDontSee('Dự kiến giao');
+    }
+
+    /* ================= 6. KHÔNG XEM ĐƯỢC ĐƠN NGƯỜI KHÁC ================= */
 
     #[Test]
     public function khong_tra_cuu_duoc_van_don_cua_nguoi_khac(): void

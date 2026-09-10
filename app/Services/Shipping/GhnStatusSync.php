@@ -159,6 +159,17 @@ class GhnStatusSync
             ));
         }
 
+        /*
+         * KHOẢNG DỰ KIẾN GIAO — cập nhật TRƯỚC phép kiểm "trạng thái có
+         * đổi không" ở dưới.
+         *
+         * GHN dời lịch giao mà vẫn giữ nguyên trạng thái là chuyện bình
+         * thường (kho ùn, thời tiết). Đặt sau phép kiểm đó thì con số
+         * ngày tháng đứng im cho tới lần vận đơn đổi trạng thái tiếp
+         * theo — có thể là vài ngày sau, và khách đọc một lời hứa đã cũ.
+         */
+        $this->luuDuKienGiao($order, $chiTiet['data'] ?? []);
+
         $trangThai = $chiTiet['data']['status'] ?? null;
 
         if (! is_string($trangThai) || $trangThai === '') {
@@ -193,6 +204,43 @@ class GhnStatusSync
         $this->theoTrangThaiVanDon($order, $trangThai);
 
         return true;
+    }
+
+    /**
+     * Ghi lại khoảng thời gian GHN dự kiến giao.
+     *
+     * `leadtime_order` cho một KHOẢNG (from/to); `leadtime` chỉ có một
+     * mốc. Ưu tiên khoảng, vì nói "giao ngày 12" trong khi cam kết của
+     * bên vận chuyển là "12 đến 13" là hứa chặt hơn thứ mình nhận được.
+     *
+     * Không có gì cũng không sao: cột để trống và giao diện im lặng —
+     * thà không hứa còn hơn hứa một ngày mình tự nghĩ ra.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function luuDuKienGiao(Order $order, array $data): void
+    {
+        $tu = $data['leadtime_order']['from_estimate_date'] ?? $data['leadtime'] ?? null;
+        $den = $data['leadtime_order']['to_estimate_date'] ?? $data['leadtime'] ?? null;
+
+        $order->forceFill([
+            'ghn_expected_from' => $this->thoiDiem($tu),
+            'ghn_expected_to' => $this->thoiDiem($den),
+        ])->save();
+    }
+
+    /** Chuỗi ISO của GHN thành mốc thời gian; chuỗi hỏng thì bỏ qua. */
+    private function thoiDiem(mixed $raw): ?\Illuminate\Support\Carbon
+    {
+        if (! is_string($raw) || trim($raw) === '') {
+            return null;
+        }
+
+        try {
+            return \Illuminate\Support\Carbon::parse($raw);
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     /**

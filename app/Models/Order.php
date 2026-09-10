@@ -46,6 +46,8 @@ class Order extends Model
         'to_district_id',
         'to_ward_code',
         'shipping_status',
+        'ghn_expected_from',
+        'ghn_expected_to',
         'coupon_id',
         'coupon_code',
         'coupon_discount',
@@ -107,6 +109,8 @@ class Order extends Model
             'tax_rate' => 'decimal:5',
             'tax_amount' => 'decimal:2',
             'shipping_tax_amount' => 'decimal:2',
+            'ghn_expected_from' => 'datetime',
+            'ghn_expected_to' => 'datetime',
         ];
     }
 

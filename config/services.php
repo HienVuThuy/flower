@@ -60,6 +60,23 @@ return [
     */
     'ghn' => [
         'base_url' => env('GHN_BASE_URL', 'https://dev-online-gateway.ghn.vn/shiip/public-api'),
+
+        /*
+         * TRANG TRA CỨU CÔNG KHAI CỦA GHN — để trống ở môi trường THỬ.
+         *
+         * ĐO ĐƯỢC: vận đơn tạo trên cổng `dev-online-gateway` KHÔNG tra
+         * được ở `donhang.ghn.vn` — đó là trang của môi trường THẬT.
+         * Khách nhập đúng 4 số cuối vẫn nhận "Thông tin không chính
+         * xác", vì trang đó không hề biết mã vận đơn kia tồn tại.
+         *
+         * Một đường dẫn luôn báo sai còn tệ hơn không có đường dẫn: nó
+         * làm khách nghi ngờ chính đơn hàng của mình. Vì thế để trống
+         * thì giao diện KHÔNG hiện nút — xem x-order.shipping-status.
+         *
+         * Khi cửa hàng chuyển sang khoá thật thì điền:
+         *   GHN_TRACKING_URL=https://donhang.ghn.vn/
+         */
+        'tracking_url' => env('GHN_TRACKING_URL'),
         'token' => env('GHN_TOKEN'),
         'shop_id' => env('GHN_SHOP_ID'),
         'verify_ssl' => env('GHN_VERIFY_SSL', true),

@@ -83,6 +83,108 @@ class GhnStatusSyncTest extends TestCase
         ]);
     }
 
+    /* ================= KHOẢNG DỰ KIẾN GIAO ================= */
+
+    #[Test]
+    public function dong_bo_luu_lai_khoang_du_kien_giao(): void
+    {
+        /*
+         * Con số khách hỏi nhiều nhất, và nó chỉ có trong câu trả lời của
+         * GHN. Không lưu lúc đồng bộ thì trang đơn phải tự gọi GHN mỗi
+         * lượt xem — một cuộc gọi HTTP ra ngoài đặt ngay giữa lúc dựng
+         * trang, cho một con số đổi vài ngày một lần.
+         */
+        $order = $this->donDangGiao();
+
+        Http::fake([
+            '*/v2/shipping-order/detail' => Http::response([
+                'code' => 200,
+                'data' => [
+                    'status' => 'delivering',
+                    'leadtime_order' => [
+                        'from_estimate_date' => '2026-09-12T16:59:59Z',
+                        'to_estimate_date' => '2026-09-13T16:59:59Z',
+                    ],
+                ],
+            ]),
+        ]);
+
+        app(GhnStatusSync::class)->syncOne($order);
+
+        $order->refresh();
+
+        $this->assertNotNull($order->ghn_expected_from, 'Không lưu lại khoảng dự kiến giao.');
+        $this->assertSame('2026-09-12', $order->ghn_expected_from->format('Y-m-d'));
+        $this->assertSame('2026-09-13', $order->ghn_expected_to->format('Y-m-d'));
+    }
+
+    #[Test]
+    public function du_kien_giao_van_duoc_cap_nhat_du_trang_thai_KHONG_doi(): void
+    {
+        /*
+         * GHN dời lịch giao mà giữ nguyên trạng thái là chuyện bình
+         * thường (kho ùn, thời tiết). Nếu chỉ lưu khi trạng thái đổi thì
+         * ngày tháng đứng im tới lần đổi trạng thái tiếp theo — có thể
+         * vài ngày sau, và khách đọc một lời hứa đã cũ.
+         */
+        $order = $this->donDangGiao(shippingStatus: 'delivering');
+
+        Http::fake([
+            '*/v2/shipping-order/detail' => Http::response([
+                'code' => 200,
+                'data' => [
+                    // Y NGUYÊN trạng thái cũ.
+                    'status' => 'delivering',
+                    'leadtime_order' => [
+                        'from_estimate_date' => '2026-09-20T16:59:59Z',
+                        'to_estimate_date' => '2026-09-21T16:59:59Z',
+                    ],
+                ],
+            ]),
+        ]);
+
+        $doiGi = app(GhnStatusSync::class)->syncOne($order);
+
+        // Trạng thái không đổi nên hàm báo "không có gì đổi"...
+        $this->assertFalse($doiGi);
+
+        // ...nhưng ngày dự kiến thì vẫn phải được ghi.
+        $this->assertSame('2026-09-20', $order->refresh()->ghn_expected_from->format('Y-m-d'));
+    }
+
+    #[Test]
+    public function GHN_khong_bao_ngay_thi_de_trong_chu_khong_bia(): void
+    {
+        $order = $this->donDangGiao();
+        $this->ghnTraVe('delivering');
+
+        app(GhnStatusSync::class)->syncOne($order);
+
+        $this->assertNull($order->refresh()->ghn_expected_from);
+    }
+
+    #[Test]
+    public function ngay_hong_cua_GHN_khong_lam_gay_lenh_dong_bo(): void
+    {
+        // Một chuỗi ngày hỏng không được làm dừng cả lượt đồng bộ.
+        $order = $this->donDangGiao();
+
+        Http::fake([
+            '*/v2/shipping-order/detail' => Http::response([
+                'code' => 200,
+                'data' => [
+                    'status' => 'delivering',
+                    'leadtime_order' => ['from_estimate_date' => 'khong-phai-ngay'],
+                ],
+            ]),
+        ]);
+
+        app(GhnStatusSync::class)->syncOne($order);
+
+        $this->assertNull($order->refresh()->ghn_expected_from);
+        $this->assertSame('delivering', $order->shipping_status);
+    }
+
     #[Test]
     public function ghn_bao_da_giao_thi_don_cod_tu_dong_thanh_da_thanh_toan(): void
     {

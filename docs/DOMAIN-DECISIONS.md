@@ -6144,3 +6144,92 @@ nó chỉ có nghĩa "hàng đang trên đường".
 
 Mỗi trạng thái kèm một câu `hint()` trả lời câu hỏi thật của người đợi
 hàng — *"vậy giờ tôi phải làm gì"* — chứ không chỉ một cái nhãn.
+
+---
+
+## QĐ-199. Đường tra cứu của GHN phải khớp MÔI TRƯỜNG, nếu không nó luôn báo sai
+
+Nút "Tra cứu trên Giao Hàng Nhanh" mở `donhang.ghn.vn`, trang này hỏi 4
+số cuối điện thoại người nhận. Khách nhập **đúng** `5678` của
+`0912345678` và vẫn nhận:
+
+> Thông tin không chính xác. Vui lòng kiểm tra lại.
+
+Nguyên nhân không nằm ở số điện thoại. Vận đơn được tạo trên cổng **thử**:
+
+```
+GHN_BASE_URL = https://dev-online-gateway.ghn.vn/shiip/public-api
+```
+
+còn `donhang.ghn.vn` là trang tra cứu của môi trường **thật**. Nó không
+hề biết mã `L8WA3V` tồn tại, và câu từ chối của nó nói về *số điện thoại*
+— nên người đọc đi kiểm lại đúng thứ không sai.
+
+Đây là "chức năng giả" đúng nghĩa: một nút bấm vào luôn hỏng. Và nó tệ
+hơn việc thiếu nút, vì lời từ chối làm khách nghi ngờ **chính đơn hàng
+của mình**.
+
+Sửa: thêm `GHN_TRACKING_URL`, để trống ở môi trường thử, và giao diện
+**không hiện nút** khi nó trống. Thay vào đó một câu nói rõ trạng thái
+lấy từ đâu, cập nhật bao lâu một lần, và gọi ai khi cần gấp — không có
+nút thì phải nói khách hỏi ai.
+
+Bài học chung: **mọi đường dẫn ra ngoài đều thuộc về một môi trường.**
+Khoá API đã tách theo `.env` từ đầu; đường dẫn cho người dùng bấm thì bị
+viết cứng, và nó lặng lẽ trỏ sang môi trường khác.
+
+---
+
+## QĐ-200. Bỏ một nút thì phải trả lại thứ có giá trị tương đương
+
+Gỡ nút tra cứu là đúng, nhưng nó lấy đi thứ duy nhất trả lời được câu
+hỏi thật của người đợi hàng: *"bao giờ hàng tới?"*
+
+GHN đã trả lời sẵn câu đó trong chính response mà `GhnStatusSync` gọi 30
+phút một lần:
+
+```json
+"leadtime_order": {
+  "from_estimate_date": "2026-09-12T16:59:59Z",
+  "to_estimate_date":   "2026-09-13T16:59:59Z"
+}
+```
+
+Nay lưu vào `orders.ghn_expected_from` / `ghn_expected_to` và hiện ở
+trang đơn: **Dự kiến giao 12/09 – 13/09/2026**.
+
+**Hai cột, không phải một.** GHN cam kết một KHOẢNG. Rút nó thành "giao
+ngày 12" là hứa chặt hơn thứ mình nhận được — và ngày 12 không có hàng
+thì lỗi thuộc về cửa hàng, dù bên vận chuyển vẫn đúng hẹn.
+
+**Lưu lại, không hỏi mỗi lần mở trang.** Đặt một cuộc gọi HTTP ra ngoài
+vào lúc dựng trang nghĩa là mỗi lượt xem của khách phải đợi GHN trả lời
+— cho một con số đổi vài ngày một lần.
+
+**Cập nhật TRƯỚC phép kiểm "trạng thái có đổi không".** GHN dời lịch giao
+mà giữ nguyên trạng thái là chuyện bình thường (kho ùn, thời tiết). Đặt
+sau phép kiểm đó thì ngày tháng đứng im tới lần đổi trạng thái tiếp theo
+— có thể vài ngày sau, và khách đọc một lời hứa đã cũ. Có bài kiểm thử
+riêng canh đúng thứ tự này.
+
+Không có số liệu thì **không hiện dòng nào** — thà không hứa còn hơn hứa
+một ngày tự nghĩ ra.
+
+---
+
+## QĐ-201. Chạy lại một script vá là áp dụng nó hai lần
+
+Script vá dùng `assert old in s` rồi `replace(old, new, 1)`. Nhưng phần
+lớn các bản vá GIỮ LẠI đoạn mốc trong `new` (chèn thêm chứ không thay
+thế), nên `assert` vẫn qua ở lần chạy thứ hai — và bản vá được chèn thêm
+một lần nữa.
+
+Đo được: chạy lại một lệnh có kèm script vá đã chạy rồi →
+`tracking_url` xuất hiện 2 lần, `luuDuKienGiao` 4 lần, `ghn_expected_from`
+4 lần. Tệp vẫn **hợp lệ cú pháp**, nên `php -l` không bắt được.
+
+Cách phát hiện và sửa: `grep -c` đếm số lần xuất hiện, rồi
+`git checkout --` mấy tệp đó và chạy lại **đúng một lần**.
+
+Từ nay: script vá phải hoặc kiểm số lần xuất hiện trước khi ghi, hoặc
+đừng bao giờ gộp nó vào một lệnh có thể chạy lại.
