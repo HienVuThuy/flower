@@ -189,6 +189,15 @@
                         <x-order.timeline :events="$order->statusEvents" />
                     </div>
 
+                    {{--
+                        TÌNH TRẠNG GIAO HÀNG — đặt NGAY DƯỚI dòng thời gian.
+
+                        Dòng thời gian nói cửa hàng đã làm gì; khối này nói
+                        kiện hàng đang ở đâu. Hai câu hỏi khác nhau, và câu
+                        thứ hai là câu người đang đợi hàng thật sự hỏi.
+                    --}}
+                    <x-order.shipping-status :order="$order" />
+
                     <dl class="order-summary__lines">
 
                         <div class="order-summary__row">

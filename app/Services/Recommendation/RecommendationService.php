@@ -261,7 +261,7 @@ class RecommendationService
     private function baseQuery()
     {
         return Product::query()
-            ->with(['category', 'promotions', 'traits'])
+            ->with(['category', 'promotions', 'traits', 'variants'])
             ->withAvg(['reviews as rating_avg' => fn ($q) => $q->visible()], 'rating')
             ->withCount(['reviews as rating_count' => fn ($q) => $q->visible()])
             /*

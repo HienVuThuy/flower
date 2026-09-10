@@ -1582,3 +1582,143 @@
     font-size: 0.8em;
     overflow-wrap: anywhere;
 }
+
+/* ============ THANH CHỌN MÓN + XOÁ TẤT CẢ ============
+ *
+ * `.cart-select` nay là KHUNG chứa hai biểu mẫu riêng: chọn món, và xoá
+ * sạch giỏ. HTML không cho lồng form, nên hai việc phải là hai form —
+ * còn với mắt người thì chúng vẫn là một thanh công cụ.
+ */
+.cart-select__form {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    /* min-width: 0 để phần đếm co được khi hàng chật — flex item mặc
+       định min-width: auto, và khi ấy flex-shrink không có tác dụng. */
+    min-width: 0;
+}
+
+/* Đẩy nút xoá về cuối hàng, tách hẳn khỏi nhóm thao tác chọn món:
+   một nút không hoàn tác được thì không nên nằm cạnh nút bấm thường. */
+.cart-select__clear {
+    margin-inline-start: auto;
+}
+
+.cart-select__clear-btn {
+    color: var(--semantic-danger);
+}
+
+.cart-select__clear-btn:hover {
+    background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
+    color: var(--semantic-danger);
+}
+
+/* ============ XOÁ MỘT ĐỊA CHỈ ĐÃ LƯU ============
+ *
+ * Nút "×" đứng NGOÀI <label> để cú bấm không tick luôn cái radio của
+ * nhãn — bấm xoá mà lại vừa chọn đúng địa chỉ định bỏ.
+ */
+.address-option-row {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+}
+
+.address-option-row .address-option {
+    flex: 1 1 auto;
+    /* min-width: 0 để nhãn co được khi địa chỉ dài — flex item mặc định
+       min-width: auto, và khi ấy flex-shrink không có tác dụng. */
+    min-width: 0;
+    /* Chừa chỗ cho nút × để chữ không chui xuống dưới nó. */
+    padding-inline-end: 2.5rem;
+}
+
+.address-option__remove {
+    position: absolute;
+    inset-block-start: 0.35rem;
+    inset-inline-end: 0.5rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--ink-500);
+    font-size: 1.15rem;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.address-option__remove:hover,
+.address-option__remove:focus-visible {
+    background: color-mix(in srgb, var(--semantic-danger) 12%, transparent);
+    color: var(--semantic-danger);
+}
+
+/* ============ TÌNH TRẠNG GIAO HÀNG (KHÁCH XEM) ============ */
+.shipping-status {
+    margin-bottom: var(--space-md);
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-alt);
+}
+
+.shipping-status__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-2xs);
+}
+
+.shipping-status__title {
+    margin: 0;
+    font-size: var(--text-body);
+    font-weight: 700;
+    /* min-width: 0 để tiêu đề co được khi hàng chật — flex item mặc định
+       min-width: auto, và khi ấy flex-shrink không có tác dụng. */
+    min-width: 0;
+}
+
+.shipping-status__hint {
+    margin: 0 0 var(--space-2xs);
+    font-size: var(--text-body-sm);
+    color: var(--ink-700);
+}
+
+.shipping-status__list {
+    margin: 0 0 var(--space-2xs);
+    font-size: var(--text-body-sm);
+}
+
+.shipping-status__list div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+    padding: 0.15rem 0;
+}
+
+.shipping-status__list dt {
+    font-weight: 400;
+    color: var(--ink-700);
+}
+
+.shipping-status__list dd {
+    margin: 0;
+    font-weight: 600;
+    text-align: end;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Mã vận đơn là thứ khách chép đi dán sang trang GHN — chữ đơn cách
+   để không nhầm 0 với O, 1 với l. */
+.shipping-status__code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    letter-spacing: 0.02em;
+}

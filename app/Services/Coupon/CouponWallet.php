@@ -149,6 +149,32 @@ class CouponWallet
     }
 
     /** Số mã đang bị ẩn — để giao diện có chỗ mời xem lại. */
+    /**
+     * Mã này còn dùng được không.
+     *
+     * ============================================================
+     * BA CÁCH CHẾT, GIAO DIỆN XỬ LÝ NHƯ NHAU:
+     *
+     *   - khách đã dùng hết suất của mình
+     *   - mã hết lượt trên toàn hệ thống
+     *   - mã hết hạn, hoặc đã bị ngừng
+     *
+     * LUẬT NÀY TỪNG NẰM TRONG BLADE (biến `$dead` của voucher-card). Để
+     * ở đó thì mỗi nơi cần lọc lại phải chép lại, và bản chép sẽ quên
+     * một trong ba vế — mã hết hạn vẫn nằm trong ví, hoặc mã còn dùng
+     * được bị dọn đi oan.
+     *
+     * @param  array{coupon: Coupon, usedCount: int, exhaustedForUser: bool}  $row
+     */
+    public function conDungDuoc(array $row): bool
+    {
+        $coupon = $row['coupon'];
+
+        return ! $row['exhaustedForUser']
+            && $coupon->isRunning()
+            && ! $coupon->isExhausted();
+    }
+
     public function hiddenCount(?User $user): int
     {
         return $user === null ? 0 : DB::table('coupon_user')

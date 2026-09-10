@@ -6027,3 +6027,120 @@ ngày ai đó sửa bản thứ nhất. → **mã thừa, phải xoá.**
 Cùng một hiện tượng (mutation sống sót), hai kết luận ngược nhau. Cách
 phân biệt: phá tiếp ở lớp dưới. Đỏ → có lớp bảo vệ thật, chốt trên là
 thừa. Vẫn xanh → chưa ai canh, bài đo sai chỗ.
+
+---
+
+## QĐ-195. Thẻ sản phẩm không được suy "chưa nạp quan hệ" thành "không có quy cách"
+
+Nút "Thêm vào giỏ" ở khối gợi ý luôn báo lỗi *"Sản phẩm này có nhiều quy
+cách. Vui lòng chọn quy cách trước khi mua."*
+
+`x-product.actions` chọn nút dựa trên `relationLoaded('variants')`:
+
+```
+đã nạp    →  biết có quy cách  →  nút mở hộp chọn
+CHƯA nạp  →  tưởng KHÔNG có    →  nút gửi thẳng biểu mẫu   ← hỏng
+```
+
+Biểu mẫu gửi thẳng thiếu `variant_id`, và `CartService` từ chối. Nghĩa
+là **bất kỳ trang nào quên `->with('variants')` đều dựng ra một nút chắc
+chắn hỏng** — âm thầm, không cảnh báo lúc dựng trang.
+`RecommendationService` nạp `category`, `promotions`, `traits` và quên
+đúng một cái.
+
+Sửa ở **hai lớp, và cả hai đều cần**:
+
+1. `RecommendationService` nạp thêm `variants` — để tránh N+1.
+2. Component **tự nạp khi thiếu** — để không trang nào phải nhớ nữa.
+
+Lớp 2 mới là lớp sửa lỗi. Chỉ thêm eager-load thì lần sau ai viết một
+danh sách mới sẽ gặp lại đúng lỗi này.
+
+**Không tốn thêm truy vấn nào:** `isPurchasable()` ngay bên trên đã tự
+truy vấn quan hệ đó khi nó chưa nạp, rồi vứt kết quả đi. Nạp một lần là
+*ít* truy vấn hơn bản cũ.
+
+Lớp chặn ở `CartService` giữ nguyên. Sửa giao diện là để khách không gặp
+lỗi; nó không thay được phép kiểm ở dưới — ai cũng gửi được một biểu mẫu
+tự chế, và lọt qua thì hàng vào giỏ với giá quy cách rẻ nhất.
+
+---
+
+## QĐ-196. Route hằng phải đăng ký TRƯỚC route có tham số
+
+`DELETE /gio-hang/tat-ca` trả 404. Laravel khớp route theo **thứ tự đăng
+ký**, và `/{cartItem}` đứng trước nên nuốt luôn `tat-ca`: route model
+binding đi tìm một dòng giỏ mang khoá `"tat-ca"`, không thấy, trả 404.
+
+Cùng cái bẫy đã gặp ở `/don-hang/tra-cuu`. Lần đó chú thích đã ghi lại;
+lần này tôi vẫn viết một chú thích **nói ngược** ("đặt trước thì không
+cần") rồi ba bài kiểm thử đỏ mới phát hiện.
+
+Chú thích sai còn tệ hơn không có chú thích: nó khiến người sau tin rằng
+thứ tự không quan trọng.
+
+---
+
+## QĐ-197. Voucher hết hiệu lực rời khỏi ví, nhưng hàng dữ liệu ở lại
+
+Trước đây mã hết hạn / hết lượt vẫn hiện, chỉ chuyển xám. Ví dùng vài
+tháng là đầy mã chết, và mã còn dùng được chìm vào giữa — đúng thứ ví
+voucher sinh ra để khỏi phải lọc bằng mắt.
+
+**Ba cách chết, phải bắt đủ cả ba:**
+
+1. hết hạn / bị ngừng (`isRunning()`)
+2. hết lượt toàn hệ thống (`isExhausted()`)
+3. **khách đã dùng hết suất của mình** (`exhaustedForUser`)
+
+Vế thứ ba dễ quên nhất: mã vẫn còn hạn, hệ thống vẫn còn lượt, chỉ riêng
+người này hết suất. Lọc bằng `isRunning()` đơn thuần bỏ sót đúng nó.
+
+Luật này **từng nằm trong Blade** (biến `$dead` của `voucher-card`). Nay
+ở `CouponWallet::conDungDuoc()` — vì mỗi nơi cần lọc lại mà chép tay thì
+bản chép sẽ quên một vế.
+
+**KHÔNG xoá hàng `coupon_user`.** Nó là thứ `per_user_limit` đếm dựa
+vào; xoá đi thì một mã "mỗi người một lần" thành mã không giới hạn cho
+ai biết đợi nó hết hạn. Chúng chỉ rời khỏi danh sách chính, và vẫn xem
+lại được qua `?het-han=1` — "mã của tôi biến đâu mất" là câu hỏi sẽ được
+hỏi.
+
+Việc này làm **di chuyển** nút "Bỏ khỏi ví" của QĐ đã sửa trước đó (mã
+hết hạn phải bỏ được). Khả năng đó không mất, nó nằm trong mục "Mã hết
+hiệu lực". Hai bài kiểm thử cũ đã cập nhật địa chỉ, và có bài mới canh
+việc thẻ đã rời khỏi ví chính.
+
+---
+
+## QĐ-198. Khách phải thấy KIỆN HÀNG đang ở đâu, không chỉ đơn đang ở bước nào
+
+Hai trạng thái khác nhau, và trước đây khách chỉ thấy vế thứ nhất:
+
+```
+OrderStatus     cửa hàng đang làm gì với đơn   (do người cửa hàng bấm)
+ShippingStatus  kiện hàng đang ở đâu           (do GHN báo về)
+```
+
+`orders.shipping_status` đã được `GhnStatusSync` cập nhật từ lâu, nhưng
+**không màn hình nào của khách đọc nó**. Một đơn "Đang giao" nằm im ba
+ngày trông y hệt nhau ở ngày đầu và ngày thứ ba. Người đợi hàng gọi điện
+hỏi cửa hàng, và cửa hàng cũng phải đi hỏi GHN — trong khi con số đã nằm
+sẵn trong cơ sở dữ liệu.
+
+**Cột KHÔNG cast sang enum, có chủ ý.** GHN thêm trạng thái mới bất cứ
+lúc nào, và một cast sẽ ném lỗi ngay giữa trang đơn hàng của khách vì
+một chuỗi lạ. `ShippingStatus::tuGhn()` trả `null` cho mã lạ, và giao
+diện lùi về câu chung "Đang vận chuyển" — không bao giờ in nguyên
+`money_collect_delivering` ra cho khách đọc.
+
+Enum cũng phải có `not_shipped` — **giá trị mặc định của cột, không phải
+mã của GHN**. Bỏ sót thì đơn chưa bàn giao rơi vào câu lùi "Đang vận
+chuyển", nói ngược hẳn sự thật: hàng vẫn đang nằm ở cửa hàng.
+
+Mười hai mã GHN gộp về bảy câu: "sorting" (phân loại ở kho trung
+chuyển) là ngôn ngữ nội bộ của đơn vị vận chuyển; với người đang đợi hoa
+nó chỉ có nghĩa "hàng đang trên đường".
+
+Mỗi trạng thái kèm một câu `hint()` trả lời câu hỏi thật của người đợi
+hàng — *"vậy giờ tôi phải làm gì"* — chứ không chỉ một cái nhãn.

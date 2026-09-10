@@ -49,26 +49,50 @@
                         <div class="address-picker" data-address-picker>
 
                             @foreach($addresses as $address)
-                                <label class="address-option">
-                                    <input
-                                        type="radio"
-                                        name="address_id"
-                                        value="{{ $address->id }}"
-                                        class="visually-hidden"
-                                        @checked((int) old('address_id', $selectedAddressId) === $address->id)
-                                    >
-                                    <span class="address-option__body">
-                                        <span class="address-option__head">
-                                            <strong>{{ $address->recipient_name }}</strong>
-                                            <span class="text-muted">{{ $address->recipient_phone }}</span>
-                                            <span class="address-option__tag">{{ $address->label->label() }}</span>
-                                            @if($address->is_default)
-                                                <span class="address-option__tag address-option__tag--default">Mặc định</span>
-                                            @endif
+                                {{--
+                                    NÚT XOÁ NẰM NGOÀI <label>, có chủ ý.
+
+                                    Đặt bên trong thì mỗi cú bấm vào nút
+                                    cũng tick luôn cái radio của nhãn —
+                                    khách bấm xoá lại vừa chọn đúng địa
+                                    chỉ mình đang muốn bỏ.
+
+                                    Nút thuộc về một <form> khác qua thuộc
+                                    tính form="": cả khối này đang nằm
+                                    trong biểu mẫu thanh toán, mà HTML
+                                    không cho lồng form. Các form xoá được
+                                    đặt ở cuối trang.
+                                --}}
+                                <div class="address-option-row">
+                                    <label class="address-option">
+                                        <input
+                                            type="radio"
+                                            name="address_id"
+                                            value="{{ $address->id }}"
+                                            class="visually-hidden"
+                                            @checked((int) old('address_id', $selectedAddressId) === $address->id)
+                                        >
+                                        <span class="address-option__body">
+                                            <span class="address-option__head">
+                                                <strong>{{ $address->recipient_name }}</strong>
+                                                <span class="text-muted">{{ $address->recipient_phone }}</span>
+                                                <span class="address-option__tag">{{ $address->label->label() }}</span>
+                                                @if($address->is_default)
+                                                    <span class="address-option__tag address-option__tag--default">Mặc định</span>
+                                                @endif
+                                            </span>
+                                            <span class="address-option__line">{{ $address->fullAddress() }}</span>
                                         </span>
-                                        <span class="address-option__line">{{ $address->fullAddress() }}</span>
-                                    </span>
-                                </label>
+                                    </label>
+
+                                    <button
+                                        type="submit"
+                                        form="xoa-dia-chi-{{ $address->id }}"
+                                        class="address-option__remove"
+                                        aria-label="Xoá địa chỉ của {{ $address->recipient_name }}"
+                                        title="Xoá địa chỉ này khỏi sổ"
+                                    >&times;</button>
+                                </div>
                             @endforeach
 
                             <label class="address-option">
@@ -485,6 +509,31 @@
                         <button type="submit" class="btn btn-primary-brand">Xem lại đơn hàng</button>
                     </div>
                 </form>
+
+                {{--
+                    BIỂU MẪU XOÁ ĐỊA CHỈ — đặt NGOÀI biểu mẫu thanh toán.
+
+                    HTML không cho lồng form, nên chúng đứng riêng ở đây
+                    và các nút "×" trong danh sách nối vào bằng thuộc tính
+                    form="" — đúng cách đã dùng cho ô chọn món ở giỏ hàng.
+
+                    Mỗi địa chỉ một biểu mẫu vì đường dẫn khác nhau. Ẩn đi
+                    bằng `hidden`, không phải CSS: các form này không có
+                    gì để nhìn, và `hidden` thì trình đọc màn hình cũng bỏ
+                    qua luôn.
+                --}}
+                @foreach($addresses as $address)
+                    <form
+                        id="xoa-dia-chi-{{ $address->id }}"
+                        method="POST"
+                        action="{{ route('shop.addresses.destroy', $address) }}"
+                        onsubmit="return confirm('Xoá địa chỉ này khỏi sổ? Đơn đã đặt không bị ảnh hưởng.');"
+                        hidden
+                    >
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                @endforeach
 
             </div>
 

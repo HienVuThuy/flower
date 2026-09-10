@@ -83,9 +83,15 @@ class AddressController extends Controller
             Auth::user()->addresses()->first()?->makeDefault();
         }
 
-        return redirect()
-            ->route('shop.addresses.index')
-            ->with('success', 'Đã xoá địa chỉ.');
+        /*
+         * back() CHỨ KHÔNG PHẢI về sổ địa chỉ.
+         *
+         * Nút xoá nay còn nằm ở bước thanh toán. Đá khách về sổ địa chỉ
+         * từ đó là bắt họ đi lại toàn bộ bước 1 — và mất những gì đang
+         * gõ dở. Bấm từ chính sổ địa chỉ thì back() cũng trả về đúng
+         * trang đó, nên không có gì đổi ở đường cũ.
+         */
+        return back()->with('success', 'Đã xoá địa chỉ.');
     }
 
     public function makeDefault(Address $address): RedirectResponse

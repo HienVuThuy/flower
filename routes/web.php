@@ -143,6 +143,26 @@ if (config('features.cart')) {
         ->group(function () {
             Route::get('/', [CartController::class, 'index'])->name('index');
             Route::post('/', [CartController::class, 'store'])->name('store');
+            /*
+             * XOÁ SẠCH GIỎ — PHẢI ĐĂNG KÝ TRƯỚC '/{cartItem}'.
+             *
+             * Laravel khớp route theo THỨ TỰ ĐĂNG KÝ. Đặt sau thì
+             * DELETE '/gio-hang/tat-ca' rơi vào '/{cartItem}', route
+             * model binding đi tìm một dòng giỏ mang khoá "tat-ca",
+             * không thấy, và trả 404. Đo được: cả ba bài xoá giỏ đều
+             * nhận 404 cho tới khi chuyển lên đây.
+             *
+             * Cùng cái bẫy với '/don-hang/tra-cuu' — xem chú thích ở
+             * nhóm route đơn hàng.
+             *
+             * throttle: một cú bấm liên tục không được biến thành hàng
+             * chục lượt xoá — dù xoá giỏ rỗng là vô hại, nó vẫn là
+             * request thật.
+             */
+            Route::delete('/tat-ca', [CartController::class, 'clear'])
+                ->middleware('throttle:20,1')
+                ->name('clear');
+
             Route::patch('/{cartItem}', [CartController::class, 'update'])->name('update');
             Route::delete('/{cartItem}', [CartController::class, 'destroy'])->name('destroy');
 

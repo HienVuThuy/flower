@@ -45,34 +45,66 @@
                 chọn". Có JavaScript thì nút tự ẩn và biểu mẫu gửi ngay
                 khi tích (resources/js/cart-live.js).
             --}}
-            <form
-                id="cart-select"
-                method="POST"
-                action="{{ route('shop.cart.select') }}"
-                class="cart-select"
-                data-cart-select
-                data-cart-form
-            >
-                @csrf
+            <div class="cart-select">
 
-                <label class="cart-select__all">
-                    <input
-                        type="checkbox"
-                        class="form-check-input"
-                        data-cart-pick-all
-                        @checked($selectedCount === $cart->items->count())
-                    >
-                    <span>Chọn tất cả</span>
-                </label>
+                <form
+                    id="cart-select"
+                    method="POST"
+                    action="{{ route('shop.cart.select') }}"
+                    class="cart-select__form"
+                    data-cart-select
+                    data-cart-form
+                >
+                    @csrf
 
-                <span class="cart-select__count">
-                    Đang chọn <strong>{{ $selectedCount }}</strong>/{{ $cart->items->count() }} món
-                </span>
+                    <label class="cart-select__all">
+                        <input
+                            type="checkbox"
+                            class="form-check-input"
+                            data-cart-pick-all
+                            @checked($selectedCount === $cart->items->count())
+                        >
+                        <span>Chọn tất cả</span>
+                    </label>
 
-                <button type="submit" class="btn btn-ghost btn-sm" data-cart-select-submit>
-                    Cập nhật lựa chọn
-                </button>
-            </form>
+                    <span class="cart-select__count">
+                        Đang chọn <strong>{{ $selectedCount }}</strong>/{{ $cart->items->count() }} món
+                    </span>
+
+                    <button type="submit" class="btn btn-ghost btn-sm" data-cart-select-submit>
+                        Cập nhật lựa chọn
+                    </button>
+                </form>
+
+                {{--
+                    XOÁ TẤT CẢ — biểu mẫu RIÊNG, không lồng trong biểu mẫu
+                    chọn món (HTML không cho lồng form).
+
+                    KHÔNG mang `data-cart-form`, nên nó gửi kiểu thường và
+                    tải lại trang. Có chủ ý: sau khi giỏ trống thì cả khối
+                    đổi hẳn — không còn danh sách, không còn bảng tiền, và
+                    khối "Có thể bạn cần thêm" cũng mất căn cứ để gợi ý.
+                    Tải lại một lần rẻ hơn là vá từng mảnh.
+
+                    HỎI LẠI TRƯỚC KHI XOÁ. Không có bước hoàn tác: bấm
+                    nhầm là mất sạch thứ khách đã chọn cả buổi.
+                --}}
+                <form
+                    method="POST"
+                    action="{{ route('shop.cart.clear') }}"
+                    class="cart-select__clear"
+                    onsubmit="return confirm('Xoá tất cả sản phẩm khỏi giỏ hàng? Thao tác này không hoàn tác được.');"
+                >
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="submit" class="btn btn-ghost btn-sm cart-select__clear-btn">
+                        <x-site.icon name="trash" />
+                        Xoá tất cả
+                    </button>
+                </form>
+
+            </div>
 
             <div class="cart-lines">
                 @foreach($cart->items as $item)

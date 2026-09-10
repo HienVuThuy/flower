@@ -335,6 +335,29 @@ class CartController extends Controller
     }
 
     /**
+     * Xoá sạch giỏ hàng.
+     *
+     * DÙNG clear() CHỨ KHÔNG PHẢI clearSelected(): khách bấm "Xoá tất
+     * cả" là muốn giỏ trống, kể cả những món họ đang bỏ tích. Xoá mỗi
+     * phần đã tích rồi báo "đã xoá tất cả" là nói sai việc vừa làm.
+     *
+     * KHÔNG có bước hoàn tác. Vì thế nút phải hỏi lại trước khi gửi —
+     * xem `data-confirm` ở trang giỏ hàng.
+     */
+    public function clear(Request $request): RedirectResponse|JsonResponse
+    {
+        $soMon = $this->cart->current()->items()->count();
+
+        if ($soMon === 0) {
+            return $this->traLoiGio($request, 'Giỏ hàng đang trống.');
+        }
+
+        $this->cart->clear();
+
+        return $this->traLoiGio($request, 'Đã xoá tất cả sản phẩm khỏi giỏ hàng.');
+    }
+
+    /**
      * Chặn việc sửa/xoá dòng trong giỏ của NGƯỜI KHÁC.
      *
      * Route model binding chỉ lấy CartItem theo id, không kiểm tra chủ

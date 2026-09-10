@@ -32,15 +32,31 @@
     $sizeClass = $compact ? 'btn-sm' : 'btn-lg';
 
     /*
-     * Trang chi tiết truyền sẵn danh sách quy cách. Thẻ sản phẩm ở
-     * trang danh sách thì không — nên tự lấy, nhưng CHỈ khi quan hệ đã
-     * được nạp trước. Gọi truy vấn ở đây là N+1: một trang danh sách có
-     * hai chục thẻ.
+     * NẠP QUY CÁCH KHI CHƯA CÓ — KHÔNG ĐƯỢC COI NHƯ "KHÔNG CÓ".
+     *
+     * LỖI ĐÃ SỬA: bản trước trả về collect() rỗng khi quan hệ chưa nạp,
+     * nên component tưởng sản phẩm không có quy cách và dựng nút gửi
+     * thẳng biểu mẫu. Biểu mẫu đó thiếu `variant_id`, và CartService từ
+     * chối — mọi cú bấm đều báo "vui lòng chọn quy cách trước khi mua".
+     *
+     * Nghĩa là BẤT KỲ trang nào quên `->with('variants')` đều dựng ra
+     * một nút chắc chắn hỏng, âm thầm. Đo được ở khối "Gợi ý cho bạn":
+     * RecommendationService nạp category, promotions, traits — và quên
+     * đúng cái này.
+     *
+     * KHÔNG thêm truy vấn nào: `isPurchasable()` ngay bên trên đã tự
+     * truy vấn quan hệ này khi nó chưa nạp, rồi vứt kết quả đi. Nạp một
+     * lần ở đây là ÍT truy vấn hơn bản cũ, không phải nhiều hơn.
+     *
+     * Nạp sẵn ở controller/service vẫn nên làm — nhưng từ nay là để
+     * tránh N+1, không còn là điều kiện để nút chạy đúng.
      */
+    if ($variants === null && ! $product->relationLoaded('variants')) {
+        $product->load('variants');
+    }
+
     $activeVariants = $variants
-        ?? ($product->relationLoaded('variants')
-            ? $product->variants->where('is_active', true)->values()
-            : collect());
+        ?? $product->variants->where('is_active', true)->values();
 
     /*
      * Có quy cách thì KHÔNG mua được nếu chưa chọn — CartService chặn

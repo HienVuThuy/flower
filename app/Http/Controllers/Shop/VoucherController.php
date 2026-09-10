@@ -42,13 +42,36 @@ class VoucherController extends Controller
          * vấn thừa cho mọi lượt xem để phục vụ số ít là đổi sai chiều.
          */
         $xemDaAn = request()->boolean('da-an');
+        $xemHetHan = request()->boolean('het-han');
+
+        /*
+         * MÃ HẾT HIỆU LỰC RỜI KHỎI VÍ, KHÔNG NẰM LẪN TRONG ĐÓ.
+         *
+         * Trước đây chúng vẫn hiện, chỉ chuyển xám. Ví dùng vài tháng là
+         * đầy mã hết hạn, và mã còn dùng được lẫn vào giữa — đúng thứ ví
+         * voucher sinh ra để khỏi phải lọc bằng mắt.
+         *
+         * KHÔNG XOÁ HÀNG DỮ LIỆU. Hàng trong `coupon_user` là bằng chứng
+         * chống dùng quá suất; xoá đi là mở lại đúng lỗ hổng đó. Chúng
+         * chỉ rời khỏi danh sách chính, và vẫn xem lại được.
+         */
+        $viDay = $user ? $this->wallet->forUser($user) : collect();
+
+        [$conDung, $hetHieuLuc] = $viDay->partition(
+            fn (array $row) => $this->wallet->conDungDuoc($row)
+        );
 
         return view('shop.vouchers.index', [
-            'mine' => $user ? $this->wallet->forUser($user) : collect(),
+            'mine' => $conDung->values(),
             'claimable' => $this->wallet->claimableFor($user),
+
             'hiddenCount' => $this->wallet->hiddenCount($user),
             'daAn' => $xemDaAn && $user ? $this->wallet->forUser($user, daAn: true) : collect(),
             'xemDaAn' => $xemDaAn,
+
+            'hetHieuLucCount' => $hetHieuLuc->count(),
+            'hetHieuLuc' => $xemHetHan ? $hetHieuLuc->values() : collect(),
+            'xemHetHan' => $xemHetHan,
         ]);
     }
 

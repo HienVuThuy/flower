@@ -53,6 +53,49 @@
                 chiều là cái bẫy. Bấm nhầm rồi thì mã biến mất và khách
                 không biết nó đi đâu.
             --}}
+            {{--
+                MÃ HẾT HIỆU LỰC — ĐÃ RỜI KHỎI VÍ Ở TRÊN.
+
+                Không hiện thẻ nào, chỉ một dòng đếm. Mã hết hạn hay hết
+                lượt nằm lẫn trong ví thì mã còn dùng được bị chìm giữa
+                chúng — đúng thứ ví voucher sinh ra để khỏi phải lọc bằng
+                mắt.
+
+                VẪN XEM LẠI ĐƯỢC, vì "mã của tôi biến đâu mất" là câu hỏi
+                sẽ được hỏi. Hàng dữ liệu không bị xoá: nó là bằng chứng
+                chống dùng quá suất.
+            --}}
+            @if($hetHieuLucCount > 0)
+                <div class="mb-5">
+                    @if($xemHetHan)
+                        <div class="section-header">
+                            <div>
+                                <h2 class="text-h4 mb-0">Mã hết hiệu lực ({{ $hetHieuLucCount }})</h2>
+                                <p class="text-body-sm mb-0">
+                                    Đã hết hạn, hết lượt, hoặc bạn đã dùng hết suất của mình.
+                                </p>
+                            </div>
+                            <a href="{{ route('shop.vouchers.index') }}" class="btn btn-ghost btn-sm">Đóng</a>
+                        </div>
+
+                        <div class="voucher-grid">
+                            @foreach($hetHieuLuc as $row)
+                                <x-shop.voucher-card
+                                    :coupon="$row['coupon']"
+                                    :saved="true"
+                                    :used-count="$row['usedCount']"
+                                    :exhausted-for-user="$row['exhaustedForUser']" />
+                            @endforeach
+                        </div>
+                    @else
+                        <a href="{{ route('shop.vouchers.index', ['het-han' => 1]) }}"
+                           class="btn btn-ghost btn-sm">
+                            Xem {{ $hetHieuLucCount }} mã hết hiệu lực
+                        </a>
+                    @endif
+                </div>
+            @endif
+
             @if($hiddenCount > 0)
                 <div class="mb-5">
                     @if($xemDaAn)

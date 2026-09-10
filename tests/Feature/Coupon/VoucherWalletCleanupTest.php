@@ -75,8 +75,15 @@ class VoucherWalletCleanupTest extends TestCase
         $coupon = $this->ma(['ends_at' => now()->subDay()]);
         $this->vaoVi($user, $coupon);
 
+        /*
+         * NÚT NẰM Ở MỤC "MÃ HẾT HIỆU LỰC", không còn ở ví chính.
+         *
+         * Ví chính nay chỉ giữ mã còn dùng được — xem VoucherController.
+         * Khả năng bỏ mã KHÔNG mất đi, nó chuyển chỗ; có bài riêng canh
+         * đúng việc thẻ này đã rời khỏi ví.
+         */
         $this->actingAs($user)
-            ->get('/voucher')
+            ->get('/voucher?het-han=1')
             ->assertOk()
             ->assertSee('Bỏ khỏi ví');
 
@@ -98,7 +105,7 @@ class VoucherWalletCleanupTest extends TestCase
         $coupon->forceFill(['used_count' => 5])->save();
         $this->vaoVi($user, $coupon);
 
-        $this->actingAs($user)->get('/voucher')->assertOk()->assertSee('Bỏ khỏi ví');
+        $this->actingAs($user)->get('/voucher?het-han=1')->assertOk()->assertSee('Bỏ khỏi ví');
 
         $this->actingAs($user)->delete('/voucher/' . $coupon->code . '/luu')->assertRedirect();
 
