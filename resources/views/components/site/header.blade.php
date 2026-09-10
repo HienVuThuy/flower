@@ -338,9 +338,16 @@
                                 </a>
                             @endif
 
-                            <a class="dropdown-item" href="{{ route('shop.vouchers.index') }}">
-                                <x-site.icon name="tags" /> Ví voucher
-                            </a>
+                            {{--
+                                "Ví voucher" ĐÃ GỠ khỏi menu tài khoản.
+
+                                Nó trỏ tới đúng trang mà menu "Khác" đã
+                                có ("Voucher"), nên hai mục khác tên cùng
+                                một đích — người dùng bấm cả hai để xem
+                                có gì khác nhau, và không có gì khác nhau.
+                                Giữ lại một mục, tên "Voucher", ở chỗ ai
+                                cũng vào được kể cả khách chưa đăng nhập.
+                            --}}
 
                             <a class="dropdown-item" href="{{ route('shop.wishlist.index') }}">
                                 <x-site.icon name="heart" /> Sản phẩm yêu thích

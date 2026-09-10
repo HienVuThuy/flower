@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Shop;
 
 use App\Enums\InvoiceBuyerType;
+use App\Enums\MomoFlow;
 use App\Enums\PaymentMethod;
 use App\Services\Shop\Provinces;
 use Illuminate\Foundation\Http\FormRequest;
@@ -126,6 +127,24 @@ class CheckoutDetailsRequest extends FormRequest
              */
             'payment_method' => ['required', Rule::in(PaymentMethod::values())],
 
+            /*
+             * CÁCH TRẢ TIỀN TRÊN TRANG MOMO — TUỲ CHỌN, không bắt buộc.
+             *
+             * Đây là một SỞ THÍCH, không phải dữ liệu thiếu thì không
+             * đặt hàng được: vắng mặt thì rơi về MomoFlow::macDinh().
+             *
+             * ĐÃ THỬ BẮT BUỘC KHI CHỌN MOMO, và 51 bài kiểm thử đỏ ngay:
+             * mọi đường đặt đơn MoMo không gửi kèm ô này đều bị chặn ở
+             * cửa xác thực và không tạo được đơn nào. Trên giao diện thì
+             * ô radio luôn có sẵn một lựa chọn nên không ai thấy — nhưng
+             * mọi lời gọi khác (kiểm thử, tích hợp sau này, một biểu mẫu
+             * cũ còn nằm trong bộ nhớ đệm của trình duyệt) đều gãy.
+             *
+             * Bắt buộc một trường mà thiếu nó vẫn làm đúng được là dựng
+             * thêm một cách để hỏng, không thêm gì.
+             */
+            'momo_flow' => ['nullable', Rule::in(MomoFlow::values())],
+
             /* ---------- xuất hoá đơn GTGT ---------- */
 
             /*
@@ -202,6 +221,7 @@ class CheckoutDetailsRequest extends FormRequest
             'delivery_date' => 'ngày giao',
             'delivery_note' => 'ghi chú',
             'payment_method' => 'hình thức thanh toán',
+            'momo_flow' => 'cách thanh toán MoMo',
             'invoice_buyer_type' => 'đối tượng xuất hoá đơn',
             'invoice_buyer_name' => 'tên trên hoá đơn',
             'invoice_email' => 'email nhận hoá đơn',

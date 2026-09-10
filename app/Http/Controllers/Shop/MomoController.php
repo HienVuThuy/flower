@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Enums\MomoFlow;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -57,9 +58,9 @@ class MomoController extends Controller
     }
 
     /** Lần trả đầu tiên, ngay sau khi đặt hàng. */
-    public function start(Order $order): RedirectResponse
+    public function start(Request $request, Order $order): RedirectResponse
     {
-        return $this->chuyenSangMomo($order);
+        return $this->chuyenSangMomo($request, $order);
     }
 
     /**
@@ -67,12 +68,12 @@ class MomoController extends Controller
      *
      * KHÔNG tạo đơn mới — vẫn là đơn cũ, chỉ thêm một lượt giao dịch.
      */
-    public function payAgain(Order $order): RedirectResponse
+    public function payAgain(Request $request, Order $order): RedirectResponse
     {
-        return $this->chuyenSangMomo($order);
+        return $this->chuyenSangMomo($request, $order);
     }
 
-    private function chuyenSangMomo(Order $order): RedirectResponse
+    private function chuyenSangMomo(Request $request, Order $order): RedirectResponse
     {
         $this->authorizeOrderAccess($order);
 
@@ -94,8 +95,18 @@ class MomoController extends Controller
                 ->with('error', 'Đơn đã kết thúc nên không thanh toán được nữa.');
         }
 
+        /*
+         * CÁCH TRẢ TIỀN ĐỌC TỪ URL, giá trị lạ rơi về mặc định.
+         *
+         * Không abort(404): người ta chép link cho nhau, và một tham số
+         * hỏng không đáng để cả lượt thanh toán biến mất — cùng nguyên
+         * tắc đã dùng cho bộ lọc sản phẩm.
+         */
+        $flow = MomoFlow::tryFrom((string) $request->query('cach', ''))
+            ?? MomoFlow::macDinh();
+
         try {
-            return redirect()->away($this->momo->createPayment($order));
+            return redirect()->away($this->momo->createPayment($order, $flow));
         } catch (PaymentException $e) {
             return redirect()
                 ->route('shop.orders.show', $order)

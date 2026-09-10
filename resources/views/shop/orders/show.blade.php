@@ -60,9 +60,25 @@
                     Đơn hàng vẫn giữ nguyên — trả lại không tạo đơn mới.
                 </p>
 
-                <a href="{{ route('shop.orders.momo.pay', $order) }}" class="btn btn-primary-brand mt-3">
-                    Thanh toán lại với MoMo
-                </a>
+                {{--
+                    MỘT NÚT CHO MỖI CÁCH TRẢ TIỀN.
+
+                    Trước đây chỉ có một nút, và nó luôn mở dịch vụ mặc
+                    định. Ai đang ngồi trước máy tính mà mặc định là
+                    "quét QR" thì phải với lấy điện thoại; ai đang cầm
+                    điện thoại mà mặc định là "nhập thẻ" thì phải đi tìm
+                    cái thẻ. Lần trả lại là lúc lần trước đã hỏng — không
+                    được bắt họ đoán tiếp.
+                --}}
+                <div class="momo-retry mt-3">
+                    @foreach(\App\Enums\MomoFlow::cases() as $cach)
+                        <a href="{{ route('shop.orders.momo.pay', [$order, 'cach' => $cach->value]) }}"
+                           class="btn {{ $loop->first ? 'btn-primary-brand' : 'btn-secondary-brand' }}">
+                            <x-site.icon :name="$cach->icon()" />
+                            {{ $cach->label() }}
+                        </a>
+                    @endforeach
+                </div>
 
             @else
                 <x-site.icon name="check-circle" class="order-success__icon" />

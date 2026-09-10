@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Enums\MomoFlow;
 use App\Enums\PaymentMethod;
 use App\Enums\UserEventType;
 use App\Http\Controllers\Controller;
@@ -534,9 +535,21 @@ class CheckoutController extends Controller
                 }
             }
 
+            /*
+             * ĐỌC RA BIẾN TRƯỚC KHI DÙNG.
+             *
+             * LỖI ĐÃ SỬA: khối chuyển hướng sang MoMo ở cuối hàm đọc
+             * `$checkout['momo_flow']` — một biến KHÔNG TỒN TẠI trong
+             * hàm này. Toán tử `??` nuốt luôn cảnh báo "undefined
+             * variable", nên lựa chọn "quét mã QR" của khách lặng lẽ rơi
+             * về mức mặc định và MoMo mở ra trang nhập thẻ. Đo được trên
+             * MoMo thật: chọn QR, nhận form thẻ.
+             */
+            $duLieuThanhToan = session(self::SESSION_KEY, []);
+
             $order = $this->orders->place(
                 $basket,
-                session(self::SESSION_KEY, []),
+                $duLieuThanhToan,
                 $this->guard->key(),
             );
         } catch (CouponException $e) {
@@ -630,7 +643,18 @@ class CheckoutController extends Controller
          * dùng chính đơn đó, không tạo đơn mới.
          */
         if ($order->payment_method === PaymentMethod::Momo) {
-            return redirect()->route('shop.payment.momo.start', $order);
+            /*
+             * MANG THEO CÁCH TRẢ TIỀN KHÁCH ĐÃ CHỌN ở bước 3 (quét mã QR
+             * hay nhập thẻ). Không mang theo thì mọi đơn rơi về mức mặc
+             * định, và ô chọn kia thành ô trang trí.
+             */
+            $flow = MomoFlow::tryFrom((string) ($duLieuThanhToan['momo_flow'] ?? ''))
+                ?? MomoFlow::macDinh();
+
+            return redirect()->route('shop.payment.momo.start', [
+                $order,
+                'cach' => $flow->value,
+            ]);
         }
 
         return redirect()->route('shop.orders.show', $order);

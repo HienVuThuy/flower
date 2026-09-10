@@ -51,19 +51,22 @@ return [
             'store_id' => env('MOMO_STORE_ID', 'AngevilStore'),
 
             /*
-             * payWithCC — thẻ quốc tế (Visa/Mastercard).
+             * CHỈ CÒN LÀ MỨC MẶC ĐỊNH — khách tự chọn ở bước thanh toán.
              *
-             * Chọn nhầm là trang MoMo mở ra không có ô nhập nào khớp với
-             * bộ thẻ thử đang có trong tay:
+             * Từ khi có App\Enums\MomoFlow, mỗi lượt thanh toán mang
+             * theo cách khách đã chọn. Giá trị ở đây chỉ dùng khi không
+             * ai chọn (gọi từ mã nguồn khác, hoặc link cũ).
              *
-             *   payWithCC     thẻ quốc tế   5200 0000 0000 1096
-             *   payWithATM    thẻ nội địa   9704 0000 0000 0018
-             *   captureWallet ví MoMo
+             * HAI GIÁ TRỊ ĐƯỢC HỖ TRỢ:
              *
-             * ĐO ĐƯỢC (10/09/2026): payWithATM trên môi trường thử đứng
-             * mãi ở màn hình "Đang tải dữ liệu giao dịch" — MoMo từ chối
-             * dịch vụ nội địa. payWithCC cùng bộ khoá đó thì hiện form
-             * thẻ bình thường. Vì vậy mặc định là payWithCC.
+             *   captureWallet  mã QR, quét bằng ứng dụng MoMo
+             *   payWithCC      thẻ quốc tế (5200 0000 0000 1096)
+             *
+             * `payWithATM` (thẻ nội địa 9704...) KHÔNG có trong MomoFlow:
+             * đo được 10/09/2026 là môi trường thử của MoMo từ chối dịch
+             * vụ này — trang mở ra đứng mãi ở "Đang tải dữ liệu giao
+             * dịch". Đặt giá trị đó vào đây thì MomoFlow::macDinh() lùi
+             * về payWithCC VÀ ghi log cảnh báo, chứ không im lặng.
              */
             'request_type' => env('MOMO_REQUEST_TYPE', 'payWithCC'),
 

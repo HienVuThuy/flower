@@ -378,6 +378,39 @@
 
                     <x-form-error name="payment_method" />
 
+                    {{--
+                        CÁCH TRẢ TIỀN TRÊN TRANG MOMO — chỉ hiện khi chọn MoMo.
+
+                        MoMo có nhiều dịch vụ khác nhau và mỗi cái mở ra
+                        một trang khác hẳn: mã QR để quét bằng ứng dụng,
+                        hay ô nhập thẻ quốc tế. Chọn nhầm thì KHÔNG có lỗi
+                        nào báo — MoMo vẫn nhận yêu cầu, chỉ là trang mở
+                        ra không có ô nhập nào khớp với thứ khách đang
+                        cầm. Vì thế phải để khách tự chọn.
+
+                        Ẩn/hiện bằng CSS thuần (:has), không bằng
+                        JavaScript — cùng cách đã dùng cho khối hoá đơn.
+                        Máy chủ mới là nơi quyết định ô nào bắt buộc.
+                    --}}
+                    @if(in_array('momo', \App\Enums\PaymentMethod::values(), true))
+                        <div class="momo-flow">
+                            <span class="form-label d-block">Trả bằng cách nào</span>
+
+                            @foreach(\App\Enums\MomoFlow::cases() as $cach)
+                                <label class="payment-option payment-option--sub">
+                                    <input type="radio" name="momo_flow" value="{{ $cach->value }}"
+                                           @checked(old('momo_flow', $values['momo_flow'] ?? \App\Enums\MomoFlow::macDinh()->value) === $cach->value)>
+                                    <span class="payment-option__body">
+                                        <span class="payment-option__name">{{ $cach->label() }}</span>
+                                        <span class="payment-option__hint">{{ $cach->hint() }}</span>
+                                    </span>
+                                </label>
+                            @endforeach
+
+                            <x-form-error name="momo_flow" />
+                        </div>
+                    @endif
+
 
                         </div>
                     </section>

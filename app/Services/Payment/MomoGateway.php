@@ -2,6 +2,7 @@
 
 namespace App\Services\Payment;
 
+use App\Enums\MomoFlow;
 use App\Enums\PaymentTransactionStatus;
 use App\Models\Order;
 use App\Models\PaymentTransaction;
@@ -49,11 +50,13 @@ class MomoGateway implements PaymentGateway
      *
      * @throws PaymentException
      */
-    public function createPayment(Order $order): string
+    public function createPayment(Order $order, ?MomoFlow $flow = null): string
     {
         if (! $this->configured()) {
             throw new PaymentException('Cổng MoMo chưa được cấu hình.');
         }
+
+        $flow ??= MomoFlow::macDinh();
 
         $transaction = PaymentTransaction::create([
             'order_id' => $order->id,
@@ -62,7 +65,7 @@ class MomoGateway implements PaymentGateway
             'status' => PaymentTransactionStatus::Pending,
         ]);
 
-        $data = $this->buildRequest($order, $transaction);
+        $data = $this->buildRequest($order, $transaction, $flow);
 
         $transaction->update([
             'gateway_order_id' => $data['orderId'],
@@ -100,7 +103,7 @@ class MomoGateway implements PaymentGateway
     /**
      * @return array<string, mixed>
      */
-    private function buildRequest(Order $order, PaymentTransaction $transaction): array
+    private function buildRequest(Order $order, PaymentTransaction $transaction, MomoFlow $flow): array
     {
         $partnerCode = (string) config('payment.gateways.momo.partner_code');
         $accessKey = (string) config('payment.gateways.momo.access_key');
@@ -132,7 +135,7 @@ class MomoGateway implements PaymentGateway
 
         $orderInfo = 'Thanh toan don hang ' . $order->order_number;
         $requestId = $orderId . '-' . time();
-        $requestType = (string) config('payment.gateways.momo.request_type', 'payWithATM');
+        $requestType = $flow->requestType();
         $redirectUrl = $this->redirectUrl();
         $ipnUrl = $this->ipnUrl();
 

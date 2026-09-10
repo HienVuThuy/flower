@@ -48,6 +48,19 @@ interface PaymentGateway
      */
     public function createPayment(Order $order): string;
 
+    /*
+     * LỚP CÀI ĐẶT ĐƯỢC PHÉP NHẬN THÊM THAM SỐ TUỲ CHỌN.
+     *
+     * MomoGateway::createPayment() có thêm `?MomoFlow $flow` để chọn
+     * trang MoMo mở ra (mã QR hay ô nhập thẻ). PHP cho phép điều đó vì
+     * tham số có giá trị mặc định — hợp đồng vẫn gọi được như cũ.
+     *
+     * KHÔNG đưa tham số ấy vào hợp đồng chung: "quét QR hay nhập thẻ" là
+     * chuyện riêng của MoMo. Cổng thứ hai (VNPay, ZaloPay) sẽ có những
+     * lựa chọn khác hẳn, và một hợp đồng mang hình dạng của MoMo thì
+     * cổng sau phải bẻ mình cho vừa.
+     */
+
     /**
      * Chữ ký của gói tin cổng gửi về có đúng không.
      *

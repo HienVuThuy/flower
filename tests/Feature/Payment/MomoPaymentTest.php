@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Payment;
 
+use App\Enums\MomoFlow;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
@@ -54,7 +55,17 @@ class MomoPaymentTest extends TestCase
             'payment.gateways.momo.access_key' => self::ACCESS_KEY,
             'payment.gateways.momo.secret_key' => self::SECRET,
             'payment.gateways.momo.endpoint' => 'https://test-payment.momo.vn/v2/gateway/api/create',
-            'payment.gateways.momo.request_type' => 'payWithATM',
+            /*
+             * PHẢI LÀ MỘT DỊCH VỤ CÓ TRONG MomoFlow.
+             *
+             * Trước đây đặt 'payWithATM'. Từ khi khách chọn được cách
+             * trả tiền, `requestType` do MomoFlow quyết định, và
+             * 'payWithATM' không ứng với case nào nên rơi về thẻ quốc
+             * tế — bài kiểm thử đỏ vì so con số cấu hình với con số thật
+             * sự gửi đi. Đúng ra nó phải đỏ: cấu hình đó không dùng được
+             * nữa, và nay macDinh() còn ghi log cảnh báo.
+             */
+            'payment.gateways.momo.request_type' => 'payWithCC',
             'payment.gateways.momo.verify_ssl' => false,
             'payment.gateways.momo.redirect_url' => null,
             'payment.gateways.momo.ipn_url' => null,
@@ -246,6 +257,149 @@ class MomoPaymentTest extends TestCase
             PaymentTransactionStatus::Failed,
             PaymentTransaction::where('gateway', 'momo')->firstOrFail()->status,
         );
+    }
+
+    /* ================= KHÁCH CHỌN CÁCH TRẢ TIỀN ================= */
+
+    #[Test]
+    public function chon_quet_QR_thi_mo_dung_dich_vu_vi_MoMo(): void
+    {
+        /*
+         * LỖI ĐÃ SỬA, đo được trên MoMo thật: chọn "quét mã QR" mà trang
+         * mở ra là ô nhập thẻ.
+         *
+         * Khối chuyển hướng ở cuối CheckoutController::place() đọc
+         * `$checkout['momo_flow']` — một biến KHÔNG TỒN TẠI trong hàm
+         * đó. Toán tử `??` nuốt luôn cảnh báo "undefined variable", nên
+         * lựa chọn của khách lặng lẽ rơi về mức mặc định.
+         *
+         * Bài này đi QUA CẢ LUỒNG (bước 1 → đặt hàng → chuyển sang MoMo)
+         * chứ không gọi thẳng gateway: lỗi nằm ở chỗ chuyền tay giữa
+         * biểu mẫu, phiên và chuyển hướng, không nằm trong phép tính.
+         */
+        $this->momoNhan();
+
+        $this->actingAs(User::factory()->create());
+        $this->post('/gio-hang', ['product_id' => $this->hang()->id, 'quantity' => 1]);
+
+        $this->post('/thanh-toan', [
+            'recipient_name' => 'Khách thử',
+            'recipient_phone' => '0912345678',
+            'shipping_address' => '1 Đường Thử',
+            'shipping_province' => 'Thành phố Hà Nội',
+            'payment_method' => 'momo',
+            'momo_flow' => 'vi',
+        ]);
+
+        $order = tap($this->post('/thanh-toan/dat-hang'), function ($res) {
+            $res->assertRedirect();
+        }) && Order::latest('id')->firstOrFail();
+
+        $order = Order::latest('id')->firstOrFail();
+
+        // Đơn phải được đẩy sang MoMo KÈM lựa chọn, không phải trần trụi.
+        $this->get('/thanh-toan/momo/' . $order->order_number . '?cach=vi');
+
+        Http::assertSent(fn ($r) => $r->data()['requestType'] === 'captureWallet');
+    }
+
+    #[Test]
+    public function duong_chuyen_huong_sau_khi_dat_hang_mang_theo_lua_chon(): void
+    {
+        /*
+         * Đo NGAY TẠI ĐƯỜNG CHUYỂN HƯỚNG. Bài trên tự gắn `?cach=vi` nên
+         * nó vẫn xanh kể cả khi place() đánh rơi lựa chọn — đã kiểm bằng
+         * cách bỏ. Chỉ phép đo này bắt được.
+         */
+        $this->momoNhan();
+
+        $this->actingAs(User::factory()->create());
+        $this->post('/gio-hang', ['product_id' => $this->hang()->id, 'quantity' => 1]);
+
+        $this->post('/thanh-toan', [
+            'recipient_name' => 'Khách thử',
+            'recipient_phone' => '0912345678',
+            'shipping_address' => '1 Đường Thử',
+            'shipping_province' => 'Thành phố Hà Nội',
+            'payment_method' => 'momo',
+            'momo_flow' => 'vi',
+        ]);
+
+        $order = null;
+
+        $res = $this->post('/thanh-toan/dat-hang');
+        $order = Order::latest('id')->firstOrFail();
+
+        $res->assertRedirect(route('shop.payment.momo.start', [$order, 'cach' => 'vi']));
+    }
+
+    #[Test]
+    public function chon_the_quoc_te_thi_mo_dung_dich_vu_the(): void
+    {
+        // Vế còn lại: đừng đẩy mọi người sang màn hình quét mã.
+        $this->momoNhan();
+
+        $this->actingAs(User::factory()->create());
+        $this->post('/gio-hang', ['product_id' => $this->hang()->id, 'quantity' => 1]);
+
+        $this->post('/thanh-toan', [
+            'recipient_name' => 'Khách thử',
+            'recipient_phone' => '0912345678',
+            'shipping_address' => '1 Đường Thử',
+            'shipping_province' => 'Thành phố Hà Nội',
+            'payment_method' => 'momo',
+            'momo_flow' => 'the',
+        ]);
+
+        $res = $this->post('/thanh-toan/dat-hang');
+        $order = Order::latest('id')->firstOrFail();
+
+        $res->assertRedirect(route('shop.payment.momo.start', [$order, 'cach' => 'the']));
+    }
+
+    #[Test]
+    public function khong_gui_momo_flow_thi_dung_muc_mac_dinh_chu_khong_chan_don(): void
+    {
+        /*
+         * ĐÃ THỬ BẮT BUỘC Ô NÀY, và 51 bài kiểm thử đỏ ngay: mọi đường
+         * đặt đơn MoMo không gửi kèm nó đều bị chặn ở cửa xác thực.
+         * Đây là một SỞ THÍCH, thiếu nó vẫn làm đúng được.
+         */
+        $this->momoNhan();
+        $order = $this->datHangMomo();
+
+        $this->assertSame(PaymentMethod::Momo, $order->payment_method);
+
+        $this->get('/thanh-toan/momo/' . $order->order_number);
+
+        Http::assertSent(fn ($r) => $r->data()['requestType'] === MomoFlow::macDinh()->requestType());
+    }
+
+    #[Test]
+    public function tham_so_cach_la_tren_URL_thi_lui_ve_mac_dinh_chu_khong_404(): void
+    {
+        // Người ta chép link cho nhau; một tham số hỏng không đáng để cả
+        // lượt thanh toán biến mất.
+        $this->momoNhan();
+        $order = $this->datHangMomo();
+
+        $this->get('/thanh-toan/momo/' . $order->order_number . '?cach=khong-co-that')
+            ->assertRedirect('https://test-payment.momo.vn/v2/gateway/pay?t=abc');
+
+        Http::assertSent(fn ($r) => $r->data()['requestType'] === MomoFlow::macDinh()->requestType());
+    }
+
+    #[Test]
+    public function buoc_thanh_toan_moi_khach_chon_cach_tra_tien(): void
+    {
+        $this->actingAs(User::factory()->create());
+        $this->post('/gio-hang', ['product_id' => $this->hang()->id, 'quantity' => 1]);
+
+        $this->get('/thanh-toan')
+            ->assertOk()
+            ->assertSee('Quét mã QR bằng ứng dụng MoMo')
+            ->assertSee('Thẻ quốc tế (Visa, Mastercard, JCB)')
+            ->assertSee('name="momo_flow"', escape: false);
     }
 
     /* ================= CHỮ KÝ LÀ RANH GIỚI TIN CẬY ================= */
@@ -495,9 +649,15 @@ class MomoPaymentTest extends TestCase
         $this->momoNhan();
         $order = $this->datHangMomo();
 
+        /*
+         * MỘT NÚT CHO MỖI CÁCH TRẢ TIỀN, không còn một nút chung.
+         * Ai đang ngồi trước máy tính không nên bị đẩy sang màn hình quét
+         * mã QR, và ngược lại.
+         */
         $this->get('/don-hang/' . $order->order_number)
             ->assertOk()
-            ->assertSee('Thanh toán lại với MoMo');
+            ->assertSee('Quét mã QR bằng ứng dụng MoMo')
+            ->assertSee('Thẻ quốc tế (Visa, Mastercard, JCB)');
     }
 
     #[Test]
@@ -512,7 +672,7 @@ class MomoPaymentTest extends TestCase
 
         $this->get('/don-hang/' . $order->order_number)
             ->assertOk()
-            ->assertDontSee('Thanh toán lại với MoMo');
+            ->assertDontSee('Quét mã QR bằng ứng dụng MoMo');
     }
 
     /* ================= PHÂN QUYỀN ================= */
