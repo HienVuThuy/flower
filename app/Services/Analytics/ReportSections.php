@@ -93,6 +93,12 @@ class ReportSections
                 'group' => 'Sản phẩm',
                 'note' => 'Chỉ đơn đã giao. Gom theo mã sản phẩm, không theo tên.',
             ],
+
+            'ton-kho' => [
+                'label' => 'Tồn kho đầy đủ',
+                'group' => 'Sản phẩm',
+                'note' => 'Mọi mặt hàng có theo dõi tồn, kèm tốc độ bán và số ngày còn bán được. Giá trị tính theo GIÁ BÁN, không phải giá vốn.',
+            ],
         ];
     }
 
@@ -123,6 +129,7 @@ class ReportSections
             'tu-khoa' => $this->tuKhoa($nhan),
             'danh-muc' => $this->danhMuc($nhan),
             'ban-chay' => $this->banChay($nhan),
+            'ton-kho' => $this->tonKho($nhan),
 
             // Mã lạ không bao giờ tới được đây (controller đã lọc), nhưng
             // trả về bảng rỗng vẫn hơn là ném lỗi giữa lúc ghi tệp.
@@ -266,6 +273,33 @@ class ReportSections
             'columns' => ['Sản phẩm', 'Số lượng', 'Doanh thu'],
             'rows' => $this->analytics->bestSellers(100)
                 ->map(fn ($r) => [$r['name'], $r['quantity'], $r['revenue']])
+                ->all(),
+        ];
+    }
+
+    /**
+     * Tồn kho — dùng chung một nguồn với trang Tồn kho.
+     *
+     * `cover` null nghĩa là CẢ KỲ KHÔNG BÁN ĐƯỢC CÁI NÀO (mẫu số bằng
+     * 0). Ghi chữ chứ không ghi số: một con số ở đó là bịa, còn ô trống
+     * thì người đọc tệp không biết vì sao trống.
+     */
+    private function tonKho(string $nhan): array
+    {
+        return [
+            'label' => $nhan,
+            'columns' => ['Mặt hàng', 'Quy cách', 'Tồn', 'Đã bán trong kỳ', 'Bán/ngày', 'Còn bán được (ngày)', 'Giá bán', 'Giá trị theo giá bán'],
+            'rows' => app(InventoryReport::class)->rows()
+                ->map(fn (array $r) => [
+                    $r['name'],
+                    $r['variant'] ?? '',
+                    $r['stock'],
+                    $r['sold'],
+                    round($r['per_day'], 2),
+                    $r['cover'] === null ? 'chưa bán được cái nào' : round($r['cover'], 1),
+                    $r['price'],
+                    $r['value'],
+                ])
                 ->all(),
         ];
     }

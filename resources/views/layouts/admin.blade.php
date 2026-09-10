@@ -71,6 +71,19 @@
                 <x-site.icon name="flower1" />
                 <span>Sản phẩm</span>
             </a>
+
+            {{--
+                TỒN KHO — cạnh Sản phẩm, nhưng là mục riêng.
+
+                Trang Sản phẩm trả lời "cửa hàng bán những gì"; trang này
+                trả lời "phải nhập gì, phải bỏ gì, tiền đang nằm ở đâu".
+                Nhồi cả hai vào một bảng thì cột nào cũng có mà không câu
+                nào trả lời được.
+            --}}
+            <a data-admin-link href="{{ route('admin.inventory.index') }}" class="admin-nav-link {{ request()->routeIs('admin.inventory.*') ? 'is-active' : '' }}">
+                <x-site.icon name="box-arrow-right" />
+                <span>Tồn kho</span>
+            </a>
         </nav>
 
         <div class="admin-nav-heading">Bán hàng</div>

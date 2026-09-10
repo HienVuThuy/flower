@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\InventoryController;
 use App\Http\Controllers\Admin\BlogPostController;
 use App\Http\Controllers\Admin\CommunityModerationController;
 use App\Http\Controllers\Admin\PricingAdvisorController;
@@ -949,6 +950,17 @@ Route::prefix('admin')
          * trọng ở đây (không có route 'phan-tich/{...}'), nhưng giữ hai
          * đường cạnh nhau để lần sau thêm route con còn nhìn thấy.
          */
+        /*
+         * TỒN KHO — tách khỏi trang Sản phẩm.
+         *
+         * Trang Sản phẩm trả lời "cửa hàng bán những gì"; trang này trả
+         * lời "phải nhập gì, phải bỏ gì, tiền đang nằm ở đâu". Chỉ đọc,
+         * không có route ghi nào: sửa tồn kho vẫn ở trang sản phẩm, nơi
+         * có đủ ngữ cảnh để biết mình đang sửa cái gì.
+         */
+        Route::get('ton-kho', [InventoryController::class, 'index'])
+            ->name('inventory.index');
+
         Route::get('phan-tich/xuat', [AnalyticsController::class, 'exportForm'])
             ->name('analytics.export-form');
 

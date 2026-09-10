@@ -6392,3 +6392,106 @@ cùng tên miền. Ctrl+bấm mở tab mới vẫn phải chạy như thường.
 Thanh cuộn của thanh bên bị **ẩn, không tắt**: nó nằm ngay giữa các mục
 điều hướng và khung nội dung. Tắt hẳn `overflow` thì màn hình thấp hoặc
 menu dài thêm là mất luôn mấy mục cuối.
+
+---
+
+## QĐ-208. Nhãn trạng thái không bao giờ xuống dòng
+
+`.status-pill` là một viên thuốc bo tròn. Chữ ngắt làm hai dòng bên trong
+thì hình bo tròn phình ra thành một khối méo, và cả bảng bị đội cao lên
+theo ô cao nhất.
+
+**Đo được** ở bảng Mã giảm giá và Đánh giá: `"Đang diễn ra"` trong ô rộng
+98px thành viên thuốc **cao 43px** — một dòng chỉ cần 24px.
+
+`white-space: nowrap`. Chữ dài hơn ô thì để nó tràn ra ngoài: ô trạng
+thái luôn là ô đáng bị co nhất, và bảng đã có `overflow-x: auto`. Đo lại
+ở 1440px và 1280px: 24px, không xuống dòng, trang không tràn ngang.
+
+---
+
+## QĐ-209. Tồn kho: `stock_quantity` một mình không trả lời được câu hỏi nào
+
+Trang Sản phẩm hiện cột "còn bao nhiêu", nhưng **"còn 5" là nhiều hay
+ít** phụ thuộc hoàn toàn vào tốc độ bán:
+
+```
+5 chậu sen đá, bán 3 cái/ngày   →  còn ~1,7 ngày   → SẮP HẾT
+5 bình gốm,    bán 1 cái/tháng  →  còn ~150 ngày   → THỪA
+```
+
+Hai dòng đó đứng cạnh nhau trong bảng sản phẩm và **trông y hệt nhau**.
+
+Trang Tồn kho trả lời ba câu hỏi khác nhau, và tách hẳn ba mục vì ba
+hành động khác nhau:
+
+| Mục | Nghĩa | Việc phải làm |
+|---|---|---|
+| Đang mất đơn | hết kho **mà vẫn bày bán** | nhập gấp |
+| Sắp hết | còn dưới N **ngày** bán | đặt hàng |
+| Tiền nằm im | còn kho, cả kỳ **không bán được cái nào** | cân nhắc xả |
+
+**Xếp theo SỐ NGÀY, không theo số lượng.** Đây là điểm dễ làm sai nhất —
+xếp theo `stock_quantity` tăng dần thì món cần gấp nhất có thể nằm tận
+cuối bảng.
+
+**Hết hàng mà đã ẩn thì không tính là "đang mất đơn"** — khách không bấm
+vào được. Đưa vào là làm loãng chính danh sách "phải xử lý hôm nay".
+
+**Đơn vị kho là (sản phẩm, quy cách), không phải sản phẩm.** "Lưỡi hổ
+mini" có hai chậu, mỗi chậu một kho riêng. Gom về một dòng thì báo cáo
+nói "còn 12" trong khi chậu sứ đã hết sạch — đúng thứ báo cáo này sinh ra
+để phát hiện.
+
+**`cover` là NULL khi cả kỳ không bán được cái nào** (mẫu số bằng 0).
+Trả về một số rất lớn thì hàng chết vốn lại đứng đầu bảng "còn nhiều
+nhất", đúng chỗ nó không nên đứng. "Vô hạn ngày" cũng là một câu vô
+nghĩa.
+
+---
+
+## QĐ-210. ⚠️ KHÔNG CÓ GIÁ VỐN — nên không có báo cáo lợi nhuận
+
+Bảng `products` chỉ có `base_price` (**giá bán**). Không có cột giá vốn,
+và không có bảng nhập hàng.
+
+Hệ quả, nói thẳng ra ở cả mã nguồn lẫn giao diện:
+
+- "Giá trị tồn kho" là theo **giá bán**, không phải vốn bỏ ra.
+- **Không có** báo cáo lãi/lỗ, biên lợi nhuận, hay vòng quay vốn.
+
+Ước lượng giá vốn bằng một tỉ lệ phần trăm nghĩ ra là **bịa một con số kế
+toán**, và nó sẽ được dùng để ra quyết định giá. Thà thiếu một báo cáo
+còn hơn có một báo cáo sai mà không ai biết là sai.
+
+Muốn có thì phải thêm cột giá vốn và nhập số thật — đó là một quyết định
+nghiệp vụ của cửa hàng, không phải một phép tính phần mềm tự làm được.
+
+---
+
+## QĐ-211. Hai bài kiểm thử sai, và cả hai đều do đo thiếu chứ không đo nhầm
+
+**1. Bảo vệ mass-assignment bắt được bài kiểm thử của tôi.** Bài dựng đơn
+bằng `Order::create([... 'status' => 'completed'])`. Nhưng `status` **cố ý
+không nằm trong `$fillable`** — trạng thái đơn chỉ được đổi qua
+`OrderService::changeStatus()`, nơi có luật chuyển trạng thái, hoàn kho và
+gửi thư.
+
+Eloquent bỏ qua trong im lặng, đơn ở lại `pending`, và báo cáo đếm được 0
+sản phẩm đã bán. **Bảo vệ đang làm đúng việc của nó; bài kiểm thử mới là
+thứ sai.** Sửa bằng `forceFill`.
+
+**2. Bài "xếp theo số ngày" không đo phép xếp.** Nó có hai món, và món
+thứ hai bị *lọc* mất vì ngoài ngưỡng — chỉ còn một dòng, nên xếp kiểu nào
+cũng ra cùng kết quả. Đổi `sortBy('cover')` thành `sortBy('stock')` mà
+bài vẫn xanh.
+
+Nay ba món, số chọn có chủ ý để hai cách xếp cho hai thứ tự khác nhau:
+
+```
+Gấp      tồn 20, 20/ngày  →  còn  1 ngày
+Đủ dùng  tồn  2, 0.2/ngày →  còn 10 ngày
+Thừa     tồn  4, .07/ngày →  còn 60 ngày (ngoài ngưỡng)
+```
+
+Xếp theo số lượng thì "Đủ dùng" (tồn 2) lên đầu — sai. Mutation đỏ ngay.
