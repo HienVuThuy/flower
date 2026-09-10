@@ -7,30 +7,85 @@
 <section class="section-sm">
     <div class="container-shop">
 
-        <div class="order-success">
-            <x-site.icon name="check-circle" class="order-success__icon" />
-            <h1 class="text-h2 mb-2">Đã nhận đơn hàng của bạn</h1>
-            <p class="mb-0">
-                Mã đơn <strong>{{ $order->order_number }}</strong>.
-                Cửa hàng sẽ liên hệ số {{ $order->recipient_phone }} để xác nhận.
-            </p>
+        @php
+            /*
+             * TIÊU ĐỀ PHẢI NÓI ĐÚNG TÌNH TRẠNG THẬT CỦA ĐƠN.
+             *
+             * LỖI ĐÃ SỬA: khối này trước đây luôn là một dấu tích xanh kèm câu
+             * "Đã nhận đơn hàng của bạn", cho MỌI đơn ở MỌI trạng thái.
+             *
+             * Đo được: khách bấm "Quay lại" ở trang MoMo để huỷ giao dịch, quay
+             * về đây và thấy dấu tích xanh báo mọi thứ ổn. Dòng đỏ giải thích có
+             * hiện, nhưng nó TỰ TẮT sau vài giây (xem resources/js/flash.js), nên
+             * thứ còn lại trên màn hình là một lời báo thành công cho một lần
+             * thanh toán vừa thất bại.
+             *
+             * Đơn đã huỷ cũng vậy: mở lại đơn của tháng trước vẫn thấy "Đã nhận
+             * đơn hàng của bạn".
+             */
+            $daHuy = $order->status === \App\Enums\OrderStatus::Cancelled;
+
+            $choTra = ! $daHuy
+                && $order->payment_method->isOnline()
+                && $order->payment_status === \App\Enums\PaymentStatus::Unpaid
+                && ! $order->status->isFinal();
+        @endphp
+
+        <div class="order-success {{ $choTra ? 'order-success--cho-tra' : '' }} {{ $daHuy ? 'order-success--da-huy' : '' }}">
+
+            @if($daHuy)
+                <x-site.icon name="x-circle" class="order-success__icon" />
+                <h1 class="text-h2 mb-2">Đơn hàng đã huỷ</h1>
+                <p class="mb-0">
+                    Mã đơn <strong>{{ $order->order_number }}</strong>.
+                    Cửa hàng sẽ không giao đơn này nữa.
+                </p>
+
+            @elseif($choTra)
+                <x-site.icon name="clock-history" class="order-success__icon" />
+                <h1 class="text-h2 mb-2">Đơn hàng chưa thanh toán</h1>
+                <p class="mb-0">
+                    Mã đơn <strong>{{ $order->order_number }}</strong> đã được ghi nhận,
+                    nhưng lần thanh toán {{ $order->payment_method->label() }} vừa rồi chưa hoàn tất.
+                </p>
+
+                {{--
+                    NÚT ĐẶT NGAY ĐÂY, không để tận cuối trang.
+
+                    Đây là chỗ mắt khách rơi vào đầu tiên khi quay lại từ cổng
+                    thanh toán. Bắt họ cuộn xuống tìm nút là bắt họ đoán rằng có
+                    một nút để tìm.
+                --}}
+                <p class="order-success__note mb-0">
+                    Đơn hàng vẫn giữ nguyên — trả lại không tạo đơn mới.
+                </p>
+
+                <a href="{{ route('shop.orders.momo.pay', $order) }}" class="btn btn-primary-brand mt-3">
+                    Thanh toán lại với MoMo
+                </a>
+
+            @else
+                <x-site.icon name="check-circle" class="order-success__icon" />
+                <h1 class="text-h2 mb-2">Đã nhận đơn hàng của bạn</h1>
+                <p class="mb-0">
+                    Mã đơn <strong>{{ $order->order_number }}</strong>.
+                    Cửa hàng sẽ liên hệ số {{ $order->recipient_phone }} để xác nhận.
+                </p>
+            @endif
 
             {{--
                 NÓI ĐÚNG THỜI ĐIỂM THƯ SẼ TỚI, không nói "đã gửi".
 
-                Bản trước báo "Xác nhận đơn đã được gửi tới ..." ngay tại
-                đây, trong khi đơn còn đang ở trạng thái "Chờ xác nhận" —
-                chưa ai ở cửa hàng nhìn thấy nó. Nay thư chỉ đi khi admin
-                chuyển đơn sang "Đã xác nhận", nên câu chữ phải đổi theo.
+                Thư chỉ đi khi admin chuyển đơn sang "Đã xác nhận", nên câu chữ
+                phải nói đúng vậy — nếu không, khách mở hộp thư tìm một lá thư
+                chưa được gửi rồi kết luận hệ thống hỏng.
 
-                Nếu không đổi, khách mở hộp thư tìm một lá thư chưa được
-                gửi, rồi kết luận là hệ thống hỏng hoặc đơn không vào.
+                Vẫn giữ deliversForReal(): dự án có thể đang chạy MAIL_MAILER=log,
+                khi đó thư chỉ ghi vào tệp và hứa hẹn gì cũng là nói dối.
 
-                Vẫn giữ phép kiểm deliversForReal(): dự án có thể đang
-                chạy MAIL_MAILER=log, khi đó thư chỉ ghi vào tệp log và
-                hứa hẹn gì cũng là nói dối.
+                Đơn đã huỷ thì không hứa thư nào cả.
             --}}
-            @if($order->recipient_email && app(\App\Services\Order\OrderMailer::class)->deliversForReal())
+            @if(! $daHuy && $order->recipient_email && app(\App\Services\Order\OrderMailer::class)->deliversForReal())
                 <p class="order-success__note mb-0">
                     Khi cửa hàng xác nhận đơn, thư báo sẽ được gửi tới
                     {{ $order->recipient_email }}.
@@ -40,7 +95,6 @@
             {{--
                 Khách chưa đăng nhập không có trang "Đơn hàng của tôi". Đóng
                 trình duyệt là hết phiên, và họ mất luôn đường vào đơn này.
-                Chỉ cho họ cách quay lại trước khi điều đó xảy ra.
             --}}
             @guest
                 <p class="order-success__note mb-0">
@@ -198,8 +252,6 @@
                         thiếu một bước nào đó.
                     --}}
                     <x-order.invoice-card :invoice="$order->invoice" />
-
-                    <x-order.pay-again :order="$order" />
 
                     {{--
                         HUỶ ĐƠN.

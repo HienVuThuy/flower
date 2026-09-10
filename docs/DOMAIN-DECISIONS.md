@@ -5870,3 +5870,74 @@ ngay khi COD được đặt và ngay khi MoMo báo thành công. Dự án này 
 là cam kết giao hàng, và cam kết trước khi kiểm hàng còn/hết, địa chỉ ship
 tới được không, là cam kết một điều chưa ai kiểm. Đây là chức năng đang
 chạy, và không sửa nó vì một tài liệu hướng dẫn.
+
+---
+
+## QĐ-190. `requestType` phải khớp với loại thẻ đem thử
+
+Ba giá trị, ba trang thanh toán khác hẳn nhau:
+
+| `requestType` | Trang MoMo mở ra | Thẻ thử |
+|---|---|---|
+| `payWithCC` | thẻ **quốc tế** | 5200 0000 0000 1096 · 05/26 · CVC 111 |
+| `payWithATM` | thẻ **nội địa** | 9704 0000 0000 0018 (và ba thẻ hỏng) |
+| `captureWallet` | ví MoMo | — |
+
+Chọn nhầm thì **không có lỗi nào báo**: MoMo vẫn trả `resultCode: 0` và
+vẫn cấp `payUrl`, chỉ là trang mở ra không có ô nhập nào khớp với bộ thẻ
+đang cầm.
+
+**Đo được ngày 10/09/2026:** `payWithATM` với bộ khoá thử đứng mãi ở màn
+hình *"Đang tải dữ liệu giao dịch"* — MoMo từ chối dịch vụ nội địa.
+Cùng bộ khoá đó, `payWithCC` hiện form thẻ bình thường:
+
+```
+Nhập thông tin thẻ để thanh toán
+Vui lòng dùng thẻ quốc tế được phát hành bởi các Ngân hàng tại Việt Nam
+Số thẻ · Ngày hết hạn · Tên chủ thẻ · CVC · Số điện thoại
+```
+
+Vì thế mặc định đổi sang `payWithCC`. Giá trị vẫn nằm ở `.env` để đổi
+lại khi MoMo sửa xong dịch vụ nội địa — **không đụng tới mã nguồn**.
+
+---
+
+## QĐ-191. Tiêu đề trang đơn phải nói đúng tình trạng, không phải luôn báo thành công
+
+Khối tiêu đề trang `/don-hang/{ma}` trước đây là một dấu tích xanh kèm
+câu *"Đã nhận đơn hàng của bạn"* — **cho mọi đơn, ở mọi trạng thái**.
+
+**Đo được trên MoMo thật:** khách bấm "Quay lại" ở trang MoMo để huỷ
+giao dịch, quay về và thấy:
+
+```
+[✓ xanh]  Đã nhận đơn hàng của bạn
+          Chờ xác nhận · Chưa thanh toán
+```
+
+Dòng đỏ giải thích *có* hiện — nhưng nó **tự tắt sau vài giây**
+(`resources/js/flash.js`), nên thứ còn lại trên màn hình là một lời báo
+thành công cho một lần thanh toán vừa thất bại. Đơn đã huỷ của tháng
+trước cũng chào bằng đúng dấu tích xanh đó.
+
+Nay tiêu đề có ba trạng thái:
+
+| Điều kiện | Tiêu đề |
+|---|---|
+| `status === Cancelled` | Đơn hàng đã huỷ |
+| cổng **online** + chưa trả + đơn chưa kết thúc | Đơn hàng chưa thanh toán |
+| còn lại | Đã nhận đơn hàng của bạn |
+
+**Phép kiểm dùng `payment_method->isOnline()`, không chỉ nhìn
+`payment_status`.** Đơn COD chưa trả tiền là chuyện *bình thường* — tiền
+thu khi giao hàng. Báo "chưa thanh toán" ở đó là doạ khách vì một việc
+chưa đến lúc phải làm.
+
+**Nút "Thanh toán lại" chuyển lên trong tiêu đề**, không để tận cuối
+trang: đây là chỗ mắt khách rơi vào đầu tiên khi quay về từ cổng thanh
+toán. Bắt họ cuộn xuống tìm nút là bắt họ đoán rằng có một nút để tìm.
+Component `x-order.pay-again` vì thế bị gỡ — một nơi, không phải hai.
+
+Bài học chung: **một thông báo tự tắt không thay được trạng thái hiển
+thị thường trực trên trang.** Flash message là để báo *việc vừa xảy ra*;
+tình trạng *hiện tại của đơn* phải nằm trong chính trang đó.

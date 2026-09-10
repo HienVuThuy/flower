@@ -51,12 +51,21 @@ return [
             'store_id' => env('MOMO_STORE_ID', 'AngevilStore'),
 
             /*
-             * payWithATM: thẻ nội địa 9704... mà MoMo cấp để thử.
-             * captureWallet là ví MoMo, payWithCC là thẻ quốc tế — chọn
-             * nhầm thì trang MoMo mở ra không có ô nhập thẻ nào khớp với
-             * bộ thẻ thử.
+             * payWithCC — thẻ quốc tế (Visa/Mastercard).
+             *
+             * Chọn nhầm là trang MoMo mở ra không có ô nhập nào khớp với
+             * bộ thẻ thử đang có trong tay:
+             *
+             *   payWithCC     thẻ quốc tế   5200 0000 0000 1096
+             *   payWithATM    thẻ nội địa   9704 0000 0000 0018
+             *   captureWallet ví MoMo
+             *
+             * ĐO ĐƯỢC (10/09/2026): payWithATM trên môi trường thử đứng
+             * mãi ở màn hình "Đang tải dữ liệu giao dịch" — MoMo từ chối
+             * dịch vụ nội địa. payWithCC cùng bộ khoá đó thì hiện form
+             * thẻ bình thường. Vì vậy mặc định là payWithCC.
              */
-            'request_type' => env('MOMO_REQUEST_TYPE', 'payWithATM'),
+            'request_type' => env('MOMO_REQUEST_TYPE', 'payWithCC'),
 
             /*
              * MOMO_VERIFY_SSL=false chỉ dành cho máy học ở nhà, nơi

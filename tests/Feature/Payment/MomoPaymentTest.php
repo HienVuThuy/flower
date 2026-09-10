@@ -201,7 +201,7 @@ class MomoPaymentTest extends TestCase
                 . '&requestType=' . $d['requestType'];
 
             return $d['partnerCode'] === self::PARTNER
-                && $d['requestType'] === 'payWithATM'
+                && $d['requestType'] === config('payment.gateways.momo.request_type')
                 // MoMo chỉ nhận số nguyên VND: "500000", không phải "500000.00".
                 && $d['amount'] === '500000'
                 && $d['signature'] === hash_hmac('sha256', $rawHash, self::SECRET);
@@ -585,6 +585,117 @@ class MomoPaymentTest extends TestCase
             ->assertSessionHas('error');
 
         $this->assertSame(0, PaymentTransaction::where('gateway', 'momo')->count());
+    }
+
+    /* ================= TIÊU ĐỀ TRANG ĐƠN NÓI ĐÚNG SỰ THẬT ================= */
+
+    #[Test]
+    public function huy_giao_dich_o_momo_thi_trang_don_KHONG_bao_thanh_cong(): void
+    {
+        /*
+         * LỖI ĐÃ SỬA, đo được trên MoMo thật.
+         *
+         * Khách bấm "Quay lại" ở trang MoMo, quay về đây và thấy một dấu
+         * tích xanh kèm "Đã nhận đơn hàng của bạn". Dòng đỏ giải thích
+         * CÓ hiện, nhưng nó tự tắt sau vài giây (resources/js/flash.js),
+         * nên thứ còn lại trên màn hình là lời báo thành công cho một
+         * lần thanh toán vừa thất bại.
+         */
+        $this->momoNhan();
+        $order = $this->datHangMomo();
+        $this->get('/thanh-toan/momo/' . $order->order_number);
+
+        $tx = PaymentTransaction::where('gateway', 'momo')->firstOrFail();
+
+        $this->get('/thanh-toan/momo/ket-qua?' . http_build_query(
+            $this->goiTin($tx, ['resultCode' => '1006', 'message' => 'Giao dich bi tu choi boi nguoi dung.'])
+        ));
+
+        $this->get('/don-hang/' . $order->order_number)
+            ->assertOk()
+            ->assertSee('Đơn hàng chưa thanh toán')
+            ->assertDontSee('Đã nhận đơn hàng của bạn');
+    }
+
+    #[Test]
+    public function tra_xong_thi_tieu_de_quay_ve_bao_da_nhan_don(): void
+    {
+        $this->momoNhan();
+        $order = $this->datHangMomo();
+        $this->get('/thanh-toan/momo/' . $order->order_number);
+
+        $tx = PaymentTransaction::where('gateway', 'momo')->firstOrFail();
+        $this->get('/thanh-toan/momo/ket-qua?' . http_build_query($this->goiTin($tx)));
+
+        $this->get('/don-hang/' . $order->order_number)
+            ->assertOk()
+            ->assertSee('Đã nhận đơn hàng của bạn')
+            ->assertDontSee('Đơn hàng chưa thanh toán');
+    }
+
+    #[Test]
+    public function don_COD_chua_tra_van_bao_da_nhan_don(): void
+    {
+        /*
+         * COD chưa trả tiền là chuyện BÌNH THƯỜNG — tiền thu khi giao
+         * hàng. Báo "chưa thanh toán" ở đây là doạ khách vì một việc
+         * chưa đến lúc phải làm.
+         *
+         * Đây là lý do phép kiểm dùng `payment_method->isOnline()` chứ
+         * không chỉ nhìn `payment_status`.
+         */
+        $this->actingAs(User::factory()->create());
+        $this->post('/gio-hang', ['product_id' => $this->hang()->id, 'quantity' => 1]);
+        $this->post('/thanh-toan', [
+            'recipient_name' => 'Khách thử',
+            'recipient_phone' => '0912345678',
+            'shipping_address' => '1 Đường Thử',
+            'shipping_province' => 'Thành phố Hà Nội',
+            'payment_method' => 'cod',
+        ]);
+        $this->post('/thanh-toan/dat-hang');
+
+        $order = Order::latest('id')->firstOrFail();
+
+        $this->get('/don-hang/' . $order->order_number)
+            ->assertOk()
+            ->assertSee('Đã nhận đơn hàng của bạn')
+            ->assertDontSee('Đơn hàng chưa thanh toán');
+    }
+
+    #[Test]
+    public function don_da_huy_khong_con_bao_da_nhan_don(): void
+    {
+        // Mở lại đơn của tháng trước cũng phải nói đúng nó đã huỷ, chứ
+        // không chào bằng một dấu tích xanh.
+        $this->momoNhan();
+        $order = $this->datHangMomo();
+
+        $this->post('/don-hang/' . $order->order_number . '/huy', ['reason' => 'Đổi ý']);
+
+        $this->get('/don-hang/' . $order->order_number)
+            ->assertOk()
+            ->assertSee('Đơn hàng đã huỷ')
+            ->assertDontSee('Đã nhận đơn hàng của bạn')
+            // Đơn đã huỷ thì KHÔNG mời trả tiền nữa.
+            ->assertDontSee('Thanh toán lại với MoMo');
+    }
+
+    #[Test]
+    public function gui_di_dung_requestType_dang_cau_hinh(): void
+    {
+        /*
+         * Chọn nhầm loại là trang MoMo mở ra không có ô nhập nào khớp
+         * với bộ thẻ đem thử — và không có lỗi nào báo, chỉ là khách
+         * không trả được tiền.
+         */
+        config(['payment.gateways.momo.request_type' => 'payWithCC']);
+
+        $this->momoNhan();
+        $order = $this->datHangMomo();
+        $this->get('/thanh-toan/momo/' . $order->order_number);
+
+        Http::assertSent(fn ($request) => $request->data()['requestType'] === 'payWithCC');
     }
 
     /* ================= NHẬT KÝ CHO NGƯỜI TRỰC ================= */

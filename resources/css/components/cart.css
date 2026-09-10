@@ -1539,18 +1539,24 @@
     font-weight: 600;
 }
 
-.pay-again {
-    margin-top: var(--space-sm);
-    padding: var(--space-sm);
-    border: 1px solid var(--border-soft);
-    border-radius: var(--radius-md);
-    background: var(--surface-alt);
+/*
+ * TIÊU ĐỀ TRANG ĐƠN ĐỔI MÀU THEO TÌNH TRẠNG THẬT.
+ *
+ * Dấu tích xanh cho một đơn vừa thanh toán hỏng là lời báo sai, và nó
+ * là thứ DUY NHẤT còn lại trên màn hình sau khi dòng thông báo đỏ tự
+ * tắt. Màu phải nói đúng trước cả khi khách kịp đọc chữ.
+ */
+.order-success--cho-tra {
+    border-color: var(--semantic-warning);
+    background: color-mix(in srgb, var(--semantic-warning) 8%, var(--surface-alt));
 }
 
-.pay-again__text {
-    margin: 0 0 var(--space-2xs);
-    font-size: var(--text-body-sm);
-    color: var(--ink-700);
+.order-success--cho-tra .order-success__icon {
+    color: var(--semantic-warning);
+}
+
+.order-success--da-huy .order-success__icon {
+    color: var(--ink-500);
 }
 
 /* Bảng lượt thanh toán ở trang quản trị đơn hàng. */
