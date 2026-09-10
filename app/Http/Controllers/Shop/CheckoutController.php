@@ -621,6 +621,18 @@ class CheckoutController extends Controller
 
         $this->logPurchase($request, $order);
 
+        /*
+         * ĐƠN MOMO ĐI THẲNG SANG CỔNG.
+         *
+         * Đơn đã ghi xong và kho đã trừ trước khi rời khỏi đây, nên
+         * khách bỏ ngang giữa trang MoMo vẫn còn đơn để trả lại — chứ
+         * không mất trắng cả giỏ hàng. Nút "Thanh toán lại" ở trang đơn
+         * dùng chính đơn đó, không tạo đơn mới.
+         */
+        if ($order->payment_method === PaymentMethod::Momo) {
+            return redirect()->route('shop.payment.momo.start', $order);
+        }
+
         return redirect()->route('shop.orders.show', $order);
     }
 

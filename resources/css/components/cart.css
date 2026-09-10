@@ -1532,3 +1532,47 @@
     font-size: var(--text-caption);
     color: var(--ink-500);
 }
+
+/* ============ THANH TOÁN LẠI (MOMO) ============ */
+.order-history__unpaid {
+    color: var(--semantic-danger);
+    font-weight: 600;
+}
+
+.pay-again {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    background: var(--surface-alt);
+}
+
+.pay-again__text {
+    margin: 0 0 var(--space-2xs);
+    font-size: var(--text-body-sm);
+    color: var(--ink-700);
+}
+
+/* Bảng lượt thanh toán ở trang quản trị đơn hàng. */
+.payment-log {
+    width: 100%;
+    font-size: var(--text-body-sm);
+}
+
+.payment-log td,
+.payment-log th {
+    padding: 0.35rem 0.5rem;
+    vertical-align: top;
+}
+
+.payment-log__amount {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.payment-log__code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.8em;
+    overflow-wrap: anywhere;
+}

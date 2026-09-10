@@ -5,8 +5,9 @@ namespace App\Enums;
 /**
  * Hình thức thanh toán.
  * ============================================================
- * HIỆN CHỈ CÓ COD. Đó là sự thật của hệ thống lúc này, và enum này nói
- * đúng sự thật đó thay vì bày ra những lựa chọn bấm vào không chạy.
+ * COD và MoMo. Enum này nói đúng những gì hệ thống LÀM ĐƯỢC, không bày
+ * ra lựa chọn bấm vào không chạy: MoMo chỉ hiện khi `.env` có đủ khoá —
+ * xem isConfigured().
  *
  * ĐÃ GỠ "Chuyển khoản ngân hàng": xác nhận một đơn chuyển khoản đòi hỏi
  * admin mở app ngân hàng, nhìn xem tiền về chưa rồi mới bấm "Đã thanh
@@ -32,11 +33,13 @@ namespace App\Enums;
 enum PaymentMethod: string
 {
     case Cod = 'cod';
+    case Momo = 'momo';
 
     public function label(): string
     {
         return match ($this) {
             self::Cod => 'Thanh toán khi nhận hàng (COD)',
+            self::Momo => 'Ví MoMo',
         };
     }
 
@@ -44,6 +47,7 @@ enum PaymentMethod: string
     {
         return match ($this) {
             self::Cod => 'Trả tiền mặt cho nhân viên giao hàng khi nhận hoa.',
+            self::Momo => 'Chuyển sang trang MoMo để trả bằng ví hoặc thẻ ATM nội địa.',
         };
     }
 
@@ -75,6 +79,7 @@ enum PaymentMethod: string
     {
         return match ($this) {
             self::Cod => null,
+            self::Momo => 'momo',
         };
     }
 

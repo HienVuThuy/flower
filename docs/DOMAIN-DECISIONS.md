@@ -5717,3 +5717,156 @@ không đi qua trình duyệt.
 
 Phải có thêm một bài **đo trên chính HTML** rằng ô ẩn có mặt. Đây là lần
 thứ ba trong dự án gặp kiểu "phép đo sai chỗ" (xem QĐ-171, QĐ-175).
+
+---
+
+## QĐ-185. Đơn hàng ghi TRƯỚC khi trả tiền, không phải sau
+
+Hai thứ tự có thể chọn:
+
+```
+A.  trả tiền xong  →  mới ghi đơn
+B.  ghi đơn  →  chuyển sang cổng  →  ghi nhận tiền về
+```
+
+Chọn **B**. Với A, khách bỏ ngang giữa trang MoMo là mất trắng cả giỏ
+hàng và không còn gì để trả lại — họ phải chọn lại từng món. Với B, đơn
+đã có, kho đã trừ, và nút "Thanh toán lại" dùng đúng đơn đó.
+
+**Thanh toán lại KHÔNG tạo đơn mới.** Đây là lý do `payment_transactions`
+là quan hệ 1‑N chứ không phải mấy cột thêm vào `orders`: một đơn có thể
+trả hụt ba lần rồi mới xong, và cả ba lần đều phải còn dấu vết.
+
+Mỗi lượt mang một `gateway_order_id` riêng (`FP-260910-B2CZ-1`,
+`-2`, …). Dùng lại mã cũ thì vướng ràng buộc UNIQUE của bảng, và MoMo
+cũng từ chối nhận lại một `orderId` đã dùng — lượt trả lại thứ hai không
+bao giờ tạo được.
+
+---
+
+## QĐ-186. Chữ ký là ranh giới tin cậy, không phải sự có mặt của khách
+
+Đường `/thanh-toan/momo/ket-qua` là một URL **ai gõ cũng được**. Nếu chỉ
+cần trình duyệt khách xuất hiện ở đó là đủ để ghi "đã thanh toán" thì bất
+kỳ khách nào cũng tự đánh dấu đơn của mình đã trả mà không mất một đồng.
+
+Thứ duy nhất phân biệt MoMo thật với người giả mạo là chuỗi HMAC‑SHA256
+ký bằng khoá bí mật chỉ hai bên biết.
+
+**Hai chuỗi ký KHÁC NHAU, không được dùng lẫn:**
+
+| | Các trường, đúng thứ tự |
+|---|---|
+| lúc **gửi** yêu cầu | accessKey, amount, extraData, ipnUrl, orderId, orderInfo, partnerCode, redirectUrl, requestId, requestType |
+| lúc **nhận** kết quả | accessKey, amount, extraData, message, orderId, orderInfo, orderType, partnerCode, payType, requestId, responseTime, resultCode, transId |
+
+Thứ tự là một phần của chuỗi ký. Đảo một trường là chữ ký sai và mọi
+callback bị vứt — không có thông báo nào, chỉ là đơn mãi không được ghi
+nhận.
+
+So bằng `hash_equals()` chứ không phải `===`: so sánh chuỗi thường dừng ở
+byte đầu tiên khác nhau, và thời gian dừng đó rò rỉ đủ thông tin để dò
+dần ra chữ ký đúng.
+
+**Ba phép kiểm, cả ba đều cần**, và mỗi phép chặn một cách hỏng khác nhau:
+
+1. **chữ ký đúng** — gói tin này có thật không;
+2. **`resultCode === 0`** — nó nói gì. MoMo cũng ký cho lượt hỏng (khách
+   huỷ, thẻ khoá, không đủ tiền);
+3. **số tiền khớp** — MoMo báo thu 1.000₫ cho đơn 505.000₫ nghĩa là gói
+   tin bị sửa hoặc có nhầm lẫn; ghi nhận lúc đó là để phần mềm tự xác
+   nhận một số tiền nó không kiểm được.
+
+---
+
+## QĐ-187. Hai đường về, một kết quả — và gọi mấy lần cũng như một
+
+MoMo báo kết quả qua **hai đường độc lập**:
+
+```
+callback  — trình duyệt khách quay về   (khách NHÌN THẤY)
+IPN       — MoMo gọi thẳng máy chủ      (đường ĐÁNG TIN)
+```
+
+IPN đáng tin hơn vì nó không đi qua máy khách: khách tắt trình duyệt
+ngay sau khi trả tiền thì callback không bao giờ tới, IPN vẫn tới.
+
+Cả hai đi qua **cùng một hàm** `ghiNhanThanhToan()`, nên chạy đường nào
+kết quả cũng như nhau. Hàm đó phải chịu được việc **cả hai về gần như
+đồng thời**:
+
+- `lockForUpdate()` xếp chúng thành hàng;
+- lần thứ hai thấy lượt giao dịch đã `paid` và dừng lại.
+
+Bỏ chốt thứ hai thì lần sau vẫn chạy tiếp, gọi `setPaymentStatus()` trên
+một đơn đã trả rồi, ăn lỗi *"đơn này đã ở trạng thái đó rồi"* — và khách
+quay lại trang đơn thấy một dòng đỏ báo lỗi ngay sau khi vừa trả tiền
+xong.
+
+IPN luôn trả `200` kể cả khi gói tin sai chữ ký: mã lỗi chỉ khiến MoMo
+gọi lại nhiều lần, mà gói tin sai chữ ký thì gọi bao nhiêu lần cũng vẫn
+sai.
+
+**IPN không tới được `localhost`** — MoMo gọi từ Internet vào. Khi học ở
+nhà luồng vẫn chạy đủ nhờ callback; muốn thử IPN thật thì mở ngrok rồi
+điền `MOMO_IPN_URL`.
+
+---
+
+## QĐ-188. Miễn CSRF cho đúng MỘT đường, và đo được điều đó
+
+MoMo gọi `/thanh-toan/momo/ipn` từ máy chủ của họ: không có phiên, không
+có token CSRF. Không miễn thì mọi IPN nhận `419` và đơn không bao giờ
+được ghi nhận qua đường đáng tin nhất.
+
+Bảo vệ **không mất đi** mà đổi sang một thứ mạnh hơn — chữ ký HMAC. Chỉ
+miễn đúng một địa chỉ; trang kết quả cho khách là `GET` nên vốn không
+cần token.
+
+**Bài kiểm thử đầu tiên viết cho việc này đo sai chỗ.** Nó `POST` vào
+`/ipn` và xanh — nhưng vẫn xanh cả khi xoá hẳn dòng khai miễn trừ, vì
+Laravel **tự tắt kiểm CSRF khi đang chạy kiểm thử**. Trên máy thật thì
+hỏng hoàn toàn, còn bài kiểm thử không bao giờ biết.
+
+Nay bài đo thẳng vào danh sách miễn trừ
+(`ValidateCsrfToken::$neverVerify`), và khẳng định thêm rằng chỉ có
+**đúng một** đường được miễn — mỗi dòng ở đó là một cánh cửa mở.
+
+Đây là lần thứ tư trong dự án gặp kiểu "phép đo sai chỗ" (xem QĐ‑171,
+QĐ‑175, QĐ‑184).
+
+---
+
+## QĐ-189. Những chỗ làm khác tài liệu hướng dẫn lab06
+
+Tài liệu viết cho một dự án mẫu có cấu trúc khác hẳn. Bốn chỗ phải đổi,
+và một chỗ cố ý không theo:
+
+**1. Tên cột và tên lớp.** Tài liệu dùng `orders.total_price`,
+`session('cart')`, `App\Services\MomoService`. Dự án này có
+`orders.grand_total`, giỏ hàng trong cơ sở dữ liệu, và dịch vụ chia theo
+nghiệp vụ. Đặt `MomoGateway` vào `App\Services\Payment` — nơi hợp đồng
+`PaymentGateway` đã nằm sẵn từ trước.
+
+**2. `requestType`.** Tài liệu ghi `payWithCC` (thẻ **quốc tế**), nhưng
+chính nó lại đưa bộ thẻ thử `9704 xxxx` — đó là thẻ **ATM nội địa**.
+Chọn `payWithCC` thì trang MoMo mở ra không có ô nhập nào khớp với bộ thẻ
+đó. Dùng `payWithATM`, và để ở `.env` để đổi được.
+
+**3. Đơn MoMo bị tạo hai bản ghi giao dịch.** Tài liệu tạo một bản ghi
+`pending` lúc đặt đơn, rồi `MomoController::newTransaction()` tạo bản thứ
+hai. Bản đầu không bao giờ có `gateway_order_id` và nằm lại mãi ở trạng
+thái chờ. Nay chỉ `MomoGateway::createPayment()` tạo — mỗi lượt trả tiền
+đúng một dòng. Đơn COD vẫn có một dòng, để `payment_transactions` trả lời
+được câu "đơn này thu tiền bằng đường nào" mà không phải hỏi bảng khác.
+
+**4. `extraData` mang mã đơn công khai, không mang id.** Tài liệu đặt
+`extraData = $order->id`. Id tự tăng để lộ tổng số đơn cửa hàng đã bán —
+cùng lý do đã có `order_number` ngay từ đầu.
+
+**5. KHÔNG tự tạo vận đơn GHN sau khi thanh toán.** Tài liệu tạo vận đơn
+ngay khi COD được đặt và ngay khi MoMo báo thành công. Dự án này tạo vận
+đơn ở trang quản trị, **sau khi cửa hàng xác nhận đơn** — vì tạo vận đơn
+là cam kết giao hàng, và cam kết trước khi kiểm hàng còn/hết, địa chỉ ship
+tới được không, là cam kết một điều chưa ai kiểm. Đây là chức năng đang
+chạy, và không sửa nó vì một tài liệu hướng dẫn.

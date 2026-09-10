@@ -31,22 +31,42 @@ return [
     'gateways' => [
 
         /*
-         * MoMo — DỰ KIẾN, chưa tích hợp.
+         * MoMo — môi trường THỬ.
          *
-         * Giữ khối này để tuần sau chỉ phải điền `.env` và viết lớp
-         * MomoGateway, không phải nghĩ lại cấu trúc cấu hình. Vì
-         * `enabled` tính từ ba khoá bên dưới và cả ba đang rỗng, MoMo
-         * KHÔNG hiện ra ở bước thanh toán — xem PaymentMethod::available().
+         * Bộ khoá test của MoMo là khoá dùng chung, ai cũng có; nó vẫn
+         * nằm trong `.env` chứ không viết vào tệp này, để ngày đổi sang
+         * khoá thật không phải sửa mã nguồn và không có nguy cơ khoá
+         * thật lọt vào Git.
          *
-         * Ba tham số này là bộ tối thiểu MoMo yêu cầu; endpoint để ở
-         * config chứ không viết cứng trong mã để chuyển giữa môi trường
-         * thử và môi trường thật mà không phải sửa mã nguồn.
+         * `redirect_url` / `ipn_url` để trống thì lớp MomoGateway tự lấy
+         * từ route — chỉ cần điền khi chạy ngrok hoặc tên miền thật.
          */
         'momo' => [
             'partner_code' => env('MOMO_PARTNER_CODE'),
             'access_key' => env('MOMO_ACCESS_KEY'),
             'secret_key' => env('MOMO_SECRET_KEY'),
             'endpoint' => env('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
+
+            'partner_name' => env('MOMO_PARTNER_NAME', 'Angevil'),
+            'store_id' => env('MOMO_STORE_ID', 'AngevilStore'),
+
+            /*
+             * payWithATM: thẻ nội địa 9704... mà MoMo cấp để thử.
+             * captureWallet là ví MoMo, payWithCC là thẻ quốc tế — chọn
+             * nhầm thì trang MoMo mở ra không có ô nhập thẻ nào khớp với
+             * bộ thẻ thử.
+             */
+            'request_type' => env('MOMO_REQUEST_TYPE', 'payWithATM'),
+
+            /*
+             * MOMO_VERIFY_SSL=false chỉ dành cho máy học ở nhà, nơi
+             * XAMPP thường thiếu bộ chứng chỉ gốc nên cURL từ chối kết
+             * nối. Trên máy chủ thật phải để true.
+             */
+            'verify_ssl' => filter_var(env('MOMO_VERIFY_SSL', true), FILTER_VALIDATE_BOOLEAN),
+
+            'redirect_url' => env('MOMO_REDIRECT_URL'),
+            'ipn_url' => env('MOMO_IPN_URL'),
 
             'enabled' => (bool) (
                 env('MOMO_PARTNER_CODE')

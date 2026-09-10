@@ -298,6 +298,8 @@
 
             </div>
 
+            <x-order.payment-log :transactions="$order->transactions" />
+
             {{--
                 GHI CHÚ NỘI BỘ — chỉ cửa hàng đọc, khách không bao giờ thấy.
 

@@ -37,6 +37,21 @@ return Application::configure(basePath: dirname(__DIR__))
         // Người chưa đăng nhập bị chặn bởi middleware "auth"
         // sẽ được đưa về trang login thay vì nhận lỗi 401.
         $middleware->redirectGuestsTo('/login');
+
+        /*
+         * IPN CỦA CỔNG THANH TOÁN KHÔNG CÓ TOKEN CSRF.
+         *
+         * MoMo gọi thẳng từ máy chủ của họ vào đây, không qua trình
+         * duyệt nào nên không có phiên và không có token. Bảo vệ ở đây
+         * KHÔNG mất đi mà đổi sang một thứ mạnh hơn: chữ ký HMAC ký bằng
+         * khoá bí mật — xem MomoGateway::verifySignature().
+         *
+         * Chỉ miễn đúng địa chỉ IPN. Trang kết quả cho khách là GET nên
+         * vốn không cần token.
+         */
+        $middleware->validateCsrfTokens(except: [
+            'thanh-toan/momo/ipn',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

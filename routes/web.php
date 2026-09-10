@@ -29,6 +29,7 @@ use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\BlogController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\CommunityController;
+use App\Http\Controllers\Shop\MomoController;
 use App\Http\Controllers\Shop\OrderController as ShopOrderController;
 use App\Http\Controllers\Shop\PageController;
 use App\Http\Controllers\Shop\CreditsController;
@@ -445,7 +446,40 @@ if (config('features.cart')) {
             Route::post('/{order}/huy', [ShopOrderController::class, 'cancel'])
                 ->middleware('throttle:10,1')
                 ->name('cancel');
+
+            /*
+             * THANH TOÁN LẠI cho đơn MoMo trả hụt.
+             *
+             * KHÔNG tạo đơn mới — vẫn là đơn cũ, chỉ thêm một lượt giao
+             * dịch. throttle để một cú bấm liên tục không đẻ ra hàng
+             * chục bản ghi giao dịch rỗng.
+             */
+            Route::get('/{order}/thanh-toan-momo', [MomoController::class, 'payAgain'])
+                ->middleware('throttle:10,1')
+                ->name('momo.pay');
         });
+
+    /*
+     *--------------------------------------------------------------------
+     * ĐƯỜNG VỀ CỦA CỔNG THANH TOÁN
+     *--------------------------------------------------------------------
+     * KHÔNG có middleware 'auth': MoMo gọi vào đây, không phải khách.
+     * Cũng vì thế IPN được miễn kiểm CSRF trong bootstrap/app.php.
+     *
+     * Thứ thay thế cho việc đăng nhập là CHỮ KÝ trong gói tin — xem
+     * MomoGateway::verifySignature(). Không có chữ ký đúng thì gói tin
+     * bị vứt, bất kể ai gửi.
+     */
+    Route::prefix('thanh-toan/momo')
+        ->name('shop.payment.momo.')
+        ->group(function () {
+            Route::get('/ket-qua', [MomoController::class, 'callback'])->name('callback');
+            Route::post('/ipn', [MomoController::class, 'ipn'])->name('ipn');
+        });
+
+    // Bắt đầu trả tiền ngay sau khi đặt đơn MoMo.
+    Route::get('thanh-toan/momo/{order}', [MomoController::class, 'start'])
+        ->name('shop.payment.momo.start');
 }
 
 

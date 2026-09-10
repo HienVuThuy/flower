@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Enums\OrderStatus;
+use App\Http\Controllers\Concerns\AuthorizesOrderAccess;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shop\OrderCancelRequest;
 use App\Models\Order;
@@ -16,6 +17,8 @@ use Illuminate\View\View;
 
 class OrderController extends Controller
 {
+    use AuthorizesOrderAccess;
+
     public function __construct(
         private readonly OrderService $orders,
         private readonly OrderMailer $mailer,
@@ -35,7 +38,7 @@ class OrderController extends Controller
 
     public function show(Order $order): View
     {
-        $this->authorizeView($order);
+        $this->authorizeOrderAccess($order);
 
         return view('shop.orders.show', [
             'order' => $order->load('items', 'invoice'),
@@ -47,7 +50,7 @@ class OrderController extends Controller
      *
      * HAI CỬA phải qua, và cả hai đều cần thiết:
      *
-     *  1. authorizeView() — đúng người. Thiếu bước này thì đổi mã trên
+     *  1. authorizeOrderAccess() — đúng người. Thiếu bước này thì đổi mã trên
      *     URL là huỷ được đơn của người lạ.
      *
      *  2. isCancellableByCustomer() — đúng lúc. Không dùng isCancellable()
@@ -60,7 +63,7 @@ class OrderController extends Controller
      */
     public function cancel(OrderCancelRequest $request, Order $order): RedirectResponse
     {
-        $this->authorizeView($order);
+        $this->authorizeOrderAccess($order);
 
         if (! $order->isCancellableByCustomer()) {
             return back()->with('error', sprintf(
@@ -107,28 +110,5 @@ class OrderController extends Controller
         ]);
 
         return back()->with('success', 'Đã huỷ đơn hàng ' . $order->order_number . '. Cửa hàng sẽ không giao đơn này nữa.');
-    }
-
-    /**
-     * Ai được xem một đơn hàng.
-     *
-     * Mã đơn nằm trên URL nên KHÔNG được coi là bí mật. Chỉ hai trường
-     * hợp được xem:
-     *   - đơn thuộc về tài khoản đang đăng nhập;
-     *   - hoặc phiên này đã chứng minh được quyền: vừa đặt đơn đó, hoặc
-     *     tra cứu đúng mã đơn + số điện thoại (OrderLookupController).
-     *
-     * Thiếu bước này thì đổi mã trên URL là đọc được tên, số điện thoại
-     * và địa chỉ nhà của người khác.
-     */
-    private function authorizeView(Order $order): void
-    {
-        if (Auth::check() && $order->user_id === Auth::id()) {
-            return;
-        }
-
-        $placed = session(CheckoutController::PLACED_KEY, []);
-
-        abort_unless(in_array($order->order_number, $placed, strict: true), 403);
     }
 }

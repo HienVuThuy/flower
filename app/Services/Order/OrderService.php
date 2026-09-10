@@ -3,7 +3,10 @@
 namespace App\Services\Order;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentTransactionStatus;
 use App\Enums\PaymentStatus;
+use App\Models\PaymentTransaction;
 use App\Models\Order;
 use App\Models\OrderStatusEvent;
 use App\Models\Product;
@@ -224,6 +227,29 @@ class OrderService
          */
         $order->load('items');
         $this->invoices->taoTuDon($order, $checkout);
+
+        /*
+         * ĐƠN COD CŨNG CÓ MỘT DÒNG TRONG SỔ GIAO DỊCH.
+         *
+         * Tiền COD không đi qua cổng nào, nhưng nếu chỉ đơn online mới
+         * có dòng thì `payment_transactions` không còn trả lời được câu
+         * "đơn này đã thu tiền bằng đường nào" — phải nhớ hỏi thêm cột
+         * `payment_method` ở bảng khác.
+         *
+         * Đơn MoMo KHÔNG tạo dòng ở đây: mỗi lần bấm trả tiền là một
+         * lượt riêng do MomoGateway::createPayment() sinh ra. Tạo sẵn ở
+         * đây thì dòng đó không bao giờ có `gateway_order_id` và nằm lại
+         * mãi ở trạng thái chờ.
+         */
+        if ($order->payment_method === PaymentMethod::Cod) {
+            PaymentTransaction::create([
+                'order_id' => $order->id,
+                'gateway' => PaymentMethod::Cod->value,
+                'amount' => $order->grand_total,
+                'status' => PaymentTransactionStatus::Pending,
+                'message' => 'Thu tiền khi giao hàng',
+            ]);
+        }
 
         /*
          * CHẤM ĐIỂM RỦI RO — sau khi đơn đã có id và đã có dòng hàng.

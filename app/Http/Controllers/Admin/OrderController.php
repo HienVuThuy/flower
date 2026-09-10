@@ -108,7 +108,7 @@ class OrderController extends Controller
         return view('admin.orders.show', [
             // statusEvents.changedBy nạp sẵn: dòng thời gian hiện tên người
             // thực hiện ở mỗi mốc, không nạp thì mỗi mốc một truy vấn.
-            'order' => $order->load('items', 'user', 'statusEvents.changedBy', 'invoice'),
+            'order' => $order->load('items', 'user', 'statusEvents.changedBy', 'invoice', 'transactions'),
 
             /*
              * Đơn đã huỷ mà khách đã trả tiền = cửa hàng đang nợ khách.

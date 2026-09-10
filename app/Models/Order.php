@@ -137,6 +137,12 @@ class Order extends Model
      * đơn. Vì thế nó là quan hệ rời chứ không phải mấy cột thêm vào
      * `orders`: xem chú thích ở migration create_invoices_table.
      */
+    /** Từng lượt thử thanh toán, mới nhất trước. */
+    public function transactions(): HasMany
+    {
+        return $this->hasMany(PaymentTransaction::class)->latest('id');
+    }
+
     public function invoice(): HasOne
     {
         return $this->hasOne(Invoice::class);

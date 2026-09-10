@@ -199,6 +199,8 @@
                     --}}
                     <x-order.invoice-card :invoice="$order->invoice" />
 
+                    <x-order.pay-again :order="$order" />
+
                     {{--
                         HUỶ ĐƠN.
 
