@@ -6233,3 +6233,162 @@ Cách phát hiện và sửa: `grep -c` đếm số lần xuất hiện, rồi
 
 Từ nay: script vá phải hoặc kiểm số lần xuất hiện trước khi ghi, hoặc
 đừng bao giờ gộp nó vào một lệnh có thể chạy lại.
+
+---
+
+## QĐ-202. Màu biểu đồ chọn bằng MÁY, không bằng mắt
+
+Bốn loại biểu đồ mới trên trang Phân tích dùng một bộ màu đã chạy qua bộ
+kiểm sáu phép (`validate_palette.js`) và đạt cả sáu:
+
+| Bộ | Dùng cho | Kết quả đo |
+|---|---|---|
+| xanh dương `#2a78d6` + cam `#eb6834` | hai đường doanh thu / số đơn | ΔE mù màu **24.7**, thường **33.6** |
+| thang 5 bước xanh (`#86b6ef` → `#104281`) | phễu, trạng thái đơn | độ sáng đơn điệu, mỗi bước cách ≥ 0.06, đầu nhạt đạt **2.06:1** |
+
+**Vì sao không chọn bằng mắt.** Hai màu trông "khác nhau rõ" với người
+nhìn bình thường có thể trùng hệt nhau với người mù màu đỏ‑lục — khoảng
+8% nam giới. Đó là một phép tính, và phép tính thì máy làm đúng hơn.
+Đổi màu thì chạy lại bộ kiểm.
+
+**Thứ tự các màu là cơ chế an toàn, không phải thẩm mỹ.** Đảo hai màu
+trong bộ có thể làm một cặp kề nhau rơi xuống dưới ngưỡng.
+
+---
+
+## QĐ-203. Hai phép đo khác đơn vị thì vẽ HAI biểu đồ, không bao giờ hai trục dọc
+
+Doanh thu (đồng) và số đơn (cái) trên cùng một khung với hai trục dọc là
+cách dễ nhất để nói dối bằng biểu đồ: kéo giãn một trục là hai đường cắt
+nhau ở bất cứ đâu người vẽ muốn, và người đọc không có cách nào biết.
+
+Nay là hai biểu đồ chồng dọc, **dùng chung trục ngày**. So sánh vẫn dễ,
+mà không còn chỗ nào để bóp méo.
+
+Vài quy tắc khác đi kèm, mỗi cái sửa một cách đọc sai:
+
+- **Ngày không có đơn phải là số 0 nhìn thấy được**, không phải một
+  khoảng trống. Nhóm bằng SQL rồi vẽ thẳng thì đường nối từ ngày 3 sang
+  ngày 7, đọc ra như bốn ngày đó bán đều đều.
+- **Nhãn trực tiếp có chọn lọc**: chỉ mốc cao nhất và mốc gần nhất. In
+  số trên mọi điểm là một mớ không ai đọc.
+- **Chưa có dữ liệu thì nói thẳng.** Một đường phẳng ở đáy đọc ra như
+  "doanh thu bằng 0 suốt kỳ" — câu khác hẳn.
+- **Khe 2px giữa các miếng bánh vòng, bằng màu nền** — không phải viền.
+  Viền làm hình đọc như một tấm ghép.
+- **Bảng số đi kèm là bắt buộc**, không phải tuỳ chọn: vài màu trong bộ
+  nằm dưới 3:1 so với nền sáng, và luật đền bù là phải có nhãn rõ hoặc
+  một bảng số. Bảng cũng là thứ trình đọc màn hình đọc được.
+
+**Thang thứ tự cho quy trình, bộ màu danh mục cho danh tính.** Chờ xác
+nhận → Đã xác nhận → Đang chuẩn bị → Đang giao → Hoàn thành là một dãy
+**có trước có sau**; tô mỗi bước một màu khác hệ là vứt bỏ thông tin thứ
+tự đó. "Đã huỷ" không nằm trong dãy — nó là kết cục xấu, dùng màu trạng
+thái và luôn đi kèm nhãn chữ.
+
+**Không dùng thư viện biểu đồ.** Chart.js là ~200KB JavaScript tải về
+cho bốn hình, và nó vẽ *sau* khi trang đã hiện — người xem thấy khoảng
+trống rồi mới thấy biểu đồ nhảy vào. SVG do Blade dựng thì có sẵn trong
+HTML đầu tiên, in ra giấy được, đọc được cả khi JavaScript hỏng.
+
+---
+
+## QĐ-204. Xuất dữ liệu: chọn phần, chọn định dạng — một danh sách duy nhất
+
+Nút "Xuất CSV" cũ tải về một tệp **cố định** gồm năm phần. Ai chỉ cần
+bảng bán chạy vẫn phải tải cả tệp rồi tự xoá bốn phần thừa; ai cần bảng
+khách hàng thì không có cách nào lấy.
+
+Nay 11 phần, tích chọn từng cái, ba định dạng:
+
+| | Dùng khi |
+|---|---|
+| **CSV** | mở bằng Excel / Google Sheets |
+| **JSON** | đưa vào script, Power BI, hệ thống khác |
+| **HTML** | đọc trên màn hình, in ra PDF bằng trình duyệt |
+
+**Không làm XLSX, không làm PDF.** PhpSpreadsheet kéo theo ~40MB phụ
+thuộc cho đúng một việc mà CSV đã làm được. Một bộ dựng PDF trong PHP thì
+phải tự lo phông tiếng Việt. Giao diện **nói thẳng** ra điều đó thay vì
+im lặng để người dùng đi tìm nút không có.
+
+**`ReportSections` là danh sách DUY NHẤT.** Màn hình chọn và đoạn ghi tệp
+đọc cùng một nơi; khai ở hai chỗ thì sớm muộn ô đánh dấu có một phần mà
+tệp không có, và không gì báo.
+
+**Thứ tự phần trong tệp là thứ tự đã khai, không theo thứ tự tích** — để
+so hai kỳ với nhau được.
+
+**JSON dùng khoá có tên**, không phải mảng vị trí: `["Kim tiền", 12]` bắt
+người nhận đọc thứ tự cột ở chỗ khác rồi tự đếm, và hỏng ngay khi thứ tự
+cột đổi.
+
+---
+
+## QĐ-205. `groupBy()` đánh mất khoá, và bộ chọn phần lặng lẽ ngừng hoạt động
+
+`collect($sections)->groupBy('group')` **đánh số lại từ 0**. Mã phần biến
+mất, và mọi ô đánh dấu gửi lên `value="0"`, `"1"`, `"2"`…
+
+Controller lọc qua danh sách hợp lệ nên tất cả bị bỏ, rơi vào nhánh
+*"không chọn gì thì xuất tất cả"*. Kết quả: bộ chọn phần **trông vẫn bình
+thường** — tích, bỏ tích, bấm tải — trong khi nó không hề có tác dụng.
+Tệp lúc nào cũng đủ 11 phần.
+
+Không có lỗi, không có cảnh báo. Bài kiểm thử `value="tong-quan"` bắt
+được ngay lần chạy đầu.
+
+Sửa bằng `groupBy('group', preserveKeys: true)`.
+
+---
+
+## QĐ-206. Một mutation sống sót vì bài đo đúng nhưng đo thiếu trường hợp
+
+Bỏ hẳn chốt lọc mã phần ở controller — bài kiểm thử **vẫn xanh**, vì
+`nhieuBang()` cũng duyệt theo danh sách hợp lệ và mã lạ rơi ra ở lớp
+dưới.
+
+Nhưng hai lớp KHÔNG tương đương. Khi gửi lên **toàn mã lạ**:
+
+```
+có chốt ở controller   →  $chon rỗng  →  "xuất tất cả"
+không có chốt          →  $chon "có phần tử"  →  tệp RỖNG
+```
+
+Người dùng nhận một tệp không có gì và không hiểu vì sao. Đã viết bài
+riêng cho đúng trình tự đó, và mutation đỏ ngay.
+
+Khác với QĐ‑194 mục 2 (chốt thừa, đã xoá): lần này chốt **không** thừa,
+chỉ là bài đo chưa chạm tới trường hợp duy nhất nó khác biệt. Cách phân
+biệt vẫn như cũ — hỏi "hai lớp có bao giờ cho kết quả khác nhau không",
+rồi viết bài cho đúng trường hợp đó.
+
+---
+
+## QĐ-207. Điều hướng quản trị không tải lại trang, và mọi lỗi đều lùi về cách cũ
+
+Mỗi cú bấm ở thanh bên trước đây dựng lại toàn bộ: thanh bên, thanh trên,
+CSS, JavaScript — chỉ để đổi phần ruột. Người trực bấm qua lại giữa Đơn
+hàng và Sản phẩm hàng chục lần mỗi ca.
+
+Nay chỉ lấy về khối `[data-admin-content]` và thay chỗ cũ.
+
+**Luôn có đường lùi.** Mạng hỏng, máy chủ trả 500, HTML thiếu khối, hoặc
+máy chủ **chuyển hướng vì hết phiên đăng nhập** — tất cả rơi về
+`location.href`, tức là tải lại y như khi không có JavaScript. Trường hợp
+hết phiên đáng chú ý nhất: cứ moi ruột câu trả lời đó ra thì biểu mẫu
+đăng nhập nằm gọn trong khung nội dung của trang quản trị.
+
+**Chỉ chặn cú bấm chắc chắn xử lý được**: chuột trái, không giữ phím nào,
+cùng tên miền. Ctrl+bấm mở tab mới vẫn phải chạy như thường.
+
+**Nghe `popstate`.** Không có thì bấm Lui đổi thanh địa chỉ mà nội dung
+đứng im — tệ hơn hẳn tải lại, vì màn hình đang nói dối về nơi mình đứng.
+
+**Mọi hàm khởi tạo phải gọi lại được.** `app.js` gom thành `bootUi()`;
+`initBulkActions()` nay đánh dấu biểu mẫu đã gắn, nếu không một cú bấm
+"Xoá đã chọn" chạy hai lượt.
+
+Thanh cuộn của thanh bên bị **ẩn, không tắt**: nó nằm ngay giữa các mục
+điều hướng và khung nội dung. Tắt hẳn `overflow` thì màn hình thấp hoặc
+menu dài thêm là mất luôn mấy mục cuối.

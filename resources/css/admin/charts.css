@@ -1,0 +1,315 @@
+/* ============================================================
+   BIỂU ĐỒ TRANG QUẢN TRỊ
+   ============================================================
+   VẼ BẰNG SVG DỰNG SẴN Ở MÁY CHỦ, không dùng thư viện biểu đồ.
+
+   Một thư viện như Chart.js là ~200KB JavaScript tải về chỉ để vẽ bốn
+   hình, và nó vẽ sau khi trang đã hiện — người xem thấy khoảng trống
+   rồi mới thấy biểu đồ nhảy vào. SVG do Blade dựng thì có sẵn trong
+   HTML đầu tiên, in ra giấy được, và đọc được cả khi JavaScript hỏng.
+
+   ============================================================
+   MÀU ĐÃ ĐƯỢC KIỂM BẰNG MÁY, KHÔNG CHỌN BẰNG MẮT.
+
+   Bộ màu dưới đây chạy qua bộ kiểm sáu phép của bảng màu tham chiếu
+   (validate_palette.js) và đạt cả sáu:
+
+     - hai màu chuỗi (xanh dương / cam):  ΔE mù màu 24.7, thường 33.6
+     - thang thứ tự 5 bước cho phễu:      độ sáng đơn điệu, mỗi bước
+                                          cách nhau >= 0.06, đầu nhạt
+                                          vẫn đạt 2.06:1 trên nền sáng
+
+   ĐỪNG ĐỔI MÀU BẰNG MẮT. Hai màu trông "khác nhau rõ" với người nhìn
+   bình thường có thể trùng hệt nhau với người mù màu đỏ-lục — khoảng
+   8% nam giới. Đổi thì chạy lại bộ kiểm.
+   ============================================================ */
+
+.viz {
+    /* Nền để bộ kiểm đo tương phản — phải khớp --admin-surface. */
+    --viz-surface: #ffffff;
+    --viz-grid: color-mix(in srgb, var(--admin-ink) 12%, transparent);
+    --viz-ink: var(--admin-ink);
+    --viz-ink-muted: var(--admin-ink-muted);
+
+    /* Hai màu chuỗi, dùng ĐÚNG THỨ TỰ này. Thứ tự chính là cơ chế an
+       toàn với mù màu, không phải chuyện thẩm mỹ. */
+    --viz-1: #2a78d6;
+    --viz-2: #eb6834;
+
+    /* Thang thứ tự cho phễu và các bước có trước có sau. */
+    --viz-step-1: #86b6ef;
+    --viz-step-2: #5598e7;
+    --viz-step-3: #2a78d6;
+    --viz-step-4: #1c5cab;
+    --viz-step-5: #104281;
+
+    /* Màu trạng thái — DÙNG RIÊNG, không bao giờ làm "chuỗi thứ ba".
+       Đi kèm nhãn chữ, không bao giờ để màu tự nói. */
+    --viz-huy: #d03b3b;
+}
+
+:root[data-scheme="toi"] .viz {
+    --viz-surface: #1a1a19;
+    --viz-1: #3987e5;
+    --viz-2: #d95926;
+
+    --viz-step-1: #cde2fb;
+    --viz-step-2: #9ec5f4;
+    --viz-step-3: #6da7ec;
+    --viz-step-4: #3987e5;
+    --viz-step-5: #184f95;
+}
+
+.viz svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    overflow: visible;
+}
+
+/* Lưới và trục là ĐƯỜNG TÓC, một sắc độ so với nền. Lưới đậm thì mắt
+   đọc lưới trước dữ liệu. Nét liền, không đứt: nét đứt đọc như "dự
+   báo" hay "ngưỡng" trong khi nó chỉ là lưới. */
+.viz__grid {
+    stroke: var(--viz-grid);
+    stroke-width: 1;
+    shape-rendering: crispEdges;
+}
+
+.viz__axis-label {
+    fill: var(--viz-ink-muted);
+    font-size: 10px;
+    font-family: inherit;
+}
+
+/* Nét mảnh: 2px. Dày hơn thì đường che mất chính chỗ nó đi qua. */
+.viz__line {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.viz__area {
+    stroke: none;
+    opacity: 0.12;
+}
+
+/*
+ * ĐIỂM CHẠM TO HƠN DẤU VẼ.
+ *
+ * Dấu tròn 3px thì gần như không rê chuột trúng. Ô chạm trong suốt rộng
+ * cả cột lo việc bắt chuột; dấu tròn chỉ lo việc nhìn.
+ */
+.viz__hit {
+    fill: transparent;
+    cursor: crosshair;
+}
+
+.viz__dot {
+    opacity: 0;
+    transition: opacity 90ms ease-out;
+}
+
+.viz__hit:hover + .viz__dot,
+.viz__hit:focus-visible + .viz__dot {
+    opacity: 1;
+}
+
+.viz__hit:focus-visible {
+    outline: 2px solid var(--admin-accent);
+    outline-offset: -2px;
+}
+
+/* ---------- CỘT NGANG ---------- */
+
+/*
+ * NGANG chứ không dọc: tên sản phẩm tiếng Việt dài, và nhãn dọc thì
+ * phải xoay chữ — thứ không ai đọc thoải mái.
+ *
+ * Bo 4px ở ĐẦU MÚT DỮ LIỆU, chân cột vẫn vuông và dính trục: bo cả hai
+ * đầu làm cột trông như tách khỏi vạch 0.
+ */
+.viz-bars {
+    display: grid;
+    gap: var(--space-2xs);
+}
+
+.viz-bars__row {
+    display: grid;
+    grid-template-columns: minmax(0, 11rem) 1fr auto;
+    align-items: center;
+    gap: var(--space-2xs);
+    font-size: 0.8125rem;
+}
+
+.viz-bars__name {
+    /* min-width: 0 để tên dài co được — ô lưới mặc định min-width: auto,
+       và khi ấy nó đẩy cả hàng tràn ngang. */
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--viz-ink);
+}
+
+.viz-bars__track {
+    min-width: 0;
+    height: 0.75rem;
+    background: color-mix(in srgb, var(--admin-ink) 7%, transparent);
+    border-radius: 2px;
+}
+
+.viz-bars__fill {
+    height: 100%;
+    background: var(--viz-1);
+    border-start-end-radius: 4px;
+    border-end-end-radius: 4px;
+    min-width: 2px;
+}
+
+.viz-bars__value {
+    color: var(--viz-ink-muted);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+/* ---------- BÁNH VÒNG ---------- */
+
+.viz-donut {
+    display: grid;
+    grid-template-columns: minmax(0, 8.5rem) 1fr;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+@media (max-width: 480px) {
+    .viz-donut {
+        grid-template-columns: 1fr;
+    }
+}
+
+/*
+ * KHE 2px GIỮA CÁC MIẾNG, bằng màu nền — không phải viền.
+ *
+ * Viền vẽ quanh miếng thì mỗi miếng có một đường bao và hình đọc như
+ * một tấm ghép; khe bằng màu nền thì chúng chỉ đơn giản không chạm nhau.
+ */
+.viz-donut__seg {
+    stroke: var(--viz-surface);
+    stroke-width: 2;
+}
+
+.viz-donut__hole {
+    fill: var(--viz-surface);
+}
+
+.viz-donut__total {
+    fill: var(--viz-ink);
+    font-size: 13px;
+    font-weight: 700;
+    text-anchor: middle;
+}
+
+.viz-donut__total-label {
+    fill: var(--viz-ink-muted);
+    font-size: 8px;
+    text-anchor: middle;
+}
+
+/*
+ * CHÚ GIẢI LUÔN CÓ khi từ 2 chuỗi trở lên, và mang cả CON SỐ.
+ *
+ * Chấm màu đứng cạnh chữ; chữ dùng token màu chữ, không nhuộm theo màu
+ * chuỗi. Màu nhuộm chữ thì người mù màu mất luôn nhãn — thứ duy nhất
+ * còn lại để phân biệt.
+ */
+.viz-legend {
+    display: grid;
+    gap: 0.15rem;
+    font-size: 0.8125rem;
+    margin: 0;
+}
+
+.viz-legend__row {
+    display: grid;
+    grid-template-columns: 0.6rem minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.viz-legend__swatch {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 2px;
+}
+
+.viz-legend__name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--viz-ink);
+}
+
+.viz-legend__value {
+    color: var(--viz-ink-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- KHUNG BIỂU ĐỒ ---------- */
+
+.viz-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2xs);
+    margin-bottom: var(--space-2xs);
+}
+
+.viz-card__title {
+    margin: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    min-width: 0;
+}
+
+.viz-card__note {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--viz-ink-muted);
+}
+
+/*
+ * BẢNG SỐ ĐI KÈM — bắt buộc, không phải tuỳ chọn.
+ *
+ * Ba màu trong bộ này nằm dưới 3:1 so với nền sáng. Luật đền bù của
+ * bảng màu tham chiếu: khi đó phải có nhãn hiện rõ HOẶC một bảng số.
+ * Bảng còn phục vụ trình đọc màn hình và việc chép số đi chỗ khác.
+ */
+.viz-table {
+    width: 100%;
+    font-size: 0.8125rem;
+    margin-top: var(--space-2xs);
+}
+
+.viz-table th,
+.viz-table td {
+    padding: 0.25rem 0.4rem;
+    border-bottom: 1px solid var(--viz-grid);
+}
+
+.viz-table td:not(:first-child),
+.viz-table th:not(:first-child) {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.viz-details > summary {
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: var(--viz-ink-muted);
+    margin-top: var(--space-2xs);
+}

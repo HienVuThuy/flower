@@ -34,12 +34,136 @@
             Xuất theo ĐÚNG kỳ đang xem, không phải kỳ mặc định — tệp tải
             về phải khớp với những gì admin vừa nhìn thấy trên màn hình.
         --}}
-        <a href="{{ route('admin.analytics.export', ['ky' => $period]) }}"
+        <a href="{{ route('admin.analytics.export-form', ['ky' => $period]) }}"
            class="btn btn-sm btn-outline-admin">
-            Xuất CSV
+            Xuất dữ liệu…
         </a>
     </div>
 </div>
+
+{{--
+    ============================================================
+    PHẦN A — TIỀN VÀ ĐƠN HÀNG
+    ============================================================
+    Đặt TRÊN CÙNG, có chủ ý. Đây là câu hỏi người mở trang này hỏi
+    trước: cửa hàng bán được bao nhiêu, và đang lên hay đang xuống.
+    Phễu chuyển đổi và hành vi là để GIẢI THÍCH con số đó, nên chúng
+    đứng sau.
+--}}
+<h2 class="admin-section-title">A. Tiền và đơn hàng</h2>
+
+<div class="row g-3 mb-4">
+
+    <div class="col-lg-7">
+        <div class="admin-panel p-4 h-100">
+            {{--
+                HAI PHÉP ĐO KHÁC ĐƠN VỊ THÌ VẼ HAI BIỂU ĐỒ, tuyệt đối
+                không chồng lên một khung với hai trục dọc.
+
+                Trục kép là cách dễ nhất để nói dối bằng biểu đồ: kéo
+                giãn một trục là hai đường cắt nhau ở bất cứ đâu người
+                vẽ muốn, và người đọc không có cách nào biết.
+
+                Hai biểu đồ chồng dọc, DÙNG CHUNG trục ngày, thì so sánh
+                vẫn dễ mà không có chỗ nào để bóp méo.
+            --}}
+            <x-admin.chart.line
+                :points="$revenueDaily->map(fn ($d) => ['label' => $d['label'], 'value' => $d['revenue']])"
+                title="Doanh thu theo ngày"
+                note="Chỉ tính đơn đã giao"
+                format="tien"
+                :slot="1" />
+
+            <hr class="my-3">
+
+            <x-admin.chart.line
+                :points="$revenueDaily->map(fn ($d) => ['label' => $d['label'], 'value' => $d['orders']])"
+                title="Số đơn đã giao theo ngày"
+                :slot="2" />
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="admin-panel p-4 h-100 d-flex flex-column gap-3">
+            @php
+                /*
+                 * THANG THỨ TỰ cho các bước trong quy trình, KHÔNG phải
+                 * bộ màu danh mục.
+                 *
+                 * Chờ xác nhận → Đã xác nhận → Đang chuẩn bị → Đang giao
+                 * → Hoàn thành là một dãy CÓ TRƯỚC CÓ SAU. Tô mỗi bước
+                 * một màu khác hệ là vứt bỏ thông tin thứ tự đó.
+                 *
+                 * "Đã huỷ" KHÔNG nằm trong dãy — nó là kết cục xấu, nên
+                 * dùng màu trạng thái và luôn đi kèm nhãn chữ.
+                 */
+                $mauTrangThai = [
+                    'pending' => 'var(--viz-step-1)',
+                    'confirmed' => 'var(--viz-step-2)',
+                    'preparing' => 'var(--viz-step-3)',
+                    'shipping' => 'var(--viz-step-4)',
+                    'completed' => 'var(--viz-step-5)',
+                    'cancelled' => 'var(--viz-huy)',
+                ];
+            @endphp
+
+            <x-admin.chart.donut
+                title="Cơ cấu trạng thái đơn"
+                note="Toàn bộ đơn trong kỳ"
+                unit="đơn"
+                :slices="$statusMix->map(fn ($r) => [
+                    'label' => $r['status']->label(),
+                    'value' => $r['total'],
+                    'color' => $mauTrangThai[$r['status']->value] ?? 'var(--viz-step-3)',
+                ])" />
+
+            <x-admin.chart.donut
+                title="Hình thức thanh toán"
+                note="Đếm theo số đơn"
+                unit="đơn"
+                :slices="$paymentMix->map(fn ($r, $i) => [
+                    'label' => $r['method']->label(),
+                    'value' => $r['total'],
+                    'color' => $i === 0 ? 'var(--viz-1)' : 'var(--viz-2)',
+                ])" />
+        </div>
+    </div>
+
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="admin-panel p-4 h-100">
+            <x-admin.chart.bars
+                title="Khách mua nhiều nhất"
+                note="Theo doanh thu, chỉ đơn đã giao"
+                format="tien"
+                empty="Chưa có đơn đã giao của khách có tài khoản."
+                :rows="$topCustomers->map(fn ($r) => [
+                    'label' => $r['name'],
+                    'value' => $r['revenue'],
+                    'meta' => $r['orders'] . ' đơn',
+                ])" />
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="admin-panel p-4 h-100">
+            <x-admin.chart.bars
+                title="Mã giảm giá đã dùng"
+                note="Theo tổng tiền đã giảm"
+                format="tien"
+                empty="Chưa có đơn nào dùng mã trong kỳ."
+                :rows="$couponUsage->map(fn ($r) => [
+                    'label' => $r['code'],
+                    'value' => $r['discount'],
+                    'meta' => $r['orders'] . ' đơn',
+                ])" />
+        </div>
+    </div>
+</div>
+
+<h2 class="admin-section-title">B. Hành vi khách hàng</h2>
 
 {{-- ============ 1. PHỄU CHUYỂN ĐỔI ============ --}}
 <div class="admin-panel p-4 mb-4">

@@ -3,6 +3,7 @@
 namespace App\Services\Analytics;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\UserEventType;
 use App\Models\Order;
 use App\Models\UserEvent;
@@ -308,6 +309,160 @@ class AnalyticsService
             // trị trung bình, và null khác 0 — giao diện hiển thị khác nhau.
             'average' => $completed > 0 ? $revenue / $completed : null,
         ];
+    }
+
+    /**
+     * Doanh thu và số đơn theo từng NGÀY trong kỳ đang chọn.
+     * ============================================================
+     * TRẢ VỀ ĐỦ MỌI NGÀY, kể cả ngày không có đơn nào.
+     *
+     * Nhóm bằng SQL rồi vẽ thẳng kết quả thì ngày không có đơn biến mất
+     * khỏi trục — và đường biểu đồ nối thẳng từ ngày 3 sang ngày 7, đọc
+     * ra như bốn ngày đó bán đều đều. Ngày trống PHẢI là số 0 nhìn thấy
+     * được, không phải một khoảng trống.
+     *
+     * "Toàn bộ" thì lấy 90 ngày gần nhất: một đường 3 năm nén vào 600px
+     * không đọc được gì, và câu hỏi của biểu đồ này là "gần đây thế nào".
+     *
+     * @return Collection<int, array{date: string, label: string, revenue: float, orders: int}>
+     */
+    public function revenueByDay(int $toiDa = 90): Collection
+    {
+        $tu = ($this->since ?? now()->subDays($toiDa - 1))->copy()->startOfDay();
+        $den = ($this->until ?? now())->copy()->endOfDay();
+
+        // Chặn trần: kỳ "Toàn bộ" của một cửa hàng chạy vài năm sẽ sinh
+        // ra hàng nghìn cột.
+        if ($tu->diffInDays($den) > $toiDa) {
+            $tu = $den->copy()->subDays($toiDa - 1)->startOfDay();
+        }
+
+        $rows = Order::query()
+            ->whereBetween('created_at', [$tu, $den])
+            ->where('status', OrderStatus::Completed)
+            ->selectRaw('DATE(created_at) as d, COUNT(*) as so_don, SUM(grand_total) as tien')
+            ->groupBy('d')
+            ->get()
+            ->keyBy('d');
+
+        $soNgay = (int) $tu->diffInDays($den) + 1;
+
+        return collect(range(0, $soNgay - 1))->map(function (int $i) use ($tu, $rows) {
+            $ngay = $tu->copy()->addDays($i);
+            $key = $ngay->toDateString();
+            $row = $rows->get($key);
+
+            return [
+                'date' => $key,
+                'label' => $ngay->format('d/m'),
+                'revenue' => (float) ($row->tien ?? 0),
+                'orders' => (int) ($row->so_don ?? 0),
+            ];
+        });
+    }
+
+    /**
+     * Cơ cấu đơn theo trạng thái.
+     *
+     * TRẢ VỀ ĐỦ MỌI TRẠNG THÁI, kể cả trạng thái không có đơn nào — biểu
+     * đồ tròn và bảng bên cạnh phải cùng một danh sách, nếu không thì
+     * chú giải nhảy chỗ mỗi lần đổi kỳ và người đọc mất mốc so sánh.
+     *
+     * @return Collection<int, array{status: OrderStatus, total: int, revenue: float}>
+     */
+    public function statusBreakdown(): Collection
+    {
+        $rows = $this->applyWindow(Order::query(), 'created_at')
+            ->selectRaw('status, COUNT(*) as tong, SUM(grand_total) as tien')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        return collect(OrderStatus::cases())->map(fn (OrderStatus $tt) => [
+            'status' => $tt,
+            'total' => (int) ($rows->get($tt->value)->tong ?? 0),
+            'revenue' => (float) ($rows->get($tt->value)->tien ?? 0),
+        ]);
+    }
+
+    /**
+     * Cơ cấu theo hình thức thanh toán.
+     *
+     * ĐẾM MỌI ĐƠN, doanh thu chỉ tính đơn đã giao — hai câu hỏi khác
+     * nhau: "khách chọn cách nào" và "cách nào mang về tiền".
+     *
+     * @return Collection<int, array{method: PaymentMethod, total: int, revenue: float}>
+     */
+    public function paymentMix(): Collection
+    {
+        $dem = $this->applyWindow(Order::query(), 'created_at')
+            ->selectRaw('payment_method, COUNT(*) as tong')
+            ->groupBy('payment_method')
+            ->pluck('tong', 'payment_method');
+
+        $tien = $this->applyWindow(Order::query(), 'created_at')
+            ->where('status', OrderStatus::Completed)
+            ->selectRaw('payment_method, SUM(grand_total) as tien')
+            ->groupBy('payment_method')
+            ->pluck('tien', 'payment_method');
+
+        return collect(PaymentMethod::cases())->map(fn (PaymentMethod $ht) => [
+            'method' => $ht,
+            'total' => (int) ($dem[$ht->value] ?? 0),
+            'revenue' => (float) ($tien[$ht->value] ?? 0),
+        ]);
+    }
+
+    /**
+     * Khách mua nhiều nhất trong kỳ.
+     *
+     * CHỈ ĐƠN ĐÃ GIAO, và bỏ qua khách vãng lai (`user_id` NULL): gom
+     * mọi đơn không tài khoản thành "một khách" là dựng ra một khách
+     * hàng không có thật, thường đứng đầu bảng.
+     *
+     * @return Collection<int, array{name: string, email: ?string, orders: int, revenue: float}>
+     */
+    public function topCustomers(int $limit = 8): Collection
+    {
+        return $this->applyWindow(Order::query(), 'orders.created_at')
+            ->join('users', 'users.id', '=', 'orders.user_id')
+            ->where('orders.status', OrderStatus::Completed->value)
+            ->groupBy('users.id', 'users.name', 'users.email')
+            ->selectRaw('users.name, users.email, COUNT(*) as so_don, SUM(orders.grand_total) as tien')
+            ->orderByDesc('tien')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($r) => [
+                'name' => (string) $r->name,
+                'email' => $r->email,
+                'orders' => (int) $r->so_don,
+                'revenue' => (float) $r->tien,
+            ]);
+    }
+
+    /**
+     * Mã giảm giá đã dùng trong kỳ, kèm tiền đã giảm.
+     *
+     * Đọc từ BẢN CHỤP trên đơn (`coupon_code`, `coupon_discount`) chứ
+     * không join sang bảng `coupons`: mã bị xoá sau đó thì đơn cũ vẫn
+     * phải kể được câu chuyện của nó.
+     *
+     * @return Collection<int, array{code: string, orders: int, discount: float}>
+     */
+    public function couponUsage(int $limit = 10): Collection
+    {
+        return $this->applyWindow(Order::query(), 'created_at')
+            ->whereNotNull('coupon_code')
+            ->groupBy('coupon_code')
+            ->selectRaw('coupon_code, COUNT(*) as so_don, SUM(coupon_discount) as giam')
+            ->orderByDesc('giam')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($r) => [
+                'code' => (string) $r->coupon_code,
+                'orders' => (int) $r->so_don,
+                'discount' => (float) $r->giam,
+            ]);
     }
 
     /**

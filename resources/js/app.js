@@ -21,6 +21,7 @@ import { initGhnAddress } from './ghn-address';
 import { initWishlist } from './wishlist';
 import { initJournalForm } from './journal-form';
 import { initAdminNav } from './admin/nav';
+import { initExportPicker } from './admin/export-picker';
 
 /*
  * Header đổi trạng thái khi cuộn — glass chỉ bật lúc cần (accent),
@@ -68,6 +69,7 @@ export function bootUi() {
     initGhnAddress();
     initWishlist();
     initJournalForm();
+    initExportPicker();
 }
 
 bootUi();

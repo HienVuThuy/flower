@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\UserEventType;
 use App\Http\Controllers\Controller;
 use App\Services\Analytics\AnalyticsService;
+use App\Services\Analytics\ReportSections;
+use App\Services\Analytics\ReportExporter;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -73,99 +75,84 @@ class AnalyticsController extends Controller
             // nó trả lời "gần đây có ai dùng không", khác câu hỏi của
             // các khối còn lại.
             'daily' => $this->analytics->dailyActivity(),
+
+            /*
+             * SỐ LIỆU CHO BIỂU ĐỒ — theo ĐÚNG kỳ đang chọn.
+             *
+             * Khác khối `daily` ngay trên: khối đó cố định 14 ngày vì nó
+             * trả lời một câu hỏi khác ("gần đây có ai dùng không").
+             * Mấy khối dưới đây phải đi theo ô chọn kỳ, nếu không thì
+             * biểu đồ và bảng số cạnh nó nói về hai khoảng thời gian
+             * khác nhau mà không có gì báo.
+             */
+            'revenueDaily' => $this->analytics->revenueByDay(),
+            'statusMix' => $this->analytics->statusBreakdown(),
+            'paymentMix' => $this->analytics->paymentMix(),
+            'topCustomers' => $this->analytics->topCustomers(),
+            'couponUsage' => $this->analytics->couponUsage(),
         ]);
     }
 
     /**
-     * Xuất báo cáo ra CSV.
+     * Trang CHỌN phần muốn xuất và định dạng.
      * ============================================================
-     * VÌ SAO CSV CHỨ KHÔNG PHẢI XLSX: xuất .xlsx cần thêm thư viện
-     * (PhpSpreadsheet, ~40MB phụ thuộc) chỉ để làm đúng một việc. CSV là
-     * văn bản thuần, Excel và Google Sheets đều mở trực tiếp, và sinh ra
-     * bằng hàm có sẵn của PHP.
+     * VÌ SAO CÓ MỘT BƯỚC CHỌN, thay vì một nút tải thẳng:
      *
-     * STREAM chứ không dựng chuỗi trong bộ nhớ: hiện dữ liệu còn nhỏ,
-     * nhưng bảng bán chạy sẽ dài ra theo thời gian, và một hàm xuất file
-     * ngốn bộ nhớ tỉ lệ thuận với dữ liệu là quả bom hẹn giờ.
+     * Bản trước xuất một tệp CỐ ĐỊNH gồm năm phần. Ai chỉ cần bảng bán
+     * chạy vẫn phải tải cả tệp rồi tự xoá bốn phần thừa; ai cần bảng
+     * khách hàng thì không có cách nào lấy.
+     *
+     * Danh sách phần lấy từ ReportSections — cùng một nơi mà đoạn ghi
+     * tệp đọc. Khai ở hai chỗ thì ô đánh dấu có phần mà tệp không có.
      */
-    public function export(Request $request): StreamedResponse
+    public function exportForm(Request $request): View
+    {
+        return view('admin.analytics.export', [
+            'period' => $this->period($request),
+            'periods' => AnalyticsService::PERIODS,
+            'sections' => ReportSections::danhSach(),
+            'formats' => ReportExporter::DINH_DANG,
+        ]);
+    }
+
+    /**
+     * Ghi tệp theo đúng những gì admin vừa chọn.
+     *
+     * KIỂM LẠI MỌI THỨ GỬI LÊN. `phan` là mảng mã đến từ trình duyệt —
+     * lọc qua danh sách hợp lệ chứ không đưa thẳng vào bộ dựng bảng.
+     */
+    public function export(Request $request, ReportSections $sections, ReportExporter $exporter): StreamedResponse
     {
         $period = $this->period($request);
         $this->analytics->forPeriod($period);
 
-        $funnel = $this->analytics->funnel();
-        $orders = $this->analytics->orderStats();
-        $topViewed = $this->analytics->topProducts(UserEventType::ProductView, 20);
-        $bestSellers = $this->analytics->bestSellers(20);
-        $searches = $this->analytics->topSearches(20);
+        $dinhDang = (string) $request->input('dinh_dang', 'csv');
 
-        $label = AnalyticsService::PERIODS[$period];
-        $filename = 'phan-tich-'.$period.'-'.now()->format('Ymd-His').'.csv';
+        if (! array_key_exists($dinhDang, ReportExporter::DINH_DANG)) {
+            $dinhDang = 'csv';
+        }
 
-        return response()->streamDownload(function () use ($funnel, $orders, $topViewed, $bestSellers, $searches, $label) {
-            $out = fopen('php://output', 'w');
+        $chon = array_values(array_intersect(
+            array_map('strval', (array) $request->input('phan', [])),
+            ReportSections::maHopLe(),
+        ));
 
-            /*
-             * BOM UTF-8 ở đầu tệp.
-             *
-             * Không có nó, Excel trên Windows đọc CSV theo bảng mã hệ
-             * thống và mọi tên sản phẩm tiếng Việt thành ký tự rác. Ba
-             * byte này là khác biệt giữa một tệp dùng được và một tệp
-             * người nhận phải tự đi dò bảng mã.
-             */
-            fwrite($out, "\xEF\xBB\xBF");
+        /*
+         * KHÔNG CHỌN GÌ THÌ XUẤT TẤT CẢ.
+         *
+         * Trả về một tệp rỗng là đúng chữ nhưng vô dụng: người dùng bấm
+         * "Tải về", nhận một tệp không có gì, và không biết mình đã quên
+         * bước nào. Giao diện cũng đã tích sẵn tất cả.
+         */
+        if ($chon === []) {
+            $chon = ReportSections::maHopLe();
+        }
 
-            fputcsv($out, ['Báo cáo phân tích', $label]);
-            fputcsv($out, ['Xuất lúc', now()->format('H:i d/m/Y')]);
-            fputcsv($out, []);
-
-            fputcsv($out, ['PHỄU CHUYỂN ĐỔI (đếm theo phiên)']);
-            fputcsv($out, ['Phiên có xem sản phẩm', $funnel['views']]);
-            fputcsv($out, ['Phiên có thêm vào giỏ', $funnel['carts']]);
-            fputcsv($out, ['Phiên có mua', $funnel['purchases']]);
-            // null nghĩa là mẫu số bằng 0 — ghi "không tính được" chứ
-            // không ghi 0, vì 0% và "chưa có dữ liệu" là hai chuyện khác.
-            fputcsv($out, ['Xem → Giỏ (%)', $funnel['view_to_cart'] ?? 'không tính được']);
-            fputcsv($out, ['Giỏ → Mua (%)', $funnel['cart_to_purchase'] ?? 'không tính được']);
-            fputcsv($out, []);
-
-            fputcsv($out, ['ĐƠN HÀNG']);
-            fputcsv($out, ['Tổng đơn', $orders['total']]);
-            fputcsv($out, ['Đã giao', $orders['completed']]);
-            fputcsv($out, ['Đã huỷ', $orders['cancelled']]);
-            fputcsv($out, ['Doanh thu (đơn đã giao)', $orders['revenue']]);
-            fputcsv($out, ['Giá trị đơn trung bình', $orders['average'] ?? 'chưa có đơn đã giao']);
-            fputcsv($out, []);
-
-            fputcsv($out, ['SẢN PHẨM ĐƯỢC XEM NHIỀU']);
-            fputcsv($out, ['Sản phẩm', 'Lượt xem']);
-
-            foreach ($topViewed as $row) {
-                // `product` là null khi sản phẩm đã bị xoá mà nhật ký còn
-                // — ghi rõ như vậy thay vì để ô trống không giải thích.
-                fputcsv($out, [$row['product']?->name ?? '(sản phẩm đã xoá)', $row['total']]);
-            }
-
-            fputcsv($out, []);
-            fputcsv($out, ['SẢN PHẨM BÁN CHẠY (đơn đã giao)']);
-            fputcsv($out, ['Sản phẩm', 'Số lượng', 'Doanh thu']);
-
-            foreach ($bestSellers as $row) {
-                fputcsv($out, [$row['name'], $row['quantity'], $row['revenue']]);
-            }
-
-            fputcsv($out, []);
-            fputcsv($out, ['TỪ KHOÁ TÌM KIẾM']);
-            fputcsv($out, ['Từ khoá', 'Lượt tìm']);
-
-            foreach ($searches as $row) {
-                fputcsv($out, [$row['term'], $row['total']]);
-            }
-
-            fclose($out);
-        }, $filename, [
-            'Content-Type' => 'text/csv; charset=UTF-8',
-        ]);
+        return $exporter->xuat(
+            $dinhDang,
+            $sections->nhieuBang($chon),
+            AnalyticsService::PERIODS[$period],
+        );
     }
 
     /**

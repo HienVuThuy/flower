@@ -937,7 +937,22 @@ Route::prefix('admin')
         Route::delete('goc-cay/{post}', [CommunityModerationController::class, 'destroy'])
             ->name('community.destroy');
 
-        Route::get('phan-tich/xuat-csv', [AnalyticsController::class, 'export'])
+        /*
+         * XUẤT DỮ LIỆU — hai bước: chọn rồi mới tải.
+         *
+         * Cả hai đều là GET vì đây là thao tác ĐỌC, không đổi gì trong
+         * hệ thống. Nhờ vậy đường dẫn kết quả chép và lưu dấu trang được
+         * — "doanh thu 30 ngày, dạng CSV" thành một liên kết gửi cho kế
+         * toán mỗi tháng.
+         *
+         * Đặt TRƯỚC route có tham số nào khác trong nhóm này không quan
+         * trọng ở đây (không có route 'phan-tich/{...}'), nhưng giữ hai
+         * đường cạnh nhau để lần sau thêm route con còn nhìn thấy.
+         */
+        Route::get('phan-tich/xuat', [AnalyticsController::class, 'exportForm'])
+            ->name('analytics.export-form');
+
+        Route::get('phan-tich/xuat/tai-ve', [AnalyticsController::class, 'export'])
             ->name('analytics.export');
 
         Route::get('reviews', [AdminReviewController::class, 'index'])

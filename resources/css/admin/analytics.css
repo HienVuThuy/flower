@@ -253,3 +253,75 @@
     font-weight: 400;
     color: var(--admin-ink-muted);
 }
+
+/* ---------- Tiêu đề phần ----------
+ *
+ * Trang phân tích nay dài và chia làm nhiều phần trả lời những câu hỏi
+ * khác nhau (tiền, hành vi, sản phẩm). Không có mốc chia thì nó đọc ra
+ * như một dãy khối rời rạc và người xem phải tự đoán khối nào thuộc câu
+ * hỏi nào.
+ */
+.admin-section-title {
+    margin: var(--space-md) 0 var(--space-2xs);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--admin-ink-muted);
+}
+
+.admin-section-title:first-of-type {
+    margin-top: 0;
+}
+
+/* ---------- Trang xuất dữ liệu ---------- */
+
+.export-list {
+    display: grid;
+    gap: var(--space-3xs);
+}
+
+.export-item {
+    display: grid;
+    grid-template-columns: 1.1rem minmax(0, 1fr);
+    align-items: start;
+    gap: 0.55rem;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    margin: 0;
+}
+
+.export-item:hover {
+    background: var(--admin-surface-alt);
+}
+
+.export-item:has(input:checked) {
+    border-color: var(--admin-accent);
+    background: var(--admin-accent-soft);
+}
+
+.export-item__body {
+    display: flex;
+    flex-direction: column;
+    /* min-width: 0 để phần chữ co được — ô lưới mặc định min-width: auto,
+       và khi ấy câu ghi chú dài đẩy cả hàng tràn ngang. */
+    min-width: 0;
+}
+
+.export-item__name {
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.export-item__note {
+    font-size: 0.75rem;
+    color: var(--admin-ink-muted);
+}
+
+/* Hai nút này chỉ chạy được nhờ JavaScript — không có JS thì ẩn đi,
+   thay vì bày ra một cái nút bấm vào không có gì xảy ra. */
+html:not(.has-js) .export-pick-all {
+    display: none;
+}
