@@ -152,7 +152,180 @@
     </div>
 </div>
 
-<h2 class="admin-section-title">B. Hành vi khách hàng</h2>
+{{--
+    ============================================================
+    PHẦN B — VẬN CHUYỂN: THU CỦA KHÁCH SO VỚI TRẢ GHN
+    ============================================================
+    Đặt ngay sau phần tiền vì nó LÀ tiền: mỗi đồng cửa hàng bù ship là
+    một đồng trừ thẳng vào doanh thu ở trên, mà doanh thu không cho thấy.
+--}}
+<h2 class="admin-section-title">B. Vận chuyển: phí thu của khách so với cước trả GHN</h2>
+
+@php
+    $tien = fn ($v) => \App\Services\Shop\Money::format($v);
+    $loai = $shipping['loai'];
+@endphp
+
+<div class="admin-panel p-4 mb-4">
+
+    @if($ghnSandbox)
+        {{--
+            NÓI TRƯỚC khi đưa ra bất kỳ con số nào.
+
+            Cổng thử của GHN dùng bảng giá thử. Không có dòng này thì một
+            con số "cửa hàng bù 14.900₫" đọc ra như tiền thật đã chi.
+        --}}
+        <div class="alert alert-warning py-2 px-3 small">
+            Đang nối <strong>cổng thử</strong> của GHN: cước dưới đây là cước thử, không phải tiền cửa hàng thật sự trả.
+        </div>
+    @endif
+
+    @if($shipping['van_don'] === 0)
+        <p class="analytics-empty mb-0">Chưa có vận đơn GHN nào cho các đơn đặt trong kỳ này.</p>
+    @elseif($shipping['tinh_duoc'] === 0)
+        {{--
+            CÓ VẬN ĐƠN MÀ KHÔNG TÍNH ĐƯỢC CÁI NÀO — nói rõ vì sao.
+
+            In ba ô "thu 0₫ / trả 0₫ / bù 0₫" ở đây là nói "cửa hàng không
+            bù đồng nào", một câu hoàn toàn khác với "không có số liệu để
+            biết".
+        --}}
+        <p class="analytics-empty mb-2">
+            Có {{ $shipping['van_don'] }} vận đơn trong kỳ nhưng chưa vận đơn nào tính được khoản bù.
+        </p>
+    @else
+        <div class="row g-3 mb-3">
+            <div class="col-12 col-sm-4">
+                <x-admin.kpi label="Phí ship thu của khách"
+                             note="Trên {{ $shipping['tinh_duoc'] }} vận đơn tính được, {{ $shipping['mien_phi'] }} đơn miễn phí giao.">
+                    {{ $tien($shipping['thu']) }}
+                </x-admin.kpi>
+            </div>
+            <div class="col-12 col-sm-4">
+                <x-admin.kpi label="Cước trả GHN" note="Theo cước GHN báo lúc tạo vận đơn.">
+                    {{ $tien($shipping['tra']) }}
+                </x-admin.kpi>
+            </div>
+            <div class="col-12 col-sm-4">
+                @php $bu = bccomp($shipping['chenh'], '0', 2); @endphp
+                {{--
+                    NÓI BẰNG CHỮ chiều của chênh lệch.
+
+                    Một con số âm hay dương trần trụi bắt người đọc nhớ quy
+                    ước "trả trừ thu". Viết "cửa hàng bù" hay "thu dư" thì
+                    không ai đọc ngược được.
+                --}}
+                <x-admin.kpi :label="$bu > 0 ? 'Cửa hàng bù ship' : ($bu < 0 ? 'Phí ship thu dư' : 'Chênh lệch')"
+                             note="Cước trả GHN trừ phí thu của khách.">
+                    <span class="{{ $bu > 0 ? 'text-danger' : '' }}">
+                        {{ $tien(ltrim($shipping['chenh'], '-')) }}
+                    </span>
+                </x-admin.kpi>
+            </div>
+        </div>
+    @endif
+
+    {{--
+        NÓI ĐÃ LOẠI NHỮNG GÌ, và vì sao.
+
+        Tổng trên chỉ đúng cho những vận đơn còn lại. Không liệt kê phần
+        bị loại thì "bù 30.000₫" đọc như con số của cả kỳ.
+    --}}
+    @if($loai['nguoi_nhan_tra'] + $loai['da_huy'] + $loai['thieu_cuoc'] > 0 || $shipping['hoan_hang'] > 0)
+        <ul class="admin-page-subtitle small mb-0 ps-3">
+            @if($loai['nguoi_nhan_tra'] > 0)
+                <li>
+                    {{ $loai['nguoi_nhan_tra'] }} vận đơn <strong>người nhận trả cước</strong> không được tính:
+                    cửa hàng không trả GHN đồng nào cho chúng. Đây là các vận đơn tạo trước khi sửa người trả cước,
+                    khi người nhận có thể đã bị thu phí ship hai lần.
+                </li>
+            @endif
+            @if($loai['da_huy'] > 0)
+                <li>{{ $loai['da_huy'] }} vận đơn đã huỷ không được tính.</li>
+            @endif
+            @if($loai['thieu_cuoc'] > 0)
+                <li>{{ $loai['thieu_cuoc'] }} vận đơn GHN không báo cước lúc tạo, không được tính (không coi là 0₫).</li>
+            @endif
+            @if($shipping['hoan_hang'] > 0)
+                <li>
+                    {{ $shipping['hoan_hang'] }} vận đơn giao thất bại hoặc hoàn hàng: cước thật có thể cao hơn
+                    vì phí hoàn, mà GHN không trả con số đó qua API. Đối chiếu với bảng đối soát của GHN.
+                </li>
+            @endif
+        </ul>
+    @endif
+
+    @if($shippingMonths->isNotEmpty())
+        <div class="table-responsive mt-3">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Tháng</th>
+                        <th class="text-end">Vận đơn</th>
+                        <th class="text-end">Thu của khách</th>
+                        <th class="text-end">Trả GHN</th>
+                        <th class="text-end">Cửa hàng bù</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($shippingMonths as $m)
+                        <tr>
+                            {{-- '!' đặt ngày về 1: thiếu nó thì createFromFormat lấy NGÀY HÔM NAY
+                                 cho phần không khai, và vào ngày 31 thì "2026-02" tràn sang tháng 3. --}}
+                            <td>{{ \Illuminate\Support\Carbon::createFromFormat('!Y-m', $m['thang'])->format('m/Y') }}</td>
+                            <td class="text-end">{{ $m['don'] }}</td>
+                            <td class="text-end">{{ $tien($m['thu']) }}</td>
+                            <td class="text-end">{{ $tien($m['tra']) }}</td>
+                            <td class="text-end {{ bccomp($m['chenh'], '0', 2) > 0 ? 'text-danger' : '' }}">
+                                {{-- Âm nghĩa là THU DƯ: in có dấu trừ để cột cộng lại đúng. --}}
+                                {{ $tien($m['chenh']) }}
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
+    @if($shippingSubsidies->isNotEmpty())
+        <h3 class="h6 fw-bold mt-4 mb-2">Đơn bù ship nhiều nhất</h3>
+        <p class="admin-page-subtitle small">
+            Bù vì miễn phí giao, hay vì bảng phí theo tỉnh thấp hơn cước GHN? Hai nguyên nhân sửa ở hai chỗ khác nhau.
+        </p>
+
+        <div class="table-responsive">
+            <table class="table table-sm align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Đơn</th>
+                        <th>Tỉnh</th>
+                        <th class="text-end">Thu của khách</th>
+                        <th class="text-end">Trả GHN</th>
+                        <th class="text-end">Bù</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($shippingSubsidies as $d)
+                        <tr>
+                            <td>
+                                <a data-admin-link href="{{ route('admin.orders.show', $d['order']) }}">{{ $d['order']->order_number }}</a>
+                            </td>
+                            <td>{{ $d['order']->shipping_province }}</td>
+                            <td class="text-end">
+                                {{ bccomp($d['thu'], '0', 2) === 0 ? 'miễn phí' : $tien($d['thu']) }}
+                            </td>
+                            <td class="text-end">{{ $tien($d['tra']) }}</td>
+                            <td class="text-end text-danger">{{ $tien($d['chenh']) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+
+</div>
+
+<h2 class="admin-section-title">C. Hành vi khách hàng</h2>
 
 {{-- ============ 1. PHỄU CHUYỂN ĐỔI ============ --}}
 <div class="admin-panel p-4 mb-4">

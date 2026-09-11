@@ -2,6 +2,7 @@
 
 namespace App\Services\Shipping;
 
+use App\Enums\GhnFeePayer;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use Illuminate\Support\Facades\Log;
@@ -87,14 +88,18 @@ class GHNOrderService
             ];
         }
 
+        /*
+         * CỬA HÀNG TRẢ CƯỚC (payment_type_id = 1).
+         *
+         * Bản đầu gửi 2 — người nhận trả — với lý do "phí giao đã cộng
+         * vào tổng tiền khách thanh toán". Đó chính là lý do để KHÔNG
+         * chọn 2: khách đã trả phí ship cho cửa hàng rồi, GHN thu thêm
+         * của người nhận là thu hai lần. Xem App\Enums\GhnFeePayer.
+         */
+        $nguoiTra = GhnFeePayer::Shop;
+
         $response = $this->ghn->createOrder(array_merge([
-            /*
-             * payment_type_id = 2: NGƯỜI NHẬN trả cước.
-             *
-             * Đúng với cách cửa hàng đang bán — phí giao đã cộng vào
-             * tổng tiền khách thanh toán, nên GHN thu của người nhận.
-             */
-            'payment_type_id' => 2,
+            'payment_type_id' => $nguoiTra->ghnCode(),
             'note' => 'Đơn hàng '.$order->order_number,
 
             /*
@@ -137,7 +142,20 @@ class GHNOrderService
              * và chỉ giữ cả hai mới biết tháng này bù lỗ bao nhiêu.
              */
             $order->ghn_order_code = $response['data']['order_code'];
-            $order->ghn_total_fee = (int) ($response['data']['total_fee'] ?? 0);
+
+            /*
+             * GHN không báo cước thì để NULL, KHÔNG phải 0.
+             *
+             * 0 là "cước bằng không" — cộng vào báo cáo thì đơn này thành
+             * đơn cửa hàng lãi trọn phí ship của khách. Và ghi đè cả con
+             * số báo giá lúc đặt: báo giá cũ không phải cước của vận đơn
+             * này, giữ lại là để một con số sai trông như số liệu thật.
+             */
+            $cuoc = $response['data']['total_fee'] ?? null;
+            $order->ghn_total_fee = is_numeric($cuoc) ? (int) $cuoc : null;
+
+            // Chụp lại người trả cước ĐÚNG như đã gửi GHN, cùng lúc với mã.
+            $order->ghn_fee_payer = $nguoiTra;
             $order->shipping_status = 'ready_to_pick';
             $order->save();
 

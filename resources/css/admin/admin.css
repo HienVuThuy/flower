@@ -478,12 +478,34 @@
 .admin-detail-list dt {
     font-weight: 400;
     color: var(--admin-ink-muted);
-    flex-shrink: 0;
+
+    /*
+     * NHÃN RỘNG THEO CHỮ, TỐI ĐA 60% DÒNG; Ô GIÁ TRỊ LẤY PHẦN CÒN LẠI.
+     *
+     * Bản đầu đặt `flex-shrink: 0` cho nhãn. Với nhãn dài như "Trong đó
+     * thuế VAT (8%, đã gồm trong tổng)", nhãn giữ nguyên bề rộng và đẩy
+     * SỐ TIỀN THUẾ ra ngoài khung 127px — đo trên trang đơn thật, con số
+     * thuế không nhìn thấy được.
+     *
+     * Hai cách vá thử trước đều hỏng ở chỗ khác, ghi lại để khỏi thử lại:
+     *   - cho nhãn co đều: "Địa chỉ" gãy làm hai dòng cạnh địa chỉ dài;
+     *   - đặt sàn 7rem cho nhãn: nhãn "Email" cũng chiếm 112px, và email
+     *     dài tràn khung trên màn điện thoại.
+     */
+    max-width: 60%;
 }
 
 .admin-detail-list dd {
     margin: 0;
     text-align: right;
+
+    /*
+     * Bề rộng gốc 0, giãn lấp phần còn lại. Nhãn ngắn thì ô giá trị rộng
+     * gần hết dòng (địa chỉ xuống dòng trong đó, nhãn vẫn một dòng); nhãn
+     * dài thì dừng ở 60% và ô giá trị vẫn không bao giờ hẹp hơn chính nội
+     * dung không gãy được của nó — số tiền luôn nằm trọn trong khung.
+     */
+    flex: 1 1 0;
 }
 
 /* ============ CON SỐ LỚN (doanh thu) ============ */

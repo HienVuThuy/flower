@@ -67,6 +67,17 @@ class ReportSections
                 'note' => 'Chỉ khách có tài khoản; đơn khách vãng lai không gom được.',
             ],
 
+            'van-chuyen' => [
+                'label' => 'Phí ship thu của khách so với cước trả GHN, theo tháng',
+                'group' => 'Vận chuyển',
+                'note' => 'Chỉ vận đơn cửa hàng trả cước, chưa huỷ, có số liệu cước. Cước theo lúc tạo vận đơn, chưa gồm phí hoàn.',
+            ],
+            'bu-ship' => [
+                'label' => 'Đơn cửa hàng bù ship',
+                'group' => 'Vận chuyển',
+                'note' => 'Từng đơn có cước GHN cao hơn phí thu của khách, bù nhiều nhất trước.',
+            ],
+
             'pheu' => [
                 'label' => 'Phễu chuyển đổi',
                 'group' => 'Hành vi khách hàng',
@@ -124,6 +135,8 @@ class ReportSections
             'thanh-toan' => $this->thanhToan($nhan),
             'ma-giam-gia' => $this->maGiamGia($nhan),
             'khach-hang' => $this->khachHang($nhan),
+            'van-chuyen' => $this->vanChuyen($nhan),
+            'bu-ship' => $this->buShip($nhan),
             'pheu' => $this->pheu($nhan),
             'san-pham-xem' => $this->sanPhamXem($nhan),
             'tu-khoa' => $this->tuKhoa($nhan),
@@ -210,6 +223,51 @@ class ReportSections
             'columns' => ['Khách hàng', 'Email', 'Số đơn', 'Doanh thu'],
             'rows' => $this->analytics->topCustomers(100)
                 ->map(fn ($r) => [$r['name'], $r['email'], $r['orders'], $r['revenue']])
+                ->all(),
+        ];
+    }
+
+    private function vanChuyen(string $nhan): array
+    {
+        $tong = $this->analytics->shippingCost();
+
+        $dong = $this->analytics->shippingCostByMonth()
+            ->map(fn ($m) => [$m['thang'], $m['don'], $m['thu'], $m['tra'], $m['chenh']])
+            ->all();
+
+        /*
+         * DÒNG TỔNG, rồi DÒNG GHI CHÚ cho phần bị loại.
+         *
+         * Tệp xuất ra bị mở ở chỗ không có giao diện giải thích. Không
+         * ghi số vận đơn bị loại ngay trong tệp thì người đọc bảng tính
+         * tưởng tổng là của cả kỳ.
+         */
+        $dong[] = ['Tổng', $tong['tinh_duoc'], $tong['thu'], $tong['tra'], $tong['chenh']];
+        $dong[] = ['Không tính: người nhận trả cước', $tong['loai']['nguoi_nhan_tra'], null, null, null];
+        $dong[] = ['Không tính: vận đơn đã huỷ', $tong['loai']['da_huy'], null, null, null];
+        $dong[] = ['Không tính: GHN không báo cước', $tong['loai']['thieu_cuoc'], null, null, null];
+
+        return [
+            'label' => $nhan,
+            'columns' => ['Tháng', 'Số vận đơn', 'Thu của khách', 'Trả GHN', 'Cửa hàng bù (âm = thu dư)'],
+            'rows' => $dong,
+        ];
+    }
+
+    private function buShip(string $nhan): array
+    {
+        return [
+            'label' => $nhan,
+            'columns' => ['Mã đơn', 'Mã vận đơn', 'Tỉnh', 'Thu của khách', 'Trả GHN', 'Cửa hàng bù'],
+            'rows' => $this->analytics->shippingSubsidies(1000)
+                ->map(fn ($d) => [
+                    $d['order']->order_number,
+                    $d['order']->ghn_order_code,
+                    $d['order']->shipping_province,
+                    $d['thu'],
+                    $d['tra'],
+                    $d['chenh'],
+                ])
                 ->all(),
         ];
     }

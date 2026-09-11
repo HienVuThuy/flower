@@ -173,8 +173,9 @@ class OrderService
              */
             'to_district_id' => $basket->toDistrictId,
             'to_ward_code' => $basket->toWardCode,
+            // Không hỏi được GHN thì NULL ("chưa biết"), không phải 0.
             'ghn_total_fee' => app(\App\Services\Shipping\ShippingQuote::class)
-                ->ghnFee($basket, $basket->toDistrictId, $basket->toWardCode) ?? 0,
+                ->ghnFee($basket, $basket->toDistrictId, $basket->toWardCode),
             'grand_total' => $grandTotal,
 
             /*

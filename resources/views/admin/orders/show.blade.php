@@ -439,9 +439,26 @@
                         bao nhiêu tiền ship.
                     --}}
                     <p class="admin-page-subtitle mb-3">
-                        Cước GHN: <x-site.money :amount="$order->ghn_total_fee" />
+                        @if($order->ghn_total_fee === null)
+                            {{-- NULL là "GHN không báo cước", KHÁC 0₫. --}}
+                            Cước GHN: chưa có số liệu
+                        @else
+                            Cước GHN: <x-site.money :amount="$order->ghn_total_fee" />
+                        @endif
                         &middot; thu của khách: <x-site.money :amount="(float) $order->shipping_fee" />
-                        @if($order->ghn_total_fee > (float) $order->shipping_fee)
+
+                        @if($order->ghn_fee_payer === \App\Enums\GhnFeePayer::Buyer)
+                            {{--
+                                VẬN ĐƠN NGƯỜI NHẬN TRẢ CƯỚC: không có khoản "cửa
+                                hàng bù" nào, vì cửa hàng không trả GHN. Ngược lại,
+                                người nhận có thể đã bị thu phí ship hai lần — nói
+                                ra để nhân viên biết mà kiểm tra với khách.
+                            --}}
+                            <span class="d-block text-danger mt-1">
+                                Vận đơn này người nhận trả cước cho GHN, trong khi khách đã trả phí ship cho cửa hàng.
+                                Kiểm tra xem shipper có thu thêm của khách không.
+                            </span>
+                        @elseif($order->ghn_total_fee !== null && $order->ghn_total_fee > (float) $order->shipping_fee)
                             <span class="text-danger">
                                 (cửa hàng bù <x-site.money :amount="$order->ghn_total_fee - (float) $order->shipping_fee" />)
                             </span>

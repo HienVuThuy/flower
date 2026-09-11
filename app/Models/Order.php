@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\GhnFeePayer;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -111,6 +112,18 @@ class Order extends Model
             'shipping_tax_amount' => 'decimal:2',
             'ghn_expected_from' => 'datetime',
             'ghn_expected_to' => 'datetime',
+
+            /*
+             * null = CHƯA CÓ SỐ LIỆU CƯỚC, khác 0₫. Xem migration
+             * record_ghn_fee_payer_on_orders_table.
+             */
+            'ghn_total_fee' => 'integer',
+
+            /*
+             * Ai trả cước cho GHN. KHÔNG nằm trong $fillable: nó chỉ được
+             * ghi bởi GHNOrderService, đúng lúc gửi vận đơn đi.
+             */
+            'ghn_fee_payer' => GhnFeePayer::class,
         ];
     }
 

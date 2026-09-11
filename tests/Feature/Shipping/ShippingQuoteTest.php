@@ -189,8 +189,16 @@ class ShippingQuoteTest extends TestCase
         $this->assertGreaterThan(0, (float) $order->shipping_fee,
             'Không được giao miễn phí chỉ vì GHN im lặng.');
 
-        $this->assertSame(0, $order->ghn_total_fee,
-            'Chưa hỏi được GHN thì cước GHN là 0, không bịa ra một con số.');
+        /*
+         * NULL, KHÔNG PHẢI 0 — đảo lại quyết định cũ.
+         *
+         * Bản trước đòi 0 ở đây với lý do "không bịa ra một con số". Nhưng
+         * 0 CŨNG là một con số: "cước bằng không". Báo cáo cước cộng nó
+         * vào thì đơn này thành đơn cửa hàng lãi trọn phí ship của khách.
+         * Xem migration record_ghn_fee_payer_on_orders_table.
+         */
+        $this->assertNull($order->ghn_total_fee,
+            'Chưa hỏi được GHN thì cước GHN là "chưa biết" (NULL), không phải 0₫.');
     }
 
     #[Test]

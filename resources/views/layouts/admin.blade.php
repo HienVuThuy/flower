@@ -57,7 +57,7 @@
         <nav class="d-flex flex-column gap-1">
             <a data-admin-link href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'is-active' : '' }}">
                 <x-site.icon name="speedometer2" />
-                <span>Dashboard</span>
+                <span>Tổng quan</span>
             </a>
         </nav>
 

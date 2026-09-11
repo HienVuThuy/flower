@@ -42,6 +42,17 @@ class GHNService
         $this->shopId = (int) config('services.ghn.shop_id', 0);
     }
 
+    /**
+     * Đang nối cổng THỬ của GHN hay không.
+     *
+     * Cước trên cổng thử là bảng giá thử. Báo cáo cước mà không nói điều
+     * này thì người đọc tưởng đó là tiền cửa hàng thật sự trả.
+     */
+    public function isSandbox(): bool
+    {
+        return str_contains($this->baseUrl, 'dev-online-gateway');
+    }
+
     /** Đã khai đủ token và shop id chưa. */
     public function configured(): bool
     {

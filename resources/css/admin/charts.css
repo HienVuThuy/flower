@@ -176,16 +176,43 @@
 
 /* ---------- BÁNH VÒNG ---------- */
 
+.viz-card {
+    container: viz-card / inline-size;
+}
+
+/*
+ * HÌNH TRÒN VÀ CHÚ GIẢI: XẾP CHỒNG, chỉ đặt cạnh nhau khi KHUNG đủ rộng.
+ *
+ * Bản đầu đặt cạnh nhau theo bề rộng MÀN HÌNH (@media). Nhưng biểu đồ
+ * nằm trong cột 5/12, nên trên màn máy tính khung chỉ còn 231px: hình
+ * chiếm 136px, chú giải còn 79px, và tên đo được 0-15px. "Đã xác nhận",
+ * "Đang chuẩn bị", "Đã giao" cùng hiện thành "Đ." — ba nhãn y hệt nhau,
+ * tức là chú giải mất đúng việc duy nhất của nó.
+ *
+ * @container đo KHUNG CỦA CHÍNH BIỂU ĐỒ, nên cùng một component đặt ở
+ * cột rộng hay cột hẹp đều tự chọn đúng.
+ */
 .viz-donut {
     display: grid;
-    grid-template-columns: minmax(0, 8.5rem) 1fr;
+    grid-template-columns: 1fr;
+    justify-items: center;
     align-items: center;
     gap: var(--space-sm);
 }
 
-@media (max-width: 480px) {
+.viz-donut > svg {
+    width: 100%;
+    max-width: 8.5rem;
+}
+
+.viz-donut > .viz-legend {
+    justify-self: stretch;
+}
+
+@container viz-card (min-width: 24rem) {
     .viz-donut {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 8.5rem) 1fr;
+        justify-items: stretch;
     }
 }
 
@@ -246,9 +273,15 @@
 
 .viz-legend__name {
     min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+
+    /*
+     * XUỐNG DÒNG, KHÔNG CẮT BẰNG DẤU BA CHẤM.
+     *
+     * Tên trong chú giải là kênh nhận diện duy nhất ngoài màu. Cắt nó đi
+     * thì người mù màu, và cả người không mù màu khi hai nhãn cùng bắt
+     * đầu bằng "Đ", không còn cách nào biết miếng nào là miếng nào.
+     */
+    overflow-wrap: anywhere;
     color: var(--viz-ink);
 }
 

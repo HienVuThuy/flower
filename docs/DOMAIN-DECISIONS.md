@@ -6663,3 +6663,81 @@ kho. Riêng "Toàn bộ" đúng vì khoá `'all'` không phải chữ số.
 
 **Số kiểu Anh.** Phần so sánh kỳ in "so với 13,810,000 kỳ trước" ngay dưới
 "7.450.000₫". Giờ in kiểu Việt, và chỉ số tiền có đơn vị.
+
+---
+
+## QĐ-220. Cửa hàng trả cước GHN, không phải người nhận
+
+Vận đơn gửi GHN `payment_type_id = 1` (cửa hàng trả). Bản đầu gửi `2` (người
+nhận trả) với lý do "phí giao đã cộng vào tổng tiền khách thanh toán" — đó
+chính là lý do để **không** chọn 2:
+
+- Đơn MoMo: khách trả phí ship qua MoMo, shipper tới cửa đòi thêm cước.
+- Đơn COD: tiền thu hộ (`grand_total`) đã gồm phí ship, shipper thu thêm cước.
+- Đơn miễn phí giao: cửa hàng hứa miễn, shipper vẫn thu của người nhận.
+
+Người trả được **chụp lại trên từng đơn** (`orders.ghn_fee_payer`) ngay lúc
+gửi vận đơn. Ba vận đơn tạo trước khi sửa được điền `buyer` — giá trị viết
+cứng từ ngày có tính năng, và API chi tiết vận đơn của GHN xác nhận
+`payment_type_id: 2`. Trang chi tiết những đơn đó cảnh báo nhân viên kiểm
+tra xem khách có bị thu hai lần không.
+
+Nếu tài liệu hướng dẫn của môn học ghi `payment_type_id = 2`, đây là một
+trong những chỗ "hơi ngược cần điều chỉnh".
+
+---
+
+## QĐ-221. Cước GHN: NULL là "chưa biết", không phải 0₫
+
+`orders.ghn_total_fee` đổi từ `integer default 0` sang nullable, và 40 số 0
+có sẵn thành NULL. GHN không bao giờ tính cước 0₫ cho một kiện thật, nên mọi
+số 0 cũ đều mang nghĩa "không hỏi được GHN". Rollback đổi ngược lại, không
+mất thông tin.
+
+Đảo lại quyết định cũ trong `ShippingQuoteTest`, vốn đòi 0 "để không bịa ra
+một con số". 0 **cũng là** một con số: báo cáo cộng nó vào thì đơn đó thành
+đơn cửa hàng lãi trọn phí ship của khách.
+
+Tạo vận đơn mà GHN không báo `total_fee` thì cũng ghi NULL, và **đè lên** báo
+giá lúc đặt — báo giá cũ không phải cước của vận đơn này.
+
+---
+
+## QĐ-222. Báo cáo cước ship chỉ tính vận đơn cửa hàng thật sự trả
+
+Trang Phân tích có phần mới **B. Vận chuyển** (phần hành vi khách lùi thành
+C), và phần xuất dữ liệu có `van-chuyen` (theo tháng) và `bu-ship` (từng đơn).
+
+Một định nghĩa duy nhất cho "vận đơn tính được cước"
+(`AnalyticsService::vanDonTinhDuocCuoc()`): có mã vận đơn, **cửa hàng trả
+cước**, chưa huỷ, có số liệu cước. Ba loại bị loại được **đếm và nói ra**
+trên màn hình lẫn trong tệp xuất — không nói thì tổng đọc như của cả kỳ.
+
+Khi có vận đơn mà không vận đơn nào tính được (đúng tình trạng dữ liệu thật
+lúc làm: 3 vận đơn, cả 3 người nhận trả), giao diện **không** in "bù 0₫" —
+câu đó nghĩa là "không bù đồng nào", khác hẳn "không có số liệu".
+
+Giới hạn nói thẳng trên giao diện:
+
+- Cước là con số GHN báo **lúc tạo vận đơn**. API chi tiết vận đơn không trả
+  lại cước, nên phí hoàn hàng và điều chỉnh khối lượng không có ở đây; đơn
+  giao thất bại/hoàn hàng được đếm riêng và nhắc đối chiếu bảng đối soát GHN.
+- Đang nối **cổng thử** của GHN thì cước là cước thử (`GHNService::isSandbox()`).
+
+---
+
+## QĐ-223. Chú giải và nhãn không bao giờ bị cắt mất nghĩa
+
+**Chú giải biểu đồ tròn** xếp cạnh hình theo bề rộng *màn hình*, nhưng biểu đồ
+nằm trong cột 5/12 — khung 231px, tên chỉ còn 0–15px, và "Đã xác nhận",
+"Đang chuẩn bị", "Đã giao" cùng hiện thành "Đ.". Giờ xếp theo bề rộng *khung
+của chính biểu đồ* (`@container`), và tên xuống dòng thay vì cắt bằng dấu ba
+chấm: tên là kênh nhận diện duy nhất ngoài màu.
+
+**Danh sách chi tiết** (`.admin-detail-list`): nhãn từng `flex-shrink: 0`, nên
+nhãn dài "Trong đó thuế VAT (8%, đã gồm trong tổng)" đẩy số tiền thuế ra ngoài
+khung 127px — không nhìn thấy. Giờ nhãn rộng theo chữ, tối đa 60% dòng; ô giá
+trị lấy phần còn lại. Hai cách vá thử trước (cho nhãn co đều; đặt sàn 7rem)
+đều hỏng chỗ khác và được ghi lại trong CSS.
+
+Thanh bên đổi "Dashboard" thành "Tổng quan" cho khớp tiêu đề trang.

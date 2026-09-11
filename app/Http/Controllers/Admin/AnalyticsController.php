@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Analytics\AnalyticsService;
 use App\Services\Analytics\ReportSections;
 use App\Services\Analytics\ReportExporter;
+use App\Services\Shipping\GHNService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -26,7 +27,7 @@ class AnalyticsController extends Controller
     ) {
     }
 
-    public function index(Request $request): View
+    public function index(Request $request, GHNService $ghn): View
     {
         $period = $this->period($request);
 
@@ -90,6 +91,11 @@ class AnalyticsController extends Controller
             'paymentMix' => $this->analytics->paymentMix(),
             'topCustomers' => $this->analytics->topCustomers(),
             'couponUsage' => $this->analytics->couponUsage(),
+
+            'shipping' => $this->analytics->shippingCost(),
+            'shippingMonths' => $this->analytics->shippingCostByMonth(),
+            'shippingSubsidies' => $this->analytics->shippingSubsidies(),
+            'ghnSandbox' => $ghn->isSandbox(),
         ]);
     }
 

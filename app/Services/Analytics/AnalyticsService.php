@@ -2,8 +2,10 @@
 
 namespace App\Services\Analytics;
 
+use App\Enums\GhnFeePayer;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
+use App\Enums\ShippingStatus;
 use App\Enums\UserEventType;
 use App\Models\Order;
 use App\Models\UserEvent;
@@ -537,6 +539,160 @@ class AnalyticsService
                 'quantity' => (int) $r->qty,
                 'revenue' => (float) $r->revenue,
             ]);
+    }
+
+    /* ================= VẬN CHUYỂN ================= */
+
+    /**
+     * PHÍ SHIP THU CỦA KHÁCH so với CƯỚC TRẢ GHN, trong kỳ.
+     * ============================================================
+     * Trả lời câu "tháng này cửa hàng bù bao nhiêu tiền ship". Chênh lệch
+     * dương là cửa hàng bù (miễn phí giao, hoặc bảng phí theo tỉnh thấp
+     * hơn cước GHN); âm là phí thu dư.
+     *
+     * CHỈ TÍNH VẬN ĐƠN CỬA HÀNG THẬT SỰ TRẢ CƯỚC. Ba loại bị loại ra, và
+     * đếm riêng để giao diện nói được đã loại những gì:
+     *
+     *   người nhận trả   vận đơn tạo trước khi sửa người trả cước; cửa
+     *                    hàng không trả GHN đồng nào
+     *   đã huỷ           GHN không thu cước vận đơn huỷ trước khi lấy hàng
+     *   thiếu số liệu    GHN không báo cước lúc tạo; NULL, không coi là 0
+     *
+     * Gộp bất kỳ loại nào vào là bịa: loại đầu thành một khoản chi không
+     * có thật, loại cuối thành đơn cửa hàng lãi trọn phí ship.
+     *
+     * CƯỚC LÀ CON SỐ GHN BÁO LÚC TẠO VẬN ĐƠN. API chi tiết vận đơn của GHN
+     * không trả lại cước, nên phí hoàn hàng hay điều chỉnh khối lượng sau
+     * khi lấy hàng KHÔNG có ở đây. Con số cuối nằm ở bảng đối soát của
+     * GHN; `hoan_hang` đếm những đơn chắc chắn lệch vì lý do đó.
+     *
+     * Tiền cộng bằng bcmath, trả về CHUỖI: đây là số đem đi đối soát với
+     * hoá đơn GHN, lệch một đồng vì làm tròn số thực là không khớp.
+     *
+     * @return array{van_don: int, tinh_duoc: int, thu: string, tra: string,
+     *               chenh: string, mien_phi: int, hoan_hang: int,
+     *               loai: array{nguoi_nhan_tra: int, da_huy: int, thieu_cuoc: int}}
+     */
+    public function shippingCost(): array
+    {
+        $vanDon = $this->applyWindow(Order::query(), 'created_at')->whereNotNull('ghn_order_code');
+
+        $nguoiNhanTra = (clone $vanDon)
+            ->where(fn ($q) => $q->whereNull('ghn_fee_payer')->orWhere('ghn_fee_payer', '!=', GhnFeePayer::Shop->value))
+            ->count();
+
+        $cuaHangTra = (clone $vanDon)->where('ghn_fee_payer', GhnFeePayer::Shop->value);
+
+        $daHuy = (clone $cuaHangTra)->where('shipping_status', ShippingStatus::Cancel->value)->count();
+
+        $thieuCuoc = (clone $cuaHangTra)
+            ->where('shipping_status', '!=', ShippingStatus::Cancel->value)
+            ->whereNull('ghn_total_fee')
+            ->count();
+
+        $dong = $this->vanDonTinhDuocCuoc()->get(['shipping_fee', 'ghn_total_fee', 'shipping_status']);
+
+        [$thu, $tra] = $this->congCuoc($dong);
+
+        return [
+            'van_don' => (clone $vanDon)->count(),
+            'tinh_duoc' => $dong->count(),
+            'thu' => $thu,
+            'tra' => $tra,
+            'chenh' => bcsub($tra, $thu, 2),
+            'mien_phi' => $dong->filter(fn ($o) => bccomp((string) $o->shipping_fee, '0', 2) === 0)->count(),
+            'hoan_hang' => $dong->filter(fn ($o) => in_array($o->shipping_status, [
+                ShippingStatus::Returned->value,
+                ShippingStatus::DeliveryFail->value,
+            ], true))->count(),
+            'loai' => [
+                'nguoi_nhan_tra' => $nguoiNhanTra,
+                'da_huy' => $daHuy,
+                'thieu_cuoc' => $thieuCuoc,
+            ],
+        ];
+    }
+
+    /**
+     * Cùng phép so sánh, chia theo THÁNG (theo ngày đặt đơn).
+     *
+     * Gom ở PHP chứ không bằng SQL: hàm định dạng ngày khác nhau giữa
+     * MySQL (DATE_FORMAT) và SQLite (strftime), mà số vận đơn một kỳ luôn
+     * nhỏ. Tháng không có vận đơn thì không có dòng; bảng này không vẽ
+     * thành đường nên không có khoảng trống nào bị nối liền sai.
+     *
+     * @return Collection<int, array{thang: string, don: int, thu: string, tra: string, chenh: string}>
+     */
+    public function shippingCostByMonth(): Collection
+    {
+        return $this->vanDonTinhDuocCuoc()
+            ->orderBy('created_at')
+            ->get(['created_at', 'shipping_fee', 'ghn_total_fee'])
+            ->groupBy(fn ($o) => $o->created_at->format('Y-m'))
+            ->map(function (Collection $nhom, string $thang) {
+                [$thu, $tra] = $this->congCuoc($nhom);
+
+                return [
+                    'thang' => $thang,
+                    'don' => $nhom->count(),
+                    'thu' => $thu,
+                    'tra' => $tra,
+                    'chenh' => bcsub($tra, $thu, 2),
+                ];
+            })
+            ->values();
+    }
+
+    /**
+     * Những đơn cửa hàng bù ship NHIỀU NHẤT.
+     *
+     * Con số tổng nói "bù 300.000₫"; danh sách này nói bù VÌ ĐÂU: đơn
+     * miễn phí giao, hay tỉnh xa mà bảng phí theo tỉnh đặt thấp hơn cước
+     * GHN. Hai nguyên nhân đó sửa ở hai chỗ khác nhau.
+     *
+     * @return Collection<int, array{order: Order, thu: string, tra: string, chenh: string}>
+     */
+    public function shippingSubsidies(int $limit = 10): Collection
+    {
+        return $this->vanDonTinhDuocCuoc()
+            ->whereRaw('ghn_total_fee > shipping_fee')
+            ->orderByRaw('(ghn_total_fee - shipping_fee) DESC')
+            ->limit($limit)
+            ->get()
+            ->map(fn (Order $o) => [
+                'order' => $o,
+                'thu' => (string) $o->shipping_fee,
+                'tra' => number_format((int) $o->ghn_total_fee, 2, '.', ''),
+                'chenh' => bcsub((string) $o->ghn_total_fee, (string) $o->shipping_fee, 2),
+            ]);
+    }
+
+    /**
+     * MỘT định nghĩa cho "vận đơn tính được cước", dùng cho tổng, theo
+     * tháng và danh sách. Ba hàm tự viết điều kiện thì chỉ cần một hàm
+     * quên loại vận đơn đã huỷ là tổng và bảng tháng lệch nhau.
+     */
+    private function vanDonTinhDuocCuoc()
+    {
+        return $this->applyWindow(Order::query(), 'created_at')
+            ->whereNotNull('ghn_order_code')
+            ->where('ghn_fee_payer', GhnFeePayer::Shop->value)
+            ->where('shipping_status', '!=', ShippingStatus::Cancel->value)
+            ->whereNotNull('ghn_total_fee');
+    }
+
+    /** @return array{0: string, 1: string} tổng thu của khách, tổng trả GHN */
+    private function congCuoc(Collection $dong): array
+    {
+        $thu = '0.00';
+        $tra = '0.00';
+
+        foreach ($dong as $o) {
+            $thu = bcadd($thu, (string) $o->shipping_fee, 2);
+            $tra = bcadd($tra, (string) $o->ghn_total_fee, 2);
+        }
+
+        return [$thu, $tra];
     }
 
     /* ================= HỖ TRỢ ================= */
