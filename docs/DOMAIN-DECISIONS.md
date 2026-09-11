@@ -6741,3 +6741,97 @@ trị lấy phần còn lại. Hai cách vá thử trước (cho nhãn co đều
 đều hỏng chỗ khác và được ghi lại trong CSS.
 
 Thanh bên đổi "Dashboard" thành "Tổng quan" cho khớp tiêu đề trang.
+
+---
+
+## QĐ-224. Hoàn tiền là một chứng từ, không phải một cú bấm đổi trạng thái
+
+Trước đây "Đã hoàn tiền" là một nút đổi `payment_status`. Không ghi hoàn bao
+nhiêu, bằng cách nào, mã giao dịch gì, ai làm, lúc nào; chỉ dùng được cho đơn
+đã huỷ — đơn đã giao mà hoa héo thì **không hoàn được bằng bất cứ cách nào**.
+
+Giờ có bảng `refunds` (1-N với đơn) và `refund_items` (hàng khách gửi trả về).
+Nút cũ bị bỏ; `OrderService::setPaymentStatus(Refunded)` từ chối. "Đã hoàn
+tiền" của đơn là **hệ quả**: `RefundService` đặt khi tổng các lần hoàn xong
+bằng số khách đã trả. Hoàn một phần thì đơn vẫn "Đã thanh toán", và trang Tổng
+quan vẫn nhắc phần còn nợ.
+
+Hai bài kiểm thử cũ đòi nút bấm tay (`OrderPaymentTest`, `TransactionSafetyTest`)
+được viết lại theo quyết định này.
+
+Các luật, đều kiểm dưới khoá dòng đơn:
+
+- Chỉ hoàn cho đơn **đã huỷ** hoặc **đã giao**, và khách đã trả tiền.
+- Tổng các lần hoàn (kể cả lần chưa rõ kết quả) không vượt `grand_total`.
+- Lý do là danh sách cố định, lọc theo trạng thái đơn (không có "hàng hỏng"
+  cho đơn chưa từng giao) — để đếm được, không phải ô chữ tự do.
+- Chuyển khoản bắt buộc mã giao dịch ngân hàng.
+- Chứng từ không sửa, không xoá. Đơn đã có khoản hoàn thì không gỡ "đã thanh
+  toán" được; khoá ngoại tới đơn là `restrictOnDelete`.
+
+---
+
+## QĐ-225. Hoàn qua MoMo: ghi trước, gọi sau, và im lặng không phải thất bại
+
+Đơn có giao dịch MoMo thành công thì hoàn được qua API hoàn tiền của MoMo, về
+đúng ví khách đã trả.
+
+1. Bản ghi được tạo **trước** khi gọi MoMo, ở trạng thái "chưa rõ kết quả",
+   và giữ chỗ số tiền. Gọi trước rồi mới ghi thì lỗi giữa hai bước là tiền đã
+   đi mà sổ không có dòng nào.
+2. MoMo trả `resultCode = 0` → xong. Trả mã khác → không thành công, số tiền
+   được nhả.
+3. **Không nhận được trả lời → giữ nguyên "chưa rõ kết quả".** MoMo có thể đã
+   hoàn. Coi là thất bại thì tiền được nhả, admin hoàn lần nữa, khách nhận hai
+   lần. Người thật kiểm trên cổng MoMo bằng mã phiếu rồi bấm "Đã hoàn" (kèm mã
+   giao dịch) hoặc "không thành công". Trang Tổng quan có dòng việc riêng cho
+   những đơn này, mức gấp ngang với nợ tiền khách.
+
+Chữ ký API hoàn tiền (`accessKey, amount, description, orderId, partnerCode,
+requestId, transId`) đã thử trên cổng thử bằng một mã giao dịch **không tồn
+tại** — không đồng nào bị hoàn: chữ ký đúng qua bước kiểm, khoá sai bị trả
+11007 kèm đúng chuỗi gốc MoMo mong đợi. Chưa chạy một lần hoàn thật trên hai
+giao dịch MoMo thử của cửa hàng, vì làm vậy phải huỷ đơn thật của người dùng.
+
+---
+
+## QĐ-226. Hàng trả về chỉ vào kho khi tiền đã hoàn xong, và chỉ phần bán lại được
+
+Chỉ đơn **đã giao** nhận hàng trả về — hàng của đơn huỷ chưa rời cửa hàng và đã
+được cộng kho lúc huỷ; cho nhận thêm là cộng kho hai lần.
+
+Mỗi dòng trả về có ô "còn bán được". Chậu vỡ khách gửi về vẫn tính là đã trả
+(không trả quá số đã mua) nhưng **không** cộng vào kho.
+
+Cộng kho xảy ra đúng lúc lần hoàn **xong**, không phải lúc ghi: một lần MoMo
+chưa rõ kết quả mà đã cộng kho thì khi nó thành thất bại, kho thừa hàng.
+
+Việc cộng lại kho dùng chung `App\Services\Inventory\StockReturn` với luồng huỷ
+đơn — trước đó `OrderService::restoreStock` tự viết lấy.
+
+"Đổi hàng" (gửi món khác thay thế) **chưa có**: làm bằng một lần hoàn cộng một
+đơn mới.
+
+---
+
+## QĐ-227. Doanh thu thuần là con số đứng đầu, ở cả hai trang
+
+`AnalyticsService::orderStats()` thêm `refunded` (đã hoàn xong cho **đơn đã
+giao** trong kỳ) và `net_revenue`. Tiền hoàn của đơn đã huỷ **không** trừ vào
+doanh thu — nó chưa bao giờ nằm trong đó.
+
+Trang Tổng quan và trang Phân tích cùng đưa **doanh thu thuần** lên vị trí nổi
+bật nhất (giữ nguyên nguyên tắc QĐ-218). Biểu đồ doanh thu theo ngày vẫn là tiền
+đơn đã giao, chưa trừ hoàn tiền.
+
+Phần xuất dữ liệu có `hoan-tien`: mọi lần hoàn **theo ngày ghi** (khác các báo cáo
+đơn, vốn theo ngày đặt) — câu hỏi của nó là "tháng này đã trả lại bao nhiêu".
+
+Khách thấy trên trang đơn của mình các lần đã hoàn và lần đang xử lý qua MoMo;
+lần không thành công là chuyện nội bộ, không hiện. Chưa có email báo hoàn tiền.
+
+Đơn có yêu cầu hoá đơn GTGT thì khối hoàn tiền nhắc hoá đơn đã xuất cần điều
+chỉnh bên phần mềm hoá đơn điện tử — hệ thống này không phát hành hoá đơn.
+
+Sửa kèm: đơn đã giao không còn hiện nút "Gỡ đánh dấu (bấm nhầm)" — dịch vụ luôn
+từ chối thao tác đó cho đơn đã giao, nên nút là một nút giả.

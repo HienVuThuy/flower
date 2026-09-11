@@ -46,6 +46,7 @@ return [
             'access_key' => env('MOMO_ACCESS_KEY'),
             'secret_key' => env('MOMO_SECRET_KEY'),
             'endpoint' => env('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
+            'refund_endpoint' => env('MOMO_REFUND_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/refund'),
 
             'partner_name' => env('MOMO_PARTNER_NAME', 'Angevil'),
             'store_id' => env('MOMO_STORE_ID', 'AngevilStore'),

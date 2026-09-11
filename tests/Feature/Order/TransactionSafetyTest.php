@@ -299,7 +299,16 @@ class TransactionSafetyTest extends TestCase
         $this->orders()->setPaymentStatus($order, PaymentStatus::Paid);
         $this->orders()->changeStatus($order->fresh(), OrderStatus::Cancelled, 'Khách đổi ý');
 
-        $this->orders()->setPaymentStatus($order->fresh(), PaymentStatus::Refunded);
+        /*
+         * Đường hoàn tiền hợp lệ giờ đi qua RefundService: ghi số tiền,
+         * cách hoàn, mã giao dịch; "Đã hoàn tiền" là hệ quả khi hoàn đủ.
+         */
+        app(\App\Services\Refund\RefundService::class)->hoan($order->fresh(), [
+            'amount' => (int) $order->fresh()->grand_total,
+            'reason' => 'don_huy',
+            'method' => 'chuyen_khoan',
+            'reference' => 'FT26273000001',
+        ]);
 
         $this->assertSame(PaymentStatus::Refunded, $order->fresh()->payment_status);
     }

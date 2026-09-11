@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BulkInquiryController as AdminBulkInquiryController;
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\RefundController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -1063,7 +1064,27 @@ Route::prefix('admin')
 
                 Route::delete('/{order}/van-don', [AdminOrderController::class, 'cancelShipment'])
                     ->name('shipment.cancel');
+
+                /*
+                 * HOÀN TIỀN.
+                 *
+                 * throttle: hoàn qua MoMo là chuyển tiền thật ra khỏi cửa
+                 * hàng. Luật "không hoàn quá số đã trả" đã chặn ở dịch vụ,
+                 * nhưng không có lý do gì để một người bấm được hàng chục
+                 * lần mỗi phút.
+                 */
+                Route::post('/{order}/hoan-tien', [RefundController::class, 'store'])
+                    ->middleware('throttle:20,1')
+                    ->name('refunds.store');
             });
+
+        Route::patch('hoan-tien/{refund}/xac-nhan', [RefundController::class, 'confirm'])
+            ->middleware('throttle:20,1')
+            ->name('refunds.confirm');
+
+        Route::patch('hoan-tien/{refund}/that-bai', [RefundController::class, 'fail'])
+            ->middleware('throttle:20,1')
+            ->name('refunds.fail');
 
         Route::prefix('bulk-inquiries')
             ->name('bulk-inquiries.')

@@ -86,6 +86,21 @@ class WorkQueue
                 'hint' => 'Khách đã trả tiền cho đơn không còn nữa. Hệ thống không tự chuyển tiền lại.',
             ],
 
+            /*
+             * HOÀN QUA MOMO MÀ KHÔNG RÕ KẾT QUẢ — ngang hàng với nợ khách.
+             *
+             * Tiền có thể đã về ví khách, có thể chưa. Để lâu thì hoặc
+             * khách gọi hỏi, hoặc có người thấy "còn hoàn được" và hoàn
+             * thêm lần nữa.
+             */
+            [
+                'label' => 'đơn có khoản hoàn tiền MoMo chưa rõ kết quả',
+                'count' => Order::refundPending()->count(),
+                'url' => route('admin.orders.index', ['hoan_tien' => 'chua-ro']),
+                'tone' => 'danger',
+                'hint' => 'MoMo không trả lời lúc hoàn. Kiểm trên cổng MoMo rồi xác nhận; đừng hoàn lại lần nữa.',
+            ],
+
             [
                 'label' => 'đơn chờ xác nhận',
                 'count' => Order::where('status', OrderStatus::Pending)->count(),

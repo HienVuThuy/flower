@@ -16,6 +16,7 @@ use App\Services\Checkout\CheckoutLine;
 use App\Services\Audit\ActivityLogger;
 use App\Services\Care\CareScheduler;
 use App\Services\Coupon\CouponService;
+use App\Services\Inventory\StockReturn;
 use App\Services\Invoice\InvoiceService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\QueryException;
@@ -44,6 +45,7 @@ class OrderService
         private readonly OrderRiskScorer $risk,
         private readonly ActivityLogger $audit,
         private readonly InvoiceService $invoices,
+        private readonly StockReturn $stock = new StockReturn(),
     ) {
     }
 
@@ -666,20 +668,9 @@ class OrderService
 
     private function restoreStock(Order $order): void
     {
+        // Cùng một đường với hàng khách trả về — xem StockReturn.
         foreach ($order->items as $item) {
-            if ($item->product_variant_id) {
-                ProductVariant::whereKey($item->product_variant_id)
-                    ->where('track_inventory', true)
-                    ->increment('stock_quantity', $item->quantity);
-
-                continue;
-            }
-
-            if ($item->product_id) {
-                Product::whereKey($item->product_id)
-                    ->where('track_inventory', true)
-                    ->increment('stock_quantity', $item->quantity);
-            }
+            $this->stock->congLai($item, (int) $item->quantity);
         }
     }
 
@@ -742,6 +733,22 @@ class OrderService
          * quy trình đó thì chặn, chứ không để ghi một trạng thái mà
          * không ai biết nó nghĩa là gì.
          */
+        /*
+         * "ĐÃ HOÀN TIỀN" KHÔNG ĐẶT TAY ĐƯỢC NỮA.
+         *
+         * Trước đây đây là một cú bấm: đổi trạng thái, không ghi hoàn bao
+         * nhiêu, bằng cách nào, mã giao dịch gì. Giờ trạng thái này là HỆ
+         * QUẢ: RefundService tự đặt khi tổng các lần hoàn xong bằng số
+         * khách đã trả. Mở lại đường tắt ở đây là để có đơn "đã hoàn
+         * tiền" mà không có một đồng hoàn tiền nào được ghi.
+         */
+        if ($target === PaymentStatus::Refunded && $order->status === OrderStatus::Cancelled) {
+            throw new OrderException(
+                'Hoàn tiền phải ghi ở mục "Hoàn tiền" của đơn: nhập số tiền, cách hoàn và mã giao dịch. '
+                .'Trạng thái "Đã hoàn tiền" sẽ tự đặt khi đã hoàn đủ.'
+            );
+        }
+
         if ($target === PaymentStatus::Refunded && $order->status !== OrderStatus::Cancelled) {
             throw new OrderException(
                 'Chỉ hoàn tiền cho đơn đã huỷ. '
@@ -759,6 +766,18 @@ class OrderService
          * đã ở nhà khách, tiền thì hệ thống bảo chưa nhận. Nếu thật sự
          * khách chưa trả thì đó là công nợ, cần chỗ ghi riêng.
          */
+        /*
+         * ĐÃ CÓ KHOẢN HOÀN TIỀN THÌ KHÔNG GỠ ĐƯỢC "ĐÃ THANH TOÁN".
+         *
+         * Gỡ đi thì đơn thành "khách chưa trả" nhưng lại có tiền đã trả
+         * lại khách — một khoản chi không có khoản thu tương ứng.
+         */
+        if ($target === PaymentStatus::Unpaid && $order->refunds()->where('status', '!=', 'failed')->exists()) {
+            throw new OrderException(
+                'Đơn này đã có khoản hoàn tiền nên không gỡ đánh dấu thanh toán được.'
+            );
+        }
+
         if ($target === PaymentStatus::Unpaid && $order->status === OrderStatus::Completed) {
             throw new OrderException(
                 'Đơn đã giao xong nên không gỡ đánh dấu thanh toán được. '
@@ -810,7 +829,14 @@ class OrderService
      */
     public function owesRefund(Order $order): bool
     {
+        /*
+         * Còn tiền chưa trả lại mới là còn nợ. Đơn huỷ đã hoàn một phần
+         * thì vẫn nợ phần còn lại; đã giữ chỗ đủ (kể cả lần hoàn MoMo
+         * đang chờ kết quả) thì không nhắc thêm — việc cần làm lúc đó là
+         * xác nhận lần đang chờ, không phải hoàn thêm.
+         */
         return $order->status === OrderStatus::Cancelled
-            && $order->payment_status === PaymentStatus::Paid;
+            && $order->payment_status === PaymentStatus::Paid
+            && bccomp($order->refundableAmount(), '0', 2) > 0;
     }
 }

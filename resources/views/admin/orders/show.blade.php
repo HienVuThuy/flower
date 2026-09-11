@@ -258,7 +258,8 @@
                         <strong>Cần hoàn tiền cho khách.</strong>
                         Đơn đã huỷ nhưng khách đã thanh toán
                         <x-site.money :amount="(float) $order->grand_total" />.
-                        Chuyển khoản trả khách xong thì bấm "Đã hoàn tiền" bên dưới.
+                        Còn phải hoàn <x-site.money :amount="$order->refundableAmount()" />.
+                        <a href="#hoan-tien">Ghi hoàn tiền</a>.
                     </div>
                 @endif
 
@@ -299,6 +300,8 @@
             </div>
 
             <x-order.payment-log :transactions="$order->transactions" />
+
+            @include('admin.orders._refunds')
 
             {{--
                 GHI CHÚ NỘI BỘ — chỉ cửa hàng đọc, khách không bao giờ thấy.

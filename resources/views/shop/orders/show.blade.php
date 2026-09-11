@@ -270,6 +270,43 @@
                     </dl>
 
                     {{--
+                        TIỀN CỬA HÀNG ĐÃ TRẢ LẠI — khách phải thấy được.
+
+                        Không có khối này thì một khách được hoàn một phần
+                        vẫn chỉ thấy "Đã thanh toán", và không có cách nào
+                        biết cửa hàng đã chuyển gì, lúc nào, qua đâu — nên
+                        họ gọi điện hỏi.
+
+                        CHỈ những lần ĐÃ HOÀN XONG và những lần đang chờ
+                        MoMo trả lời. Lần không thành công là chuyện nội bộ:
+                        báo cho khách "một lần hoàn thất bại" chỉ làm họ lo
+                        về một khoản tiền chưa từng rời cửa hàng.
+                    --}}
+                    @php
+                        $hoanHienThi = $order->refunds->filter(fn ($r) => $r->status !== \App\Enums\RefundStatus::Failed);
+                    @endphp
+
+                    @if($hoanHienThi->isNotEmpty())
+                        <div class="order-refunds mb-3">
+                            <h3 class="text-h5 mb-2">Tiền đã hoàn lại</h3>
+                            <ul class="list-unstyled mb-0">
+                                @foreach($hoanHienThi as $r)
+                                    <li class="mb-1">
+                                        <strong><x-site.money :amount="(string) $r->amount" /></strong>
+                                        @if($r->status === \App\Enums\RefundStatus::Completed)
+                                            &middot; {{ $r->method === \App\Enums\RefundMethod::Momo ? 'về ví MoMo' : ($r->method === \App\Enums\RefundMethod::Cash ? 'tiền mặt' : 'chuyển khoản') }}
+                                            &middot; {{ $r->completed_at?->format('d/m/Y') }}
+                                        @else
+                                            &middot; đang xử lý qua MoMo
+                                        @endif
+                                        <span class="d-block small text-muted">Mã {{ $r->code }}</span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
+                    {{--
                         HOÁ ĐƠN GTGT — chỉ hiện khi khách đã yêu cầu.
 
                         Không yêu cầu thì không hiện gì: một khối trống

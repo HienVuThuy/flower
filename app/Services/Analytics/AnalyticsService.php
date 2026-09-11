@@ -5,9 +5,11 @@ namespace App\Services\Analytics;
 use App\Enums\GhnFeePayer;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
+use App\Enums\RefundStatus;
 use App\Enums\ShippingStatus;
 use App\Enums\UserEventType;
 use App\Models\Order;
+use App\Models\Refund;
 use App\Models\UserEvent;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -308,8 +310,18 @@ class AnalyticsService
      * Doanh thu chỉ tính đơn ĐÃ GIAO. Đơn đang xử lý chưa phải là tiền
      * đã thu; gộp vào là báo cáo doanh thu cao hơn sự thật.
      *
+     * `revenue` là tiền của đơn đã giao, CHƯA trừ hoàn tiền. `refunded` là
+     * phần đã trả lại khách cho CHÍNH những đơn đó, và `net_revenue` là số
+     * cửa hàng thật sự giữ lại — con số trang Tổng quan và Phân tích đưa
+     * lên đầu.
+     *
+     * Chỉ trừ hoàn tiền của đơn ĐÃ GIAO: tiền hoàn của đơn đã huỷ chưa bao
+     * giờ nằm trong doanh thu, trừ đi là trừ hai lần. Chỉ tính lần hoàn ĐÃ
+     * XONG: một lần "chưa rõ kết quả" chưa chắc tiền đã đi.
+     *
      * @return array{total: int, completed: int, cancelled: int,
-     *               revenue: float, average: float|null}
+     *               revenue: float, refunded: float, net_revenue: float,
+     *               average: float|null}
      */
     public function orderStats(): array
     {
@@ -320,11 +332,18 @@ class AnalyticsService
         $cancelled = (clone $query)->where('status', OrderStatus::Cancelled)->count();
         $revenue = (float) (clone $query)->where('status', OrderStatus::Completed)->sum('grand_total');
 
+        $refunded = (float) Refund::query()
+            ->where('status', RefundStatus::Completed->value)
+            ->whereIn('order_id', (clone $query)->where('status', OrderStatus::Completed)->select('id'))
+            ->sum('amount');
+
         return [
             'total' => $total,
             'completed' => $completed,
             'cancelled' => $cancelled,
             'revenue' => $revenue,
+            'refunded' => $refunded,
+            'net_revenue' => $revenue - $refunded,
             // Chia cho 0 là lỗi; chưa có đơn nào giao thì không có giá
             // trị trung bình, và null khác 0 — giao diện hiển thị khác nhau.
             'average' => $completed > 0 ? $revenue / $completed : null,
@@ -539,6 +558,29 @@ class AnalyticsService
                 'quantity' => (int) $r->qty,
                 'revenue' => (float) $r->revenue,
             ]);
+    }
+
+    /* ================= HOÀN TIỀN ================= */
+
+    /**
+     * Mọi lần hoàn tiền GHI TRONG KỲ, theo NGÀY GHI chứ không theo ngày đặt
+     * đơn — khác các báo cáo đơn hàng.
+     *
+     * Câu hỏi của bảng này là "tháng này cửa hàng đã trả lại bao nhiêu",
+     * và một đơn tháng trước hoàn tháng này là tiền đi ra tháng này.
+     *
+     * Gồm cả lần chưa rõ kết quả và lần không thành công, có cột trạng thái:
+     * người đối soát cần thấy cả những lần MoMo từ chối.
+     *
+     * @return Collection<int, Refund>
+     */
+    public function refundList(int $limit = 1000): Collection
+    {
+        return $this->applyWindow(Refund::query(), 'created_at')
+            ->with('order:id,order_number')
+            ->latest('id')
+            ->limit($limit)
+            ->get();
     }
 
     /* ================= VẬN CHUYỂN ================= */

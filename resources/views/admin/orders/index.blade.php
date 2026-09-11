@@ -100,7 +100,7 @@
             --}}
             <div class="p-4 text-center admin-page-subtitle">
                 <p class="mb-0">
-                    @if(request()->hasAny(['q', 'payment', 'van_don', 'tu_ngay', 'den_ngay']))
+                    @if(request()->hasAny(['q', 'payment', 'van_don', 'hoan_tien', 'tu_ngay', 'den_ngay']))
                         Không có đơn nào khớp với bộ lọc.
                         <a href="{{ route('admin.orders.index') }}" class="ms-1">Xoá lọc</a>
                     @elseif($currentStatus)

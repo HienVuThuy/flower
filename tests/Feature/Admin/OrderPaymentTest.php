@@ -103,15 +103,21 @@ class OrderPaymentTest extends TestCase
     }
 
     #[Test]
-    public function ghi_nhan_da_hoan_tien_cho_don_da_huy(): void
+    public function KHONG_bam_tay_da_hoan_tien_duoc_nua(): void
     {
-        // Trạng thái "Đã hoàn tiền" trước đây là mã chết — khai trong
-        // enum nhưng không nơi nào đặt được.
+        /*
+         * ĐẢO LẠI QUYẾT ĐỊNH CŨ (QĐ-224).
+         *
+         * Bài này từng đòi một cú bấm đặt được "Đã hoàn tiền" cho đơn đã
+         * huỷ. Cú bấm đó không ghi hoàn bao nhiêu, bằng cách nào, mã giao
+         * dịch gì. Giờ hoàn tiền ghi ở RefundService, và "Đã hoàn tiền" tự
+         * đặt khi đã hoàn đủ — xem tests/Feature/Order/RefundTest.
+         */
         $order = $this->order(OrderStatus::Cancelled, PaymentStatus::Paid);
 
-        $this->setPayment($order, PaymentStatus::Refunded)->assertSessionHas('success');
+        $this->setPayment($order, PaymentStatus::Refunded)->assertSessionHas('error');
 
-        $this->assertSame(PaymentStatus::Refunded, $order->fresh()->payment_status);
+        $this->assertSame(PaymentStatus::Paid, $order->fresh()->payment_status);
     }
 
     #[Test]

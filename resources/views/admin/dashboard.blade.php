@@ -79,13 +79,20 @@
 <div class="row g-3 mb-4">
 
     <div class="col-12 col-sm-6 col-lg-3">
+        {{--
+            DOANH THU THUẦN: tiền đơn đã giao TRỪ phần đã hoàn lại khách.
+            Không trừ thì một tháng hoàn nhiều vì hoa héo vẫn trông như
+            tháng bán tốt.
+        --}}
         <x-admin.kpi
-            label="Doanh thu"
-            note="Chỉ đơn đã giao. Đơn đang xử lý chưa phải là tiền đã thu."
-            :now="$orderStats['revenue']"
-            :before="$previous['revenue'] ?? null"
+            label="Doanh thu thuần"
+            :note="$orderStats['refunded'] > 0
+                ? 'Đơn đã giao ' . \App\Services\Shop\Money::format($orderStats['revenue']) . ', đã trừ ' . \App\Services\Shop\Money::format($orderStats['refunded']) . ' hoàn tiền.'
+                : 'Chỉ đơn đã giao, đã trừ hoàn tiền. Đơn đang xử lý chưa phải là tiền đã thu.'"
+            :now="$orderStats['net_revenue']"
+            :before="$previous['net_revenue'] ?? null"
             format="tien">
-            <x-site.money :amount="$orderStats['revenue']" />
+            <x-site.money :amount="$orderStats['net_revenue']" />
         </x-admin.kpi>
     </div>
 

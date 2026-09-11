@@ -67,6 +67,12 @@ class ReportSections
                 'note' => 'Chỉ khách có tài khoản; đơn khách vãng lai không gom được.',
             ],
 
+            'hoan-tien' => [
+                'label' => 'Các lần hoàn tiền',
+                'group' => 'Tiền và đơn hàng',
+                'note' => 'Theo NGÀY GHI hoàn tiền, gồm cả lần chưa rõ kết quả và không thành công.',
+            ],
+
             'van-chuyen' => [
                 'label' => 'Phí ship thu của khách so với cước trả GHN, theo tháng',
                 'group' => 'Vận chuyển',
@@ -135,6 +141,7 @@ class ReportSections
             'thanh-toan' => $this->thanhToan($nhan),
             'ma-giam-gia' => $this->maGiamGia($nhan),
             'khach-hang' => $this->khachHang($nhan),
+            'hoan-tien' => $this->hoanTien($nhan),
             'van-chuyen' => $this->vanChuyen($nhan),
             'bu-ship' => $this->buShip($nhan),
             'pheu' => $this->pheu($nhan),
@@ -162,6 +169,8 @@ class ReportSections
                 ['Đã giao', $o['completed']],
                 ['Đã huỷ', $o['cancelled']],
                 ['Doanh thu (đơn đã giao)', $o['revenue']],
+                ['Đã hoàn tiền cho đơn đã giao', $o['refunded']],
+                ['Doanh thu thuần', $o['net_revenue']],
                 /*
                  * null nghĩa là MẪU SỐ BẰNG 0 — chưa có đơn đã giao nào.
                  * Ghi 0 ở đây là nói "giá trị đơn trung bình bằng 0", một
@@ -223,6 +232,27 @@ class ReportSections
             'columns' => ['Khách hàng', 'Email', 'Số đơn', 'Doanh thu'],
             'rows' => $this->analytics->topCustomers(100)
                 ->map(fn ($r) => [$r['name'], $r['email'], $r['orders'], $r['revenue']])
+                ->all(),
+        ];
+    }
+
+    private function hoanTien(string $nhan): array
+    {
+        return [
+            'label' => $nhan,
+            'columns' => ['Mã', 'Đơn', 'Ngày ghi', 'Số tiền', 'Cách hoàn', 'Lý do', 'Trạng thái', 'Mã giao dịch', 'Người ghi'],
+            'rows' => $this->analytics->refundList()
+                ->map(fn ($r) => [
+                    $r->code,
+                    $r->order?->order_number,
+                    $r->created_at->format('Y-m-d H:i'),
+                    (string) $r->amount,
+                    $r->method->label(),
+                    $r->reason->label(),
+                    $r->status->label(),
+                    $r->reference,
+                    $r->actorLabel(),
+                ])
                 ->all(),
         ];
     }

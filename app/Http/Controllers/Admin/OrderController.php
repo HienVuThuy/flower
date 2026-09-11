@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Services\Shipping\GHNOrderService;
 use App\Services\Order\OrderException;
 use App\Services\Order\OrderService;
+use App\Services\Refund\RefundService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -87,6 +88,11 @@ class OrderController extends Controller
                     $request->query('van_don') === 'cho-tao',
                     fn ($q) => $q->awaitingWaybill()
                 )
+                // Dòng việc "hoàn tiền MoMo chưa rõ kết quả" ở trang Tổng quan.
+                ->when(
+                    $request->query('hoan_tien') === 'chua-ro',
+                    fn ($q) => $q->refundPending()
+                )
                 ->when(
                     $request->query('van_don') === 'roi',
                     fn ($q) => $q->whereNotNull('ghn_order_code')
@@ -127,12 +133,26 @@ class OrderController extends Controller
         ]);
     }
 
-    public function show(Order $order): View
+    public function show(Order $order, RefundService $refunds): View
     {
+        $order->load('items', 'user', 'statusEvents.changedBy', 'invoice', 'transactions', 'refunds.items.orderItem', 'refunds.createdBy');
+
         return view('admin.orders.show', [
             // statusEvents.changedBy nạp sẵn: dòng thời gian hiện tên người
             // thực hiện ở mỗi mốc, không nạp thì mỗi mốc một truy vấn.
-            'order' => $order->load('items', 'user', 'statusEvents.changedBy', 'invoice', 'transactions'),
+            'order' => $order,
+
+            /*
+             * HOÀN TIỀN: một câu "vì sao không hoàn được" (null nếu được),
+             * các cách hoàn dùng được, và số còn trả về được của từng dòng.
+             * Tính sẵn ở đây để view không phải biết luật nào.
+             */
+            'refundBlocked' => $refunds->lyDoKhongHoanDuoc($order),
+            'refundMethods' => $refunds->cachHoan($order),
+            'refundReasons' => \App\Enums\RefundReason::choTrangThai($order->status),
+            'returnable' => $order->items->mapWithKeys(fn ($item) => [
+                $item->id => (int) $item->quantity - $refunds->soDaTra($item),
+            ]),
 
             /*
              * Đơn đã huỷ mà khách đã trả tiền = cửa hàng đang nợ khách.
@@ -142,7 +162,22 @@ class OrderController extends Controller
              * phần mềm là nhắc; việc chuyển tiền là của con người.
              */
             'owesRefund' => $this->orders->owesRefund($order),
-            'paymentTargets' => $order->payment_status->nextStates(),
+            /*
+             * CHỈ BÀY NÚT MÀ BẤM VÀO ĐƯỢC.
+             *
+             * "Đã hoàn tiền" không còn là một nút — nó là hệ quả của các lần
+             * hoàn ghi ở mục Hoàn tiền. "Gỡ đánh dấu" thì OrderService từ
+             * chối với đơn đã giao hoặc đã có khoản hoàn; bày nút ra ở đó là
+             * một nút lúc nào bấm cũng báo lỗi.
+             */
+            'paymentTargets' => array_values(array_filter(
+                $order->payment_status->nextStates(),
+                fn ($t) => $t !== PaymentStatus::Refunded
+                    && ! ($t === PaymentStatus::Unpaid && (
+                        $order->status === OrderStatus::Completed
+                        || $order->refunds->contains(fn ($r) => $r->status->giuChoTien())
+                    )),
+            )),
         ]);
     }
 

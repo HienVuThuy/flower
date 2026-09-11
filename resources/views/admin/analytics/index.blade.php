@@ -416,12 +416,31 @@
                         </dt>
                         <dd>{{ number_format($orderStats['cancelled']) }}</dd>
                     </div>
+                    <div class="stat-list__row">
+                        <dt>Doanh thu (đơn đã giao)</dt>
+                        <dd><x-site.money :amount="$orderStats['revenue']" /></dd>
+                    </div>
+                    <div class="stat-list__row">
+                        <dt>Đã hoàn tiền cho những đơn đó</dt>
+                        <dd>
+                            @if($orderStats['refunded'] > 0)
+                                −<x-site.money :amount="$orderStats['refunded']" />
+                            @else
+                                <x-site.money :amount="0" />
+                            @endif
+                        </dd>
+                    </div>
+                    {{--
+                        DÒNG TỔNG LÀ DOANH THU THUẦN — cùng con số trang Tổng
+                        quan đưa lên đầu. Hai trang đưa hai con số khác nhau
+                        lên vị trí nổi bật nhất là đúng lỗi đã sửa ở QĐ-218.
+                    --}}
                     <div class="stat-list__row stat-list__row--total">
                         <dt>
-                            Doanh thu (đơn đã giao)
-                            <x-admin.trend :now="$orderStats['revenue']" :before="$previous['orders']['revenue'] ?? null" format="tien" />
+                            Doanh thu thuần
+                            <x-admin.trend :now="$orderStats['net_revenue']" :before="$previous['orders']['net_revenue'] ?? null" format="tien" />
                         </dt>
-                        <dd><x-site.money :amount="$orderStats['revenue']" /></dd>
+                        <dd><x-site.money :amount="$orderStats['net_revenue']" /></dd>
                     </div>
                     <div class="stat-list__row">
                         <dt>Giá trị đơn trung bình</dt>

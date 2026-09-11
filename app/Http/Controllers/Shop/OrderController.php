@@ -41,7 +41,7 @@ class OrderController extends Controller
         $this->authorizeOrderAccess($order);
 
         return view('shop.orders.show', [
-            'order' => $order->load('items', 'invoice'),
+            'order' => $order->load('items', 'invoice', 'refunds'),
         ]);
     }
 

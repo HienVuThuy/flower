@@ -168,10 +168,59 @@ class MomoGateway implements PaymentGateway
     }
 
     /**
+     * HOÀN TIỀN trên một giao dịch MoMo đã thành công.
+     * ============================================================
+     * Chuỗi ký của API hoàn tiền KHÁC hai chuỗi ở đầu lớp:
+     *
+     *     accessKey, amount, description, orderId, partnerCode,
+     *     requestId, transId
+     *
+     * Đã thử trên cổng thử với một mã giao dịch không tồn tại (nên không
+     * có đồng nào bị hoàn): chữ ký theo thứ tự này qua được bước kiểm,
+     * còn khoá sai bị trả mã 11007 kèm đúng chuỗi gốc MoMo mong đợi.
+     *
+     * TRẢ VỀ GÓI TIN THÔ, không tự quyết thành công hay thất bại. Mảng
+     * rỗng nghĩa là KHÔNG BIẾT: mất kết nối hoặc hết thời gian chờ thì
+     * MoMo có thể đã hoàn rồi. Nơi gọi phải giữ khoản đó ở "chưa rõ kết
+     * quả", không được coi là thất bại — coi là thất bại thì số tiền được
+     * nhả ra, admin bấm hoàn lại, và khách nhận tiền hai lần.
+     *
+     * @param  string  $maYeuCau  duy nhất cho mỗi lần hoàn; MoMo từ chối mã đã dùng
+     * @return array<string, mixed>
+     */
+    public function refund(PaymentTransaction $daTra, int $soTien, string $maYeuCau, string $moTa): array
+    {
+        $partnerCode = (string) config('payment.gateways.momo.partner_code');
+        $accessKey = (string) config('payment.gateways.momo.access_key');
+        $secretKey = (string) config('payment.gateways.momo.secret_key');
+
+        $transId = (string) $daTra->transaction_id;
+
+        $raw = 'accessKey=' . $accessKey
+            . '&amount=' . $soTien
+            . '&description=' . $moTa
+            . '&orderId=' . $maYeuCau
+            . '&partnerCode=' . $partnerCode
+            . '&requestId=' . $maYeuCau
+            . '&transId=' . $transId;
+
+        return $this->send([
+            'partnerCode' => $partnerCode,
+            'orderId' => $maYeuCau,
+            'requestId' => $maYeuCau,
+            'amount' => $soTien,
+            'transId' => (int) $transId,
+            'lang' => 'vi',
+            'description' => $moTa,
+            'signature' => hash_hmac('sha256', $raw, $secretKey),
+        ], (string) config('payment.gateways.momo.refund_endpoint'));
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      * @return array<string, mixed>
      */
-    private function send(array $data): array
+    private function send(array $data, ?string $endpoint = null): array
     {
         try {
             $response = Http::withOptions([
@@ -179,7 +228,7 @@ class MomoGateway implements PaymentGateway
             ])
                 ->timeout(20)
                 ->acceptJson()
-                ->post((string) config('payment.gateways.momo.endpoint'), $data);
+                ->post($endpoint ?? (string) config('payment.gateways.momo.endpoint'), $data);
 
             return $response->json() ?? [];
         } catch (ConnectionException $e) {

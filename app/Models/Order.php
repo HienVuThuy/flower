@@ -6,6 +6,7 @@ use App\Enums\GhnFeePayer;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\RefundStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -165,6 +166,53 @@ class Order extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    /** Các lần hoàn tiền, mới nhất trước. */
+    public function refunds(): HasMany
+    {
+        return $this->hasMany(Refund::class)->latest('id');
+    }
+
+    /**
+     * Tổng tiền ĐÃ TRẢ LẠI khách — chỉ các lần đã hoàn xong.
+     *
+     * Dạng chuỗi bcmath. Đọc từ quan hệ đã nạp nếu có, để trang đơn không
+     * hỏi lại cơ sở dữ liệu cho mỗi con số.
+     */
+    public function refundedAmount(): string
+    {
+        return $this->congTienHoan(fn (Refund $r) => $r->status === RefundStatus::Completed);
+    }
+
+    /**
+     * Tổng tiền đang BỊ GIỮ CHỖ cho hoàn tiền: đã hoàn xong + chưa rõ kết
+     * quả. Số còn hoàn được tính trên con số này, không phải con số trên —
+     * nếu không, một lần hoàn MoMo đang chờ trả lời vẫn để hở đúng số tiền
+     * đó cho người bấm tiếp theo.
+     */
+    public function reservedRefundAmount(): string
+    {
+        return $this->congTienHoan(fn (Refund $r) => $r->status->giuChoTien());
+    }
+
+    /** Số tiền còn hoàn được, không bao giờ âm. */
+    public function refundableAmount(): string
+    {
+        $con = bcsub((string) $this->grand_total, $this->reservedRefundAmount(), 2);
+
+        return bccomp($con, '0', 2) > 0 ? $con : '0.00';
+    }
+
+    private function congTienHoan(callable $loc): string
+    {
+        $tong = '0.00';
+
+        foreach ($this->refunds->filter($loc) as $r) {
+            $tong = bcadd($tong, (string) $r->amount, 2);
+        }
+
+        return $tong;
+    }
+
     /**
      * Tổng thuế các dòng hàng, KHÔNG gồm thuế phí vận chuyển.
      *
@@ -280,6 +328,15 @@ class Order extends Model
         return $query
             ->whereIn('status', [OrderStatus::Confirmed->value, OrderStatus::Preparing->value])
             ->whereNull('ghn_order_code');
+    }
+
+    /**
+     * Đơn có một lần hoàn tiền "chưa rõ kết quả" — MoMo không trả lời.
+     * Dùng chung cho dòng việc ở trang Tổng quan và bộ lọc danh sách đơn.
+     */
+    public function scopeRefundPending(Builder $query): Builder
+    {
+        return $query->whereHas('refunds', fn ($q) => $q->where('status', RefundStatus::Pending->value));
     }
 
     /** Đơn chưa kết thúc — hàng chờ xử lý ở admin. */
