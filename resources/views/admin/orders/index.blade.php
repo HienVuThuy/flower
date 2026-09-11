@@ -70,6 +70,17 @@
             <option value="refunded" @selected(request('payment') === 'refunded')>Đã hoàn tiền</option>
         </select>
 
+        {{--
+            Ô này là đích của dòng "đơn đã nhận nhưng chưa có vận đơn" ở
+            trang tổng quan. Không có nó thì đường dẫn lọc sẵn kia tới
+            nơi mà màn hình không nói được là đang lọc theo cái gì.
+        --}}
+        <select name="van_don" class="form-select" aria-label="Lọc theo vận đơn">
+            <option value="">Mọi tình trạng vận đơn</option>
+            <option value="cho-tao" @selected(request('van_don') === 'cho-tao')>Chờ tạo vận đơn</option>
+            <option value="roi" @selected(request('van_don') === 'roi')>Đã có vận đơn</option>
+        </select>
+
         <input type="date" name="tu_ngay" value="{{ request('tu_ngay') }}"
                class="form-control" style="width:auto" aria-label="Từ ngày">
         <input type="date" name="den_ngay" value="{{ request('den_ngay') }}"
@@ -89,7 +100,7 @@
             --}}
             <div class="p-4 text-center admin-page-subtitle">
                 <p class="mb-0">
-                    @if(request()->hasAny(['q', 'payment', 'tu_ngay', 'den_ngay']))
+                    @if(request()->hasAny(['q', 'payment', 'van_don', 'tu_ngay', 'den_ngay']))
                         Không có đơn nào khớp với bộ lọc.
                         <a href="{{ route('admin.orders.index') }}" class="ms-1">Xoá lọc</a>
                     @elseif($currentStatus)

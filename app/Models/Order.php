@@ -249,6 +249,26 @@ class Order extends Model
         return $rows;
     }
 
+    /**
+     * Đơn CHỜ TẠO VẬN ĐƠN: cửa hàng đã nhận, mà chưa gọi đơn vị giao.
+     *
+     * MỘT ĐỊNH NGHĨA cho cả dòng việc ở trang Tổng quan lẫn bộ lọc ở
+     * danh sách đơn. Bản đầu mỗi nơi tự viết điều kiện: hàng đợi đếm
+     * "đã xác nhận/đang chuẩn bị + chưa có mã", còn bộ lọc chỉ lọc "chưa
+     * có mã". Trên dữ liệu thật, dòng việc nói 2 đơn, bấm vào ra 41 —
+     * lẫn cả đơn đã giao xong từ lâu, vốn không có vận đơn là bình
+     * thường (khách lấy tại cửa hàng, đơn trước khi nối GHN).
+     *
+     * Đơn đã giao hay đã huỷ KHÔNG còn chờ gì cả; đơn chờ xác nhận thì
+     * chưa tới lượt tạo vận đơn.
+     */
+    public function scopeAwaitingWaybill(Builder $query): Builder
+    {
+        return $query
+            ->whereIn('status', [OrderStatus::Confirmed->value, OrderStatus::Preparing->value])
+            ->whereNull('ghn_order_code');
+    }
+
     /** Đơn chưa kết thúc — hàng chờ xử lý ở admin. */
     public function scopeOpen(Builder $query): Builder
     {

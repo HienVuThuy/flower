@@ -31,7 +31,7 @@
     <div class="d-flex flex-wrap gap-2">
         @foreach($cacKy as $value => $label)
             <a data-admin-link href="{{ route('admin.inventory.index', ['ky' => $value, 'nguong' => $nguong]) }}"
-               class="btn btn-sm {{ $ky === $value ? 'btn-primary-brand' : 'btn-outline-admin' }}">
+               class="btn btn-sm {{ $ky === (string) $value ? 'btn-primary-brand' : 'btn-outline-admin' }}">
                 {{ $label }}
             </a>
         @endforeach

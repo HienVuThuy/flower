@@ -58,6 +58,21 @@ class ReviewController extends Controller
             ->when($request->query('sao') === 'thap', fn ($q) => $q->where('rating', '<=', 2))
 
             /*
+             * LỌC THEO "CỬA HÀNG ĐÃ TRẢ LỜI CHƯA".
+             *
+             * Ghép với ô số sao, đây mới là hàng đợi thật: đánh giá 1-2
+             * sao CHƯA AI TRẢ LỜI. Một lời phàn nàn đã được trả lời thì
+             * không còn là việc phải làm nữa, nhưng lọc theo sao thôi
+             * thì nó vẫn nằm trong danh sách và làm loãng phần còn lại.
+             *
+             * whereNull chứ không phải where('admin_reply', ''): cột này
+             * nullable, chưa trả lời là NULL, và so sánh NULL với chuỗi
+             * rỗng trong SQL luôn cho ra rỗng.
+             */
+            ->when($request->query('tra_loi') === 'chua', fn ($q) => $q->whereNull('admin_reply'))
+            ->when($request->query('tra_loi') === 'roi', fn ($q) => $q->whereNotNull('admin_reply'))
+
+            /*
              * Tìm trong nội dung nhận xét và TÊN SẢN PHẨM.
              *
              * Tên sản phẩm phải tìm qua whereHas: khách gọi tới kêu "bó

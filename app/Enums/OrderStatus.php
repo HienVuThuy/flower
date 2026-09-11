@@ -42,6 +42,32 @@ enum OrderStatus: string
         };
     }
 
+    /**
+     * Màu trong biểu đồ — THANG THỨ TỰ, không phải bộ màu danh mục.
+     *
+     * Chờ xác nhận → Đã xác nhận → Đang chuẩn bị → Đang giao → Đã giao
+     * là một dãy CÓ TRƯỚC CÓ SAU. Tô mỗi bước một màu khác hệ là vứt bỏ
+     * đúng thông tin quan trọng nhất của dãy đó: thứ tự.
+     *
+     * "Đã huỷ" KHÔNG nằm trong dãy — nó là kết cục xấu, không phải bước
+     * thứ sáu. Dùng màu trạng thái riêng, và luôn kèm nhãn chữ.
+     *
+     * Ở ENUM chứ không ở Blade: trang Phân tích và trang Tổng quan cùng
+     * vẽ biểu đồ này. Chép bảng màu sang màn hình thứ hai là hai màn
+     * hình sẽ lệch màu ngay lần đầu có người sửa một bên.
+     */
+    public function vizColor(): string
+    {
+        return match ($this) {
+            self::Pending => 'var(--viz-step-1)',
+            self::Confirmed => 'var(--viz-step-2)',
+            self::Preparing => 'var(--viz-step-3)',
+            self::Shipping => 'var(--viz-step-4)',
+            self::Completed => 'var(--viz-step-5)',
+            self::Cancelled => 'var(--viz-huy)',
+        };
+    }
+
     /** @return array<int, self> */
     public function nextStates(): array
     {

@@ -141,9 +141,22 @@ class InventoryReport
             'price' => $gia,
             'value' => $ton * $gia,
 
-            // Còn bày bán hay không — quyết định việc hết hàng có đang
-            // làm mất đơn hay không.
-            'selling' => $p->status === 'published',
+            /*
+             * CÒN BÀY BÁN HAY KHÔNG — quyết định việc hết hàng có đang
+             * làm mất đơn hay không.
+             *
+             * 'active' là từ vựng THẬT của dự án (xem ô chọn trạng thái ở
+             * biểu mẫu sản phẩm: draft / active / inactive / out_of_stock).
+             * Bản đầu viết 'published' — một giá trị không tồn tại ở bất
+             * kỳ đâu trong mã nguồn — nên `selling` LUÔN false, và mục
+             * "đang mất đơn" của trang Tồn kho vĩnh viễn rỗng: màn hình
+             * nói "Không có mặt hàng nào đang bày bán mà hết kho. Tốt."
+             * dù kho có hết sạch.
+             *
+             * Bài kiểm thử không bắt được vì nó tự đặt status là
+             * 'published' — cùng một giả định sai ở cả hai phía.
+             */
+            'selling' => $p->status === 'active',
         ];
     }
 

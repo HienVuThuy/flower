@@ -52,6 +52,16 @@
             <option value="{{ $i }}" @selected(request('sao') === (string) $i)>{{ $i }} sao</option>
         @endfor
     </select>
+
+    {{--
+        Ghép với ô số sao thì ra đúng hàng đợi: phàn nàn CHƯA AI TRẢ
+        LỜI. Đây là đích của dòng tương ứng ở trang tổng quan.
+    --}}
+    <select name="tra_loi" class="form-select" aria-label="Lọc theo trả lời">
+        <option value="">Đã trả lời hay chưa</option>
+        <option value="chua" @selected(request('tra_loi') === 'chua')>Chưa trả lời</option>
+        <option value="roi" @selected(request('tra_loi') === 'roi')>Đã trả lời</option>
+    </select>
 </x-admin.filter-bar>
 
 <x-admin.bulk-bar

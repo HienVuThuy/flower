@@ -25,7 +25,7 @@
     <div class="d-flex flex-wrap gap-2">
         @foreach($periods as $value => $label)
             <a href="{{ route('admin.analytics.index', ['ky' => $value]) }}"
-               class="btn btn-sm {{ $period === $value ? 'btn-primary-brand' : 'btn-outline-admin' }}">
+               class="btn btn-sm {{ $period === (string) $value ? 'btn-primary-brand' : 'btn-outline-admin' }}">
                 {{ $label }}
             </a>
         @endforeach
@@ -87,24 +87,13 @@
         <div class="admin-panel p-4 h-100 d-flex flex-column gap-3">
             @php
                 /*
-                 * THANG THỨ TỰ cho các bước trong quy trình, KHÔNG phải
-                 * bộ màu danh mục.
+                 * Bảng màu trạng thái nằm ở OrderStatus::vizColor().
                  *
-                 * Chờ xác nhận → Đã xác nhận → Đang chuẩn bị → Đang giao
-                 * → Hoàn thành là một dãy CÓ TRƯỚC CÓ SAU. Tô mỗi bước
-                 * một màu khác hệ là vứt bỏ thông tin thứ tự đó.
-                 *
-                 * "Đã huỷ" KHÔNG nằm trong dãy — nó là kết cục xấu, nên
-                 * dùng màu trạng thái và luôn đi kèm nhãn chữ.
+                 * Trang Tổng quan vẽ đúng biểu đồ này. Chép bảng màu
+                 * sang đó là hai màn hình lệch màu ngay lần đầu có người
+                 * sửa một bên — và không ai phát hiện, vì cả hai đều
+                 * trông bình thường khi nhìn riêng.
                  */
-                $mauTrangThai = [
-                    'pending' => 'var(--viz-step-1)',
-                    'confirmed' => 'var(--viz-step-2)',
-                    'preparing' => 'var(--viz-step-3)',
-                    'shipping' => 'var(--viz-step-4)',
-                    'completed' => 'var(--viz-step-5)',
-                    'cancelled' => 'var(--viz-huy)',
-                ];
             @endphp
 
             <x-admin.chart.donut
@@ -114,7 +103,7 @@
                 :slices="$statusMix->map(fn ($r) => [
                     'label' => $r['status']->label(),
                     'value' => $r['total'],
-                    'color' => $mauTrangThai[$r['status']->value] ?? 'var(--viz-step-3)',
+                    'color' => $r['status']->vizColor(),
                 ])" />
 
             <x-admin.chart.donut
@@ -257,7 +246,7 @@
                     <div class="stat-list__row stat-list__row--total">
                         <dt>
                             Doanh thu (đơn đã giao)
-                            <x-admin.trend :now="$orderStats['revenue']" :before="$previous['orders']['revenue'] ?? null" />
+                            <x-admin.trend :now="$orderStats['revenue']" :before="$previous['orders']['revenue'] ?? null" format="tien" />
                         </dt>
                         <dd><x-site.money :amount="$orderStats['revenue']" /></dd>
                     </div>

@@ -167,8 +167,6 @@ class AnalyticsController extends Controller
      */
     private function period(Request $request): string
     {
-        $period = (string) $request->query('ky', '30');
-
-        return array_key_exists($period, AnalyticsService::PERIODS) ? $period : '30';
+        return AnalyticsService::hopLeKy($request->query('ky'));
     }
 }

@@ -1,4 +1,4 @@
-@props(['now', 'before' => null, 'invert' => false])
+@props(['now', 'before' => null, 'invert' => false, 'format' => 'so'])
 
 {{--
     So sánh một chỉ số với kỳ trước.
@@ -23,6 +23,21 @@
         : \App\Services\Analytics\AnalyticsService::change((float) $now, (float) $before);
 
     $good = $change === null ? null : ($invert ? $change < 0 : $change > 0);
+
+    /*
+     * ĐỊNH DẠNG KIỂU VIỆT: dấu chấm ngăn nghìn, dấu phẩy thập phân.
+     *
+     * Bản trước gọi number_format() với tham số mặc định, tức là kiểu
+     * Anh — "so với 13,810,000 kỳ trước" và "46.1%". Đặt cạnh con số
+     * chính "7.450.000₫" thì cùng một dòng có hai quy ước, và "13,810"
+     * đọc theo kiểu Việt là mười ba phẩy tám.
+     *
+     * `format="tien"` cho chỉ số tiền: mốc so sánh cũng phải có đơn vị,
+     * nếu không người đọc không biết 13.810.000 là đồng hay là lượt xem.
+     */
+    $moc = $before === null ? null : ($format === 'tien'
+        ? \App\Services\Shop\Money::format((string) round((float) $before))
+        : number_format((float) $before, 0, ',', '.'));
 @endphp
 
 @if($before !== null)
@@ -33,8 +48,8 @@
             không đổi so với kỳ trước
         @else
             {{ $change > 0 ? '▲' : '▼' }}
-            {{ number_format(abs($change), 1) }}%
-            <span class="admin-trend__base">so với {{ number_format((float) $before) }} kỳ trước</span>
+            {{ number_format(abs($change), 1, ',', '.') }}%
+            <span class="admin-trend__base">so với {{ $moc }} kỳ trước</span>
         @endif
     </span>
 @endif

@@ -505,6 +505,7 @@
 .admin-list__row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: var(--space-sm);
     padding-block: 0.6rem;
     border-bottom: 1px solid var(--admin-border);
@@ -519,16 +520,43 @@
     color: var(--admin-accent-strong);
 }
 
-/* Cột giữa co giãn, mã đơn và tiền giữ nguyên bề rộng. */
-.admin-list__row > .admin-page-subtitle {
+/*
+ * HAI CỘT, MỖI CỘT HAI TẦNG.
+ *
+ * Khối "Đơn gần đây" nằm trong cột hẹp (5/12 trên máy tính, trọn bề
+ * ngang trên điện thoại). Bản đầu xếp bốn thứ trên một hàng: đo trên màn
+ * 366px thì mã đơn gãy ba dòng ở dấu gạch, tên người nhận co về 0px, và
+ * số tiền tràn 6-21px ra ngoài khung; trên màn 1280px mỗi dòng cao 74px.
+ */
+.admin-list__main {
+    display: flex;
+    flex-direction: column;
+
+    /* Cột co giãn; không có min-width: 0 thì tên dài đẩy cột phải ra
+       ngoài khung thay vì bị cắt bằng dấu ba chấm. */
     flex: 1;
     min-width: 0;
+}
+
+.admin-list__main > span,
+.admin-list__side > span {
+    /* Hai tầng chữ là một khối thông tin, không phải hai đoạn văn: giãn
+       dòng 1.6 mặc định làm mỗi dòng đơn cao 73px. */
+    line-height: 1.35;
+}
+
+.admin-list__main > span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.admin-list__row > .fw-bold:last-child {
+.admin-list__side {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
     white-space: nowrap;
 }
 
@@ -850,6 +878,82 @@
 
 .admin-todo__label {
     flex: 1;
+
+    /*
+     * min-width: 0 BẮT BUỘC trên một flex item.
+     *
+     * Mặc định của flexbox là min-width: auto, nghĩa là item không co
+     * nhỏ hơn nội dung của nó. Câu chú thích dài bên dưới sẽ đẩy mũi
+     * tên ra ngoài khung thay vì tự xuống dòng.
+     */
+    min-width: 0;
+}
+
+/*
+ * CÂU CHÚ THÍCH DƯỚI MỖI DÒNG VIỆC.
+ *
+ * "3 đơn đã nhận nhưng chưa có vận đơn" nói ĐANG CÓ GÌ. Câu dưới nói
+ * VÌ SAO ĐÁNG QUAN TÂM ("đơn COD không tự tạo vận đơn — chưa tạo thì
+ * hàng chưa đi"). Thiếu vế thứ hai thì người mới vào làm đọc con số mà
+ * không biết bỏ qua thì mất gì.
+ */
+.admin-todo__hint {
+    display: block;
+    margin-top: 0.1rem;
+    font-size: 0.78rem;
+    font-weight: 400;
+    line-height: 1.35;
+    color: var(--admin-ink-muted);
+}
+
+/*
+ * THẺ CHỈ SỐ ở đầu trang Tổng quan.
+ * ============================================================
+ * Khác `stat-card` (một dòng, có icon, để đếm thứ tĩnh): thẻ này xếp
+ * dọc để chừa chỗ cho phần SO VỚI KỲ TRƯỚC — thứ biến con số thành một
+ * câu trả lời thay vì một con số.
+ */
+.admin-kpi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    height: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    background: var(--admin-surface);
+    color: inherit;
+    text-decoration: none;
+}
+
+a.admin-kpi:hover,
+a.admin-kpi:focus-visible {
+    background: var(--admin-surface-alt);
+}
+
+.admin-kpi__label {
+    font-size: 0.8rem;
+    color: var(--admin-ink-muted);
+}
+
+.admin-kpi__value {
+    /* "7.450.000₫" không có chỗ gãy tự nhiên; thẻ hẹp thì cho gãy
+       giữa chữ số còn hơn tràn ra ngoài khung. */
+    overflow-wrap: anywhere;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.2;
+
+    /* Chữ số cùng bề rộng: bốn thẻ xếp cạnh nhau thì các con số thẳng
+       hàng, mắt so được ngay mà không phải đọc từng chữ số. */
+    font-variant-numeric: tabular-nums;
+}
+
+.admin-kpi__note {
+    margin-top: 0.15rem;
+    font-size: 0.72rem;
+    line-height: 1.35;
+    color: var(--admin-ink-muted);
 }
 
 .admin-todo__go {

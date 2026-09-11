@@ -69,6 +69,30 @@ class OrderController extends Controller
                 )
 
                 /*
+                 * LỌC THEO VẬN ĐƠN.
+                 *
+                 * Đơn trả qua MoMo tự tạo vận đơn ngay sau khi thanh
+                 * toán; đơn COD thì KHÔNG — phải có người bấm. Đơn quên
+                 * bấm nằm ở "Đã xác nhận", trông y hệt đơn đang chạy, và
+                 * không có cách nào lọc ra.
+                 *
+                 * "cho-tao" dùng CHUNG scope với dòng việc ở trang Tổng
+                 * quan — xem Order::scopeAwaitingWaybill() để biết vì sao
+                 * không lọc trần "chưa có mã".
+                 *
+                 * SO VỚI CHUỖI CỐ ĐỊNH chứ không dùng filled(): tham số
+                 * lạ thì coi như không lọc, không đoán ý.
+                 */
+                ->when(
+                    $request->query('van_don') === 'cho-tao',
+                    fn ($q) => $q->awaitingWaybill()
+                )
+                ->when(
+                    $request->query('van_don') === 'roi',
+                    fn ($q) => $q->whereNotNull('ghn_order_code')
+                )
+
+                /*
                  * LỌC THEO KHOẢNG NGÀY.
                  *
                  * whereDate chứ không phải where: `created_at` có cả giờ,

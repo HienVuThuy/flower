@@ -4,10 +4,14 @@ namespace Tests\Feature\Admin;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\StockReceiptStatus;
 use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\ProductVariant;
+use App\Models\Review;
+use App\Models\StockReceipt;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
@@ -38,9 +42,9 @@ class DashboardTodoTest extends TestCase
         return $user;
     }
 
-    private function order(OrderStatus $status, PaymentStatus $payment): Order
+    private function order(OrderStatus $status, PaymentStatus $payment, array $them = []): Order
     {
-        $order = Order::create([
+        $order = Order::create(array_merge([
             'order_number' => 'FP-TEST-'.strtoupper(bin2hex(random_bytes(3))),
             'recipient_name' => 'Khách thử',
             'recipient_phone' => '0912345678',
@@ -52,11 +56,20 @@ class DashboardTodoTest extends TestCase
             'shipping_fee' => '25000.00',
             'coupon_discount' => '0.00',
             'grand_total' => '325000.00',
-        ]);
+        ], $them));
 
-        $order->status = $status;
-        $order->payment_status = $payment;
-        $order->save();
+        /*
+         * forceFill CHỨ KHÔNG PHẢI create([...'status'...]).
+         *
+         * `status` cố ý không nằm trong $fillable — chỉ mã nguồn phía
+         * cửa hàng mới đổi được, không phải dữ liệu gửi lên từ biểu mẫu.
+         * Đưa vào create() thì Laravel BỎ QUA IM LẶNG, đơn ở lại trạng
+         * thái mặc định, và bài kiểm thử xanh vì lý do sai.
+         */
+        $order->forceFill([
+            'status' => $status,
+            'payment_status' => $payment,
+        ])->save();
 
         return $order;
     }
@@ -66,13 +79,15 @@ class DashboardTodoTest extends TestCase
         return $this->actingAs($this->admin())->get('/admin/dashboard');
     }
 
+    /* ================= TIỀN CỦA NGƯỜI KHÁC ================= */
+
     #[Test]
     public function nhac_don_da_huy_ma_khach_da_tra_tien(): void
     {
         /*
-         * Việc DUY NHẤT trong bốn mục liên quan tới tiền của người khác.
-         * Trước khi có khối này, không chỗ nào hiện nó ra — admin chỉ
-         * phát hiện khi tình cờ mở đúng đơn đó.
+         * Việc DUY NHẤT trong cả danh sách liên quan tới tiền của người
+         * khác. Trước khi có khối này, không chỗ nào hiện nó ra — admin
+         * chỉ phát hiện khi tình cờ mở đúng đơn đó.
          */
         $this->order(OrderStatus::Cancelled, PaymentStatus::Paid);
 
@@ -89,6 +104,48 @@ class DashboardTodoTest extends TestCase
         $this->dashboard()->assertSee('đơn chờ xác nhận');
     }
 
+    /* ================= ĐƠN ĐỨNG IM ================= */
+
+    #[Test]
+    public function nhac_don_da_nhan_ma_chua_co_van_don(): void
+    {
+        /*
+         * Đơn trả qua MoMo tự tạo vận đơn ngay sau khi thanh toán; đơn
+         * COD thì KHÔNG — phải có người bấm. Trước đây không màn hình
+         * nào hiện ra khoảng trống đó: đơn nằm ở "Đã xác nhận", trông y
+         * hệt đơn đang chạy, mà thực tế chưa ai gọi shipper.
+         */
+        $this->order(OrderStatus::Confirmed, PaymentStatus::Unpaid);
+
+        $this->dashboard()->assertSee('đơn đã nhận nhưng chưa có vận đơn');
+    }
+
+    #[Test]
+    public function don_DA_CO_van_don_thi_khong_con_la_viec(): void
+    {
+        $this->order(OrderStatus::Confirmed, PaymentStatus::Unpaid, [
+            'ghn_order_code' => 'L8WA3V',
+        ]);
+
+        $this->dashboard()->assertDontSee('đơn đã nhận nhưng chưa có vận đơn');
+    }
+
+    #[Test]
+    public function don_da_giao_xong_khong_bi_doi_van_don(): void
+    {
+        /*
+         * Đơn đã giao mà không có mã vận đơn là chuyện bình thường —
+         * khách tới lấy tại cửa hàng, hoặc đơn cũ trước khi nối GHN.
+         * Đưa vào hàng đợi là dựng ra một việc không ai làm được, và
+         * con số đó không bao giờ về 0.
+         */
+        $this->order(OrderStatus::Completed, PaymentStatus::Paid);
+
+        $this->dashboard()->assertDontSee('đơn đã nhận nhưng chưa có vận đơn');
+    }
+
+    /* ================= TỒN KHO ================= */
+
     #[Test]
     public function nhac_hang_het_NHUNG_khong_tinh_hang_lam_theo_don(): void
     {
@@ -102,12 +159,130 @@ class DashboardTodoTest extends TestCase
         $cat = Category::factory()->create();
         Product::factory()->for($cat)->madeToOrder()->create();
 
-        $this->dashboard()->assertDontSee('sản phẩm đã hết hàng');
+        $this->dashboard()->assertDontSee('mặt hàng đã hết nhưng vẫn đang bày bán');
 
         Product::factory()->for($cat)->stock(0)->create();
 
-        $this->dashboard()->assertSee('sản phẩm đã hết hàng');
+        $this->dashboard()->assertSee('mặt hàng đã hết nhưng vẫn đang bày bán');
     }
+
+    #[Test]
+    public function het_hang_cua_san_pham_DA_AN_khong_phai_la_viec(): void
+    {
+        // Khách không bấm vào được thì không mất đơn nào. Đưa vào danh
+        // sách "phải xử lý hôm nay" là làm loãng chính danh sách đó.
+        Product::factory()
+            ->for(Category::factory())
+            ->stock(0)
+            ->create(['status' => 'draft']);
+
+        $this->dashboard()->assertDontSee('mặt hàng đã hết nhưng vẫn đang bày bán');
+    }
+
+    #[Test]
+    public function het_hang_o_QUY_CACH_van_bi_bat(): void
+    {
+        /*
+         * MẤU CHỐT CỦA VIỆC ĐẾM BẰNG InventoryReport.
+         *
+         * Sản phẩm có quy cách giữ tồn ở TỪNG QUY CÁCH; cột
+         * `products.stock_quantity` không phải thứ khách mua. Cách đếm
+         * cũ (`products.stock_quantity <= 0`) bỏ sót đúng trường hợp
+         * này: cột trên bảng sản phẩm vẫn là 100, trong khi quy cách
+         * duy nhất đang bán đã hết sạch và khách không mua được gì.
+         */
+        $p = Product::factory()
+            ->for(Category::factory())
+            ->create(['status' => 'active', 'track_inventory' => true, 'stock_quantity' => 100]);
+
+        ProductVariant::create([
+            'product_id' => $p->id,
+            'name' => 'Chậu sứ',
+            'sku' => 'TEST-QC-1',
+            'price' => '150000.00',
+            'stock_quantity' => 0,
+            'track_inventory' => true,
+            'is_active' => true,
+        ]);
+
+        $this->dashboard()->assertSee('mặt hàng đã hết nhưng vẫn đang bày bán');
+    }
+
+    /* ================= PHIẾU NHẬP ================= */
+
+    #[Test]
+    public function nhac_phieu_nhap_con_nhap(): void
+    {
+        /*
+         * Lập phiếu KHÔNG cộng vào kho — phải bấm "Ghi sổ". Người lập bị
+         * gọi đi giữa chừng là phiếu nằm mãi ở nháp, tồn kho hiển thị
+         * thiếu, và trang Tồn kho giục nhập thêm đúng món đang chất
+         * trong kho.
+         */
+        StockReceipt::create([
+            'code' => 'NK-TEST-0001',
+            'received_at' => now()->toDateString(),
+        ]);
+
+        $this->dashboard()->assertSee('phiếu nhập còn nháp, chưa cộng vào kho');
+    }
+
+    #[Test]
+    public function phieu_da_ghi_so_khong_con_la_viec(): void
+    {
+        $phieu = StockReceipt::create([
+            'code' => 'NK-TEST-0002',
+            'received_at' => now()->toDateString(),
+        ]);
+
+        $phieu->forceFill(['status' => StockReceiptStatus::Posted, 'posted_at' => now()])->save();
+
+        $this->dashboard()->assertDontSee('phiếu nhập còn nháp');
+    }
+
+    /* ================= ĐÁNH GIÁ ================= */
+
+    #[Test]
+    public function nhac_danh_gia_thap_chua_tra_loi(): void
+    {
+        $this->danhGia(1, null);
+
+        $this->dashboard()->assertSee('đánh giá 1-2 sao chưa được trả lời');
+    }
+
+    #[Test]
+    public function danh_gia_thap_DA_TRA_LOI_khong_con_la_viec(): void
+    {
+        // Một lời phàn nàn đã được trả lời không còn là việc phải làm.
+        // Để nó lại trong hàng đợi là làm loãng phần còn lại.
+        $this->danhGia(1, 'Cửa hàng xin lỗi và đã đổi cây mới cho anh/chị.');
+
+        $this->dashboard()->assertDontSee('đánh giá 1-2 sao chưa được trả lời');
+    }
+
+    #[Test]
+    public function danh_gia_5_sao_chua_tra_loi_khong_phai_viec_gap(): void
+    {
+        $this->danhGia(5, null);
+
+        $this->dashboard()->assertDontSee('đánh giá 1-2 sao chưa được trả lời');
+    }
+
+    private function danhGia(int $sao, ?string $traLoi): Review
+    {
+        $review = Review::create([
+            'product_id' => Product::factory()->for(Category::factory())->create()->id,
+            'user_id' => User::factory()->create()->id,
+            'rating' => $sao,
+            'comment' => 'Nhận xét thử',
+        ]);
+
+        $review->forceFill(['admin_reply' => $traLoi, 'is_visible' => true])->save();
+
+        return $review;
+    }
+
+    /* ================= LUẬT CHUNG CỦA HÀNG ĐỢI ================= */
 
     #[Test]
     public function het_viec_thi_noi_het_viec(): void
@@ -136,6 +311,61 @@ class DashboardTodoTest extends TestCase
             $html,
             'Dòng "cần hoàn tiền" phải dẫn tới danh sách đã lọc sẵn.',
         );
+    }
+
+    #[Test]
+    public function moi_dong_noi_ro_vi_sao_dang_quan_tam(): void
+    {
+        /*
+         * Con số nói ĐANG CÓ GÌ; câu chú thích nói BỎ QUA THÌ MẤT GÌ.
+         * Thiếu vế thứ hai thì người mới vào làm đọc "3 đơn chưa có vận
+         * đơn" mà không biết điều đó nghĩa là hàng chưa đi.
+         */
+        $this->order(OrderStatus::Confirmed, PaymentStatus::Unpaid);
+
+        $this->dashboard()->assertSee('Đơn COD không tự tạo vận đơn');
+    }
+
+    /* ================= ĐÍCH ĐẾN PHẢI KHỚP CON SỐ ================= */
+
+    #[Test]
+    public function dich_cua_dong_van_don_chi_hien_don_chua_co_van_don(): void
+    {
+        /*
+         * Dòng việc nói "2 đơn chưa có vận đơn" rồi dẫn tới một danh
+         * sách 40 đơn lẫn lộn là một lời hứa không giữ. Bộ lọc ở trang
+         * đích phải cho ra ĐÚNG những đơn mà con số đã đếm.
+         */
+        $chua = $this->order(OrderStatus::Confirmed, PaymentStatus::Unpaid);
+        $roi = $this->order(OrderStatus::Confirmed, PaymentStatus::Unpaid, ['ghn_order_code' => 'L8WA3V']);
+
+        /*
+         * ĐƠN ĐÃ GIAO XONG MÀ KHÔNG CÓ MÃ VẬN ĐƠN — chính là thứ làm lộ
+         * lỗi trên dữ liệu thật: bản đầu bộ lọc chỉ soi "chưa có mã", nên
+         * dòng việc nói 2 đơn mà bấm vào ra 41. Thiếu đơn này trong dữ
+         * liệu thử thì bài kiểm thử xanh trong khi màn hình nói sai.
+         */
+        $daGiao = $this->order(OrderStatus::Completed, PaymentStatus::Paid);
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.orders.index', ['van_don' => 'cho-tao']))
+            ->assertOk()
+            ->assertSee($chua->order_number)
+            ->assertDontSee($roi->order_number)
+            ->assertDontSee($daGiao->order_number);
+    }
+
+    #[Test]
+    public function dich_cua_dong_danh_gia_chi_hien_danh_gia_thap_chua_tra_loi(): void
+    {
+        $this->danhGia(1, null)->forceFill(['comment' => 'Cây héo ngay hôm sau'])->save();
+        $this->danhGia(2, 'Đã đổi cây mới.')->forceFill(['comment' => 'Chậu bị nứt'])->save();
+
+        $this->actingAs($this->admin())
+            ->get(route('admin.reviews.index', ['sao' => 'thap', 'tra_loi' => 'chua']))
+            ->assertOk()
+            ->assertSee('Cây héo ngay hôm sau')
+            ->assertDontSee('Chậu bị nứt');
     }
 
     #[Test]

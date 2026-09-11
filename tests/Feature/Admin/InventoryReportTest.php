@@ -34,7 +34,16 @@ class InventoryReportTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function hang(string $ten, int $ton, string $gia = '100000.00', string $trangThai = 'published'): Product
+    /*
+     * MẶC ĐỊNH 'active' — từ vựng THẬT của dự án.
+     *
+     * Bản đầu để 'published', một giá trị không tồn tại ở đâu trong mã
+     * nguồn. Nó khớp với hằng số cũng sai bên InventoryReport, nên cả 12
+     * bài kiểm thử đều xanh trong khi trên dữ liệu thật mục "đang mất
+     * đơn" vĩnh viễn rỗng. Bài kiểm thử chỉ có giá trị khi nó nói cùng
+     * một ngôn ngữ với phần còn lại của ứng dụng.
+     */
+    private function hang(string $ten, int $ton, string $gia = '100000.00', string $trangThai = 'active'): Product
     {
         return Product::factory()
             ->for(Category::factory()->state(['kind' => 'plant', 'is_active' => true]))

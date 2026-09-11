@@ -103,6 +103,24 @@ class AnalyticsService
         return true;
     }
 
+    /**
+     * Đọc mã kỳ từ tham số URL, trả về một mã CHẮC CHẮN hợp lệ.
+     *
+     * Ở ĐÂY chứ không ở từng controller: hai màn hình (Tổng quan và
+     * Phân tích) cùng nhận tham số `ky`. Mỗi nơi tự kiểm một kiểu thì
+     * đủ để một nơi nhận '90' còn nơi kia lùi về '30', và hai trang nói
+     * hai con số cho cùng một cửa hàng.
+     *
+     * Tham số lạ thì LÙI VỀ MẶC ĐỊNH, không nổ: `?ky=<script>` là thứ
+     * bất kỳ ai cũng gõ được vào thanh địa chỉ.
+     */
+    public static function hopLeKy(mixed $ky, string $macDinh = '30'): string
+    {
+        $ky = is_scalar($ky) ? (string) $ky : '';
+
+        return array_key_exists($ky, self::PERIODS) ? $ky : $macDinh;
+    }
+
     /** Mốc bắt đầu của một kỳ, hoặc null với 'all'. */
     private static function startOf(string $period): ?Carbon
     {

@@ -86,7 +86,7 @@
                     @foreach($periods as $value => $label)
                         <label class="export-item">
                             <input type="radio" class="form-check-input" name="ky"
-                                   value="{{ $value }}" @checked($period === $value)>
+                                   value="{{ $value }}" @checked($period === (string) $value)>
                             <span class="export-item__body">
                                 <span class="export-item__name">{{ $label }}</span>
                             </span>

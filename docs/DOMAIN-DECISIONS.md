@@ -6592,3 +6592,74 @@ một cái tên do người gửi tự đặt.
 Ô chọn cũng **chỉ liệt kê mặt hàng có bật theo dõi tồn**: bày ra một lựa
 chọn mà lúc ghi sổ sẽ bị từ chối là để người dùng gõ xong cả phiếu rồi
 mới biết mình chọn sai.
+
+---
+
+## QĐ-216. Trang Tổng quan mở đầu bằng việc phải làm, không bằng số đếm
+
+Bốn thẻ "bao nhiêu danh mục / sản phẩm / khách hàng / yêu cầu" bị bỏ. Chúng
+gần như không đổi từ ngày này sang ngày khác và không trả lời câu hỏi nào
+của người mở trang, nên người ta học cách lướt qua cả vùng đó.
+
+Thứ tự trang bây giờ trả lời đúng hai câu:
+
+1. **Hôm nay phải làm gì** — hàng đợi việc (`App\Services\Admin\WorkQueue`).
+2. **Cửa hàng đang lên hay xuống** — doanh thu, đơn đã giao, giá trị đơn
+   trung bình, đơn huỷ, mỗi chỉ số kèm kỳ trước.
+
+Phễu, từ khoá tìm kiếm, khách mua nhiều, mã giảm giá, xuất dữ liệu **ở lại**
+trang Phân tích. Chép sang đây là hai màn hình cùng làm một việc.
+
+---
+
+## QĐ-217. Hàng đợi việc: ba luật, và đích đến phải khớp con số
+
+- Mỗi mục là thứ **có người động tay được**.
+- Mỗi mục dẫn tới **danh sách đã lọc sẵn**.
+- Mục bằng 0 **biến mất**; hết việc thì nói hết việc.
+
+Luật thứ tư, học được từ dữ liệu thật: **con số và trang đích phải dùng
+chung một định nghĩa.** Bản đầu hàng đợi đếm "đã xác nhận/đang chuẩn bị +
+chưa có mã vận đơn", còn bộ lọc chỉ lọc "chưa có mã" — dòng việc nói 2 đơn,
+bấm vào ra 41, lẫn cả đơn đã giao xong. Giờ cả hai gọi
+`Order::scopeAwaitingWaybill()`.
+
+Các mục mới so với bản trước: đơn chờ tạo vận đơn (đơn COD không tự tạo),
+hàng sắp hết theo số ngày bán, phiếu nhập còn nháp, đánh giá 1–2 sao chưa
+trả lời, bài cộng đồng chờ duyệt. Hai bộ lọc mới đi kèm: `van_don` ở danh
+sách đơn, `tra_loi` ở danh sách đánh giá.
+
+---
+
+## QĐ-218. Một định nghĩa cho mỗi chỉ số, dùng chung giữa các màn hình
+
+`DashboardController` từng tự viết `orderStats()` với định nghĩa doanh thu
+riêng. Giờ nó chỉ gọi `AnalyticsService`. Bài kiểm thử mở **cả hai trang**
+với cùng dữ liệu và đòi cùng một chuỗi tiền.
+
+Cùng nguyên tắc cho những thứ nhỏ hơn:
+
+- Đếm hết hàng bằng `InventoryReport` — cách cũ `products.stock_quantity <= 0`
+  bỏ sót sản phẩm có quy cách (tồn nằm ở từng quy cách) và tính cả sản phẩm
+  đã ẩn.
+- Màu trạng thái đơn trong biểu đồ: `OrderStatus::vizColor()`, không chép
+  bảng màu vào từng Blade.
+- Đọc tham số kỳ: `AnalyticsService::hopLeKy()`.
+
+---
+
+## QĐ-219. Sửa ba lỗi hiển thị chỉ thấy được trên trang thật
+
+**Trạng thái sản phẩm bịa.** `InventoryReport` so `status === 'published'` —
+giá trị không tồn tại ở đâu trong mã nguồn (từ vựng thật: `draft / active /
+inactive / out_of_stock`). Mục "đang mất đơn" ở trang Tồn kho vì thế **luôn
+rỗng** và nói "Tốt." dù kho hết sạch. Bài kiểm thử không bắt được vì nó cũng
+tự đặt `'published'`: cùng một giả định sai ở cả hai phía.
+
+**Nút kỳ không bao giờ được tô đậm.** PHP đổi khoá mảng `'30'` thành số
+nguyên `30`; so với chuỗi `'30'` từ URL bằng `===` thì luôn sai. Lỗi có ở
+Tổng quan, Phân tích, form Xuất dữ liệu (ô kỳ không được tích sẵn) và Tồn
+kho. Riêng "Toàn bộ" đúng vì khoá `'all'` không phải chữ số.
+
+**Số kiểu Anh.** Phần so sánh kỳ in "so với 13,810,000 kỳ trước" ngay dưới
+"7.450.000₫". Giờ in kiểu Việt, và chỉ số tiền có đơn vị.
