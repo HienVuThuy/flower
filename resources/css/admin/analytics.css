@@ -325,3 +325,40 @@
 html:not(.has-js) .export-pick-all {
     display: none;
 }
+
+/* ============ THANH TAB CÁC TRANG PHÂN TÍCH ============
+ *
+ * Tab là LIÊN KẾT thật (mỗi trang một địa chỉ), không phải nút ẩn/hiện
+ * nội dung bằng JavaScript: gửi được đường dẫn cho đồng nghiệp, bấm Back
+ * ra đúng trang, và mỗi trang chỉ chạy truy vấn của chính nó.
+ */
+.analytics-tabs {
+    display: flex;
+    gap: 0.25rem;
+    overflow-x: auto;
+    /* Chỉ cuộn ngang. `overflow-x: auto` kéo theo `overflow-y: auto`, và
+       viền dưới -1px của tab đang chọn làm hiện mũi tên cuộn dọc thừa. */
+    overflow-y: hidden;
+    border-bottom: 1px solid var(--admin-border);
+}
+
+.analytics-tabs__tab {
+    flex: none;
+    padding: 0.5rem 0.9rem;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    color: var(--admin-ink-muted);
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.analytics-tabs__tab:hover,
+.analytics-tabs__tab:focus-visible {
+    color: var(--admin-ink);
+}
+
+.analytics-tabs__tab.is-active {
+    color: var(--admin-ink);
+    font-weight: 600;
+    border-bottom-color: var(--admin-accent);
+}

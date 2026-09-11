@@ -10,7 +10,9 @@ use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\AnalyticsController;
+use App\Http\Controllers\Admin\AnalyticsPagesController;
 use App\Http\Controllers\Admin\InventoryController;
+use App\Http\Controllers\Admin\StockCountController;
 use App\Http\Controllers\Admin\StockReceiptController;
 use App\Http\Controllers\Admin\BlogPostController;
 use App\Http\Controllers\Admin\CommunityModerationController;
@@ -908,6 +910,16 @@ Route::prefix('admin')
         Route::get('phan-tich', [AnalyticsController::class, 'index'])
             ->name('analytics.index');
 
+        // Các trang con — xem AnalyticsPagesController.
+        Route::get('phan-tich/doanh-thu', [AnalyticsPagesController::class, 'sales'])
+            ->name('analytics.sales');
+        Route::get('phan-tich/khach-hang', [AnalyticsPagesController::class, 'customers'])
+            ->name('analytics.customers');
+        Route::get('phan-tich/danh-gia', [AnalyticsPagesController::class, 'reviews'])
+            ->name('analytics.reviews');
+        Route::get('phan-tich/loi-nhuan', [AnalyticsPagesController::class, 'profit'])
+            ->name('analytics.profit');
+
         /*
          * ĐỀ XUẤT GIÁ & ƯU ĐÃI.
          *
@@ -989,6 +1001,19 @@ Route::prefix('admin')
         Route::post('nhap-kho/{stockReceipt}/ghi-so', [StockReceiptController::class, 'post'])
             ->middleware('throttle:20,1')
             ->name('stock-receipts.post');
+
+        /*
+         * KIỂM KÊ KHO — cùng khuôn với phiếu nhập: không sửa, xoá chỉ khi còn
+         * nháp, ghi sổ bằng POST có throttle.
+         */
+        Route::resource('kiem-ke', StockCountController::class)
+            ->parameters(['kiem-ke' => 'stockCount'])
+            ->except(['edit', 'update'])
+            ->names('stock-counts');
+
+        Route::post('kiem-ke/{stockCount}/ghi-so', [StockCountController::class, 'post'])
+            ->middleware('throttle:20,1')
+            ->name('stock-counts.post');
 
         Route::get('phan-tich/xuat', [AnalyticsController::class, 'exportForm'])
             ->name('analytics.export-form');

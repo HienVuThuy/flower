@@ -35,7 +35,7 @@
                             <tr>
                                 <th style="min-width: 16rem;">Mặt hàng</th>
                                 <th style="width: 7rem;">Số lượng</th>
-                                <th style="width: 10rem;">Giá vốn / đơn vị</th>
+                                <th style="width: 10rem;">Giá vốn / đơn vị <span class="fw-normal text-muted">(chưa VAT)</span></th>
                             </tr>
                         </thead>
                         <tbody>
@@ -89,7 +89,7 @@
                     HAI ĐIỀU DỄ HIỂU NHẦM, nói ngay cạnh ô nhập.
                 --}}
                 <p class="admin-page-subtitle mt-3 mb-0">
-                    <strong>Giá vốn</strong> để trống nghĩa là <em>chưa biết</em> (hàng tặng, hàng mẫu),
+                    <strong>Giá vốn</strong> là giá mua <strong>chưa gồm VAT đầu vào</strong> (theo hoá đơn của nhà cung cấp) — trang Lãi gộp so nó với doanh thu đã trừ VAT. Để trống nghĩa là <em>chưa biết</em> (hàng tặng, hàng mẫu),
                     khác với 0₫. Tổng tiền sẽ bỏ qua những dòng đó thay vì tính bằng không.
                     <br>
                     <strong>Số lượng âm</strong> dùng để lập phiếu điều chỉnh khi nhập nhầm —

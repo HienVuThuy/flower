@@ -29,6 +29,9 @@
     </div>
 
     <div class="d-flex flex-wrap gap-2">
+        {{-- Số trên trang này chỉ đúng khi tồn trên hệ thống khớp kệ thật. --}}
+        <a data-admin-link href="{{ route('admin.stock-counts.create') }}" class="btn btn-sm btn-outline-admin">Kiểm kê</a>
+
         @foreach($cacKy as $value => $label)
             <a data-admin-link href="{{ route('admin.inventory.index', ['ky' => $value, 'nguong' => $nguong]) }}"
                class="btn btn-sm {{ $ky === (string) $value ? 'btn-primary-brand' : 'btn-outline-admin' }}">

@@ -125,14 +125,31 @@ class AnalyticsService
         return array_key_exists($ky, self::PERIODS) ? $ky : $macDinh;
     }
 
-    /** Mốc bắt đầu của một kỳ, hoặc null với 'all'. */
+    /**
+     * Mốc bắt đầu của một kỳ, hoặc null với 'all'.
+     *
+     * NỬA ĐÊM GIỜ VIỆT NAM, không phải nửa đêm UTC (tức 7h sáng). Xem
+     * KhoangThoiGian.
+     */
     private static function startOf(string $period): ?Carbon
     {
         return match ($period) {
-            '7' => now()->subDays(7)->startOfDay(),
-            '30' => now()->subDays(30)->startOfDay(),
+            '7' => KhoangThoiGian::nuaDemTruoc(7),
+            '30' => KhoangThoiGian::nuaDemTruoc(30),
             default => null,
         };
+    }
+
+    /**
+     * Kỳ đang chốt, dưới dạng một đối tượng đưa được cho lớp báo cáo khác.
+     *
+     * Các trang con của Phân tích (doanh thu, khách hàng, đánh giá, lợi
+     * nhuận) lấy kỳ từ ĐÂY chứ không tự tính lại — để "7 ngày qua" ở mọi
+     * trang là cùng một khoảng.
+     */
+    public function khoang(): KhoangThoiGian
+    {
+        return new KhoangThoiGian($this->since, $this->until);
     }
 
     /**
@@ -283,15 +300,23 @@ class AnalyticsService
      */
     public function dailyActivity(int $days = 14): Collection
     {
-        $from = now()->subDays($days - 1)->startOfDay();
+        $from = KhoangThoiGian::nuaDemTruoc($days - 1);
 
+        /*
+         * GOM THEO NGÀY GIỜ VIỆT NAM, ở PHP.
+         *
+         * `DATE(created_at)` trong SQL cắt ngày theo giờ lưu (UTC) — mọi sự
+         * kiện từ 0h tới 7h sáng rơi vào ngày hôm trước. Đổi múi giờ trong
+         * SQL thì MySQL và SQLite viết khác nhau, nên đếm ở đây.
+         */
         $counts = UserEvent::where('created_at', '>=', $from)
-            ->selectRaw('DATE(created_at) as d, COUNT(*) as total')
-            ->groupBy('d')
-            ->pluck('total', 'd');
+            ->pluck('created_at')
+            ->countBy(fn ($t) => KhoangThoiGian::diaPhuong($t)->toDateString());
 
-        return collect(range(0, $days - 1))->map(function (int $i) use ($from, $counts) {
-            $day = $from->copy()->addDays($i);
+        $dauNgay = KhoangThoiGian::diaPhuong($from);
+
+        return collect(range(0, $days - 1))->map(function (int $i) use ($dauNgay, $counts) {
+            $day = $dauNgay->copy()->addDays($i);
             $key = $day->toDateString();
 
             return [
@@ -367,8 +392,20 @@ class AnalyticsService
      */
     public function revenueByDay(int $toiDa = 90): Collection
     {
-        $tu = ($this->since ?? now()->subDays($toiDa - 1))->copy()->startOfDay();
-        $den = ($this->until ?? now())->copy()->endOfDay();
+        /*
+         * MỌI MỐC Ở ĐÂY LÀ GIỜ VIỆT NAM: ngày đầu, ngày cuối, và ngày của
+         * từng đơn. Xem KhoangThoiGian — gom theo DATE() của SQL thì đơn
+         * đặt lúc 6h sáng rơi vào ngày hôm trước.
+         */
+        $mg = KhoangThoiGian::muiGio();
+
+        $tu = $this->since
+            ? KhoangThoiGian::diaPhuong($this->since)->startOfDay()
+            : now($mg)->subDays($toiDa - 1)->startOfDay();
+
+        $den = $this->until
+            ? KhoangThoiGian::diaPhuong($this->until)->subSecond()->endOfDay()
+            : now($mg)->endOfDay();
 
         // Chặn trần: kỳ "Toàn bộ" của một cửa hàng chạy vài năm sẽ sinh
         // ra hàng nghìn cột.
@@ -376,26 +413,26 @@ class AnalyticsService
             $tu = $den->copy()->subDays($toiDa - 1)->startOfDay();
         }
 
-        $rows = Order::query()
-            ->whereBetween('created_at', [$tu, $den])
+        $luu = (string) config('app.timezone');
+
+        $nhom = Order::query()
+            ->whereBetween('created_at', [$tu->copy()->setTimezone($luu), $den->copy()->setTimezone($luu)])
             ->where('status', OrderStatus::Completed)
-            ->selectRaw('DATE(created_at) as d, COUNT(*) as so_don, SUM(grand_total) as tien')
-            ->groupBy('d')
-            ->get()
-            ->keyBy('d');
+            ->get(['created_at', 'grand_total'])
+            ->groupBy(fn ($o) => KhoangThoiGian::diaPhuong($o->created_at)->toDateString());
 
-        $soNgay = (int) $tu->diffInDays($den) + 1;
+        $soNgay = (int) $tu->copy()->startOfDay()->diffInDays($den->copy()->startOfDay()) + 1;
 
-        return collect(range(0, $soNgay - 1))->map(function (int $i) use ($tu, $rows) {
+        return collect(range(0, $soNgay - 1))->map(function (int $i) use ($tu, $nhom) {
             $ngay = $tu->copy()->addDays($i);
             $key = $ngay->toDateString();
-            $row = $rows->get($key);
+            $dsDon = $nhom->get($key, collect());
 
             return [
                 'date' => $key,
                 'label' => $ngay->format('d/m'),
-                'revenue' => (float) ($row->tien ?? 0),
-                'orders' => (int) ($row->so_don ?? 0),
+                'revenue' => (float) $dsDon->sum('grand_total'),
+                'orders' => $dsDon->count(),
             ];
         });
     }
@@ -670,7 +707,8 @@ class AnalyticsService
         return $this->vanDonTinhDuocCuoc()
             ->orderBy('created_at')
             ->get(['created_at', 'shipping_fee', 'ghn_total_fee'])
-            ->groupBy(fn ($o) => $o->created_at->format('Y-m'))
+            // Tháng theo giờ Việt Nam: đơn 6h sáng ngày 1 thuộc tháng mới.
+            ->groupBy(fn ($o) => KhoangThoiGian::diaPhuong($o->created_at)->format('Y-m'))
             ->map(function (Collection $nhom, string $thang) {
                 [$thu, $tra] = $this->congCuoc($nhom);
 
@@ -758,18 +796,8 @@ class AnalyticsService
      */
     private function applyWindow(mixed $query, string $column): mixed
     {
-        if ($this->since) {
-            $query->where($column, '>=', $this->since);
-        }
-
-        if ($this->until) {
-            // `<` chứ không phải `<=`: mốc kết thúc của kỳ trước CHÍNH LÀ
-            // mốc bắt đầu của kỳ này. Dùng `<=` thì bản ghi rơi đúng vào
-            // giây đó bị đếm ở cả hai kỳ.
-            $query->where($column, '<', $this->until);
-        }
-
-        return $query;
+        // Một cách áp khoảng duy nhất, dùng chung với các trang con.
+        return $this->khoang()->apDung($query, $column);
     }
 
     private function distinctSessions(UserEventType $type): int

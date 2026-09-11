@@ -3,8 +3,6 @@
 namespace App\Services\Inventory;
 
 use App\Enums\StockReceiptStatus;
-use App\Models\Product;
-use App\Models\ProductVariant;
 use App\Models\StockReceipt;
 use App\Services\Audit\ActivityLogger;
 use Illuminate\Support\Facades\Auth;
@@ -36,6 +34,7 @@ class StockReceiptService
 {
     public function __construct(
         private readonly ActivityLogger $audit,
+        private readonly StockAdjuster $kho = new StockAdjuster(),
     ) {
     }
 
@@ -134,65 +133,12 @@ class StockReceiptService
     }
 
     /**
-     * Cộng một dòng vào đúng chỗ giữ tồn.
-     *
-     * QUY CÁCH GIỮ TỒN RIÊNG. Sản phẩm có quy cách thì `products
-     * .stock_quantity` không phải thứ khách mua — cộng vào đó là cộng
-     * vào một con số không ai đọc, còn quy cách thì vẫn hết hàng.
+     * Cộng một dòng vào đúng chỗ giữ tồn — xem StockAdjuster (dùng chung với
+     * phiếu kiểm kê).
      */
     private function congVaoKho(?int $variantId, ?int $productId, int $soLuong, string $ten): void
     {
-        if ($soLuong === 0) {
-            return;
-        }
-
-        if ($variantId !== null) {
-            $so = ProductVariant::whereKey($variantId)->lockForUpdate()->first();
-
-            if (! $so) {
-                throw new StockReceiptException(sprintf('Quy cách của "%s" không còn tồn tại.', $ten));
-            }
-
-            /*
-             * KHÔNG THEO DÕI TỒN THÌ KHÔNG CỘNG.
-             *
-             * Cửa hàng cố ý khai mặt hàng này bán không giới hạn. Cộng
-             * vào một cột không ai đọc là ghi một con số vô nghĩa, và
-             * người lập phiếu tưởng mình vừa nhập kho xong.
-             */
-            if (! $so->track_inventory) {
-                throw new StockReceiptException(sprintf(
-                    'Quy cách "%s" không bật theo dõi tồn kho nên không nhập kho được.',
-                    $so->name,
-                ));
-            }
-
-            $so->increment('stock_quantity', $soLuong);
-
-            return;
-        }
-
-        $sp = Product::whereKey($productId)->lockForUpdate()->first();
-
-        if (! $sp) {
-            throw new StockReceiptException(sprintf('Sản phẩm "%s" không còn tồn tại.', $ten));
-        }
-
-        if ($sp->variants()->where('is_active', true)->exists()) {
-            throw new StockReceiptException(sprintf(
-                'Sản phẩm "%s" có quy cách — phải chọn quy cách cụ thể để nhập.',
-                $sp->name,
-            ));
-        }
-
-        if (! $sp->track_inventory) {
-            throw new StockReceiptException(sprintf(
-                'Sản phẩm "%s" không bật theo dõi tồn kho nên không nhập kho được.',
-                $sp->name,
-            ));
-        }
-
-        $sp->increment('stock_quantity', $soLuong);
+        $this->kho->dieuChinh($variantId, $productId, $soLuong, $ten);
     }
 
     /**

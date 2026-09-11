@@ -99,6 +99,12 @@
     --admin-accent: #2f5d62;
     --admin-accent-strong: #234a4e;
     --admin-accent-soft: #e9f1f1;
+
+    /* Màu CHỮ mang sắc nhấn — tách khỏi --admin-accent-strong, vốn còn làm
+       nền nút khi rê chuột (chữ trắng). Ở nền tối không màu nào đạt cả hai
+       vai: xem khối tối trong admin/admin.css. */
+    --admin-accent-ink: #234a4e;
+    --admin-warning: #a4670c;
     --admin-surface: #ffffff;
     --admin-surface-alt: #fafbfa;
     --admin-ink: #1e231f;

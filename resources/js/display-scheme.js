@@ -42,6 +42,12 @@ export const DisplaySchemeStore = {
 
         el.dataset.scheme = cheDo === 'toi' ? 'toi' : 'sang';
 
+        // Trang quản trị dùng thêm bộ màu tối của Bootstrap cho bảng, ô nhập,
+        // thông báo. Không đổi theo thì bấm nút xong nền tối mà bảng vẫn trắng.
+        if (el.hasAttribute('data-admin')) {
+            el.setAttribute('data-bs-theme', el.dataset.scheme === 'toi' ? 'dark' : 'light');
+        }
+
         if (giuTuDong) {
             el.dataset.schemeAuto = '1';
         } else {

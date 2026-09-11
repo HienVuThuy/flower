@@ -5,11 +5,13 @@ namespace App\Services\Admin;
 use App\Enums\InquiryStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\StockCountStatus;
 use App\Enums\StockReceiptStatus;
 use App\Models\BulkOrderInquiry;
 use App\Models\CommunityPost;
 use App\Models\Order;
 use App\Models\Review;
+use App\Models\StockCount;
 use App\Models\StockReceipt;
 use App\Services\Analytics\InventoryReport;
 
@@ -169,6 +171,20 @@ class WorkQueue
                 'url' => route('admin.stock-receipts.index', ['trang-thai' => StockReceiptStatus::Draft->value]),
                 'tone' => 'info',
                 'hint' => 'Hàng đã nhận nhưng tồn kho chưa được cộng thêm.',
+            ],
+
+            /*
+             * PHIẾU KIỂM KÊ CÒN NHÁP = ĐÃ ĐẾM MÀ SỔ CHƯA ĐỔI.
+             *
+             * Để lâu thì càng nhiều đơn bán ra giữa lúc đếm và lúc ghi sổ, và
+             * tới lúc ghi có thể bị từ chối vì tồn thành số âm.
+             */
+            [
+                'label' => 'phiếu kiểm kê còn nháp, chưa điều chỉnh kho',
+                'count' => StockCount::where('status', StockCountStatus::Draft)->count(),
+                'url' => route('admin.stock-counts.index', ['trang-thai' => StockCountStatus::Draft->value]),
+                'tone' => 'info',
+                'hint' => 'Đã đếm hàng thật nhưng tồn trên hệ thống vẫn là số cũ.',
             ],
 
             /*

@@ -7,7 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StockReceiptRequest;
 use App\Models\Product;
 use App\Models\StockReceipt;
-use App\Services\Inventory\StockReceiptException;
+use App\Services\Inventory\InventoryException;
+use App\Services\Inventory\StockUnits;
 use App\Services\Inventory\StockReceiptService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -114,7 +115,7 @@ class StockReceiptController extends Controller
     {
         try {
             $this->service->ghiSo($stockReceipt);
-        } catch (StockReceiptException $e) {
+        } catch (InventoryException $e) {
             return back()->with('error', $e->getMessage());
         }
 
@@ -138,42 +139,15 @@ class StockReceiptController extends Controller
     }
 
     /**
-     * Mọi đơn vị kho có thể nhập, cho ô chọn.
-     *
-     * CHỈ MẶT HÀNG CÓ BẬT THEO DÕI TỒN. Cho chọn thứ không theo dõi tồn
-     * là bày ra một lựa chọn mà lúc ghi sổ sẽ bị từ chối — sau khi người
-     * dùng đã gõ xong cả phiếu.
+     * Mọi đơn vị kho có thể nhập, cho ô chọn — xem StockUnits (dùng chung với
+     * phiếu kiểm kê).
      *
      * @return \Illuminate\Support\Collection<int, array{value: string, label: string}>
      */
     private function donViKho()
     {
-        return Product::query()
-            ->with(['variants' => fn ($q) => $q->where('is_active', true)])
-            ->orderBy('name')
-            ->get()
-            ->flatMap(function (Product $p) {
-                $quyCach = $p->variants;
-
-                if ($quyCach->isNotEmpty()) {
-                    return $quyCach
-                        ->filter(fn ($v) => $v->track_inventory)
-                        ->map(fn ($v) => [
-                            'value' => $p->id . ':' . $v->id,
-                            'label' => $p->name . ' — ' . $v->name,
-                        ]);
-                }
-
-                if (! $p->track_inventory) {
-                    return [];
-                }
-
-                return [[
-                    'value' => $p->id . ':',
-                    'label' => $p->name,
-                ]];
-            })
-            ->values();
+        return app(StockUnits::class)->danhSach()
+            ->map(fn (array $d) => ['value' => $d['value'], 'label' => $d['label']]);
     }
 
     /**

@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Enums;
+
+/**
+ * Phiếu kiểm kê đã điều chỉnh kho hay chưa.
+ *
+ * Cùng hai trạng thái với phiếu nhập, cùng ranh giới: kho đã đổi theo phiếu
+ * hay chưa. Phiếu đã ghi sổ không sửa, không xoá — đếm nhầm thì lập phiếu
+ * kiểm kê mới.
+ */
+enum StockCountStatus: string
+{
+    case Draft = 'draft';
+    case Posted = 'posted';
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Draft => 'Nháp',
+            self::Posted => 'Đã ghi sổ',
+        };
+    }
+
+    public function badge(): string
+    {
+        return match ($this) {
+            self::Draft => 'secondary',
+            self::Posted => 'success',
+        };
+    }
+
+    public function hint(): string
+    {
+        return match ($this) {
+            self::Draft => 'Chưa điều chỉnh kho. Xoá được nếu đếm nhầm.',
+            self::Posted => 'Đã điều chỉnh kho theo chênh lệch. Không sửa được — đếm nhầm thì lập phiếu mới.',
+        };
+    }
+}

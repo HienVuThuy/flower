@@ -111,6 +111,50 @@ class ReportSections
                 'note' => 'Chỉ đơn đã giao. Gom theo mã sản phẩm, không theo tên.',
             ],
 
+            'dt-danh-muc' => [
+                'label' => 'Doanh thu theo danh mục',
+                'group' => 'Doanh thu theo chiều',
+                'note' => 'Tiền hàng sau khuyến mại và mã giảm giá, chưa gồm phí ship, chưa trừ hoàn tiền. Theo danh mục hiện tại của sản phẩm.',
+            ],
+            'dt-tinh' => [
+                'label' => 'Doanh thu theo tỉnh/thành',
+                'group' => 'Doanh thu theo chiều',
+                'note' => 'Đã trừ hoàn tiền; gộp các cách viết khác nhau của cùng một tỉnh.',
+            ],
+            'khung-gio' => [
+                'label' => 'Số đơn đặt theo thứ và giờ',
+                'group' => 'Doanh thu theo chiều',
+                'note' => 'Giờ Việt Nam; mọi đơn đã đặt, kể cả đơn bị huỷ.',
+            ],
+
+            'khach-moi-cu' => [
+                'label' => 'Khách mới và khách quay lại',
+                'group' => 'Khách hàng',
+                'note' => 'Đơn đầu tiên xét trên toàn bộ lịch sử; tỉ lệ mua lại cũng vậy.',
+            ],
+            'gio-bo-do' => [
+                'label' => 'Giỏ hàng bỏ dở',
+                'group' => 'Khách hàng',
+                'note' => 'Tình trạng HIỆN TẠI, không theo kỳ. Giá trị theo giá hôm nay.',
+            ],
+
+            'danh-gia' => [
+                'label' => 'Đánh giá: tổng quan và phân bố sao',
+                'group' => 'Đánh giá',
+                'note' => 'Theo ngày viết đánh giá, gồm cả bài đang ẩn.',
+            ],
+            'danh-gia-thap' => [
+                'label' => 'Sản phẩm bị chấm thấp nhất',
+                'group' => 'Đánh giá',
+                'note' => 'Chỉ sản phẩm có từ 2 bài trở lên.',
+            ],
+
+            'lai-gop' => [
+                'label' => 'Lãi gộp theo sản phẩm',
+                'group' => 'Lợi nhuận',
+                'note' => 'Chỉ dòng hàng có giá vốn từ phiếu nhập; có dòng tổng và phần không tính được.',
+            ],
+
             'ton-kho' => [
                 'label' => 'Tồn kho đầy đủ',
                 'group' => 'Sản phẩm',
@@ -150,6 +194,14 @@ class ReportSections
             'danh-muc' => $this->danhMuc($nhan),
             'ban-chay' => $this->banChay($nhan),
             'ton-kho' => $this->tonKho($nhan),
+            'dt-danh-muc' => $this->dtDanhMuc($nhan),
+            'dt-tinh' => $this->dtTinh($nhan),
+            'khung-gio' => $this->khungGio($nhan),
+            'khach-moi-cu' => $this->khachMoiCu($nhan),
+            'gio-bo-do' => $this->gioBoDo($nhan),
+            'danh-gia' => $this->danhGia($nhan),
+            'danh-gia-thap' => $this->danhGiaThap($nhan),
+            'lai-gop' => $this->laiGop($nhan),
 
             // Mã lạ không bao giờ tới được đây (controller đã lọc), nhưng
             // trả về bảng rỗng vẫn hơn là ném lỗi giữa lúc ghi tệp.
@@ -372,6 +424,144 @@ class ReportSections
      * 0). Ghi chữ chứ không ghi số: một con số ở đó là bịa, còn ô trống
      * thì người đọc tệp không biết vì sao trống.
      */
+    /*
+     * CÁC PHẦN CỦA TRANG CON — lấy kỳ từ AnalyticsService::khoang(), cùng một
+     * khoảng với phần còn lại của tệp. Con số trong tệp phải đúng bằng con số
+     * trên trang admin vừa xem, nên gọi CHÍNH lớp tính mà trang đó gọi.
+     */
+
+    private function dtDanhMuc(string $nhan): array
+    {
+        $dm = app(SalesBreakdown::class)->trong($this->analytics->khoang())->theoDanhMuc();
+
+        $dong = $dm['dong']->map(fn ($d) => [$d['ten'], $d['doanh_thu'], $d['ti_le'] ?? '', $d['so_luong'], $d['so_don']])->all();
+        $dong[] = ['Tổng tiền hàng', $dm['tong'], null, null, null];
+
+        if (bccomp($dm['ma_giam_chua_chia'], '0', 2) > 0) {
+            $dong[] = ['Mã giảm giá của đơn cũ chưa chia về dòng (doanh thu trên cao hơn thực tế đúng bằng số này)', $dm['ma_giam_chua_chia'], null, null, null];
+        }
+
+        return [
+            'label' => $nhan,
+            'columns' => ['Danh mục', 'Doanh thu', 'Tỉ lệ (%)', 'Số lượng', 'Số đơn'],
+            'rows' => $dong,
+        ];
+    }
+
+    private function dtTinh(string $nhan): array
+    {
+        return [
+            'label' => $nhan,
+            'columns' => ['Tỉnh/thành', 'Số đơn', 'Doanh thu', 'Hoàn tiền', 'Thuần', 'Trung bình/đơn'],
+            'rows' => app(SalesBreakdown::class)->trong($this->analytics->khoang())->theoTinh()
+                ->map(fn ($d) => [$d['ten'], $d['so_don'], $d['doanh_thu'], $d['hoan_tien'], $d['thuan'], $d['trung_binh']])
+                ->all(),
+        ];
+    }
+
+    private function khungGio(string $nhan): array
+    {
+        $g = app(SalesBreakdown::class)->trong($this->analytics->khoang())->theoKhungGio();
+        $thu = ['Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy', 'Chủ Nhật'];
+
+        return [
+            'label' => $nhan,
+            'columns' => array_merge(['Thứ'], array_map(fn ($h) => $h . 'h', range(0, 23)), ['Cả ngày']),
+            'rows' => array_map(fn ($i) => array_merge([$thu[$i]], $g['o'][$i], [$g['theo_thu'][$i]]), range(0, 6)),
+        ];
+    }
+
+    private function khachMoiCu(string $nhan): array
+    {
+        $k = app(SalesBreakdown::class)->trong($this->analytics->khoang())->khachMoiVaQuayLai();
+
+        return [
+            'label' => $nhan,
+            'columns' => ['Nhóm', 'Số khách', 'Số đơn', 'Doanh thu'],
+            'rows' => [
+                ['Đơn đầu tiên của khách', $k['moi']['khach'], $k['moi']['don'], $k['moi']['doanh_thu']],
+                ['Đơn của khách quay lại', $k['quay_lai']['khach'], $k['quay_lai']['don'], $k['quay_lai']['doanh_thu']],
+                ['Khách vãng lai (không xếp nhóm được)', null, $k['vang_lai']['don'], $k['vang_lai']['doanh_thu']],
+                ['Tỉ lệ mua lại, toàn bộ lịch sử (%)', $k['khach_co_don'], $k['khach_mua_lai'], $k['ti_le_mua_lai'] ?? 'chưa tính được'],
+            ],
+        ];
+    }
+
+    private function gioBoDo(string $nhan): array
+    {
+        $b = app(AbandonedCarts::class)->baoCao();
+
+        return [
+            'label' => $nhan,
+            'columns' => ['Khách', 'Email', 'Số món', 'Giá trị theo giá hôm nay', 'Món giá liên hệ', 'Lần sửa cuối (giờ VN)', 'Số ngày', 'Hàng trong giỏ'],
+            'rows' => $b['gio']->map(fn ($g) => [
+                $g['khach'],
+                $g['email'],
+                $g['so_mon'],
+                $g['gia_tri'],
+                $g['khong_dinh_gia'],
+                KhoangThoiGian::diaPhuong($g['lan_cuoi'])->format('Y-m-d H:i'),
+                $g['so_ngay'],
+                implode('; ', $g['mat_hang']),
+            ])->all(),
+        ];
+    }
+
+    private function danhGia(string $nhan): array
+    {
+        $t = app(ReviewReport::class)->trong($this->analytics->khoang())->tongQuan();
+
+        $dong = [
+            ['Số bài', $t['so_bai']],
+            ['Điểm trung bình', $t['trung_binh'] ?? 'chưa có đánh giá'],
+            ['Bài 1–2 sao chưa trả lời', $t['thap_chua_tra_loi']],
+            ['Tỉ lệ đã trả lời bài 1–2 sao (%)', $t['ti_le_tra_loi_thap'] ?? 'không có bài 1–2 sao'],
+            ['Thời gian trả lời, trung vị (giờ)', $t['gio_tra_loi_trung_vi'] ?? 'chưa trả lời bài nào'],
+            ['Bài đang ẩn', $t['dang_an']],
+        ];
+
+        foreach ($t['phan_bo'] as $sao => $n) {
+            $dong[] = [$sao . ' sao', $n];
+        }
+
+        return ['label' => $nhan, 'columns' => ['Chỉ số', 'Giá trị'], 'rows' => $dong];
+    }
+
+    private function danhGiaThap(string $nhan): array
+    {
+        return [
+            'label' => $nhan,
+            'columns' => ['Sản phẩm', 'Điểm trung bình', 'Số bài', 'Số bài 1–2 sao'],
+            'rows' => app(ReviewReport::class)->trong($this->analytics->khoang())->sanPhamBiCheNhieu(100)
+                ->map(fn ($d) => [$d['ten'], $d['trung_binh'], $d['so_bai'], $d['so_bai_thap']])
+                ->all(),
+        ];
+    }
+
+    private function laiGop(string $nhan): array
+    {
+        $l = app(ProfitReport::class)->trong($this->analytics->khoang())->baoCao();
+
+        $dong = $l['theo_san_pham']
+            ->map(fn ($d) => [$d['ten'], $d['so_luong'], $d['doanh_thu'], $d['gia_von'], $d['lai_gop'], $d['bien'] ?? ''])
+            ->all();
+
+        // Dòng tổng, rồi phần KHÔNG tính được — tệp mở ra ở chỗ không có giao diện giải thích.
+        $dong[] = ['Tổng phần có giá vốn', null, $l['doanh_thu_co_gia_von'], $l['gia_von'], $l['lai_gop'], $l['bien'] ?? ''];
+        $dong[] = ['Không có giá vốn, KHÔNG tính vào lãi (' . $l['dong_khong_gia_von'] . ' dòng)', null, $l['doanh_thu_khong_gia_von'], null, null, null];
+        $dong[] = ['Tỉ lệ doanh thu có giá vốn (%)', null, $l['ti_le_phu'] ?? '', null, null, null];
+
+        if ($l['dong_chua_tach_vat'] > 0) {
+            $dong[] = ['Dòng thuộc đơn chưa có số liệu thuế — doanh thu vẫn gồm VAT (' . $l['dong_chua_tach_vat'] . ' dòng)', null, $l['doanh_thu_chua_tach_vat'], null, null, null];
+        }
+
+        return [
+            'label' => $nhan,
+            'columns' => ['Mặt hàng', 'Số lượng', 'Doanh thu (trừ VAT nếu có số liệu)', 'Giá vốn', 'Lãi gộp', 'Biên (%)'],
+            'rows' => $dong,
+        ];
+    }
+
     private function tonKho(string $nhan): array
     {
         return [

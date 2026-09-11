@@ -8,7 +8,18 @@
 
     data-admin thay cho data-theme; hiệu ứng mùa vụ cũng không nạp ở đây.
 --}}
-<html lang="vi" data-admin>
+{{--
+    data-scheme: cùng lựa chọn sáng/tối của người dùng ở trang cửa hàng (cùng
+    cookie). Người để máy tối vào quản trị lúc nửa đêm không phải nhìn một
+    trang trắng loá chỉ vì đây là "khu vận hành".
+
+    data-bs-theme đặt SẴN từ máy chủ khi đã chọn rõ, để bảng và ô nhập của
+    Bootstrap đúng màu ngay khung hình đầu; "auto" thì scheme-boot đặt.
+--}}
+@php $cheDo = \App\Services\Shop\DisplayScheme::current(); @endphp
+<html lang="vi" data-admin
+      data-scheme="{{ $cheDo }}"
+      @if($cheDo !== 'auto') data-bs-theme="{{ $cheDo === 'toi' ? 'dark' : 'light' }}" @endif>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -27,6 +38,8 @@
         thấy nó nhấp nháy.
     --}}
     <script>document.documentElement.classList.add('has-js');</script>
+
+    <x-site.scheme-boot :bootstrap="true" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
@@ -90,6 +103,11 @@
             <a data-admin-link href="{{ route('admin.stock-receipts.index') }}" class="admin-nav-link {{ request()->routeIs('admin.stock-receipts.*') ? 'is-active' : '' }}">
                 <x-site.icon name="plus" />
                 <span>Nhập kho</span>
+            </a>
+
+            <a data-admin-link href="{{ route('admin.stock-counts.index') }}" class="admin-nav-link {{ request()->routeIs('admin.stock-counts.*') ? 'is-active' : '' }}">
+                <x-site.icon name="check-circle" />
+                <span>Kiểm kê kho</span>
             </a>
         </nav>
 
@@ -229,6 +247,8 @@
                         <x-site.icon name="box-arrow-up-right" />
                         <span class="admin-topbar__label">Xem trang chủ</span>
                     </a>
+
+                    <x-site.scheme-toggle />
 
                     <span class="text-muted small admin-topbar__label">{{ Auth::user()->name }}</span>
 

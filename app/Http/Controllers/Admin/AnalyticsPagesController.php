@@ -1,0 +1,93 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Services\Analytics\AbandonedCarts;
+use App\Services\Analytics\AnalyticsService;
+use App\Services\Analytics\ProfitReport;
+use App\Services\Analytics\ReviewReport;
+use App\Services\Analytics\SalesBreakdown;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+/**
+ * Các trang con của Phân tích: Doanh thu, Khách hàng, Đánh giá, Lợi nhuận.
+ * ============================================================
+ * VÌ SAO TÁCH TRANG: trang Phân tích đã dài 638 dòng. Nhồi thêm bốn nhóm
+ * báo cáo vào là một trang chạy hàng chục truy vấn cho mỗi lần mở, và người
+ * cần xem "tỉnh nào mua nhiều" phải cuộn qua phễu chuyển đổi để tới.
+ *
+ * Mỗi trang chỉ chạy truy vấn của chính nó. Kỳ lấy từ
+ * AnalyticsService::khoang() — cùng một định nghĩa "7 ngày qua" với trang
+ * Tổng hợp.
+ */
+class AnalyticsPagesController extends Controller
+{
+    public function __construct(
+        private readonly AnalyticsService $analytics,
+    ) {
+    }
+
+    public function sales(Request $request, SalesBreakdown $bao): View
+    {
+        [$ky, $khoang] = $this->ky($request);
+
+        $bao->trong($khoang);
+
+        return view('admin.analytics.sales', $this->chung($ky) + [
+            'danhMuc' => $bao->theoDanhMuc(),
+            'tinh' => $bao->theoTinh(),
+            'khungGio' => $bao->theoKhungGio(),
+        ]);
+    }
+
+    public function customers(Request $request, SalesBreakdown $bao, AbandonedCarts $gio): View
+    {
+        [$ky, $khoang] = $this->ky($request);
+
+        return view('admin.analytics.customers', $this->chung($ky) + [
+            'khach' => $bao->trong($khoang)->khachMoiVaQuayLai(),
+            'gioBoDo' => $gio->baoCao(),
+        ]);
+    }
+
+    public function reviews(Request $request, ReviewReport $bao): View
+    {
+        [$ky, $khoang] = $this->ky($request);
+
+        $bao->trong($khoang);
+
+        return view('admin.analytics.reviews', $this->chung($ky) + [
+            'tongQuan' => $bao->tongQuan(),
+            'biChe' => $bao->sanPhamBiCheNhieu(),
+            'theoThang' => $bao->theoThang(),
+        ]);
+    }
+
+    public function profit(Request $request, ProfitReport $bao): View
+    {
+        [$ky, $khoang] = $this->ky($request);
+
+        return view('admin.analytics.profit', $this->chung($ky) + [
+            'loi' => $bao->trong($khoang)->baoCao(),
+            'buShip' => $this->analytics->shippingCost(),
+        ]);
+    }
+
+    /** @return array{0: string, 1: \App\Services\Analytics\KhoangThoiGian} */
+    private function ky(Request $request): array
+    {
+        $ky = AnalyticsService::hopLeKy($request->query('ky'));
+
+        return [$ky, $this->analytics->forPeriod($ky)->khoang()];
+    }
+
+    private function chung(string $ky): array
+    {
+        return [
+            'period' => $ky,
+            'periods' => AnalyticsService::PERIODS,
+        ];
+    }
+}

@@ -6875,3 +6875,129 @@ từ chối lưu hotline không phải số (để trống vẫn được). Châ
 Vì ẩn lặng lẽ thì không ai biết phải sửa, trang Tổng quan có dòng việc "cấu hình
 cần sửa" khi giá trị đang lưu không phải số. **Số thật của cửa hàng vẫn phải do
 người dùng nhập** — hệ thống không tự bịa một số.
+
+---
+
+## QĐ-230. Báo cáo gom theo giờ Việt Nam; dữ liệu vẫn lưu UTC
+
+`app.timezone = UTC`: đơn đặt lúc 15:52 ở Hà Nội được lưu là 08:52. Với báo
+cáo, điều đó nghĩa là khung giờ lệch 7 tiếng, đơn từ 0h–7h sáng rơi vào ngày
+hôm trước, và "7 ngày qua" bắt đầu lúc 7h sáng.
+
+**Không đổi `app.timezone`**: dữ liệu cũ nằm trong cột DATETIME không mang múi
+giờ, đổi cấu hình là đọc lệch mọi mốc cũ. Thêm `app.display_timezone`
+(Asia/Ho_Chi_Minh) và `App\Services\Analytics\KhoangThoiGian` — một nơi cho:
+cắt mốc kỳ theo nửa đêm giờ Việt Nam (trả về theo giờ lưu, vì Eloquent không
+đổi múi giờ khi đưa Carbon vào truy vấn), gom ngày/giờ/tháng theo giờ địa
+phương (ở PHP — hàm đổi múi giờ của MySQL và SQLite khác nhau).
+
+`revenueByDay`, `dailyActivity`, `shippingCostByMonth` và mốc kỳ 7/30 ngày đã
+chuyển sang cách này. **Phần hiển thị giờ ở các trang khác vẫn in UTC** — tách
+thành một việc riêng.
+
+---
+
+## QĐ-231. Phân tích tách thành trang con có tab, dùng chung một kỳ
+
+Trang Phân tích (638 dòng) tách thành: Tổng hợp / Doanh thu / Khách hàng / Đánh
+giá / Lợi nhuận. Tab là liên kết thật, giữ nguyên kỳ đang chọn; mỗi trang chỉ
+chạy truy vấn của nó. Đầu trang dùng chung một partial
+(`admin/analytics/_header`). Các lớp tính mới nhận kỳ từ
+`AnalyticsService::khoang()`, không tự tính "7 ngày qua".
+
+Mọi báo cáo mới đều có phần tương ứng trong Xuất dữ liệu, và tệp xuất gọi
+**chính lớp tính** trang admin gọi.
+
+---
+
+## QĐ-232. Doanh thu theo danh mục, tỉnh, khung giờ, khách mới/quay lại
+
+- **Danh mục**: tiền dòng = `line_total − discount_amount`; chưa gồm phí ship, chưa
+  trừ hoàn tiền (hoàn tiền ghi theo đơn) — nên tổng khác doanh thu trang Tổng
+  hợp, và trang nói vì sao. Theo danh mục **hiện tại** của sản phẩm. Mã giảm của
+  đơn cũ chưa chia về dòng được cộng riêng và nói ra.
+- **Tỉnh**: đã trừ hoàn tiền. Gộp cách viết khác của cùng một tỉnh ("Hà Nội" /
+  "Thành phố Hà Nội" — cả hai có trong dữ liệu thật) bằng `TenTinh::khoa()`, chỉ
+  bỏ tiền tố hành chính. **Không** tự gộp theo sáp nhập tỉnh.
+- **Khung giờ**: bản đồ nhiệt thứ × giờ, giờ Việt Nam, đếm **mọi đơn đã đặt** (câu
+  hỏi là khách vào mua lúc nào). 5 bậc một sắc độ, ô 0 không tô màu thang, có
+  bảng số.
+- **Khách mới / quay lại**: "đơn đầu tiên" xét trên **toàn bộ lịch sử**; khách
+  vãng lai để riêng, không đoán theo số điện thoại. Tỉ lệ mua lại tính trên toàn
+  lịch sử và nói rõ.
+
+---
+
+## QĐ-233. Giỏ bỏ dở và báo cáo đánh giá
+
+**Giỏ bỏ dở** = còn hàng + không động tới quá 24 giờ (theo lần sửa gần nhất của
+giỏ hoặc bất kỳ dòng nào) + khách có tài khoản chưa đặt đơn nào sau lúc đó. Giá
+trị theo **giá hôm nay** qua `CartItem::unitPrice()` (giỏ không lưu giá), hàng
+giá liên hệ đếm riêng. Tình trạng hiện tại, không theo kỳ. **Không có nút gửi
+email nhắc**: hệ thống chưa ghi nhận khách nào đồng ý nhận thư tiếp thị.
+
+**Đánh giá**: theo ngày viết, gồm cả bài đang ẩn. Trung bình NULL khi không có bài.
+Phân bố đủ 5 mức. Bảng "bị chấm thấp" chỉ xét sản phẩm từ 2 bài. Thời gian trả lời
+dùng **trung vị** — một bài trả lời sau 90 ngày không kéo lệch cả con số.
+
+---
+
+## QĐ-234. Lãi gộp chỉ trên doanh thu có giá vốn thật
+
+Giá vốn = bình quân gia quyền các lần nhập **đã ghi sổ, có giá, tới ngày bán**
+(lô nhập sau không quyết định lãi của hàng bán trước; dòng điều chỉnh âm có giá
+cũng được tính). Dòng không có giá vốn bị loại khỏi lãi, và được đếm, định giá,
+nói ra cùng **tỉ lệ doanh thu có giá vốn**.
+
+Doanh thu trừ VAT khi có số liệu thuế; đơn chưa có số liệu thuế được đếm riêng vì
+doanh thu của chúng vẫn gồm VAT — nhãn không được khẳng định "chưa VAT" cho
+chúng. Ô giá vốn ở phiếu nhập ghi rõ là **chưa gồm VAT đầu vào**.
+
+Không tính "lãi ròng": hoàn tiền và bù ship hiện cạnh lãi gộp, không trừ vào.
+
+Lúc làm, dữ liệu thật **chưa có phiếu nhập nào ghi sổ có giá** → trang nói thẳng
+chưa tính được lãi và dẫn tới lập phiếu nhập. Bài kiểm thử bắt được một lỗi làm
+trang sập đúng lúc cửa hàng lập phiếu nhập có giá đầu tiên.
+
+---
+
+## QĐ-235. Kiểm kê kho: chụp tồn lúc lập, ghi sổ cộng chênh lệch, không để âm
+
+Bảng `stock_counts` + `stock_count_items`. Tồn hệ thống **chụp ở máy chủ** lúc
+lập phiếu (không nhận từ biểu mẫu). Để trống = không đếm; khác với đếm được 0.
+
+Ghi sổ **cộng chênh lệch** (đếm được − hệ thống lúc lập) vào tồn hiện tại, không
+gán số đếm — hàng bán ra giữa lúc đếm và lúc ghi sổ vẫn giữ đúng.
+`applied_difference` ghi chênh lệch thật đã cộng. Kết quả âm thì **từ chối cả
+phiếu** (một transaction), không kẹp về 0.
+
+Phép cộng/trừ kho có khoá dòng tách thành `StockAdjuster`, danh sách đơn vị kho
+thành `StockUnits` — phiếu nhập và kiểm kê dùng chung. Không sửa; nháp xoá được;
+đã ghi sổ thì không. Có dòng việc "phiếu kiểm kê còn nháp" ở trang Tổng quan.
+
+---
+
+## QĐ-236. Giao diện tối cho trang quản trị
+
+Dùng chung lựa chọn sáng/tối (cookie) với cửa hàng. Chỉ đổi token `--admin-*`
+dưới `:root[data-admin][data-scheme="toi"]`, cộng `data-bs-theme="dark"` cho thành
+phần Bootstrap (chỉ ở trang quản trị — cửa hàng có bộ màu tối riêng). Đoạn khởi
+động đổi "auto" thành sáng/tối trước khung hình đầu tách thành
+`<x-site.scheme-boot>`, dùng chung hai layout.
+
+Màu tính tương phản trước (chữ chính 14,1:1, chữ phụ 7,7:1, chữ trắng trên nút
+4,8:1…), nền khung **đúng bằng** nền tối mà bộ màu biểu đồ đã được kiểm. Tách
+`--admin-accent-ink` khỏi `--admin-accent-strong` vì ở nền tối không màu nào vừa
+làm nền nút (chữ trắng) vừa làm màu chữ. Quét chữ trên 5 trang ở chế độ tối tìm ra
+2 chỗ dưới ngưỡng (số dòng việc dùng màu cửa hàng 2,84:1; `.text-danger` 4,02:1),
+đã sửa.
+
+---
+
+## QĐ-237. Mọi biểu đồ cột chưa từng hiện thanh
+
+`.viz-bars__fill` là `<span>` hiển thị `inline`, nên width/height bị bỏ qua — đo
+được **0×0px** ở mọi biểu đồ cột của trang quản trị từ lúc dựng (Bán chạy, Mã giảm
+giá…). Biểu đồ vẫn "hiện" nhờ tên và con số nên không ai thấy. Sửa bằng
+`display: block`, và bố cục thanh xếp dưới tên khi khung hẹp (`@container`) — ở
+cột 6/12 thanh từng chỉ còn 92px.

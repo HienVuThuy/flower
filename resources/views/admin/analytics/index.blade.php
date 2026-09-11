@@ -12,34 +12,10 @@
     $peak = max(1, $daily->max('total'));
 @endphp
 
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
-    <div>
-        <h1 class="admin-page-title">Phân tích</h1>
-        <p class="admin-page-subtitle">
-            Mọi con số dưới đây đếm trực tiếp từ cơ sở dữ liệu.
-            Chưa có dữ liệu thì hiện là chưa có, không ước lượng.
-        </p>
-    </div>
-
-    {{-- Ô chọn kỳ: liên kết thường, không cần JavaScript. --}}
-    <div class="d-flex flex-wrap gap-2">
-        @foreach($periods as $value => $label)
-            <a href="{{ route('admin.analytics.index', ['ky' => $value]) }}"
-               class="btn btn-sm {{ $period === (string) $value ? 'btn-primary-brand' : 'btn-outline-admin' }}">
-                {{ $label }}
-            </a>
-        @endforeach
-
-        {{--
-            Xuất theo ĐÚNG kỳ đang xem, không phải kỳ mặc định — tệp tải
-            về phải khớp với những gì admin vừa nhìn thấy trên màn hình.
-        --}}
-        <a href="{{ route('admin.analytics.export-form', ['ky' => $period]) }}"
-           class="btn btn-sm btn-outline-admin">
-            Xuất dữ liệu…
-        </a>
-    </div>
-</div>
+@include('admin.analytics._header', [
+    'tieuDe' => 'Phân tích',
+    'moTa' => 'Mọi con số dưới đây đếm trực tiếp từ cơ sở dữ liệu. Chưa có dữ liệu thì hiện là chưa có, không ước lượng.',
+])
 
 {{--
     ============================================================

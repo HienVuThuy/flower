@@ -390,7 +390,7 @@
 
 .admin-notice__title {
     font-weight: 700;
-    color: var(--admin-accent-strong);
+    color: var(--admin-accent-ink);
     margin-bottom: 0.35rem;
 }
 
@@ -413,7 +413,7 @@
 .btn-outline-admin:focus-visible {
     border-color: var(--admin-accent);
     background: var(--admin-accent-soft);
-    color: var(--admin-accent-strong);
+    color: var(--admin-accent-ink);
 }
 
 /* ============ TAB LỌC (danh sách đơn hàng) ============ */
@@ -440,7 +440,7 @@
 
 .admin-filter-tab:hover {
     border-color: var(--admin-accent);
-    color: var(--admin-accent-strong);
+    color: var(--admin-accent-ink);
 }
 
 .admin-filter-tab.is-active {
@@ -539,7 +539,7 @@
 }
 
 .admin-list__row:hover {
-    color: var(--admin-accent-strong);
+    color: var(--admin-accent-ink);
 }
 
 /*
@@ -984,14 +984,16 @@ a.admin-kpi:focus-visible {
 }
 
 /* Ba mức khẩn: nợ tiền khách > việc tồn > việc mới tới. */
-.admin-todo--danger { border-inline-start-color: #b3261e; }
-.admin-todo--danger .admin-todo__count { color: #b3261e; }
+.admin-todo--danger { border-inline-start-color: var(--admin-danger); }
+.admin-todo--danger .admin-todo__count { color: var(--admin-danger); }
 
-.admin-todo--warning { border-inline-start-color: #a4670c; }
-.admin-todo--warning .admin-todo__count { color: #a4670c; }
+.admin-todo--warning { border-inline-start-color: var(--admin-warning); }
+.admin-todo--warning .admin-todo__count { color: var(--admin-warning); }
 
-.admin-todo--info { border-inline-start-color: var(--brand-500); }
-.admin-todo--info .admin-todo__count { color: var(--brand-500); }
+.admin-todo--info { border-inline-start-color: var(--admin-accent); }
+/* --admin-accent-ink, không phải --brand-500: màu cửa hàng ở nền tối chỉ đạt
+   2,84:1 — đo trên trang Tổng quan chế độ tối. */
+.admin-todo--info .admin-todo__count { color: var(--admin-accent-ink); }
 
 /*
  * ĐẦU CỘT SẮP XẾP ĐƯỢC
@@ -1125,4 +1127,71 @@ a.admin-kpi:focus-visible {
     opacity: 0.55;
     transition: opacity 120ms ease-out;
     pointer-events: none;
+}
+
+
+/* ============================================================
+   CHẾ ĐỘ TỐI CỦA TRANG QUẢN TRỊ
+   ============================================================
+   CHỈ ĐỔI TOKEN, không sửa từng component — cùng cách làm với core/dark.css
+   của cửa hàng. Mọi thành phần quản trị đọc --admin-*, nên đổi token là cả
+   khu đổi theo; thành phần Bootstrap (bảng, ô nhập, thông báo) đổi nhờ
+   data-bs-theme="dark" ở thẻ <html>.
+
+   MÀU ĐÃ TÍNH TƯƠNG PHẢN, không chọn bằng mắt (WCAG, tỉ lệ):
+
+     chữ chính      #e6e8e3 / nền khung #1a1a19   14.11  (cần >= 7)
+     chữ phụ        #a8afa4 / nền khung           7.74   (cần >= 4.5)
+     chữ trắng      / nhấn #3d7c82                4.77   (nút chính)
+     chữ trắng      / nhấn đậm #336d73            5.87   (nút khi rê chuột)
+     nhấn #3d7c82   / nền khung                   3.65   (viền, cần >= 3)
+     chữ nhấn       #6fb0b6 / nền khung           7.10
+     đỏ #f08a82 · xanh #7bc393 · cam #e0a54a      7.18 · 8.35 · 8.00
+
+   NỀN KHUNG = #1a1a19, ĐÚNG BẰNG --viz-surface tối của biểu đồ: bộ màu biểu
+   đồ được kiểm trên đúng nền đó. Khác nền là kết quả kiểm không còn giá trị.
+   ============================================================ */
+
+:root[data-admin][data-scheme="toi"] {
+    --admin-bg: #121311;
+    --admin-sidebar-bg: #0e100e;
+    --admin-border: #3a3d37;
+    --admin-hover-bg: #232822;
+
+    --admin-surface: #1a1a19;
+    --admin-surface-alt: #232421;
+    --admin-ink: #e6e8e3;
+    --admin-ink-muted: #a8afa4;
+
+    --admin-accent: #3d7c82;
+    --admin-accent-strong: #336d73;
+    --admin-accent-soft: #1d2f30;
+    --admin-accent-ink: #6fb0b6;
+
+    --admin-danger: #f08a82;
+    --admin-success: #7bc393;
+    --admin-warning: #e0a54a;
+}
+
+/*
+ * Lớp chữ màu của Bootstrap: `.text-danger` ở nền tối chỉ đạt 4,02:1 (đo trên
+ * trang chi tiết đơn). Dùng màu đã tính của khu quản trị. `!important` vì
+ * chính Bootstrap khai các lớp tiện ích này bằng `!important`.
+ */
+:root[data-admin][data-scheme="toi"] .text-danger { color: var(--admin-danger) !important; }
+:root[data-admin][data-scheme="toi"] .text-success { color: var(--admin-success) !important; }
+
+/* Hai khối vàng cảnh báo rủi ro đơn: màu nền sáng viết cứng, phải đổi riêng. */
+:root[data-admin][data-scheme="toi"] .risk-flag {
+    background: #2e2715;
+    color: #f0c46e;
+}
+
+:root[data-admin][data-scheme="toi"] .risk-panel {
+    border-color: #6b5524;
+    background: #221d11;
+}
+
+:root[data-admin][data-scheme="toi"] .risk-panel__title {
+    color: #f0c46e;
 }

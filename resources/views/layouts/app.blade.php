@@ -48,45 +48,8 @@
     --}}
     <script>document.documentElement.classList.add('has-js');</script>
 
-    {{--
-        QUY "theo hệ thống" VỀ MỘT GIÁ TRỊ CỤ THỂ, TRƯỚC KHI VẼ.
-
-        Máy chủ biết người dùng chọn "auto" nhưng KHÔNG biết hệ điều
-        hành của họ đang để sáng hay tối — thông tin đó chỉ có ở trình
-        duyệt. Nên máy chủ ghi "auto", và đoạn này đổi nó thành "sang"
-        hoặc "toi" ngay tại chỗ.
-
-        ĐẶT INLINE TRONG <head>, chạy đồng bộ TRƯỚC khung hình đầu tiên
-        — cùng lý do với dòng has-js ở trên. Để trong app.js thì trang
-        vẽ nền sáng rồi mới nháy sang tối.
-
-        CSS chỉ có MỘT khối màu tối, gắn với [data-scheme="toi"]. Cách
-        còn lại là viết thêm một khối y hệt trong @media
-        (prefers-color-scheme: dark) — hai bản chép của cùng một bảng
-        màu, và bản bị quên khi sửa sẽ tạo ra hai chế độ tối khác nhau.
-
-        ĐÁNH ĐỔI, nói rõ: người TẮT JavaScript và để "theo hệ thống" sẽ
-        thấy nền sáng dù máy họ đang để tối. Họ vẫn chọn tay được, và
-        lựa chọn tay thì máy chủ xử lý hoàn toàn. Đây đúng bằng những gì
-        trang đang làm trước bản này, nên không ai mất gì.
-    --}}
-    <script>
-        (function () {
-            var el = document.documentElement;
-
-            if (el.dataset.scheme !== 'auto') return;
-
-            el.dataset.scheme =
-                window.matchMedia &&
-                window.matchMedia('(prefers-color-scheme: dark)').matches
-                    ? 'toi'
-                    : 'sang';
-
-            // Nhớ lại là "auto", để nút chuyển chế độ biết người dùng
-            // đang ở trạng thái tự động chứ không phải tự tay chọn.
-            el.dataset.schemeAuto = '1';
-        })();
-    </script>
+    {{-- Đổi "auto" thành sáng/tối trước khung hình đầu tiên — xem component. --}}
+    <x-site.scheme-boot />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 

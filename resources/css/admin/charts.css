@@ -46,6 +46,14 @@
     /* Màu trạng thái — DÙNG RIÊNG, không bao giờ làm "chuỗi thứ ba".
        Đi kèm nhãn chữ, không bao giờ để màu tự nói. */
     --viz-huy: #d03b3b;
+
+    /* Thang ĐỘ LỚN cho bản đồ nhiệt: ít → nhiều = nhạt → đậm trên nền
+       sáng. Cùng năm màu của thang thứ tự (đã qua bộ kiểm), khác vai trò. */
+    --viz-heat-1: var(--viz-step-1);
+    --viz-heat-2: var(--viz-step-2);
+    --viz-heat-3: var(--viz-step-3);
+    --viz-heat-4: var(--viz-step-4);
+    --viz-heat-5: var(--viz-step-5);
 }
 
 :root[data-scheme="toi"] .viz {
@@ -58,6 +66,15 @@
     --viz-step-3: #6da7ec;
     --viz-step-4: #3987e5;
     --viz-step-5: #184f95;
+
+    /* NỀN TỐI ĐẢO CHIỀU: "nhiều" phải là thứ nổi nhất, và trên nền tối thứ
+       nổi nhất là màu SÁNG. Dùng lại đúng năm màu tối đã qua bộ kiểm, chỉ
+       đổi thứ tự. */
+    --viz-heat-1: #184f95;
+    --viz-heat-2: #3987e5;
+    --viz-heat-3: #6da7ec;
+    --viz-heat-4: #9ec5f4;
+    --viz-heat-5: #cde2fb;
 }
 
 .viz svg {
@@ -135,12 +152,37 @@
     gap: var(--space-2xs);
 }
 
+/*
+ * HAI TẦNG MẶC ĐỊNH: tên + số ở trên, thanh ở dưới, rộng hết khung.
+ *
+ * Bản đầu đặt ba cột trên một hàng (tên 11rem | thanh | số). Trong khung
+ * hẹp — biểu đồ nằm ở cột 5/12 hay 6/12 — tên chiếm 176px, con số tiền
+ * chiếm phần còn lại, và thanh chỉ còn 92px. Thanh là thứ duy nhất để SO
+ * ĐỘ LỚN; bóp nó lại là bóp đúng việc của biểu đồ.
+ *
+ * Chỉ khi KHUNG CỦA CHÍNH BIỂU ĐỒ đủ rộng mới dàn ba cột (xem @container).
+ */
 .viz-bars__row {
     display: grid;
-    grid-template-columns: minmax(0, 11rem) 1fr auto;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+        "ten so"
+        "thanh thanh";
     align-items: center;
-    gap: var(--space-2xs);
+    column-gap: var(--space-2xs);
+    row-gap: 0.2rem;
     font-size: 0.8125rem;
+}
+
+.viz-bars__name { grid-area: ten; }
+.viz-bars__track { grid-area: thanh; }
+.viz-bars__value { grid-area: so; }
+
+@container viz-card (min-width: 36rem) {
+    .viz-bars__row {
+        grid-template-columns: minmax(0, 11rem) 1fr auto;
+        grid-template-areas: "ten thanh so";
+    }
 }
 
 .viz-bars__name {
@@ -154,6 +196,7 @@
 }
 
 .viz-bars__track {
+    display: block;
     min-width: 0;
     height: 0.75rem;
     background: color-mix(in srgb, var(--admin-ink) 7%, transparent);
@@ -161,6 +204,15 @@
 }
 
 .viz-bars__fill {
+    /*
+     * display: block BẮT BUỘC.
+     *
+     * Phần tử là <span>, mặc định `inline` — và phần tử inline bỏ qua
+     * width/height. Thiếu dòng này, đo trên trang thật: thanh 0×0px ở MỌI
+     * biểu đồ cột của trang quản trị, từ lúc dựng tới lúc phát hiện. Biểu
+     * đồ vẫn "hiện" vì còn tên và con số, nên không ai thấy thiếu thanh.
+     */
+    display: block;
     height: 100%;
     background: var(--viz-1);
     border-start-end-radius: 4px;
@@ -345,4 +397,65 @@
     font-size: 0.75rem;
     color: var(--viz-ink-muted);
     margin-top: var(--space-2xs);
+}
+
+
+/* ============ BẢN ĐỒ NHIỆT ============ */
+
+.viz-heat {
+    overflow-x: auto;
+}
+
+.viz-heat__grid {
+    display: grid;
+    grid-template-columns: 2.2rem repeat(var(--so-cot), minmax(0.85rem, 1fr));
+    gap: 2px;
+    min-width: 30rem;
+    font-size: 0.7rem;
+}
+
+.viz-heat__col-label,
+.viz-heat__row-label {
+    color: var(--viz-ink-muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.viz-heat__row-label {
+    align-self: center;
+}
+
+.viz-heat__cell {
+    display: inline-block;
+    min-height: 1.1rem;
+    border-radius: 2px;
+}
+
+/* Ô 0: không tô màu thang — "không có đơn" khác "có một đơn". */
+.viz-heat__cell--0 { background: transparent; box-shadow: inset 0 0 0 1px var(--viz-grid); }
+.viz-heat__cell--1 { background: var(--viz-heat-1); }
+.viz-heat__cell--2 { background: var(--viz-heat-2); }
+.viz-heat__cell--3 { background: var(--viz-heat-3); }
+.viz-heat__cell--4 { background: var(--viz-heat-4); }
+.viz-heat__cell--5 { background: var(--viz-heat-5); }
+
+.viz-heat__legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.8rem;
+    margin-top: 0.6rem;
+    font-size: 0.75rem;
+    color: var(--viz-ink-muted);
+}
+
+.viz-heat__legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.viz-heat__legend .viz-heat__cell {
+    width: 0.9rem;
+    min-height: 0.9rem;
 }
