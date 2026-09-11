@@ -294,7 +294,8 @@
                                     <li class="mb-1">
                                         <strong><x-site.money :amount="(string) $r->amount" /></strong>
                                         @if($r->status === \App\Enums\RefundStatus::Completed)
-                                            &middot; {{ $r->method === \App\Enums\RefundMethod::Momo ? 'về ví MoMo' : ($r->method === \App\Enums\RefundMethod::Cash ? 'tiền mặt' : 'chuyển khoản') }}
+                                            &middot; {{-- "qua MoMo", không phải "về ví MoMo": khách trả bằng thẻ thì tiền về thẻ. --}}
+                                            {{ $r->method === \App\Enums\RefundMethod::Momo ? 'qua MoMo' : ($r->method === \App\Enums\RefundMethod::Cash ? 'tiền mặt' : 'chuyển khoản') }}
                                             &middot; {{ $r->completed_at?->format('d/m/Y') }}
                                         @else
                                             &middot; đang xử lý qua MoMo

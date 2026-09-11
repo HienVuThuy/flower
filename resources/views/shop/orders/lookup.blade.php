@@ -81,15 +81,22 @@
 
                 </div>
 
-                <p class="text-caption text-center mt-3 mb-0">
-                    Không nhớ mã đơn? Gọi
-                    @php $hotline = \App\Models\Setting::get('site_hotline'); @endphp
-                    @if($hotline)
-                        <strong>{{ $hotline }}</strong> để được hỗ trợ.
-                    @else
-                        cho cửa hàng để được hỗ trợ.
-                    @endif
-                </p>
+                {{-- Bảo khách "gọi cho cửa hàng" mà không đưa số là một chỉ dẫn
+                     không làm theo được. Chưa có hotline thì đưa email. --}}
+                @php
+                    $hotline = \App\Services\Shop\StoreProfile::hotline();
+                    $emailCuaHang = \App\Services\Shop\StoreProfile::email();
+                @endphp
+                @if($hotline || $emailCuaHang)
+                    <p class="text-caption text-center mt-3 mb-0">
+                        Không nhớ mã đơn?
+                        @if($hotline)
+                            Gọi <strong>{{ $hotline }}</strong> để được hỗ trợ.
+                        @else
+                            Gửi email tới <strong>{{ $emailCuaHang }}</strong> để được hỗ trợ.
+                        @endif
+                    </p>
+                @endif
 
             </div>
 

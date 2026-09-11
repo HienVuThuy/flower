@@ -6,6 +6,9 @@ use App\Enums\OrderStatus;
 use App\Mail\OrderConfirmationMail;
 use App\Mail\OrderCancelledByCustomerMail;
 use App\Mail\OrderStatusMail;
+use App\Mail\RefundMail;
+use App\Enums\RefundStatus;
+use App\Models\Refund;
 use App\Models\Order;
 use App\Models\Setting;
 use App\Services\Mail\MailTransport;
@@ -150,6 +153,42 @@ class OrderMailer
             Log::error('Không gửi được email cập nhật trạng thái đơn.', [
                 'order_number' => $order->order_number,
                 'status' => $order->status->value,
+                'exception' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Báo khách: cửa hàng đã trả lại tiền.
+     *
+     * CHỈ lần hoàn ĐÃ XONG. Lần "chưa rõ kết quả" chưa chắc tiền đã đi —
+     * báo khách lúc đó là hứa một khoản có thể không bao giờ tới.
+     *
+     * KHÔNG hỏi tuỳ chọn "nhận thư cập nhật đơn" của khách. Đây là biên
+     * nhận một khoản tiền trả lại, cùng loại với thư xác nhận đơn — thứ
+     * khách cần giữ để đối chiếu với ngân hàng, không phải tin cập nhật.
+     *
+     * @return bool đã bàn giao cho tầng mail hay chưa
+     */
+    public function sendRefund(Refund $refund): bool
+    {
+        $refund->loadMissing('order', 'items.orderItem');
+
+        if ($refund->status !== RefundStatus::Completed || ! $refund->order->recipient_email) {
+            return false;
+        }
+
+        try {
+            $this->transport->deliver(new RefundMail($refund), $refund->order->recipient_email);
+
+            return true;
+        } catch (\Throwable $e) {
+            // Nuốt lỗi: tiền đã hoàn và sổ đã ghi. Ném ra thì admin thấy
+            // trang lỗi và tưởng chưa hoàn — rồi hoàn lần nữa.
+            Log::error('Không gửi được email báo hoàn tiền.', [
+                'refund' => $refund->code,
                 'exception' => $e->getMessage(),
             ]);
 

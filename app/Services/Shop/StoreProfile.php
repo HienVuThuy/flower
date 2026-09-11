@@ -103,9 +103,38 @@ class StoreProfile
         return $path ? \Illuminate\Support\Facades\Storage::url($path) : null;
     }
 
+    /**
+     * Số hotline — CHỈ KHI NÓ LÀ MỘT SỐ ĐIỆN THOẠI.
+     *
+     * Cơ sở dữ liệu đang lưu `site_hotline = "demo"`. Trả nguyên chuỗi đó
+     * thì mọi email gửi khách in "Gọi demo hoặc trả lời email này", chân
+     * trang in "demo" cạnh biểu tượng điện thoại, và trang theo dõi đơn nói
+     * "liên hệ cửa hàng theo số demo". Một số không gọi được còn tệ hơn
+     * không có số: khách thử gọi, rồi nghĩ cửa hàng không có thật.
+     *
+     * Không phải số thì trả null — mọi nơi hiển thị đã có nhánh "chưa có
+     * hotline" (trả lời email này), và giờ nhánh đó được dùng đúng lúc.
+     */
     public static function hotline(): ?string
     {
-        return self::get('site_hotline');
+        $so = trim((string) self::get('site_hotline'));
+
+        return self::laSoDienThoai($so) ? $so : null;
+    }
+
+    /**
+     * 8-15 chữ số, cho phép dấu +, khoảng trắng, chấm, gạch và ngoặc để
+     * viết cho dễ đọc ("0912 345 678", "(024) 3838 1234", "+84 912...").
+     */
+    public static function laSoDienThoai(string $chuoi): bool
+    {
+        if (! preg_match('/^\+?[\d\s.\-()]+$/', $chuoi)) {
+            return false;
+        }
+
+        $chuSo = strlen(preg_replace('/\D/', '', $chuoi) ?? '');
+
+        return $chuSo >= 8 && $chuSo <= 15;
     }
 
     public static function email(): ?string

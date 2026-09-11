@@ -74,7 +74,11 @@
             </p>
 
             <p style="margin:0;">
-                Cần trợ giúp? Gọi {{ $hotline }}.
+                @if($hotline)
+                    Cần trợ giúp? Gọi {{ $hotline }} hoặc trả lời thư này.
+                @else
+                    Cần trợ giúp? Trả lời thư này.
+                @endif
             </p>
         </td>
     </tr>

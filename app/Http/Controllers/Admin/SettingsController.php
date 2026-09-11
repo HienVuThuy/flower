@@ -141,7 +141,16 @@ class SettingsController extends Controller
             'site_logo' => ['nullable', 'file', 'image', 'mimes:png,jpg,jpeg,webp', 'max:512'],
             'remove_logo' => ['nullable', 'boolean'],
 
-            'site_hotline' => ['nullable', 'string', 'max:30'],
+            /*
+             * Hotline phải là một SỐ gọi được. Ô chữ tự do từng nhận "demo",
+             * và chữ đó đi thẳng vào mọi email gửi khách. Cùng luật với
+             * StoreProfile::laSoDienThoai() — một nơi định nghĩa.
+             */
+            'site_hotline' => ['nullable', 'string', 'max:30', function (string $attr, mixed $value, \Closure $fail) {
+                if (filled($value) && ! \App\Services\Shop\StoreProfile::laSoDienThoai(trim((string) $value))) {
+                    $fail('Hotline phải là số điện thoại (8-15 chữ số), ví dụ 0912 345 678. Để trống nếu chưa có.');
+                }
+            }],
             'site_email' => ['nullable', 'email', 'max:255'],
             'site_address' => ['nullable', 'string', 'max:255'],
 

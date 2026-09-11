@@ -116,7 +116,11 @@
             --}}
             <p class="shipping-status__note">
                 Trạng thái được cập nhật từ Giao Hàng Nhanh, khoảng 30 phút một lần.
-                Cần gấp thì liên hệ cửa hàng theo số {{ \App\Services\Shop\StoreProfile::hotline() }}.
+                @if($hotline = \App\Services\Shop\StoreProfile::hotline())
+                    Cần gấp thì liên hệ cửa hàng theo số {{ $hotline }}.
+                @elseif($emailCuaHang = \App\Services\Shop\StoreProfile::email())
+                    Cần gấp thì liên hệ cửa hàng qua {{ $emailCuaHang }}.
+                @endif
             </p>
         @endif
 

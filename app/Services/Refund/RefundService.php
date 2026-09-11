@@ -15,6 +15,7 @@ use App\Models\Refund;
 use App\Models\RefundItem;
 use App\Services\Audit\ActivityLogger;
 use App\Services\Inventory\StockReturn;
+use App\Services\Order\OrderMailer;
 use App\Services\Payment\MomoGateway;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -56,6 +57,7 @@ class RefundService
         private readonly MomoGateway $momo,
         private readonly StockReturn $stock,
         private readonly ActivityLogger $audit,
+        private readonly OrderMailer $mailer,
     ) {
     }
 
@@ -237,6 +239,15 @@ class RefundService
 
         $refund->refresh();
 
+        /*
+         * BÁO KHÁCH — SAU transaction, và chỉ khi tiền đã đi.
+         *
+         * Thư gửi rồi không rút lại được; dữ liệu thì cuộn lại được. Nên
+         * thứ không rút lại được đi sau cùng, cùng lý do với thư đổi trạng
+         * thái trong OrderService.
+         */
+        $this->mailer->sendRefund($refund);
+
         $this->audit->log(
             'don-hang.hoan-tien',
             sprintf(
@@ -276,6 +287,8 @@ class RefundService
             [$khoa, $phieu] = $this->khoaPhieuDangCho($refund);
             $this->hoanTat($phieu, $khoa, $maGiaoDich);
         });
+
+        $this->mailer->sendRefund($refund->fresh());
 
         $this->audit->log('don-hang.xac-nhan-hoan-tien', 'Xác nhận đã hoàn '.$refund->code, $refund->order);
     }

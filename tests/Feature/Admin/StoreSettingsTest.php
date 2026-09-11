@@ -143,6 +143,52 @@ class StoreSettingsTest extends TestCase
         $this->assertNull(StoreProfile::get('site_logo'));
     }
 
+    /* ================= HOTLINE PHẢI GỌI ĐƯỢC ================= */
+
+    #[Test]
+    public function hotline_KHONG_phai_so_thi_khong_hien_o_dau_ca(): void
+    {
+        /*
+         * Dữ liệu thật đang lưu "demo". Trước khi sửa, chữ đó nằm trong mọi
+         * email gửi khách ("Gọi demo hoặc trả lời email này") và ở chân
+         * trang cạnh biểu tượng điện thoại. Một số không gọi được còn tệ hơn
+         * không có số.
+         */
+        Setting::set('site_hotline', 'demo');
+
+        $this->assertNull(StoreProfile::hotline());
+
+        $this->get('/san-pham')->assertOk()->assertDontSee('demo');
+        $this->get(route('shop.orders.lookup'))->assertOk()->assertDontSee('Gọi cho cửa hàng');
+
+        // Lặng lẽ ẩn thì không ai biết phải sửa — trang Tổng quan phải nói.
+        $this->actingAs($this->admin())
+            ->get('/admin/dashboard')
+            ->assertSee('không phải số điện thoại');
+    }
+
+    #[Test]
+    public function hotline_la_so_thi_hien_va_bam_goi_duoc(): void
+    {
+        Setting::set('site_hotline', '0912 345 678');
+
+        $this->assertSame('0912 345 678', StoreProfile::hotline());
+        $this->get('/san-pham')->assertOk()->assertSee('href="tel:0912345678"', false);
+    }
+
+    #[Test]
+    public function khong_luu_duoc_hotline_khong_phai_so(): void
+    {
+        $this->actingAs($this->admin())
+            ->put('/admin/settings', $this->duLieu(['site_hotline' => 'demo']))
+            ->assertSessionHasErrors('site_hotline');
+
+        // Để trống vẫn lưu được: "chưa có hotline" là một tình trạng thật.
+        $this->actingAs($this->admin())
+            ->put('/admin/settings', $this->duLieu(['site_hotline' => '']))
+            ->assertSessionHasNoErrors();
+    }
+
     #[Test]
     public function ten_cua_hang_khong_duoc_de_trong(): void
     {

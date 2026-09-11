@@ -25,6 +25,9 @@ use App\Services\Shop\Money;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\RefundMail;
+use App\Services\Mail\MailTransport;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -585,6 +588,99 @@ class RefundTest extends TestCase
             ->get(route('admin.orders.index', ['hoan_tien' => 'chua-ro']))
             ->assertSee($order->order_number)
             ->assertDontSee($khac->order_number);
+    }
+
+    /* ================= 6. THƯ BÁO KHÁCH ================= */
+
+    private function coEmail(Order $order): Order
+    {
+        $order->forceFill(['recipient_email' => 'khach@vi-du.vn'])->save();
+
+        return $order->fresh();
+    }
+
+    #[Test]
+    public function hoan_xong_thi_gui_thu_cho_khach(): void
+    {
+        Mail::fake();
+
+        $order = $this->coEmail($this->don(OrderStatus::Cancelled));
+        $r = $this->svc()->hoan($order, $this->chuyenKhoan(300000));
+
+        Mail::assertSent(RefundMail::class, fn (RefundMail $m) => $m->hasTo('khach@vi-du.vn') && $m->refund->is($r));
+    }
+
+    #[Test]
+    public function momo_CHUA_RO_ket_qua_thi_KHONG_bao_khach_cho_toi_khi_xac_nhan(): void
+    {
+        /*
+         * Báo "tiền đang về" cho một khoản chưa chắc đã đi là hứa một điều
+         * có thể không xảy ra. Thư chỉ đi khi người thật xác nhận đã hoàn.
+         */
+        Mail::fake();
+        Http::fake(fn () => throw new ConnectionException('hết thời gian chờ'));
+
+        $order = $this->coEmail($this->donMomo(OrderStatus::Cancelled));
+        $r = $this->svc()->hoan($order, ['amount' => 300000, 'reason' => 'don_huy', 'method' => 'momo']);
+
+        Mail::assertNothingSent();
+
+        $this->svc()->xacNhanDaHoan($r, '999777');
+
+        Mail::assertSent(RefundMail::class, 1);
+    }
+
+    #[Test]
+    public function momo_tu_choi_thi_KHONG_gui_thu(): void
+    {
+        Mail::fake();
+        Http::fake(['momo.test/refund' => Http::response(['resultCode' => 1080, 'message' => 'lỗi'])]);
+
+        $order = $this->coEmail($this->donMomo(OrderStatus::Cancelled));
+        $this->svc()->hoan($order, ['amount' => 300000, 'reason' => 'don_huy', 'method' => 'momo']);
+
+        Mail::assertNothingSent();
+    }
+
+    #[Test]
+    public function thu_KHONG_lo_ghi_chu_noi_bo_va_noi_ro_hoan_mot_phan(): void
+    {
+        Mail::fake();
+
+        $order = $this->coEmail($this->don(OrderStatus::Completed));
+        $r = $this->svc()->hoan($order, $this->chuyenKhoan(90000, 'hang_hong', [
+            'note' => 'Khách gửi ảnh mờ, tạm hoàn 30% cho xong',
+        ]));
+
+        $thu = new RefundMail($r->fresh());
+
+        $thu->assertDontSeeInHtml('ảnh mờ');
+        $thu->assertSeeInHtml(Money::format('90000'));
+        $thu->assertSeeInHtml($r->reference);
+        // Hoàn một phần: phải nói tổng đã hoàn trên số đã trả, không để
+        // khách tưởng đã nhận đủ.
+        $thu->assertSeeInHtml('trên ' . Money::format('300000'));
+    }
+
+    #[Test]
+    public function gui_thu_hong_KHONG_lam_hong_lan_hoan(): void
+    {
+        /*
+         * Tiền đã đi, sổ đã ghi. Ném lỗi gửi thư ra ngoài thì admin thấy
+         * trang lỗi, tưởng chưa hoàn, và hoàn lần nữa.
+         */
+        $this->mock(MailTransport::class, function ($m) {
+            $m->shouldReceive('deliver')->andThrow(new \RuntimeException('máy chủ thư sập'));
+            $m->shouldReceive('deliversForReal')->andReturn(true);
+        });
+
+        $order = $this->coEmail($this->don(OrderStatus::Cancelled));
+
+        $this->actingAs($this->admin())
+            ->post(route('admin.orders.refunds.store', $order), $this->chuyenKhoan(300000))
+            ->assertSessionHas('success');
+
+        $this->assertSame(PaymentStatus::Refunded, $order->fresh()->payment_status);
     }
 
     #[Test]

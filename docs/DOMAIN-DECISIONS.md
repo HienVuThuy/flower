@@ -6835,3 +6835,43 @@ chỉnh bên phần mềm hoá đơn điện tử — hệ thống này không p
 
 Sửa kèm: đơn đã giao không còn hiện nút "Gỡ đánh dấu (bấm nhầm)" — dịch vụ luôn
 từ chối thao tác đó cho đơn đã giao, nên nút là một nút giả.
+
+---
+
+## QĐ-228. Thư báo hoàn tiền: chỉ khi tiền đã đi, không lộ ghi chú nội bộ
+
+`OrderMailer::sendRefund()` gửi `RefundMail` khi một lần hoàn **đã xong** — lúc
+ghi (chuyển khoản, tiền mặt), lúc MoMo trả thành công, hoặc lúc người thật xác
+nhận một khoản MoMo đang chờ. Lần "chưa rõ kết quả" và lần thất bại **không**
+gửi: báo "tiền đang về" cho một khoản chưa chắc đã đi là hứa điều có thể không
+xảy ra.
+
+- Gửi **sau** transaction; lỗi gửi thư bị nuốt và ghi log — tiền đã đi, ném lỗi
+  ra thì admin tưởng chưa hoàn và hoàn lần nữa.
+- **Không** hỏi tuỳ chọn "nhận thư cập nhật đơn": đây là biên nhận một khoản tiền,
+  cùng loại với thư xác nhận đơn.
+- **Không in ô ghi chú** của lần hoàn — đó là chỗ nhân viên viết cho nhau.
+- Nói rõ đã hoàn đủ hay mới một phần ("420.000₫ trên 1.405.000₫ bạn đã trả").
+- **Không hứa số ngày** tiền về: do ví, ngân hàng hay tổ chức phát hành thẻ quyết
+  định. Thư chỉ nói đưa mã nào cho ai để tra.
+
+Trang đơn của khách đổi "về ví MoMo" thành "qua MoMo": khách trả bằng thẻ qua
+MoMo thì tiền về thẻ, không về ví.
+
+---
+
+## QĐ-229. Hotline không phải số điện thoại thì coi như chưa có
+
+Cơ sở dữ liệu lưu `site_hotline = "demo"`. Chữ đó đi thẳng vào **mọi email gửi
+khách** ("Gọi demo hoặc trả lời email này"), chân trang (cạnh biểu tượng điện
+thoại), trang theo dõi đơn ("liên hệ cửa hàng theo số demo") và trang tra cứu.
+
+`StoreProfile::hotline()` giờ chỉ trả giá trị có 8–15 chữ số (cho phép `+`,
+khoảng trắng, chấm, gạch, ngoặc); còn lại trả `null`, và mọi nơi hiển thị dùng
+nhánh "chưa có hotline" — trả lời email, hoặc đưa email cửa hàng. Trang Cấu hình
+từ chối lưu hotline không phải số (để trống vẫn được). Chân trang có liên kết
+`tel:` để bấm gọi trên điện thoại.
+
+Vì ẩn lặng lẽ thì không ai biết phải sửa, trang Tổng quan có dòng việc "cấu hình
+cần sửa" khi giá trị đang lưu không phải số. **Số thật của cửa hàng vẫn phải do
+người dùng nhập** — hệ thống không tự bịa một số.

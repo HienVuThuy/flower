@@ -206,6 +206,24 @@ class WorkQueue
             ],
         ];
 
+        /*
+         * HOTLINE LƯU SAI — việc cấu hình, nhưng khách chịu hậu quả.
+         *
+         * StoreProfile::hotline() lặng lẽ bỏ qua giá trị không phải số, để
+         * email không in "Gọi demo". Lặng lẽ nghĩa là không ai biết phải
+         * sửa, nên nói ra ở đây. Để trống thì không nhắc: "chưa có hotline"
+         * là một tình trạng thật, không phải lỗi nhập.
+         */
+        $hotlineLuu = trim((string) \App\Services\Shop\StoreProfile::get('site_hotline'));
+
+        $viec[] = [
+            'label' => 'cấu hình cần sửa: hotline "' . \Illuminate\Support\Str::limit($hotlineLuu, 20) . '" không phải số điện thoại',
+            'count' => ($hotlineLuu !== '' && \App\Services\Shop\StoreProfile::hotline() === null) ? 1 : 0,
+            'url' => route('admin.settings.edit'),
+            'tone' => 'info',
+            'hint' => 'Email gửi khách và chân trang đang ẩn hotline vì không gọi được. Nhập số thật hoặc để trống.',
+        ];
+
         return array_values(array_filter($viec, fn (array $v) => $v['count'] > 0));
     }
 }

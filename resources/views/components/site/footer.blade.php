@@ -42,10 +42,14 @@
 
             <div class="col-md-3">
                 <div class="site-footer__heading">Liên hệ</div>
-                <p class="mb-1">
-                    <x-site.icon name="telephone" />
-                    {{ \App\Services\Shop\StoreProfile::hotline() }}
-                </p>
+                {{-- Không phải số gọi được thì không bày biểu tượng điện thoại
+                     cạnh một chữ vô nghĩa. Xem StoreProfile::hotline(). --}}
+                @if($hotline = \App\Services\Shop\StoreProfile::hotline())
+                    <p class="mb-1">
+                        <x-site.icon name="telephone" />
+                        <a href="tel:{{ preg_replace('/[^\d+]/', '', $hotline) }}">{{ $hotline }}</a>
+                    </p>
+                @endif
                 <p class="mb-1">
                     <x-site.icon name="envelope" />
                     {{ \App\Services\Shop\StoreProfile::email() }}
