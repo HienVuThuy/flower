@@ -122,6 +122,29 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Tài khoản này vào được khu vực nào của trang quản trị.
+     *
+     * ============================================================
+     * MỘT CÂU HỎI, MỘT CÂU TRẢ LỜI.
+     *
+     * Middleware chặn đường dẫn, thanh điều hướng ẩn mục, và trang phân
+     * quyền đều hỏi qua đây. Mỗi nơi tự so `role === Admin` một kiểu thì
+     * sớm muộn thanh điều hướng ẩn một mục mà đường dẫn vẫn vào được —
+     * TRÔNG NHƯ ĐÃ KHOÁ trong khi chưa khoá, thứ nguy hiểm hơn hẳn việc
+     * không khoá gì.
+     */
+    public function duoc(\App\Enums\Quyen $quyen): bool
+    {
+        return in_array($quyen, $this->role->quyen(), true);
+    }
+
+    /** Có vào được trang quản trị không (bất kể khu vực nào). */
+    public function laNhanSu(): bool
+    {
+        return $this->role->laNhanSu();
+    }
+
+    /**
      * Gửi thư đặt lại mật khẩu.
      *
      * GHI ĐÈ hành vi mặc định của Laravel. Thư mặc định là tiếng Anh,

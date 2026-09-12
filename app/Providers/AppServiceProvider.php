@@ -66,6 +66,28 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         /*
+         * ĐĂNG KÝ MỘT GATE CHO MỖI KHU VỰC QUẢN TRỊ.
+         *
+         * Để Blade viết được `@can('kho')` thay vì gọi
+         * `auth()->user()->duoc(...)` trong từng thẻ — một chỗ quên là
+         * thanh điều hướng bày ra một mục dẫn thẳng tới trang 403.
+         *
+         * ============================================================
+         * HAI CƠ CHẾ, MỘT BẢNG.
+         *
+         * Đường dẫn khoá bằng middleware `quyen:` (nó còn NỔ khi tên
+         * quyền gõ sai, thứ `can:` không làm được); giao diện ẩn mục bằng
+         * `@can`. Cả hai đều hỏi User::duoc(), tức là cùng đọc
+         * UserRole::quyen(). Không có bảng thứ hai để lệch nhau.
+         */
+        foreach (\App\Enums\Quyen::cases() as $quyen) {
+            \Illuminate\Support\Facades\Gate::define(
+                $quyen->value,
+                fn (\App\Models\User $user) => $user->duoc($quyen),
+            );
+        }
+
+        /*
          * PHÂN TRANG DÙNG MARKUP BOOTSTRAP 5.
          *
          * Mặc định Laravel in ra view Tailwind. Dự án này KHÔNG có

@@ -817,12 +817,25 @@ Route::middleware('auth')->group(function () {
  * Yêu cầu đăng nhập và role "admin".
  */
 
+/*
+ * ============================================================
+ * KHU QUẢN TRỊ — CỔNG CHUNG RỘNG, KHOÁ NẰM Ở TỪNG KHU
+ * ============================================================
+ * Cổng ngoài chỉ hỏi "có phải nhân sự không" (`role:admin,staff`). Ai
+ * vào được KHU NÀO thì do `quyen:` của từng nhóm quyết định, và bảng
+ * quyền nằm ở UserRole::quyen() — một nơi duy nhất.
+ *
+ * MỌI ĐƯỜNG DẪN TRONG NÀY PHẢI CÓ `quyen:`. Quên một dòng là dòng đó mở
+ * cho mọi nhân viên. Có bài kiểm thử đi qua từng đường dẫn quản trị và
+ * báo đỏ nếu thiếu — xem PhanQuyenTest.
+ */
 Route::prefix('admin')
     ->name('admin.')
-    ->middleware(['auth', 'role:admin'])
+    ->middleware(['auth', 'role:admin,staff'])
     ->group(function () {
 
         Route::get('dashboard', [DashboardController::class, 'index'])
+            ->middleware('quyen:bao-cao')
             ->name('dashboard');
 
         /*
@@ -846,7 +859,8 @@ Route::prefix('admin')
              * chỉ có tên, ảnh và thứ tự — trang sửa đã hiện đủ, thêm một
              * trang chỉ để xem là thêm chỗ phải bảo trì mà không ai vào.
              */
-            ->except(['show']);
+            ->except(['show'])
+            ->middleware('quyen:san-pham');
 
 
         /*
@@ -870,12 +884,13 @@ Route::prefix('admin')
          * tự khớp.
          */
         Route::post('products/hang-loat', [ProductController::class, 'bulk'])
+            ->middleware('quyen:san-pham')
             ->name('products.bulk');
 
         Route::resource(
             'products',
             ProductController::class
-        );
+        )->middleware('quyen:san-pham');
 
 
         /*
@@ -895,7 +910,8 @@ Route::prefix('admin')
         if (config('features.cart')) {
             Route::resource('coupons', CouponController::class)
                 ->except(['show'])
-                ->parameters(['coupons' => 'coupon']);
+                ->parameters(['coupons' => 'coupon'])
+                ->middleware('quyen:khuyen-mai');
         }
 
         /*
@@ -908,16 +924,21 @@ Route::prefix('admin')
          * Chỉ đọc, không có thao tác ghi nên không cần throttle.
          */
         Route::get('phan-tich', [AnalyticsController::class, 'index'])
+            ->middleware('quyen:bao-cao')
             ->name('analytics.index');
 
         // Các trang con — xem AnalyticsPagesController.
         Route::get('phan-tich/doanh-thu', [AnalyticsPagesController::class, 'sales'])
+            ->middleware('quyen:bao-cao')
             ->name('analytics.sales');
         Route::get('phan-tich/khach-hang', [AnalyticsPagesController::class, 'customers'])
+            ->middleware('quyen:bao-cao')
             ->name('analytics.customers');
         Route::get('phan-tich/danh-gia', [AnalyticsPagesController::class, 'reviews'])
+            ->middleware('quyen:bao-cao')
             ->name('analytics.reviews');
         Route::get('phan-tich/loi-nhuan', [AnalyticsPagesController::class, 'profit'])
+            ->middleware('quyen:tai-chinh')
             ->name('analytics.profit');
 
         /*
@@ -928,6 +949,7 @@ Route::prefix('admin')
          * Tự động hoá việc đó là tự động hoá một quyết định kinh doanh.
          */
         Route::get('de-xuat-gia', [PricingAdvisorController::class, 'index'])
+            ->middleware('quyen:khuyen-mai')
             ->name('pricing-advisor.index');
 
         /*
@@ -940,16 +962,21 @@ Route::prefix('admin')
         Route::resource('cam-nang', BlogPostController::class)
             ->parameters(['cam-nang' => 'post'])
             ->except(['show'])
-            ->names('blog');
+            ->names('blog')
+            ->middleware('quyen:san-pham');
 
         /* DUYỆT BÀI "Góc cây của bạn". */
         Route::get('goc-cay', [CommunityModerationController::class, 'index'])
+            ->middleware('quyen:danh-gia')
             ->name('community.index');
         Route::patch('goc-cay/{post}/duyet', [CommunityModerationController::class, 'approve'])
+            ->middleware('quyen:danh-gia')
             ->name('community.approve');
         Route::patch('goc-cay/{post}/tu-choi', [CommunityModerationController::class, 'reject'])
+            ->middleware('quyen:danh-gia')
             ->name('community.reject');
         Route::delete('goc-cay/{post}', [CommunityModerationController::class, 'destroy'])
+            ->middleware('quyen:danh-gia')
             ->name('community.destroy');
 
         /*
@@ -973,6 +1000,7 @@ Route::prefix('admin')
          * có đủ ngữ cảnh để biết mình đang sửa cái gì.
          */
         Route::get('ton-kho', [InventoryController::class, 'index'])
+            ->middleware('quyen:kho')
             ->name('inventory.index');
 
         /*
@@ -988,7 +1016,8 @@ Route::prefix('admin')
         Route::resource('nhap-kho', StockReceiptController::class)
             ->parameters(['nhap-kho' => 'stockReceipt'])
             ->except(['edit', 'update'])
-            ->names('stock-receipts');
+            ->names('stock-receipts')
+            ->middleware('quyen:kho');
 
         /*
          * GHI SỔ — POST chứ không GET: nó CỘNG vào kho và không lùi
@@ -999,6 +1028,7 @@ Route::prefix('admin')
          * nhưng chặn từ sớm thì rẻ hơn.
          */
         Route::post('nhap-kho/{stockReceipt}/ghi-so', [StockReceiptController::class, 'post'])
+            ->middleware('quyen:kho')
             ->middleware('throttle:20,1')
             ->name('stock-receipts.post');
 
@@ -1009,25 +1039,32 @@ Route::prefix('admin')
         Route::resource('kiem-ke', StockCountController::class)
             ->parameters(['kiem-ke' => 'stockCount'])
             ->except(['edit', 'update'])
-            ->names('stock-counts');
+            ->names('stock-counts')
+            ->middleware('quyen:kho');
 
         Route::post('kiem-ke/{stockCount}/ghi-so', [StockCountController::class, 'post'])
+            ->middleware('quyen:kho')
             ->middleware('throttle:20,1')
             ->name('stock-counts.post');
 
         Route::get('phan-tich/xuat', [AnalyticsController::class, 'exportForm'])
+            ->middleware('quyen:bao-cao')
             ->name('analytics.export-form');
 
         Route::get('phan-tich/xuat/tai-ve', [AnalyticsController::class, 'export'])
+            ->middleware('quyen:bao-cao')
             ->name('analytics.export');
 
         Route::get('reviews', [AdminReviewController::class, 'index'])
+            ->middleware('quyen:danh-gia')
             ->name('reviews.index');
 
         Route::post('reviews/hang-loat', [AdminReviewController::class, 'bulk'])
+            ->middleware('quyen:danh-gia')
             ->name('reviews.bulk');
 
         Route::patch('reviews/{review}/hien-thi', [AdminReviewController::class, 'toggle'])
+            ->middleware('quyen:danh-gia')
             ->name('reviews.toggle');
 
         /*
@@ -1035,12 +1072,15 @@ Route::prefix('admin')
          * Gửi ô trống nghĩa là xoá phản hồi, không cần route riêng.
          */
         Route::patch('reviews/{review}/phan-hoi', [AdminReviewController::class, 'reply'])
+            ->middleware('quyen:danh-gia')
             ->name('reviews.reply');
 
         Route::resource('promotions', PromotionController::class)
-            ->except(['show']);
+            ->except(['show'])
+            ->middleware('quyen:khuyen-mai');
 
         Route::put('promotions/{promotion}/products', [PromotionController::class, 'syncProducts'])
+            ->middleware('quyen:khuyen-mai')
             ->name('promotions.sync-products');
 
 
@@ -1058,6 +1098,7 @@ Route::prefix('admin')
          */
         Route::prefix('orders')
             ->name('orders.')
+            ->middleware('quyen:don-hang')
             ->group(function () {
                 Route::get('/', [AdminOrderController::class, 'index'])->name('index');
                 Route::get('/{order}', [AdminOrderController::class, 'show'])->name('show');
@@ -1104,15 +1145,18 @@ Route::prefix('admin')
             });
 
         Route::patch('hoan-tien/{refund}/xac-nhan', [RefundController::class, 'confirm'])
+            ->middleware('quyen:tai-chinh')
             ->middleware('throttle:20,1')
             ->name('refunds.confirm');
 
         Route::patch('hoan-tien/{refund}/that-bai', [RefundController::class, 'fail'])
+            ->middleware('quyen:tai-chinh')
             ->middleware('throttle:20,1')
             ->name('refunds.fail');
 
         Route::prefix('bulk-inquiries')
             ->name('bulk-inquiries.')
+            ->middleware('quyen:don-hang')
             ->group(function () {
                 Route::get('/', [AdminBulkInquiryController::class, 'index'])->name('index');
                 Route::get('/{bulkInquiry}', [AdminBulkInquiryController::class, 'show'])->name('show');
@@ -1126,7 +1170,9 @@ Route::prefix('admin')
          * =========================
          */
 
-        Route::get('users', [UserController::class, 'index'])->name('users.index');
+        Route::get('users', [UserController::class, 'index'])
+            ->middleware('quyen:he-thong')
+            ->name('users.index');
 
         /*
          * KHÔNG dùng Route::resource cho người dùng.
@@ -1140,9 +1186,11 @@ Route::prefix('admin')
          * thay cả bản ghi.
          */
         Route::patch('users/{user}/vai-tro', [UserController::class, 'updateRole'])
+            ->middleware('quyen:he-thong')
             ->name('users.role');
 
         Route::patch('users/{user}/khoa', [UserController::class, 'updateLock'])
+            ->middleware('quyen:he-thong')
             ->name('users.lock');
 
 
@@ -1164,9 +1212,12 @@ Route::prefix('admin')
          * Đường dẫn tiếng Việt như các trang quản trị khác.
          */
         Route::get('nhat-ky', [ActivityLogController::class, 'index'])
+            ->middleware('quyen:he-thong')
             ->name('activity-logs.index');
 
 
-        Route::get('settings', [SettingsController::class, 'edit'])->name('settings.edit');
-        Route::put('settings', [SettingsController::class, 'update'])->name('settings.update');
+        Route::get('settings', [SettingsController::class, 'edit'])
+            ->middleware('quyen:he-thong')->name('settings.edit');
+        Route::put('settings', [SettingsController::class, 'update'])
+            ->middleware('quyen:he-thong')->name('settings.update');
     });

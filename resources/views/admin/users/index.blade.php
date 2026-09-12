@@ -158,11 +158,23 @@
                                     @csrf
                                     @method('PATCH')
 
+                                    {{--
+                                        NÓI RÕ MỖI VAI TRÒ ĐƯỢC GÌ, ngay
+                                        tại chỗ chọn.
+
+                                        Người bấm ở đây đang trao quyền
+                                        cho một người thật. Một danh sách
+                                        chỉ có ba cái tên bắt họ phải đoán
+                                        — và đoán sai thì hoặc nhân viên
+                                        không làm được việc, hoặc nhìn
+                                        thấy lãi gộp của cửa hàng.
+                                    --}}
                                     <select name="role" class="form-select form-select-sm w-auto"
                                             aria-label="Vai trò của {{ $user->name }}">
                                         @foreach($roles as $role)
                                             <option value="{{ $role->value }}"
-                                                    @selected($user->role === $role)>
+                                                    @selected($user->role === $role)
+                                                    title="{{ $role->moTa() }}">
                                                 {{ $role->label() }}
                                             </option>
                                         @endforeach
@@ -222,6 +234,62 @@
             {{ $users->links() }}
         </div>
     @endif
+
+</div>
+
+{{--
+    ============================================================
+    BẢNG QUYỀN — ai thấy được gì
+    ============================================================
+    Trang này là nơi trao quyền cho người thật. Không bày bảng ra thì
+    người bấm phải nhớ hoặc phải đoán, và đoán sai theo hướng nào cũng
+    hỏng: hoặc nhân viên không làm được việc, hoặc họ nhìn thấy giá vốn
+    và lãi gộp của cửa hàng.
+
+    Bảng này đọc thẳng từ UserRole::quyen() — cùng nguồn với middleware
+    khoá đường dẫn. Nó không thể nói sai so với thứ hệ thống thật sự làm.
+--}}
+<div class="admin-panel p-4 mt-4">
+
+    <h2 class="h5 fw-bold mb-1">Mỗi vai trò vào được khu nào</h2>
+    <p class="text-muted small mb-3">
+        Đổi bảng này phải sửa mã nguồn — cố ý như vậy: phân quyền là thứ
+        không nên đổi được bằng một cú bấm nhầm.
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+            <thead>
+                <tr>
+                    <th scope="col">Khu vực</th>
+                    @foreach(\App\Enums\UserRole::nhanSu() as $vt)
+                        <th scope="col" class="text-center">{{ $vt->label() }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(\App\Enums\Quyen::cases() as $q)
+                    <tr>
+                        <th scope="row" class="fw-normal">
+                            {{ $q->nhan() }}
+                            <span class="d-block admin-page-subtitle small">{{ $q->moTa() }}</span>
+                        </th>
+
+                        @foreach(\App\Enums\UserRole::nhanSu() as $vt)
+                            @php $co = in_array($q, $vt->quyen(), true); @endphp
+                            <td class="text-center">
+                                {{-- Chữ chứ không phải chỉ một dấu tích: trình đọc
+                                     màn hình phải đọc ra được câu trả lời. --}}
+                                <span class="{{ $co ? 'text-success' : 'text-muted' }}">
+                                    {{ $co ? 'Có' : 'Không' }}
+                                </span>
+                            </td>
+                        @endforeach
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
 
 </div>
 

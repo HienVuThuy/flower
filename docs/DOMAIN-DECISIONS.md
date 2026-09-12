@@ -7372,3 +7372,66 @@ Nút "Làm mới" là một liên kết thật và mang `data-admin-link` như m
 kết quản trị khác — bài kiểm thử sẵn có bắt được ngay khi nó thiếu. Công
 tắc thì chỉ hiện khi có JavaScript: bày một công tắc bấm vào không có
 chuyện gì xảy ra còn tệ hơn không có công tắc.
+
+---
+
+## QĐ-250. Phân quyền: nhân viên và chủ cửa hàng
+
+Trước bản này chỉ có `admin`/`customer`: **ai vào được trang quản trị thì
+vào được tất cả** — giá vốn, lãi gộp, phân quyền, cấu hình cửa hàng. Một
+cửa hàng thật có người chỉ xử lý đơn và nhập kho; đưa cho họ tài khoản
+admin là đưa luôn quyền đổi giá và xem lãi.
+
+**Chia theo KHU VỰC, không theo từng nút.** Quyền cho từng hành động
+("được sửa giá nhưng không được sửa tên") nghe thì mịn, nhưng không ai
+cấu hình nổi và cũng không ai kiểm lại được. Tám khu vực thì đọc hết
+trong mười giây, và câu "nhân viên này thấy được gì" trả lời bằng mắt.
+
+**Nhân viên KHÔNG có:** sản phẩm (vì sửa được GIÁ BÁN), khuyến mại, tài
+chính (giá vốn, lãi gộp, xác nhận tiền hoàn đã đi), hệ thống (phân
+quyền, cấu hình, nhật ký). Ba nhóm đầu là tiền của cửa hàng; nhóm cuối là
+chìa khoá của chính hệ thống — ai sửa được phân quyền thì tự cho mình mọi
+quyền còn lại.
+
+**Bảng quyền nằm trong enum, không trong cơ sở dữ liệu.** Quyền riêng cho
+từng người mềm dẻo hơn, nhưng cũng nghĩa là không ai trả lời được "nhân
+viên nói chung thấy gì" mà không mở cơ sở dữ liệu ra dò. Ở quy mô này,
+một bảng nằm trong lịch sử mã nguồn đáng giá hơn.
+
+**`quyen:` chứ không `role:` trên từng đường dẫn.** `role:admin,staff`
+khai ở đường dẫn rằng *ai* được vào — thêm một vai trò là phải sửa hàng
+chục dòng route. `quyen:tai-chinh` khai *khu này là khu gì*; ai vào được
+thì tra một bảng duy nhất. Middleware còn **ném lỗi** khi tên quyền gõ
+sai: `quyen:tai-chinh2` mà lặng lẽ cho qua thì cả khu mất bảo vệ.
+
+**Ẩn ở thanh điều hướng KHÔNG PHẢI là khoá.** Khoá thật là middleware;
+`@can` chỉ để nhân viên không bấm vào rồi nhận trang 403. Một mục bị ẩn
+mà đường dẫn vẫn mở thì nguy hiểm hơn không khoá gì — nhìn vào tin là đã
+khoá. Nên mỗi khu có hai phép kiểm: không thấy mục, VÀ gõ thẳng địa chỉ
+vẫn bị chặn.
+
+**Bài kiểm thử quan trọng nhất không phải "nhân viên bị chặn ở trang X",
+mà là "MỌI đường dẫn quản trị đều khai quyền".** Quên một dòng route là
+dòng đó mở cho mọi nhân viên, và không có gì báo: trang vẫn chạy, vẫn
+đẹp, chỉ là ai cũng vào được.
+
+---
+
+## QĐ-251. Năm phép khẳng định không bao giờ đỏ được
+
+Bài kiểm thử "nhân viên không thấy mục bị cấm ở thanh điều hướng" viết
+tay địa chỉ `href="http://localhost/admin/users"`. Máy chủ trong môi
+trường kiểm thử in ra `http://localhost:8000/...`, nên **cả năm phép
+khẳng định `assertStringNotContainsString` đều không thể đỏ** — chúng chỉ
+trang trí.
+
+Bài vẫn xanh, vẫn trông như đang canh gác. Chỉ lộ ra khi chạy đột biến:
+bỏ `@can` quanh mục "Người dùng" cho nhân viên thấy nó, mà bài **vẫn
+xanh**.
+
+Sửa: dựng địa chỉ bằng chính `route()`. Đổi `APP_URL` bao nhiêu lần thì
+bài vẫn đo đúng thứ nó nói là đang đo.
+
+Đây là lý do mỗi phép khẳng định "KHÔNG chứa" đều phải được thử bằng đột
+biến ít nhất một lần: một phép khẳng định phủ định sai chuỗi thì **luôn
+luôn đúng**, và không có cách nào nhận ra bằng cách đọc.

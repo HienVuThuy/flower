@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => EnsureUserHasRole::class,
+            'quyen' => \App\Http\Middleware\CoQuyen::class,
         ]);
 
         // Trang đã đăng nhập không được lưu trong bfcache của trình

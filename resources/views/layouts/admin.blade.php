@@ -67,15 +67,26 @@
             </div>
         </div>
 
+{{--
+        ẨN MỤC KHÔNG VÀO ĐƯỢC, NHƯNG ẨN KHÔNG PHẢI LÀ KHOÁ.
+
+        Khoá thật nằm ở middleware `quyen:` trên từng đường dẫn; đoạn này
+        chỉ để nhân viên không phải bấm vào một mục rồi nhận trang 403.
+        Cả hai cùng đọc UserRole::quyen(), nên không thể lệch nhau.
+    --}}
+    @can('bao-cao')
         <nav class="d-flex flex-column gap-1">
             <a data-admin-link href="{{ route('admin.dashboard') }}" class="admin-nav-link {{ request()->routeIs('admin.dashboard') ? 'is-active' : '' }}">
                 <x-site.icon name="speedometer2" />
                 <span>Tổng quan</span>
             </a>
         </nav>
+    @endcan
 
+        @canany(['san-pham', 'kho'])
         <div class="admin-nav-heading">Cửa hàng</div>
         <nav class="d-flex flex-column gap-1">
+            @can('san-pham')
             <a data-admin-link href="{{ route('admin.categories.index') }}" class="admin-nav-link {{ request()->routeIs('admin.categories.*') ? 'is-active' : '' }}">
                 <x-site.icon name="tags" />
                 <span>Danh mục</span>
@@ -84,6 +95,9 @@
                 <x-site.icon name="flower1" />
                 <span>Sản phẩm</span>
             </a>
+            @endcan
+
+            @can('kho')
 
             {{--
                 TỒN KHO — cạnh Sản phẩm, nhưng là mục riêng.
@@ -109,10 +123,14 @@
                 <x-site.icon name="check-circle" />
                 <span>Kiểm kê kho</span>
             </a>
+            @endcan
         </nav>
+        @endcanany
 
+        @canany(['don-hang', 'san-pham', 'danh-gia', 'khuyen-mai'])
         <div class="admin-nav-heading">Bán hàng</div>
         <nav class="d-flex flex-column gap-1">
+            @can('don-hang')
             <a data-admin-link href="{{ route('admin.bulk-inquiries.index') }}" class="admin-nav-link {{ request()->routeIs('admin.bulk-inquiries.*') ? 'is-active' : '' }}">
                 <x-site.icon name="envelope-paper" />
                 <span>Yêu cầu số lượng lớn</span>
@@ -134,15 +152,24 @@
                     <span>Đơn hàng</span>
                 </a>
             @endif
+            @endcan
+
+            @can('san-pham')
             <a data-admin-link href="{{ route('admin.blog.index') }}" class="admin-nav-link {{ request()->routeIs('admin.blog.*') ? 'is-active' : '' }}">
                 <x-site.icon name="list" />
                 <span>Cẩm nang</span>
             </a>
 
+            @endcan
+
+            @can('danh-gia')
             <a data-admin-link href="{{ route('admin.community.index') }}" class="admin-nav-link {{ request()->routeIs('admin.community.*') ? 'is-active' : '' }}">
                 <x-site.icon name="people" />
                 <span>Góc cây của bạn</span>
             </a>
+            @endcan
+
+            @can('khuyen-mai')
 
             <a data-admin-link href="{{ route('admin.promotions.index') }}" class="admin-nav-link {{ request()->routeIs('admin.promotions.*') ? 'is-active' : '' }}">
                 <x-site.icon name="megaphone" />
@@ -169,26 +196,39 @@
                     <span>Mã giảm giá</span>
                 </a>
             @endif
+            @endcan
         </nav>
+        @endcanany
 
+        @canany(['he-thong', 'danh-gia'])
         <div class="admin-nav-heading">Khách hàng</div>
         <nav class="d-flex flex-column gap-1">
+            @can('he-thong')
             <a data-admin-link href="{{ route('admin.users.index') }}" class="admin-nav-link {{ request()->routeIs('admin.users.*') ? 'is-active' : '' }}">
                 <x-site.icon name="people" />
                 <span>Người dùng</span>
             </a>
+            @endcan
+            @can('danh-gia')
             <a data-admin-link href="{{ route('admin.reviews.index') }}" class="admin-nav-link {{ request()->routeIs('admin.reviews.*') ? 'is-active' : '' }}">
                 <x-site.icon name="star" />
                 <span>Đánh giá</span>
             </a>
+            @endcan
         </nav>
+        @endcanany
 
+        @canany(['bao-cao', 'he-thong'])
         <div class="admin-nav-heading">Hệ thống</div>
         <nav class="d-flex flex-column gap-1">
+            @can('bao-cao')
             <a data-admin-link href="{{ route('admin.analytics.index') }}" class="admin-nav-link {{ request()->routeIs('admin.analytics.*') ? 'is-active' : '' }}">
                 <x-site.icon name="bar-chart" />
                 <span>Phân tích</span>
             </a>
+            @endcan
+
+            @can('he-thong')
             {{--
                 NHẬT KÝ đứng trong nhóm "Hệ thống", ngay trên Cài đặt.
 
@@ -203,7 +243,9 @@
                 <x-site.icon name="gear" />
                 <span>Cài đặt</span>
             </a>
+            @endcan
         </nav>
+        @endcanany
 
     </aside>
 
