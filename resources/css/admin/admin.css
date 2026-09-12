@@ -1328,3 +1328,36 @@ html.has-js .chon-ky__xem {
     width: auto;
     min-width: 8.5rem;
 }
+
+/* ============================================================
+   TUỔI SỐ LIỆU — trang này tính lúc nào
+   ============================================================ */
+.tuoi-so-lieu {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    font-size: .8125rem;
+    color: var(--admin-ink-muted);
+}
+
+.tuoi-so-lieu__moc {
+    white-space: nowrap;
+}
+
+.tuoi-so-lieu__tu-dong {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Công tắc không làm được gì nếu không có JavaScript, nên chỉ hiện khi có. */
+.tuoi-so-lieu__tu-dong {
+    display: none;
+}
+
+html.has-js .tuoi-so-lieu__tu-dong {
+    display: flex;
+}

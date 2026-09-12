@@ -25,6 +25,7 @@ import { initExportPicker } from './admin/export-picker';
 import { initReceiptLines } from './admin/receipt-lines';
 import { initStockLock } from './admin/stock-lock';
 import { initChonKy } from './admin/chon-ky';
+import { initTuoiSoLieu } from './admin/tuoi-so-lieu';
 import { initProductBlocks } from './admin/product-blocks';
 import { initVideoEmbed } from './components/video-embed';
 
@@ -78,6 +79,7 @@ export function bootUi() {
     initReceiptLines();
     initStockLock();
     initChonKy();
+    initTuoiSoLieu();
     initProductBlocks();
     initVideoEmbed();
 }

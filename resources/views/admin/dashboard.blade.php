@@ -20,7 +20,11 @@
         `href` trần, nên đây là màn hình quản trị DUY NHẤT còn nạp lại
         toàn trang mỗi lần bấm.
     --}}
-    <x-admin.chon-ky :ky="$ky" :periods="$periods" route="admin.dashboard" />
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <x-admin.tuoi-so-lieu />
+
+        <x-admin.chon-ky :ky="$ky" :periods="$periods" route="admin.dashboard" />
+    </div>
 </div>
 
 {{--

@@ -285,4 +285,25 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertDontSee('stat-card', escape: false);
     }
+
+    #[Test]
+    public function trang_noi_ro_so_lieu_tinh_luc_may_gio(): void
+    {
+        /*
+         * Một bảng điều khiển mở từ sáng trông y hệt một bảng vừa tải
+         * xong. Số liệu đứng im cả buổi mà không có gì cho biết, nên
+         * người xem tin rằng "hôm nay chưa có đơn nào" trong khi thật ra
+         * trang đã cũ ba tiếng.
+         *
+         * Mốc giờ do MÁY CHỦ in ra, không phải JavaScript vẽ thêm: tắt
+         * script thì vẫn phải biết con số mình đang nhìn cũ tới đâu.
+         */
+        $html = $this->xem('/admin/dashboard')->assertOk()->getContent();
+
+        $this->assertStringContainsString('Số liệu lúc', $html);
+        $this->assertStringContainsString('Làm mới', $html);
+
+        // Mốc phải là giờ Việt Nam, như mọi mốc khác trên trang (QĐ-245).
+        $this->assertStringContainsString('+07:00', $html);
+    }
 }

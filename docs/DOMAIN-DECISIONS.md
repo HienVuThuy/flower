@@ -7343,3 +7343,32 @@ duyệt.
 Nút "Xem" vẫn nằm trong HTML và vẫn chạy khi không có JavaScript. Ẩn một
 nút mà không thay được việc nó làm là bỏ rơi người không chạy được
 script.
+
+---
+
+## QĐ-249. Trang nói rõ số liệu tính lúc mấy giờ; tự làm mới thì mặc định TẮT
+
+Một bảng điều khiển mở từ sáng trông y hệt một bảng vừa tải xong. Số
+liệu đứng im cả buổi mà không có gì cho biết, nên người xem tin rằng
+"hôm nay chưa có đơn nào" trong khi trang đã cũ ba tiếng.
+
+Đây mới là phần "thời gian thực" đáng làm: không phải làm mới liên tục,
+mà là **luôn biết con số mình đang nhìn cũ tới đâu**. Mốc giờ do máy chủ
+in ra (thẻ `<time>`, giờ Việt Nam theo [QĐ-245]); JavaScript chỉ thêm
+chữ "cách đây N phút" và cập nhật mỗi phút — **không tải lại trang chỉ
+để nói điều đó**.
+
+**Tự làm mới mặc định TẮT.** Trang tự tải lại giữa lúc người ta đang đọc
+một bảng, hay đang kéo chuột chọn một dòng, là cướp việc của họ. Ai cần
+(màn hình phụ, ngày bán chạy) thì bật, và lựa chọn được nhớ trong
+`localStorage` — bọc try/catch vì cửa sổ riêng tư có thể ném lỗi ngay ở
+lệnh đọc.
+
+Chỉ làm mới khi **tab đang được nhìn** (`document.hidden`). Tab nằm dưới
+nền mà vẫn tải lại mỗi phút là gọi máy chủ hàng trăm lần cho một trang
+không ai xem.
+
+Nút "Làm mới" là một liên kết thật và mang `data-admin-link` như mọi liên
+kết quản trị khác — bài kiểm thử sẵn có bắt được ngay khi nó thiếu. Công
+tắc thì chỉ hiện khi có JavaScript: bày một công tắc bấm vào không có
+chuyện gì xảy ra còn tệ hơn không có công tắc.

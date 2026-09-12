@@ -31,6 +31,8 @@
     </div>
 
     <div class="d-flex flex-wrap align-items-center gap-2">
+        <x-admin.tuoi-so-lieu />
+
         <x-admin.chon-ky :ky="$ky" :periods="$periods" :route="$trangNay" />
 
         {{-- Xuất theo ĐÚNG kỳ đang xem: tệp tải về phải khớp màn hình. --}}
