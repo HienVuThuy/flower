@@ -5,12 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\UserEventType;
 use App\Http\Controllers\Controller;
 use App\Services\Analytics\AnalyticsService;
-use App\Services\Analytics\ReportSections;
 use App\Services\Analytics\ReportExporter;
+use App\Services\Analytics\ReportSections;
 use App\Services\Shipping\GHNService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Trang Phân tích của admin (Guide §11 — "Admin → Analytics").
@@ -127,7 +127,7 @@ class AnalyticsController extends Controller
      * KIỂM LẠI MỌI THỨ GỬI LÊN. `phan` là mảng mã đến từ trình duyệt —
      * lọc qua danh sách hợp lệ chứ không đưa thẳng vào bộ dựng bảng.
      */
-    public function export(Request $request, ReportSections $sections, ReportExporter $exporter): StreamedResponse
+    public function export(Request $request, ReportSections $sections, ReportExporter $exporter): Response
     {
         $period = $this->period($request);
         $this->analytics->forPeriod($period);

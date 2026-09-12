@@ -6307,10 +6307,12 @@ Nay 11 phần, tích chọn từng cái, ba định dạng:
 | **JSON** | đưa vào script, Power BI, hệ thống khác |
 | **HTML** | đọc trên màn hình, in ra PDF bằng trình duyệt |
 
-**Không làm XLSX, không làm PDF.** PhpSpreadsheet kéo theo ~40MB phụ
-thuộc cho đúng một việc mà CSV đã làm được. Một bộ dựng PDF trong PHP thì
-phải tự lo phông tiếng Việt. Giao diện **nói thẳng** ra điều đó thay vì
-im lặng để người dùng đi tìm nút không có.
+~~**Không làm XLSX, không làm PDF.**~~ — **đã đảo lại ở [QĐ-243] và
+[QĐ-244]**. Lý do cũ: PhpSpreadsheet kéo theo ~40MB phụ thuộc cho đúng
+một việc mà CSV đã làm được, và một bộ dựng PDF trong PHP thì phải tự lo
+phông tiếng Việt. Cả hai lý do đều đã được kiểm lại và không còn đúng —
+xem hai mục đó. Giữ đoạn này ở đây để người đọc sau biết quyết định đã
+đổi, chứ không phải để nguyên một câu nói ngược với mã.
 
 **`ReportSections` là danh sách DUY NHẤT.** Màn hình chọn và đoạn ghi tệp
 đọc cùng một nơi; khai ở hai chỗ thì sớm muộn ô đánh dấu có một phần mà
@@ -7078,3 +7080,105 @@ tâm (trong giỏ + lượt lưu), cộng thư viện ảnh–video, danh sách 
 thứ tự, và đường dẫn/SEO. Doanh thu tính **chỉ đơn đã giao**, cùng định nghĩa với
 trang Phân tích (QĐ-218) — không đẻ ra định nghĩa doanh thu thứ hai. Chưa ai đánh
 giá thì hiện "chưa có", không hiện 0 sao.
+
+---
+
+## QĐ-243. XLSX: mỗi phần một trang tính, và số là số
+
+Đảo lại phần "không làm XLSX" của [QĐ-204].
+
+**Lý do cũ sai ở đâu.** Câu cũ là "CSV đã làm được rồi". Không đúng, vì
+hai điều CSV **không** làm được:
+
+1. CSV dồn 23 phần vào MỘT bảng, cách nhau bằng dòng trống. Mở bằng Excel
+   là một trang tính dài — không lọc, không xoay bảng, không cộng cột.
+2. CSV không có kiểu dữ liệu. `1234567.00` vào Excel là **chữ**, cộng
+   không ra. Còn `0912345678` thì Excel tự nuốt số 0 đầu.
+
+Tệp .xlsx sửa đúng hai điều đó: **mỗi phần một trang tính riêng**, dòng
+đầu là tên cột (in đậm, khoá lại), và số được ghi là số.
+
+**Dùng openspout chứ không PhpSpreadsheet.** PhpSpreadsheet giữ cả bảng
+tính trong bộ nhớ; openspout ghi theo luồng — đúng nguyên tắc mà bộ xuất
+CSV/JSON ở đây đã theo từ đầu. Cả bộ chỉ ~780KB, không phải 40MB. Cần
+`ext-zip` của PHP (XAMPP không bật sẵn, phải thêm `extension=zip` vào
+`php.ini` — trong tệp của XAMPP 8.4 **không có sẵn dòng này để bỏ dấu
+`;`**, phải tự thêm).
+
+**Chỉ nhận đúng dạng số chuẩn, không dùng `is_numeric()`.**
+`is_numeric('0912345678')` là true, và ghi nó thành số thì Excel hiện
+`912345678` — số điện thoại sai, im lặng, không có gì báo. Nên bộ lọc là
+`^-?(0|[1-9]\d*)(\.\d+)?$`: tiền từ bcmath khớp, còn số có 0 đầu và
+`+84…` thì giữ nguyên làm chữ.
+
+**Tên trang tính là thứ làm hỏng cả tệp.** Excel không mở được tệp có
+tên trang dài quá 31 ký tự, chứa `: \ / ? * [ ]`, hay trùng nhau — báo
+hỏng tệp chứ không phải hiện xấu. Nhãn phần ở đây là câu tiếng Việt dài
+và có cả dấu hai chấm ("Đánh giá: tổng quan và phân bố sao"), nên cả ba
+đều có thể xảy ra. Có cắt, có lọc, có chống trùng.
+
+Đoạn chống trùng **sống sót một phép đột biến**: bỏ hẳn nó mà mọi bài
+vẫn xanh, vì trong 23 phần hiện có không hai nhãn nào giống nhau ở 31 ký
+tự đầu. Nghĩa là nó chưa từng được đo, và sẽ hỏng vào đúng ngày có người
+thêm phần thứ 24 tên na ná phần cũ. Đã thêm bài gọi thẳng bộ ghi với ba
+nhãn cố tình trùng.
+
+**Trang đầu là trang "Thông tin"** (kỳ, giờ xuất, danh sách phần). Một
+tệp bị đổi tên rồi gửi đi thì không còn gì cho biết nó là kỳ nào, trong
+khi mọi con số bên trong chỉ có nghĩa khi biết kỳ.
+
+**Độ rộng cột là cài đặt của cả tệp**, không của từng trang — openspout
+khai ở cấp workbook. Cột đầu luôn là cột tên nên để rộng, các cột sau là
+số nên vừa phải. Thoả hiệp có chủ ý.
+
+---
+
+## QĐ-244. PDF: dompdf có sẵn phông đủ dấu tiếng Việt
+
+Đảo lại phần "không làm PDF" của [QĐ-204].
+
+**Lý do cũ sai ở đâu.** Câu cũ là "một bộ dựng PDF trong PHP phải tự lo
+phông tiếng Việt". Đã kiểm lại bằng cách dựng thử rồi **rút chữ ra khỏi
+tệp PDF**: dompdf mang sẵn DejaVu Sans, và bộ phông đó có đủ dấu —
+`ăâêôơưđ`, `ạảãáàặẳẵắằệểễếềộổỗốồợởỡớờựửữứừ`, dấu `₫`, dấu `—` đều đúng,
+không ô vuông nào. Lý do cũ là một phỏng đoán chưa đo.
+
+Còn "in từ trình duyệt cũng ra PDF" thì đúng, nhưng nó bắt người nhận làm
+thêm ba bước và tệp in ra kèm đầu trang, chân trang, địa chỉ URL. Báo cáo
+gửi cho người khác thì nên hoàn chỉnh ngay lúc tải.
+
+**Phải gọi đích danh `"DejaVu Sans"`.** dompdf không đi hỏi phông của hệ
+điều hành; để `system-ui` như bản HTML thì nó rơi về Helvetica và mọi chữ
+có dấu thành ô vuông — tệp vẫn tải về được, vẫn mở được, chỉ là không đọc
+được, và **không có gì báo lỗi**. Đây là rủi ro duy nhất đáng canh của
+định dạng này, nên có bài kiểm thử riêng.
+
+Phông được khai ở **hai lớp** (CSS `font-family` và `setDefaultFont`).
+Phép đột biến bỏ riêng `setDefaultFont` sống sót — đúng, vì lớp CSS đỡ
+được; bỏ **cả hai** thì bài kiểm thử đỏ ngay. Giữ cả hai là có chủ ý:
+CSS lo phần thân, `setDefaultFont` lo những chỗ dompdf dựng ngoài CSS.
+
+**Khổ ngang chứ không dọc.** Bảng ở đây hay 5–7 cột (tồn kho, lãi gộp,
+vận chuyển); trang dọc thì cột cuối bị ép nát hoặc rơi xuống dòng dưới,
+đọc thành một cột lệch.
+
+**`isRemoteEnabled = false`.** Nội dung báo cáo là dữ liệu từ cơ sở dữ
+liệu — tên sản phẩm, từ khoá khách gõ — tức là chữ **người ngoài nhập
+vào**. Bật tuỳ chọn đó lên là biến bộ dựng PDF thành công cụ gọi hộ đường
+dẫn nội bộ cho người lạ. Chữ trong ô cũng đi qua `htmlspecialchars` như
+bản HTML; tệp HTML xuất ra sẽ được mở bằng trình duyệt trên máy kế toán,
+một thẻ script lọt vào đó là chạy trên máy họ.
+
+**HTML và PDF dùng chung một bản dựng nội dung** (`ReportHtml`), khác
+nhau đúng phần phông và lề trang. Viết hai lần thì sớm muộn một bên có
+cột mà bên kia không có, và hai người cầm hai tệp sẽ cãi nhau về cùng một
+kỳ. Bản dựng ghi qua một hàm gọi lại chứ không trả về chuỗi: tệp HTML ghi
+thẳng ra luồng (bộ nhớ phẳng), còn dompdf buộc phải cầm cả tài liệu mới
+chia trang được — mỗi bên truyền cái nó cần, không bên nào phải nhân
+nhượng.
+
+**Con số trong tệp vẫn là con số thô, chưa định dạng** (`37755000`,
+`968076.92307692`) — giống hệt CSV và JSON. Chưa đổi vì bảng ở đây không
+khai cột nào là tiền, cột nào là mã; đoán bừa thì mã sản phẩm `1234` sẽ
+thành `1.234`. Muốn số đẹp trong PDF thì phải khai kiểu cột trong
+`ReportSections` trước — việc riêng, chưa làm.

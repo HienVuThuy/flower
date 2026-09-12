@@ -291,4 +291,342 @@ class ReportExportTest extends TestCase
 
         $this->assertSame('chưa có đơn đã giao', $dong['Giá trị đơn trung bình']['Giá trị']);
     }
+
+    /* ================= EXCEL VÀ PDF ================= */
+
+    /**
+     * Tải về mà không cần biết định dạng trả về kiểu phản hồi nào.
+     *
+     * CSV/JSON/HTML là luồng, XLSX là tệp trên đĩa, PDF là chuỗi dựng
+     * sẵn — ba loại phản hồi khác nhau. Bài kiểm thử không nên phải biết
+     * điều đó mới lấy được nội dung.
+     */
+    private function taiVeNhiPhan(array $tuyChon = []): string
+    {
+        $res = $this->actingAs($this->admin())
+            ->get('/admin/phan-tich/xuat/tai-ve?' . http_build_query(array_merge(['ky' => '30'], $tuyChon)));
+
+        $res->assertOk();
+
+        $base = $res->baseResponse;
+
+        if ($base instanceof \Symfony\Component\HttpFoundation\BinaryFileResponse) {
+            return (string) file_get_contents($base->getFile()->getPathname());
+        }
+
+        if ($base instanceof \Symfony\Component\HttpFoundation\StreamedResponse) {
+            return $res->streamedContent();
+        }
+
+        return (string) $res->getContent();
+    }
+
+    /** Mở tệp .xlsx trong bộ nhớ và đọc ra một tệp XML bên trong. */
+    private function trongXlsx(string $noiDung, string $duong): string
+    {
+        $tam = tempnam(sys_get_temp_dir(), 'kt-xlsx-');
+        file_put_contents($tam, $noiDung);
+
+        $zip = new \ZipArchive();
+
+        $this->assertTrue($zip->open($tam) === true, 'Tệp .xlsx không mở được như tệp nén');
+
+        $xml = $zip->getFromName($duong);
+        $zip->close();
+        @unlink($tam);
+
+        $this->assertIsString($xml, 'Trong tệp .xlsx không có ' . $duong);
+
+        return $xml;
+    }
+
+    /** @return list<string> */
+    private function tenCacTrangTinh(string $noiDung): array
+    {
+        preg_match_all('/<sheet name="([^"]+)"/', $this->trongXlsx($noiDung, 'xl/workbook.xml'), $m);
+
+        return array_map(
+            fn (string $t) => html_entity_decode($t, ENT_QUOTES, 'UTF-8'),
+            $m[1],
+        );
+    }
+
+    #[Test]
+    public function XLSX_tach_moi_phan_ra_mot_trang_tinh_rieng(): void
+    {
+        /*
+         * ĐÂY LÀ LÝ DO XLSX TỒN TẠI BÊN CẠNH CSV.
+         *
+         * CSV dồn mọi phần vào một bảng cách nhau bằng dòng trống — mở
+         * bằng Excel là một trang dài không lọc, không xoay bảng được.
+         * Nếu tệp .xlsx cũng chỉ có một trang tính thì nó không hơn gì
+         * CSV, và cả định dạng này là thừa.
+         */
+        $ten = $this->tenCacTrangTinh($this->taiVeNhiPhan([
+            'dinh_dang' => 'xlsx',
+            'phan' => ['tong-quan', 'ban-chay', 'ton-kho'],
+        ]));
+
+        // Một trang Thông tin + ba phần đã chọn.
+        $this->assertCount(4, $ten);
+        $this->assertSame('Thông tin', $ten[0]);
+        $this->assertStringContainsString('Tổng quan', $ten[1]);
+        $this->assertStringContainsString('Sản phẩm bán chạy', $ten[2]);
+        $this->assertStringContainsString('Tồn kho', $ten[3]);
+    }
+
+    #[Test]
+    public function ten_trang_tinh_luon_hop_le_voi_Excel(): void
+    {
+        /*
+         * Excel KHÔNG MỞ ĐƯỢC tệp có tên trang dài quá 31 ký tự, chứa
+         * `: \ / ? * [ ]`, hay trùng nhau — hỏng cả tệp chứ không phải
+         * hiện xấu. Nhãn phần ở đây là câu tiếng Việt dài, có cả dấu hai
+         * chấm ("Đánh giá: tổng quan và phân bố sao"), nên cả ba đều có
+         * thể xảy ra nếu lấy nhãn làm tên trang.
+         */
+        $ten = $this->tenCacTrangTinh($this->taiVeNhiPhan(['dinh_dang' => 'xlsx']));
+
+        $this->assertNotEmpty($ten);
+
+        foreach ($ten as $t) {
+            $this->assertLessThanOrEqual(31, mb_strlen($t), 'Tên trang quá dài: ' . $t);
+            $this->assertDoesNotMatchRegularExpression('~[:\\\\/?*\[\]]~u', $t, 'Tên trang có ký tự Excel cấm: ' . $t);
+        }
+
+        $this->assertSame(count($ten), count(array_unique($ten)), 'Có hai trang tính trùng tên');
+    }
+
+    #[Test]
+    public function hai_phan_giong_nhau_o_31_ky_tu_dau_khong_lam_hong_tep(): void
+    {
+        /*
+         * BÀI NÀY SINH RA TỪ MỘT PHÉP ĐỘT BIẾN SỐNG SÓT.
+         *
+         * Bỏ hẳn đoạn chống trùng tên trang mà mọi bài vẫn xanh — vì
+         * trong 23 phần hiện có, không hai nhãn nào giống nhau ở 31 ký
+         * tự đầu. Nghĩa là đoạn đó chưa từng được đo, và sẽ hỏng vào
+         * đúng ngày có người thêm phần thứ 24 tên na ná phần cũ.
+         *
+         * Hai trang tính trùng tên thì Excel KHÔNG MỞ ĐƯỢC tệp — không
+         * phải hiện xấu, mà là báo hỏng tệp.
+         */
+        $tam = tempnam(sys_get_temp_dir(), 'kt-trung-') . '.xlsx';
+
+        $motPhan = fn (string $nhan) => [
+            'label' => $nhan,
+            'columns' => ['Cột'],
+            'rows' => [['giá trị']],
+        ];
+
+        app(\App\Services\Analytics\Export\XlsxWriter::class)->ghi(
+            collect([
+                $motPhan('Doanh thu theo tỉnh thành phố trực thuộc trung ương, quý 1'),
+                $motPhan('Doanh thu theo tỉnh thành phố trực thuộc trung ương, quý 2'),
+                $motPhan('Doanh thu theo tỉnh thành phố trực thuộc trung ương, quý 3'),
+            ]),
+            'kỳ thử',
+            $tam,
+        );
+
+        $ten = $this->tenCacTrangTinh((string) file_get_contents($tam));
+        @unlink($tam);
+
+        // Thông tin + ba phần, và không tên nào trùng tên nào.
+        $this->assertCount(4, $ten);
+        $this->assertSame(4, count(array_unique($ten)), 'Trùng tên trang: ' . implode(' | ', $ten));
+
+        foreach ($ten as $t) {
+            $this->assertLessThanOrEqual(31, mb_strlen($t), 'Tên trang quá dài: ' . $t);
+        }
+    }
+
+    #[Test]
+    public function XLSX_ghi_so_thanh_so_chu_ghi_thanh_chu(): void
+    {
+        $this->donDaGiao();
+
+        $xml = $this->trongXlsx(
+            $this->taiVeNhiPhan(['dinh_dang' => 'xlsx', 'phan' => ['tong-quan']]),
+            // sheet1 là trang Thông tin, sheet2 mới là phần đầu tiên.
+            'xl/worksheets/sheet2.xml',
+        );
+
+        /*
+         * openspout ghi chữ là `t="inlineStr"`, còn số thì ô KHÔNG có
+         * thuộc tính `t`. Đây là khác biệt duy nhất khiến Excel cộng
+         * được cột tiền — CSV không có cách nào nói điều này.
+         */
+        $this->assertMatchesRegularExpression(
+            '~<c r="B\d+"[^>]*><v>\d~',
+            $xml,
+            'Cột giá trị không có ô số nào — mọi thứ đang bị ghi thành chữ',
+        );
+
+        // Và ô số KHÔNG được mang t="inlineStr" — mang là Excel coi là chữ.
+        // Chỉ xét từ dòng 2: dòng 1 là tên cột, vốn phải là chữ.
+        $this->assertDoesNotMatchRegularExpression('~<c r="B2"[^>]*t="inlineStr"~', $xml);
+
+        // Còn cột tên thì ngược lại: phải là chữ.
+        $this->assertMatchesRegularExpression('~<c r="A2"[^>]*t="inlineStr"~', $xml);
+        $this->assertStringContainsString('Tổng đơn', $xml);
+    }
+
+    #[Test]
+    public function so_co_chu_so_0_dau_khong_bi_bien_thanh_so(): void
+    {
+        /*
+         * `is_numeric('0912345678')` là true. Ghi nó thành số thì Excel
+         * hiện `912345678` — SỐ ĐIỆN THOẠI SAI, im lặng. Mã đơn `0034`
+         * cũng vậy.
+         *
+         * Gọi thẳng bộ ghi vì chưa phần báo cáo nào có cột kiểu này;
+         * quy tắc vẫn phải đúng từ trước khi có phần đó.
+         */
+        $tam = tempnam(sys_get_temp_dir(), 'kt-so-') . '.xlsx';
+
+        app(\App\Services\Analytics\Export\XlsxWriter::class)->ghi(
+            collect([[
+                'label' => 'Thử kiểu số',
+                'columns' => ['Giữ nguyên chữ', 'Là số thật'],
+                'rows' => [
+                    ['0912345678', '1234567.00'],
+                    ['0034', 42],
+                    ['+84912345678', -5],
+                ],
+            ]]),
+            'kỳ thử',
+            $tam,
+        );
+
+        $xml = $this->trongXlsx((string) file_get_contents($tam), 'xl/worksheets/sheet2.xml');
+        @unlink($tam);
+
+        foreach (['0912345678', '0034', '+84912345678'] as $giuNguyen) {
+            $this->assertStringContainsString(
+                '<t>' . $giuNguyen . '</t>',
+                $xml,
+                $giuNguyen . ' phải được giữ nguyên làm chữ',
+            );
+        }
+
+        // Còn cột bên phải thì phải là số thật.
+        $this->assertMatchesRegularExpression('~<c r="B2"[^>]*><v>1234567~', $xml);
+        $this->assertMatchesRegularExpression('~<c r="B3"[^>]*><v>42</v>~', $xml);
+        $this->assertMatchesRegularExpression('~<c r="B4"[^>]*><v>-5</v>~', $xml);
+    }
+
+    #[Test]
+    public function PDF_dung_phong_co_du_dau_tieng_Viet(): void
+    {
+        /*
+         * ĐÂY LÀ ĐIỀU DUY NHẤT KHIẾN PDF DÙNG ĐƯỢC Ở ĐÂY.
+         *
+         * dompdf không đi hỏi phông của hệ điều hành; nó rơi về
+         * Helvetica nếu không gọi đích danh một bộ có sẵn. Helvetica
+         * KHÔNG có dấu tiếng Việt, và kết quả là một tệp PDF đầy ô
+         * vuông — vẫn tải về được, vẫn mở được, chỉ là không đọc được.
+         * Không có gì báo lỗi, nên chỉ bài này bắt được.
+         */
+        $pdf = $this->taiVeNhiPhan(['dinh_dang' => 'pdf', 'phan' => ['tong-quan']]);
+
+        $this->assertStringStartsWith('%PDF-', $pdf);
+        $this->assertStringContainsString('DejaVuSans', $pdf, 'PDF không nhúng DejaVu — chữ có dấu sẽ thành ô vuông');
+    }
+
+    #[Test]
+    public function PDF_va_HTML_dung_chung_mot_ban_dung_noi_dung(): void
+    {
+        /*
+         * Hai tệp là cùng một báo cáo, chỉ khác cách người nhận mở ra.
+         * Nếu dựng riêng thì sớm muộn một bên có cột mà bên kia không
+         * có, và hai người cầm hai tệp sẽ cãi nhau về cùng một kỳ.
+         */
+        $html = app(\App\Services\Analytics\Export\ReportHtml::class);
+
+        $bang = collect([[
+            'label' => 'Một phần',
+            'columns' => ['Chỉ số', 'Giá trị'],
+            'rows' => [['Tổng đơn', 7]],
+        ]]);
+
+        $choMan = '';
+        $choPdf = '';
+        $html->viet($bang, 'kỳ thử', function (string $d) use (&$choMan) { $choMan .= $d; });
+        $html->viet($bang, 'kỳ thử', function (string $d) use (&$choPdf) { $choPdf .= $d; }, choPdf: true);
+
+        // Phần thân giống nhau.
+        foreach (['<h2>Một phần</h2>', '<th>Chỉ số</th>', '<td>Tổng đơn</td>', '<td>7</td>'] as $doan) {
+            $this->assertStringContainsString($doan, $choMan);
+            $this->assertStringContainsString($doan, $choPdf);
+        }
+
+        // Chỉ phông là khác — và đúng chiều.
+        $this->assertStringContainsString('DejaVu Sans', $choPdf);
+        $this->assertStringNotContainsString('DejaVu Sans', $choMan);
+    }
+
+    #[Test]
+    public function ten_san_pham_co_the_HTML_khong_chay_duoc_trong_tep_xuat(): void
+    {
+        /*
+         * Tên sản phẩm, từ khoá khách gõ, tên người nhận — đều là chữ
+         * NGƯỜI NGOÀI nhập vào, và đều đi thẳng vào báo cáo. Tệp HTML
+         * xuất ra sẽ được mở bằng trình duyệt trên máy kế toán; một thẻ
+         * script lọt vào đó là chạy trên máy họ.
+         */
+        Product::factory()
+            ->for(Category::factory())
+            ->stock(3)
+            ->create(['name' => '<script>alert(1)</script>Cây xấu']);
+
+        $html = $this->taiVeNhiPhan(['dinh_dang' => 'html', 'phan' => ['ton-kho']]);
+
+        $this->assertStringNotContainsString('<script>alert(1)</script>', $html);
+        $this->assertStringContainsString('&lt;script&gt;', $html);
+    }
+
+    #[Test]
+    public function moi_dinh_dang_deu_tai_ve_duoc_va_dung_kieu_tep(): void
+    {
+        $this->donDaGiao();
+
+        $mong = [
+            'csv' => 'text/csv',
+            'xlsx' => 'spreadsheetml.sheet',
+            'json' => 'application/json',
+            'html' => 'text/html',
+            'pdf' => 'application/pdf',
+        ];
+
+        // Danh sách định dạng khai ở một nơi; giao diện và bài này cùng đọc nó.
+        $this->assertSame(
+            array_keys($mong),
+            array_keys(\App\Services\Analytics\ReportExporter::DINH_DANG),
+        );
+
+        foreach ($mong as $dinhDang => $kieu) {
+            $res = $this->actingAs($this->admin())->get(
+                '/admin/phan-tich/xuat/tai-ve?' . http_build_query([
+                    'ky' => '30',
+                    'dinh_dang' => $dinhDang,
+                    'phan' => ['tong-quan'],
+                ]),
+            );
+
+            $res->assertOk();
+
+            $this->assertStringContainsString(
+                $kieu,
+                (string) $res->headers->get('Content-Type'),
+                'Sai kiểu tệp cho ' . $dinhDang,
+            );
+
+            $this->assertStringContainsString(
+                '.' . $dinhDang,
+                (string) $res->headers->get('Content-Disposition'),
+                'Sai đuôi tệp cho ' . $dinhDang,
+            );
+        }
+    }
 }

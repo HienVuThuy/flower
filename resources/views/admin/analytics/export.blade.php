@@ -110,15 +110,17 @@
                 </div>
 
                 {{--
-                    NÓI THẲNG RA CÁI KHÔNG CÓ.
+                    NÓI RÕ HAI CẶP DỄ NHẦM.
 
-                    Người dùng sẽ đi tìm nút "Excel" và "PDF". Im lặng thì
-                    họ tưởng trang thiếu tính năng; nói ra thì họ biết
-                    đường làm và biết vì sao.
+                    CSV và XLSX trông như hai cách làm cùng một việc, HTML
+                    và PDF cũng vậy. Không nói thì người dùng chọn bừa rồi
+                    tải lại lần nữa; nói ra thì chọn đúng ngay lần đầu.
                 --}}
                 <p class="admin-page-subtitle mb-3">
-                    Cần tệp Excel thì mở tệp CSV bằng Excel — không cần bước nào khác.
-                    Cần PDF thì chọn HTML rồi bấm In &rarr; Lưu thành PDF.
+                    Mở bằng Excel để lọc và cộng cột thì chọn <strong>XLSX</strong>
+                    (mỗi phần một trang tính, số là số); chọn CSV khi cần một bảng
+                    phẳng để dán đi nơi khác. Gửi cho người khác hoặc in ra giấy thì
+                    chọn <strong>PDF</strong>; chọn HTML khi còn muốn sửa lại.
                 </p>
 
                 <button type="submit" class="btn btn-primary-brand w-100">Tải về</button>

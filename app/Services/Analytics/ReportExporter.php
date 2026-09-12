@@ -2,49 +2,66 @@
 
 namespace App\Services\Analytics;
 
+use App\Services\Analytics\Export\PdfWriter;
+use App\Services\Analytics\Export\ReportHtml;
+use App\Services\Analytics\Export\XlsxWriter;
 use Illuminate\Support\Collection;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 /**
- * Ghi báo cáo ra tệp, ba định dạng.
+ * Ghi báo cáo ra tệp, năm định dạng.
  * ============================================================
- * BA ĐỊNH DẠNG, KHÔNG THÊM MỘT THƯ VIỆN NÀO:
+ * MỖI ĐỊNH DẠNG CHO MỘT VIỆC KHÁC NHAU — không phải năm cách làm cùng
+ * một việc:
  *
- *   CSV   mở thẳng bằng Excel / Google Sheets, dán vào bảng tính khác
+ *   CSV   dán vào bảng tính khác, đưa vào công cụ đọc tệp phẳng
+ *   XLSX  mỗi phần một trang tính, số là số — lọc, xoay bảng, cộng cột
  *   JSON  đưa vào script, Power BI, hay một hệ thống khác
- *   HTML  đọc trên màn hình, và in ra PDF bằng chính trình duyệt
+ *   HTML  đọc trên màn hình, và sửa lại được trước khi gửi đi
+ *   PDF   gửi cho người khác, in ra giấy — không sửa được, không lệch
  *
- * KHÔNG LÀM XLSX. PhpSpreadsheet kéo theo khoảng 40MB phụ thuộc cho
- * đúng một việc mà CSV đã làm được — Excel mở CSV không khác gì. Và
- * không làm PDF bằng thư viện: mọi trình duyệt đều in ra PDF được, còn
- * một bộ dựng PDF trong PHP thì phải tự lo phông tiếng Việt.
+ * CSV và XLSX không thừa nhau: CSV là một bảng phẳng cho máy đọc, XLSX
+ * là tệp nhiều trang tính có kiểu dữ liệu cho người dùng Excel. HTML và
+ * PDF cũng vậy: một cái để sửa, một cái để gửi.
  *
  * ============================================================
- * GHI THẲNG RA LUỒNG, không dựng chuỗi trong bộ nhớ.
+ * GHI THẲNG RA LUỒNG nếu định dạng cho phép.
  *
- * Hôm nay dữ liệu còn nhỏ, nhưng bảng bán chạy và bảng doanh thu theo
- * ngày dài ra theo thời gian. Một hàm xuất tệp ngốn bộ nhớ tỉ lệ thuận
- * với dữ liệu là quả bom hẹn giờ — nó nổ vào đúng ngày cửa hàng bán
- * được nhiều nhất.
+ * CSV, JSON, HTML ghi thẳng ra `php://output` — bộ nhớ phẳng dù bảng dài
+ * bao nhiêu. XLSX là tệp nén nên phải qua tệp tạm (đĩa, không phải bộ
+ * nhớ); PDF thì bộ dựng buộc phải cầm cả tài liệu mới chia trang được.
+ * Chỗ nào ép được thì ép, chỗ nào không thì nói rõ vì sao.
  */
 class ReportExporter
 {
     public const DINH_DANG = [
         'csv' => 'CSV — mở bằng Excel, Google Sheets',
+        'xlsx' => 'XLSX — tệp Excel, mỗi phần một trang tính',
         'json' => 'JSON — đưa vào script hoặc hệ thống khác',
-        'html' => 'HTML — đọc trên màn hình, in ra PDF',
+        'html' => 'HTML — đọc trên màn hình, sửa lại được',
+        'pdf' => 'PDF — gửi cho người khác, in ra giấy',
     ];
+
+    public function __construct(
+        private readonly ReportHtml $html,
+        private readonly XlsxWriter $xlsx,
+        private readonly PdfWriter $pdf,
+    ) {
+    }
 
     /**
      * @param  Collection<int, array{label: string, columns: list<string>, rows: list}>  $bang
      */
-    public function xuat(string $dinhDang, Collection $bang, string $tenKy): StreamedResponse
+    public function xuat(string $dinhDang, Collection $bang, string $tenKy): Response
     {
         $ten = 'bao-cao-' . now()->format('Ymd-His');
 
         return match ($dinhDang) {
+            'xlsx' => $this->xlsxTai($bang, $tenKy, $ten . '.xlsx'),
             'json' => $this->json($bang, $tenKy, $ten . '.json'),
-            'html' => $this->html($bang, $tenKy, $ten . '.html'),
+            'html' => $this->htmlTai($bang, $tenKy, $ten . '.html'),
+            'pdf' => $this->pdfTai($bang, $tenKy, $ten . '.pdf'),
             default => $this->csv($bang, $tenKy, $ten . '.csv'),
         };
     }
@@ -88,6 +105,44 @@ class ReportExporter
         }, $ten, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
+    /**
+     * XLSX phải qua một TỆP TẠM.
+     *
+     * Tệp .xlsx là một tệp nén: mục lục của nó nằm ở cuối và chỉ viết
+     * được sau khi biết mọi thứ bên trong nằm ở đâu. Không có cách nào
+     * đẩy thẳng ra trình duyệt mà vẫn ghi theo luồng. Đổi lại, đây là
+     * ĐĨA chứ không phải bộ nhớ — số dòng tăng thì tệp tạm to ra, còn
+     * tiến trình PHP vẫn phẳng.
+     *
+     * `deleteFileAfterSend` dọn tệp ngay sau khi gửi xong, nên thư mục
+     * tạm không phình theo số lần bấm tải.
+     */
+    private function xlsxTai(Collection $bang, string $tenKy, string $ten): Response
+    {
+        $tam = tempnam(sys_get_temp_dir(), 'bao-cao-') . '.xlsx';
+
+        $this->xlsx->ghi($bang, $tenKy, $tam);
+
+        return response()->download($tam, $ten, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ])->deleteFileAfterSend(true);
+    }
+
+    /**
+     * PDF dựng xong trong bộ nhớ rồi mới gửi.
+     *
+     * Không giấu điều này sau `streamDownload`: gói nó vào luồng chỉ làm
+     * mã trông như đang chảy trong khi thực ra dompdf vẫn cầm cả tài liệu
+     * — và người đọc mã sau này sẽ tin nhầm là nó an toàn với bảng dài.
+     */
+    private function pdfTai(Collection $bang, string $tenKy, string $ten): Response
+    {
+        return response($this->pdf->ghi($bang, $tenKy), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $ten . '"',
+        ]);
+    }
+
     private function json(Collection $bang, string $tenKy, string $ten): StreamedResponse
     {
         return response()->streamDownload(function () use ($bang, $tenKy) {
@@ -120,64 +175,12 @@ class ReportExporter
         }, $ten, ['Content-Type' => 'application/json; charset=UTF-8']);
     }
 
-    private function html(Collection $bang, string $tenKy, string $ten): StreamedResponse
+    private function htmlTai(Collection $bang, string $tenKy, string $ten): StreamedResponse
     {
         return response()->streamDownload(function () use ($bang, $tenKy) {
-            $e = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES, 'UTF-8');
-
-            /*
-             * TỆP TỰ ĐỨNG MỘT MÌNH: kiểu dáng nhúng thẳng, không tham
-             * chiếu tệp CSS nào. Người nhận mở tệp trên máy họ, ở đó
-             * không có máy chủ nào để tải CSS về.
-             */
-            echo '<!doctype html><html lang="vi"><head><meta charset="utf-8">';
-            echo '<title>' . $e('Báo cáo — ' . $tenKy) . '</title>';
-            echo '<style>'
-                . 'body{font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:2rem;color:#1e231f}'
-                . 'h1{font-size:1.25rem;margin:0 0 .25rem}'
-                . 'h2{font-size:1rem;margin:2rem 0 .5rem;border-bottom:1px solid #ddd;padding-bottom:.25rem}'
-                . 'table{border-collapse:collapse;width:100%;font-size:13px}'
-                . 'th,td{border:1px solid #ddd;padding:.35rem .5rem;text-align:left}'
-                . 'td+td,th+th{text-align:right;white-space:nowrap}'
-                . '.meta{color:#5d6660;font-size:12px;margin:0 0 1rem}'
-                . '.trong{color:#5d6660;font-style:italic}'
-                . '@media print{body{margin:0}h2{page-break-after:avoid}}'
-                . '</style></head><body>';
-
-            echo '<h1>' . $e('Báo cáo phân tích') . '</h1>';
-            echo '<p class="meta">' . $e($tenKy) . ' &middot; xuất lúc ' . $e(now()->format('H:i d/m/Y')) . '</p>';
-
-            foreach ($bang as $b) {
-                echo '<h2>' . $e($b['label']) . '</h2>';
-
-                if ($b['rows'] === []) {
-                    echo '<p class="trong">Chưa có dữ liệu trong kỳ này.</p>';
-
-                    continue;
-                }
-
-                echo '<table><thead><tr>';
-
-                foreach ($b['columns'] as $c) {
-                    echo '<th>' . $e($c) . '</th>';
-                }
-
-                echo '</tr></thead><tbody>';
-
-                foreach ($b['rows'] as $dong) {
-                    echo '<tr>';
-
-                    foreach ($dong as $o) {
-                        echo '<td>' . $e($o) . '</td>';
-                    }
-
-                    echo '</tr>';
-                }
-
-                echo '</tbody></table>';
-            }
-
-            echo '</body></html>';
+            $this->html->viet($bang, $tenKy, function (string $doan): void {
+                echo $doan;
+            });
         }, $ten, ['Content-Type' => 'text/html; charset=UTF-8']);
     }
 }
