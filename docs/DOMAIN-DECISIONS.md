@@ -7001,3 +7001,80 @@ làm nền nút (chữ trắng) vừa làm màu chữ. Quét chữ trên 5 trang
 giá…). Biểu đồ vẫn "hiện" nhờ tên và con số nên không ai thấy. Sửa bằng
 `display: block`, và bố cục thanh xếp dưới tên khi khung hẹp (`@container`) — ở
 cột 6/12 thanh từng chỉ còn 92px.
+
+---
+
+## QĐ-238. Nút sáng/tối ở trang quản trị bị gắn sự kiện chồng lên nhau
+
+`initSchemeToggle()` chạy lại sau mỗi lần điều hướng SPA của trang quản trị
+(`bootUi()`), mà nút sáng/tối nằm ở thanh trên **không bị thay** — nên sau một
+lần chuyển trang có hai listener cùng bắn: đổi sang tối rồi đổi ngược lại sáng
+ngay trong một cú bấm. Nhìn ra thì tưởng nút chết.
+
+Sửa: đánh dấu `data-scheme-bound` lên form đã gắn, và cờ ở cấp module cho
+`matchMedia` (chỉ theo dõi hệ điều hành một lần, lúc đổi thì tự hỏi lại DOM).
+Đây là quy tắc chung cho mọi hàm `init*` trong trang quản trị: **có gắn sự kiện
+thì phải đánh dấu phần tử đã gắn.**
+
+---
+
+## QĐ-239. Tắt quản lý tồn kho thì ô số lượng khoá lại, bằng `readonly` chứ không `disabled`
+
+Bấm được vào ô số lượng trong khi đã chọn "không quản lý tồn kho" chỉ gây hiểu
+nhầm — gõ số vào cũng không có tác dụng gì.
+
+Khoá bằng `readonly` chứ không `disabled` vì trình duyệt **không gửi** ô
+`disabled`: số tồn đang có sẽ biến mất khỏi biểu mẫu, người bán bật quản lý kho
+lại thì mất số cũ. `readonly` vẫn gửi giá trị, chỉ chặn gõ.
+
+Trạng thái ban đầu do máy chủ in (`@readonly`), JS chỉ lo lúc người dùng đổi lựa
+chọn — tắt JS thì vẫn đúng ngay từ lần tải trang.
+
+---
+
+## QĐ-240. Sản phẩm có video: nhận cả đường dẫn nhúng lẫn tệp MP4
+
+Video nằm chung bảng `product_images` với cột `kind` (`image`/`video`), vì nó là
+**một món trong thư viện của sản phẩm**, xếp thứ tự chung với ảnh — tách bảng
+riêng thì sắp xếp xen kẽ thành hai nguồn.
+
+- Đường dẫn: chỉ nhận YouTube và Vimeo. `VideoLink::nhung()` **bóc lấy mã video
+  rồi dựng lại** đường dẫn nhúng, không bao giờ lưu nguyên chuỗi người dùng dán —
+  nên `javascript:`, tên miền lạ, hay `<script>` không có đường nào lọt vào thẻ
+  `src`. YouTube dùng `youtube-nocookie.com`.
+- Tệp: chỉ MP4, kiểm **cả** `mimetypes:video/mp4` (nội dung thật) lẫn `mimes:mp4`
+  (đuôi), tối đa 20MB. Đổi tên tệp `.php` thành `.mp4` không qua được.
+
+Trang khách **không nạp sẵn `<iframe>`**: hiện ảnh bìa, bấm mới dựng khung nhúng.
+Chưa bấm thì YouTube chưa biết gì về người xem, và trang không tải chậm vì video
+không ai mở. Khi tắt JS vẫn còn thẻ `<a>` mở video ở tab mới.
+
+---
+
+## QĐ-241. Mô tả chi tiết xếp theo khối chữ/ảnh xen kẽ
+
+Bài giới thiệu cây thật thì hay là chữ – ảnh – chữ, không phải một cục chữ rồi
+một dãy ảnh ở cuối. Bảng `product_blocks` giữ từng khối (`text` hoặc `image`) kèm
+`sort_order`.
+
+Biểu mẫu là **toàn bộ sự thật**: khối nào không có trong lần gửi thì bị xoá (kèm
+tệp ảnh của nó), thứ tự là thứ tự gửi lên. Không có "xoá mềm" nửa vời để rồi lệch
+giữa cái admin thấy và cái khách thấy.
+
+Chữ đi qua `HtmlSanitizer` **lúc lưu**, nên lúc in dùng `{!! !!}`. Lọc lúc lưu
+chứ không lúc in: lọc lúc in thì mỗi chỗ hiển thị phải nhớ gọi bộ lọc, quên một
+chỗ là thủng một chỗ. Khối chữ rỗng bị bỏ qua, không tạo bản ghi trắng.
+
+---
+
+## QĐ-242. Trang "xem" sản phẩm ở quản trị nói được sản phẩm bán thế nào
+
+Trước đây trang này chỉ đọc lại đúng những gì admin đã gõ vào — mở ra không biết
+thêm điều gì. Người mở nó thường đang hỏi: món này bán được không, ai chê không,
+còn ai đang để trong giỏ không.
+
+Thêm 4 số: đã bán (số lượng / số đơn), doanh thu, điểm đánh giá, đang được quan
+tâm (trong giỏ + lượt lưu), cộng thư viện ảnh–video, danh sách khối mô tả theo
+thứ tự, và đường dẫn/SEO. Doanh thu tính **chỉ đơn đã giao**, cùng định nghĩa với
+trang Phân tích (QĐ-218) — không đẻ ra định nghĩa doanh thu thứ hai. Chưa ai đánh
+giá thì hiện "chưa có", không hiện 0 sao.

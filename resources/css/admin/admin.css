@@ -1195,3 +1195,73 @@ a.admin-kpi:focus-visible {
 :root[data-admin][data-scheme="toi"] .risk-panel__title {
     color: #f0c46e;
 }
+
+/*
+ * Ô ĐANG KHOÁ — thấy được là khoá, không chỉ "gõ vào không ăn".
+ *
+ * Một ô readonly trông y hệt ô bình thường: người dùng gõ, không thấy chữ
+ * hiện ra, và tưởng bàn phím hỏng. Nền mờ và con trỏ "not-allowed" nói
+ * trước điều đó.
+ */
+.form-control.is-locked {
+    background: var(--admin-surface-alt);
+    color: var(--admin-ink-muted);
+    cursor: not-allowed;
+}
+
+/* ============ KHỐI MÔ TẢ CHI TIẾT (biểu mẫu sản phẩm) ============ */
+
+.block-row {
+    border: 1px solid var(--admin-border);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.5rem;
+    background: var(--admin-surface-alt);
+}
+
+.block-row__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-sm);
+    margin-bottom: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--admin-ink-muted);
+}
+
+.block-row__kind {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+}
+
+.block-row__tools {
+    display: inline-flex;
+    gap: 0.15rem;
+}
+
+/* Ảnh xem trước vừa đủ để nhận ra là ảnh nào, không chiếm hết biểu mẫu. */
+.block-row__preview {
+    display: block;
+    max-height: 7rem;
+    width: auto;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.4rem;
+}
+
+/* Video trong lưới quản lý thư viện: không có ảnh nhỏ để xem trước, nên
+   hiện một ô chữ cho biết đó là video dạng gì. */
+.gallery-manager__item--video .gallery-manager__video {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    min-height: 5rem;
+    padding: 0.5rem;
+    border: 1px dashed var(--admin-border);
+    border-radius: var(--radius-sm);
+    font-size: 0.78rem;
+    color: var(--admin-ink-muted);
+    text-align: center;
+}

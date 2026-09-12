@@ -125,9 +125,38 @@ class Product extends Model
         return $this->hasMany(ProductVariant::class);
     }
 
+    /**
+     * CHỈ ẢNH. Bảng `product_images` nay chứa cả video (xem migration
+     * add_video_to_product_images_table), nên quan hệ này lọc lại `kind` để mọi
+     * nơi gọi nó từ trước — gallery, galleryPaths(), trang quản trị — giữ
+     * nguyên ý nghĩa cũ.
+     */
     public function images(): HasMany
     {
+        return $this->hasMany(ProductImage::class)
+            ->where('kind', ProductImage::ANH)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+    /** Ảnh và video chung một dải, theo đúng thứ tự người bán đã xếp. */
+    public function media(): HasMany
+    {
         return $this->hasMany(ProductImage::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function videos(): HasMany
+    {
+        return $this->hasMany(ProductImage::class)
+            ->where('kind', ProductImage::VIDEO)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+    /** Khối mô tả chi tiết: chữ và ảnh xen kẽ, theo thứ tự đã xếp. */
+    public function blocks(): HasMany
+    {
+        return $this->hasMany(ProductBlock::class)->orderBy('sort_order')->orderBy('id');
     }
 
     /**

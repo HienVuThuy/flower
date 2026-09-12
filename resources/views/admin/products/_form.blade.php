@@ -78,6 +78,73 @@
 
                 <x-form-error name="description"/>
 
+                <div class="form-text">
+                    Đoạn mở đầu, hiện trước các khối bên dưới. Cần chữ xen ảnh thì thêm khối.
+                </div>
+
+            </div>
+
+            {{--
+                MÔ TẢ CHI TIẾT THEO KHỐI: chữ – ảnh – chữ – ảnh…
+                ============================================================
+                Mỗi khối một dòng, thứ tự trên màn hình CHÍNH LÀ thứ tự hiện ra
+                ở trang khách. Không có ô "số thứ tự" gõ tay: hai khối cùng mang
+                số 3 thì thứ tự do database quyết định, không ai đoán được.
+
+                Ảnh ở đây là TỆP CÓ CHỦ (một dòng trong bảng), không phải thẻ
+                <img> nhét vào ô chữ — nhờ vậy xoá khối là xoá được cả tệp, và ô
+                chữ không phải mở cửa cho thẻ ảnh tuỳ ý.
+            --}}
+            <div class="mb-3" data-blocks>
+
+                <label class="form-label fw-semibold">Khối nội dung chi tiết</label>
+
+                <p class="text-muted small mb-2">
+                    Xếp chữ và ảnh xen kẽ tuỳ ý. Khối chữ để trống sẽ bị bỏ khi lưu;
+                    khối ảnh chưa chọn ảnh cũng vậy.
+                </p>
+
+                @php
+                    /*
+                     * Dữ liệu dựng lại sau khi validation hỏng (old) phải thắng
+                     * dữ liệu trong cơ sở dữ liệu — nếu không, người dùng sửa
+                     * xong, gặp lỗi ở ô khác, và mất hết phần vừa gõ.
+                     */
+                    $khoiCu = old('blocks', isset($product)
+                        ? $product->blocks->map(fn ($b) => [
+                            'id' => $b->id,
+                            'kind' => $b->kind,
+                            'body' => $b->body,
+                            'caption' => $b->caption,
+                            'image_path' => $b->image_path,
+                        ])->all()
+                        : []);
+                @endphp
+
+                <div data-blocks-list>
+                    @foreach($khoiCu as $i => $khoi)
+                        @include('admin.products._block-row', ['i' => $i, 'khoi' => $khoi])
+                    @endforeach
+                </div>
+
+                <div class="d-flex gap-2 mt-2">
+                    <button type="button" class="btn btn-outline-admin btn-sm" data-block-add="text">+ Thêm khối chữ</button>
+                    <button type="button" class="btn btn-outline-admin btn-sm" data-block-add="image">+ Thêm khối ảnh</button>
+                </div>
+
+                <x-form-error name="blocks.*.body"/>
+                <x-form-error name="blocks.*.image"/>
+
+                {{-- Mẫu dòng cho JavaScript nhân bản. Để trong <template> nên
+                     trình duyệt không gửi các ô bên trong khi lưu. --}}
+                <template data-block-template="text">
+                    @include('admin.products._block-row', ['i' => '__INDEX__', 'khoi' => ['kind' => 'text']])
+                </template>
+
+                <template data-block-template="image">
+                    @include('admin.products._block-row', ['i' => '__INDEX__', 'khoi' => ['kind' => 'image']])
+                </template>
+
             </div>
 
         </div>
@@ -1129,44 +1196,58 @@
 
                 {{-- col-12: hai ô này nằm trong cột phụ vốn đã hẹp, chia đôi nữa
                      thì nhãn lựa chọn dài bị cắt cụt ("Không (bán the…"). --}}
-                <div class="col-12">
+                @php
+                    $trackInventoryOld = old(
+                        'track_inventory',
+                        isset($product) ? (int) $product->track_inventory : 0
+                    );
+                @endphp
 
-                    <label class="form-label">
+                {{--
+                    HAI Ô ĐI VỚI NHAU nên nằm chung một khối `data-stock-group`:
+                    ô số tồn chỉ gõ được khi ô trên đang bật.
+                --}}
+                <div class="col-12" data-stock-group>
+
+                    <label class="form-label" for="track_inventory">
                         Quản lý tồn kho
                     </label>
 
-                    @php
-                        $trackInventoryOld = old(
-                            'track_inventory',
-                            isset($product) ? (int) $product->track_inventory : 0
-                        );
-                    @endphp
-
-                    <select name="track_inventory" class="form-select @error('track_inventory') is-invalid @enderror">
+                    <select id="track_inventory" name="track_inventory" data-stock-toggle
+                            class="form-select @error('track_inventory') is-invalid @enderror">
                         <option value="0" @selected($trackInventoryOld == 0)>Không (bán theo mùa/đặt trước)</option>
                         <option value="1" @selected($trackInventoryOld == 1)>Có</option>
                     </select>
 
                     <x-form-error name="track_inventory"/>
 
-                </div>
-
-                <div class="col-12">
-
-                    <label class="form-label">
+                    <label class="form-label mt-3" for="stock_quantity">
                         Số lượng tồn
                     </label>
 
+                    {{--
+                        KHOÁ BẰNG readonly, KHÔNG PHẢI disabled.
+
+                        Ô disabled không được gửi lên máy chủ: bật lại quản lý tồn
+                        kho là con số cũ biến mất mà không ai bấm gì.
+
+                        Trạng thái dựng SẴN Ở MÁY CHỦ, không đợi JavaScript — tắt
+                        JS thì ô vẫn khoá đúng, và không có cú nháy "gõ được rồi
+                        khoá lại" ngay sau khi trang hiện.
+                    --}}
                     <input
                         type="number"
+                        id="stock_quantity"
                         name="stock_quantity"
                         min="0"
-                        class="form-control @error('stock_quantity') is-invalid @enderror"
+                        data-stock-input
+                        @readonly($trackInventoryOld != 1)
+                        @class(['form-control', 'is-locked' => $trackInventoryOld != 1, 'is-invalid' => $errors->has('stock_quantity')])
                         value="{{ old('stock_quantity', $product->stock_quantity ?? '') }}"
                     >
 
-                    <div class="form-text">
-                        Chỉ áp dụng khi bật quản lý tồn kho.
+                    <div class="form-text" data-stock-note @if($trackInventoryOld == 1) hidden @endif>
+                        Đang tắt quản lý tồn kho nên ô này không dùng tới — chọn "Có" ở trên nếu muốn nhập số tồn.
                     </div>
 
                     <x-form-error name="stock_quantity"/>
@@ -1297,6 +1378,72 @@
                     Tích vào ảnh muốn xóa rồi bấm lưu.
                 </div>
 
+            @endif
+
+            {{--
+                VIDEO — hai đường, vì hai nhu cầu khác nhau.
+
+                Link YouTube/Vimeo: không tốn chỗ trên máy chủ, nhưng kéo theo
+                theo dõi người xem (đã dùng bản youtube-nocookie, và chỉ tải
+                trình phát khi khách bấm).
+
+                Tệp MP4: cửa hàng tự giữ, không ai theo dõi khách, nhưng tốn chỗ
+                — nên giới hạn 20MB cho một clip ngắn quay bằng điện thoại.
+            --}}
+            <hr class="my-4">
+
+            <h2 class="h6 fw-bold mb-1">Video</h2>
+
+            <p class="text-muted small mb-3">
+                Hiện chung dải với ảnh ở trang chi tiết, theo thứ tự thêm vào.
+            </p>
+
+            <label class="form-label" for="video_url_0">Link YouTube hoặc Vimeo</label>
+
+            @for($i = 0; $i < 2; $i++)
+                <input
+                    type="url"
+                    id="video_url_{{ $i }}"
+                    name="video_urls[]"
+                    value="{{ old('video_urls.' . $i) }}"
+                    class="form-control mb-2 @error('video_urls.' . $i) is-invalid @enderror"
+                    placeholder="https://www.youtube.com/watch?v=..."
+                >
+                <x-form-error :name="'video_urls.' . $i"/>
+            @endfor
+
+            <label class="form-label mt-2" for="video_files">Hoặc tải lên tệp MP4</label>
+
+            <input
+                type="file"
+                id="video_files"
+                name="video_files[]"
+                class="form-control @error('video_files.0') is-invalid @enderror"
+                accept="video/mp4"
+                multiple
+            >
+
+            <div class="form-text">Tối đa 3 tệp, mỗi tệp 20MB. Dài hơn thì đăng YouTube rồi dán link.</div>
+
+            <x-form-error name="video_files.0"/>
+            <x-form-error name="video_files.1"/>
+            <x-form-error name="video_files.2"/>
+
+            @if(isset($product) && $product->videos->isNotEmpty())
+                <div class="gallery-manager mt-3">
+                    @foreach($product->videos as $video)
+                        <label class="gallery-manager__item gallery-manager__item--video">
+                            <input type="checkbox" name="remove_images[]" value="{{ $video->id }}" class="gallery-manager__check">
+                            <span class="gallery-manager__video">
+                                <x-site.icon name="eye" />
+                                {{ $video->linkNhung() ? 'Link nhúng' : 'Tệp MP4' }}
+                            </span>
+                            <span class="gallery-manager__label">Xóa</span>
+                        </label>
+                    @endforeach
+                </div>
+
+                <div class="form-text mt-2">Tích vào video muốn xoá rồi bấm lưu.</div>
             @endif
 
         </div>

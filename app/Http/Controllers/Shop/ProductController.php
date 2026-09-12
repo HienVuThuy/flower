@@ -372,6 +372,11 @@ class ProductController extends Controller
             'category',
             'promotions',
             'variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
+
+            // Nạp sẵn: hai component bên dưới gọi tới, thiếu dòng này là mỗi
+            // lần dựng trang thêm hai truy vấn.
+            'blocks',
+            'videos',
         ]);
 
         /*

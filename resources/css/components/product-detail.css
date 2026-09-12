@@ -407,3 +407,99 @@
 .variant-dialog__actions .btn {
     flex: 1 1 0;
 }
+
+
+/* ============================================================
+   VIDEO SẢN PHẨM
+   ============================================================
+   Nút "xem video" là một LIÊN KẾT thật tới trang gốc; JavaScript chỉ thay nó
+   bằng trình phát khi khách bấm (xem components/product/videos.blade.php).
+   Nhờ vậy trang không kéo theo ~1MB JavaScript của YouTube cho người chỉ lướt
+   qua, và người tắt JavaScript vẫn xem được video.
+   ============================================================ */
+
+.product-videos__list {
+    display: grid;
+    gap: var(--space-md);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+}
+
+.product-video {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--surface-alt);
+    color: inherit;
+    text-decoration: none;
+}
+
+.product-video:hover,
+.product-video:focus-visible {
+    border-color: var(--brand-400);
+}
+
+.product-video__play {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 50%;
+    background: var(--brand-500);
+    color: #fff;
+}
+
+.product-video__label small {
+    display: block;
+    color: var(--ink-500);
+}
+
+/* Khung 16:9 cho cả trình phát nhúng lẫn tệp MP4: không đặt tỉ lệ thì trang
+   nhảy một nhịp đúng lúc video hiện ra. */
+.product-video--playing,
+.product-video__file {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    padding: 0;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: #000;
+}
+
+.product-video--playing iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
+.product-video__file {
+    border: 1px solid var(--border);
+}
+
+
+/* ============ KHỐI MÔ TẢ CHI TIẾT ============ */
+
+.product-blocks__text + .product-blocks__figure,
+.product-blocks__figure + .product-blocks__text {
+    margin-top: var(--space-md);
+}
+
+.product-blocks__figure {
+    margin: 0 0 var(--space-md);
+}
+
+.product-blocks__figure img {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+}
+
+.product-blocks__figure figcaption {
+    margin-top: 0.4rem;
+    font-size: var(--text-body-sm);
+    color: var(--ink-500);
+}

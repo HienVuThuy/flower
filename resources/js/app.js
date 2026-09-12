@@ -23,6 +23,9 @@ import { initJournalForm } from './journal-form';
 import { initAdminNav } from './admin/nav';
 import { initExportPicker } from './admin/export-picker';
 import { initReceiptLines } from './admin/receipt-lines';
+import { initStockLock } from './admin/stock-lock';
+import { initProductBlocks } from './admin/product-blocks';
+import { initVideoEmbed } from './components/video-embed';
 
 /*
  * Header đổi trạng thái khi cuộn — glass chỉ bật lúc cần (accent),
@@ -72,6 +75,9 @@ export function bootUi() {
     initJournalForm();
     initExportPicker();
     initReceiptLines();
+    initStockLock();
+    initProductBlocks();
+    initVideoEmbed();
 }
 
 bootUi();

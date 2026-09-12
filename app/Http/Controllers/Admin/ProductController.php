@@ -13,6 +13,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\TaxClass;
 use App\Services\Media\ImageStore;
+use App\Services\Product\ProductBlockService;
 use App\Services\Product\ProductImageService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,6 +40,7 @@ class ProductController extends Controller
 
     public function __construct(
         private readonly ProductImageService $images,
+        private readonly ProductBlockService $blocks,
         private readonly ImageStore $anh,
     ) {}
 
@@ -180,7 +182,7 @@ class ProductController extends Controller
         $variants =
             $data['variants'] ?? [];
 
-        unset($data['variants'], $data['gallery'], $data['remove_images']);
+        unset($data['variants'], $data['gallery'], $data['remove_images'], $data['video_urls'], $data['video_files'], $data['blocks']);
 
         /*
          * Tách nhãn phân loại ra khỏi dữ liệu Product.
@@ -334,6 +336,23 @@ class ProductController extends Controller
                         );
                     }
 
+                    /*
+                     * Video (link + tệp) và các khối mô tả chi tiết.
+                     *
+                     * Tệp vừa lưu được gom chung vào $storedGallery để nhánh
+                     * catch bên dưới dọn hết trong một lần — transaction hỏng mà
+                     * để lại tệp là đĩa đầy dần bằng thứ không bản ghi nào trỏ tới.
+                     */
+                    $storedGallery = array_merge(
+                        $storedGallery,
+                        $this->images->attachVideos(
+                            $product,
+                            (array) $request->input('video_urls', []),
+                            (array) $request->file('video_files', []),
+                        ),
+                        $this->blocks->sync($product, $this->blockRows($request)),
+                    );
+
 
                     return $product;
                 }
@@ -380,6 +399,29 @@ class ProductController extends Controller
      * XEM PRODUCT
      * =========================================================
      */
+    /**
+     * Gộp dữ liệu khối mô tả: phần chữ nằm trong input, ảnh nằm trong file.
+     *
+     * Laravel để hai thứ ở hai chỗ; ProductBlockService cần một mảng duy nhất
+     * để không phải biết request trông thế nào.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    private function blockRows(\Illuminate\Http\Request $request): array
+    {
+        $rows = [];
+
+        foreach ((array) $request->input('blocks', []) as $i => $row) {
+            $row = is_array($row) ? $row : [];
+            $row['image'] = $request->file("blocks.{$i}.image");
+
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+
     public function show(
         Product $product
     ): View {
@@ -387,7 +429,10 @@ class ProductController extends Controller
         $product->load([
             'category',
             'promotions',
-            'images',
+            'media',
+            'blocks',
+            'traits',
+            'reviews',
 
             'variants' => function ($query) {
                 $query
@@ -397,10 +442,40 @@ class ProductController extends Controller
         ]);
 
 
-        return view(
-            'admin.products.show',
-            compact('product')
-        );
+        /*
+         * SỐ LIỆU BÁN HÀNG — đếm ở đây, không đếm trong Blade.
+         *
+         * Trang này trước chỉ hiện những gì admin đã nhập. Câu hỏi thật khi mở
+         * một sản phẩm ra xem là "nó bán thế nào": đã bán bao nhiêu, mang về bao
+         * nhiêu tiền, khách chấm mấy sao, còn nằm trong giỏ ai không.
+         *
+         * Chỉ tính ĐƠN ĐÃ GIAO — cùng định nghĩa doanh thu với trang Phân tích.
+         */
+        $banHang = \App\Models\OrderItem::query()
+            ->join('orders', 'orders.id', '=', 'order_items.order_id')
+            ->where('order_items.product_id', $product->id)
+            ->where('orders.status', \App\Enums\OrderStatus::Completed->value)
+            ->whereNull('orders.deleted_at')
+            ->selectRaw('COALESCE(SUM(order_items.quantity), 0) as so_luong')
+            ->selectRaw('COALESCE(SUM(order_items.line_total - order_items.discount_amount), 0) as doanh_thu')
+            ->selectRaw('COUNT(DISTINCT order_items.order_id) as so_don')
+            ->selectRaw('MAX(orders.created_at) as ban_gan_nhat')
+            ->first();
+
+        $product->loadCount([
+            'reviews as so_danh_gia',
+            'wishlists as so_yeu_thich',
+        ]);
+
+        $product->loadAvg(['reviews as diem_trung_binh'], 'rating');
+
+        return view('admin.products.show', [
+            'product' => $product,
+            'banHang' => $banHang,
+
+            // Còn nằm trong giỏ của ai: hàng sắp bán được, hoặc giỏ bị bỏ dở.
+            'trongGio' => (int) \App\Models\CartItem::where('product_id', $product->id)->sum('quantity'),
+        ]);
     }
 
 
@@ -484,7 +559,7 @@ class ProductController extends Controller
         // gallery/remove_images không phải cột của products.
         $removeImages = $data['remove_images'] ?? [];
 
-        unset($data['variants'], $data['gallery'], $data['remove_images']);
+        unset($data['variants'], $data['gallery'], $data['remove_images'], $data['video_urls'], $data['video_files'], $data['blocks']);
 
         /*
          * Tách nhãn phân loại ra khỏi dữ liệu Product.
@@ -543,6 +618,17 @@ class ProductController extends Controller
                             $request->file('gallery')
                         );
                     }
+
+                    // Video và khối mô tả — xem chú thích ở store().
+                    $storedGallery = array_merge(
+                        $storedGallery,
+                        $this->images->attachVideos(
+                            $product,
+                            (array) $request->input('video_urls', []),
+                            (array) $request->file('video_files', []),
+                        ),
+                        $this->blocks->sync($product, $this->blockRows($request)),
+                    );
 
 
                     /*

@@ -16,12 +16,34 @@ import { DisplaySchemeStore } from './display-scheme';
  *
  * Nên giá trị gửi đi phải tính từ chế độ ĐANG THẤY, không phải từ cookie.
  */
-export function initSchemeToggle() {
-    const forms = document.querySelectorAll('[data-scheme-toggle]');
+/*
+ * ĐÃ THEO DÕI HỆ ĐIỀU HÀNH CHƯA — cờ ở phạm vi module, không phải trong hàm.
+ *
+ * Hàm này được gọi LẠI sau mỗi lần trang quản trị thay ruột (xem bootUi ở
+ * app.js). Đăng ký lại listener của matchMedia mỗi lần là mỗi lần máy đổi
+ * sáng/tối thì trang chạy nhiều lượt xử lý cho cùng một sự kiện.
+ */
+let daTheoDoiHeDieuHanh = false;
 
-    if (forms.length === 0) return;
+export function initSchemeToggle() {
+    /*
+     * CHỈ GẮN CHO FORM CHƯA GẮN.
+     *
+     * LỖI ĐÃ ĐO ĐƯỢC: nút sáng/tối nằm ở thanh trên cùng của trang quản trị —
+     * phần KHÔNG bị thay khi điều hướng. Mỗi lần đổi trang, bootUi() gọi lại
+     * hàm này và gắn thêm một listener nữa lên đúng cái form cũ. Hai listener
+     * thì một cú bấm chạy hai lượt: lượt đầu sáng→tối, lượt sau tối→sáng, và
+     * màn hình không đổi gì. Tái hiện: mở /admin/dashboard, bấm một mục bất kỳ
+     * ở thanh bên, rồi bấm nút sáng/tối — không có gì xảy ra.
+     *
+     * Đúng luật đã ghi ở bootUi: "cái nào gắn sự kiện lên phần tử thì phải tự
+     * đánh dấu phần tử đã gắn".
+     */
+    const forms = document.querySelectorAll('[data-scheme-toggle]:not([data-scheme-bound])');
 
     forms.forEach((form) => {
+        form.dataset.schemeBound = '1';
+
         const input = form.querySelector('[data-scheme-value]');
 
         /*
@@ -86,16 +108,18 @@ export function initSchemeToggle() {
      * họ tải lại. Người đã tự chọn thì KHÔNG đụng vào — lựa chọn tay
      * luôn thắng cài đặt máy.
      */
-    if (window.matchMedia) {
+    if (window.matchMedia && !daTheoDoiHeDieuHanh) {
+        daTheoDoiHeDieuHanh = true;
+
         window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
             if (!DisplaySchemeStore.dangTuDong()) return;
 
             DisplaySchemeStore.apDung(e.matches ? 'toi' : 'sang', { giuTuDong: true });
 
-            forms.forEach((form) => {
-                const input = form.querySelector('[data-scheme-value]');
-
-                if (input) input.value = DisplaySchemeStore.doiSang();
+            // Hỏi lại DOM chứ không dùng `forms` của lần gọi nào: trang quản
+            // trị thay ruột liên tục, danh sách cũ có thể đã không còn trong DOM.
+            document.querySelectorAll('[data-scheme-value]').forEach((input) => {
+                input.value = DisplaySchemeStore.doiSang();
             });
         });
     }

@@ -372,4 +372,135 @@
 
 </div>
 
+
+{{--
+    ============================================================
+    BÁN HÀNG — thứ trang này trước đây không nói
+    ============================================================
+    Trước bản này, trang xem sản phẩm chỉ lặp lại những gì admin đã gõ vào.
+    Người mở nó ra thường đang hỏi: món này bán được không, có ai chê không,
+    còn hàng không. Đó là những câu chỉ trả lời được bằng dữ liệu bán hàng.
+--}}
+<div class="row g-3 mt-1">
+    <div class="col-6 col-lg-3">
+        <x-admin.kpi label="Đã bán" note="Chỉ đơn đã giao.">
+            {{ number_format((int) $banHang->so_luong, 0, ',', '.') }}
+            <span class="admin-page-subtitle">cái / {{ (int) $banHang->so_don }} đơn</span>
+        </x-admin.kpi>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <x-admin.kpi label="Doanh thu" note="Sau khuyến mại và mã giảm giá, đã gồm VAT.">
+            <x-site.money :amount="(string) $banHang->doanh_thu" />
+        </x-admin.kpi>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <x-admin.kpi label="Đánh giá"
+                     :href="$product->so_danh_gia > 0 ? route('admin.reviews.index', ['q' => $product->name]) : null"
+                     :note="$product->so_danh_gia . ' bài · ' . number_format($product->view_count) . ' lượt xem trang'">
+            @if($product->so_danh_gia === 0)
+                {{-- null khác 0 sao: chưa ai đánh giá thì không có điểm nào. --}}
+                <span class="admin-page-subtitle">chưa có</span>
+            @else
+                {{ number_format((float) $product->diem_trung_binh, 2, ',', '.') }} / 5
+            @endif
+        </x-admin.kpi>
+    </div>
+
+    <div class="col-6 col-lg-3">
+        <x-admin.kpi label="Đang được quan tâm"
+                     :note="$trongGio . ' cái trong giỏ khách · ' . $product->so_yeu_thich . ' lượt lưu'">
+            {{ $trongGio + $product->so_yeu_thich }}
+        </x-admin.kpi>
+    </div>
+</div>
+
+@if($banHang->ban_gan_nhat)
+    <p class="admin-page-subtitle small mt-2">
+        Lần bán gần nhất:
+        {{ \App\Services\Analytics\KhoangThoiGian::diaPhuong(\Illuminate\Support\Carbon::parse($banHang->ban_gan_nhat, config('app.timezone')))->format('d/m/Y') }}
+    </p>
+@endif
+
+{{-- ============ THƯ VIỆN: ẢNH VÀ VIDEO ============ --}}
+<div class="admin-panel p-4 mt-4">
+
+    <h2 class="h5 fw-bold mb-1">Thư viện</h2>
+    <p class="text-muted small mb-3">
+        {{ $product->media->where('kind', 'image')->count() }} ảnh phụ,
+        {{ $product->media->where('kind', 'video')->count() }} video.
+        Ảnh đại diện đứng đầu ở trang khách.
+    </p>
+
+    @if($product->media->isEmpty())
+        <p class="analytics-empty mb-0">Chưa có ảnh phụ hay video nào.</p>
+    @else
+        <div class="gallery-manager">
+            @foreach($product->media as $item)
+                @if($item->laVideo())
+                    <div class="gallery-manager__item gallery-manager__item--video">
+                        <span class="gallery-manager__video">
+                            @if($item->linkNhung())
+                                <a href="{{ $item->linkXem() }}" target="_blank" rel="noopener nofollow">Video nhúng</a>
+                            @else
+                                <a href="{{ asset('storage/' . $item->path) }}" target="_blank" rel="noopener">Tệp MP4</a>
+                            @endif
+                        </span>
+                    </div>
+                @else
+                    <div class="gallery-manager__item">
+                        <img src="{{ asset('storage/' . $item->path) }}" alt="">
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    @endif
+
+</div>
+
+{{-- ============ KHỐI MÔ TẢ CHI TIẾT ============ --}}
+@if($product->blocks->isNotEmpty())
+    <div class="admin-panel p-4 mt-4">
+        <h2 class="h5 fw-bold mb-1">Mô tả chi tiết theo khối</h2>
+        <p class="text-muted small mb-3">
+            {{ $product->blocks->count() }} khối, hiện theo đúng thứ tự này ở trang khách.
+        </p>
+
+        <ol class="admin-page-subtitle small mb-0 ps-3">
+            @foreach($product->blocks as $khoi)
+                <li class="mb-1">
+                    @if($khoi->laAnh())
+                        <strong>Ảnh</strong>{{ $khoi->caption ? ' — ' . $khoi->caption : '' }}
+                    @else
+                        <strong>Chữ</strong> — {{ \Illuminate\Support\Str::limit(strip_tags($khoi->body), 120) }}
+                    @endif
+                </li>
+            @endforeach
+        </ol>
+    </div>
+@endif
+
+{{-- ============ SEO VÀ ĐƯỜNG DẪN ============ --}}
+<div class="admin-panel p-4 mt-4">
+
+    <h2 class="h5 fw-bold mb-3">Đường dẫn và SEO</h2>
+
+    <dl class="admin-detail-list mb-0">
+        <div>
+            <dt>Trang khách</dt>
+            <dd><a href="{{ route('shop.products.show', $product) }}" target="_blank" rel="noopener">/san-pham/{{ $product->slug }}</a></dd>
+        </div>
+        <div>
+            <dt>Tiêu đề SEO</dt>
+            <dd>{{ $product->meta_title ?: 'chưa đặt — dùng tên sản phẩm' }}</dd>
+        </div>
+        <div>
+            <dt>Mô tả SEO</dt>
+            <dd>{{ $product->meta_description ?: 'chưa đặt — dùng mô tả ngắn' }}</dd>
+        </div>
+    </dl>
+
+</div>
+
 @endsection

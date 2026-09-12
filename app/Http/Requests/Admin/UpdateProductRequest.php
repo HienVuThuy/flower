@@ -227,6 +227,44 @@ class UpdateProductRequest extends FormRequest
                 'max:4096',
             ],
 
+
+            /*
+             * VIDEO — LINK hoặc TỆP.
+             *
+             * Link: chỉ nhận YouTube/Vimeo, và chỉ lấy mã video ra
+             * (App\Services\Media\VideoLink). Nhận nguyên chuỗi rồi đổ vào
+             * <iframe src> là mở cửa cho `javascript:` và cho một trang giả
+             * làm trình phát ngay giữa trang cửa hàng.
+             *
+             * Tệp: `mimetypes` đọc NỘI DUNG tệp, không chỉ đuôi — đổi tên
+             * `shell.php` thành `clip.mp4` không lọt qua được.
+             *
+             * 20MB: máy chủ nhận tối đa 40MB (upload_max_filesize), và một
+             * video giới thiệu hoa dài 30 giây quay bằng điện thoại thường
+             * dưới 20MB. Video dài hơn nên đăng YouTube rồi dán link.
+             */
+            'video_urls' => ['nullable', 'array', 'max:5'],
+            'video_urls.*' => ['nullable', 'string', 'max:500', function (string $attr, mixed $value, \Closure $fail) {
+                if (filled($value) && ! \App\Services\Media\VideoLink::hopLe((string) $value)) {
+                    $fail('Chỉ nhận link YouTube hoặc Vimeo. Ví dụ: https://www.youtube.com/watch?v=...');
+                }
+            }],
+
+            'video_files' => ['nullable', 'array', 'max:3'],
+            'video_files.*' => ['file', 'mimetypes:video/mp4', 'mimes:mp4', 'max:20480'],
+
+            /*
+             * MÔ TẢ CHI TIẾT THEO KHỐI: chữ – ảnh – chữ…
+             *
+             * Thứ tự là thứ tự các dòng gửi lên; ô "sort" gõ tay không tồn tại
+             * (xem ProductBlockService).
+             */
+            'blocks' => ['nullable', 'array', 'max:40'],
+            'blocks.*.id' => ['nullable', 'integer'],
+            'blocks.*.kind' => ['required_with:blocks', 'in:text,image'],
+            'blocks.*.body' => ['nullable', 'string', 'max:5000'],
+            'blocks.*.caption' => ['nullable', 'string', 'max:255'],
+            'blocks.*.image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             // Danh sách id ảnh phụ admin bấm xoá.
             'remove_images' => [
                 'nullable',
@@ -420,6 +458,18 @@ class UpdateProductRequest extends FormRequest
             'main_image.max' =>
                 'Ảnh không được lớn hơn 4MB.',
 
+
+            'video_files.*.mimetypes' =>
+                'Video phải là tệp MP4.',
+
+            'video_files.*.max' =>
+                'Video không được nặng quá 20MB. Video dài hơn nên đăng lên YouTube rồi dán link.',
+
+            'blocks.*.image.image' =>
+                'Khối ảnh chỉ nhận tệp ảnh.',
+
+            'blocks.*.body.max' =>
+                'Mỗi đoạn chữ tối đa 5000 ký tự — dài hơn thì tách thành nhiều khối.',
             'gallery.max' =>
                 'Chỉ được tải lên tối đa 8 ảnh phụ mỗi lần.',
 

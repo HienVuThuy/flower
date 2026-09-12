@@ -118,12 +118,21 @@
         </div>
 
         {{-- ============ MÔ TẢ ============ --}}
-        @if($product->description)
+        @if($product->description || $product->blocks->isNotEmpty())
             <div class="mt-5" style="max-width: 68ch;">
                 <h2 class="text-h3 mb-3">Mô tả chi tiết</h2>
-                <div>{!! nl2br(e($product->description)) !!}</div>
+
+                @if($product->description)
+                    <div>{!! nl2br(e($product->description)) !!}</div>
+                @endif
+
+                {{-- Khối chữ/ảnh xen kẽ, nếu người bán có soạn. Sản phẩm cũ
+                     không có khối nào thì phần trên vẫn hiện như trước. --}}
+                <x-product.detail-blocks :product="$product" />
             </div>
         @endif
+
+        <x-product.videos :product="$product" />
 
         {{-- ============ THÔNG SỐ ============ --}}
         <div class="row g-4 g-lg-5 mt-4">
