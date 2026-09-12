@@ -17,12 +17,14 @@ enum StockReceiptKind: string
 {
     case NhapMoi = 'nhap_moi';
     case TonDauKy = 'ton_dau_ky';
+    case TraNcc = 'tra_ncc';
 
     public function label(): string
     {
         return match ($this) {
             self::NhapMoi => 'Nhập hàng mới',
             self::TonDauKy => 'Khai tồn đầu kỳ',
+            self::TraNcc => 'Trả hàng cho nhà cung cấp',
         };
     }
 
@@ -31,13 +33,22 @@ enum StockReceiptKind: string
         return match ($this) {
             self::NhapMoi => 'Hàng vừa về kho. Ghi sổ thì cộng vào tồn.',
             self::TonDauKy => 'Khai số đã có sẵn trên kệ và giá vốn ước tính. KHÔNG cộng vào tồn.',
+            self::TraNcc => 'Hàng trả lại vựa. Ghi sổ thì TRỪ khỏi tồn và khỏi nền giá vốn.',
         };
     }
 
     /** Ghi sổ có cộng vào tồn kho không. */
+    /**
+     * Ghi sổ có đụng tới tồn kho không.
+     *
+     * Phiếu trả CÓ đụng — nhưng theo chiều ngược lại, và điều đó nằm ở
+     * dấu của số lượng chứ không ở đây: dòng phiếu trả lưu số ÂM. Nhờ vậy
+     * cùng một đoạn cộng kho và cùng một bảng giá vốn phục vụ cả hai
+     * chiều, không có bản chép thứ hai để lệch.
+     */
     public function congVaoKho(): bool
     {
-        return $this === self::NhapMoi;
+        return $this === self::NhapMoi || $this === self::TraNcc;
     }
 
     /** Giá vốn của loại phiếu này là ước tính hay có chứng từ. */

@@ -41,6 +41,11 @@ class FlowerLot extends Model
             'quantity' => 'decimal:2',
             'total_cost' => 'decimal:2',
             'hao_hut' => 'decimal:2',
+            'tra_lai_qty' => 'decimal:2',
+            'tra_lai_tien' => 'decimal:2',
+            'tra_lai_ly_do' => \App\Enums\ReturnReason::class,
+            'tra_lai_settlement' => \App\Enums\ReturnSettlement::class,
+            'tra_lai_at' => 'datetime',
             'unit' => FlowerUnit::class,
             'status' => FlowerLotStatus::class,
             'quality' => FlowerQuality::class,
@@ -76,6 +81,27 @@ class FlowerLot extends Model
     public function daDong(): bool
     {
         return $this->status === FlowerLotStatus::DaDong;
+    }
+
+    /**
+     * Tiền THẬT SỰ tốn cho lô này, sau khi trừ phần đã trả lại vựa.
+     *
+     * Chỉ trừ khi TIỀN QUAY VỀ. Đổi hàng khác thì cửa hàng vẫn nhận đủ
+     * hàng; không được gì thì cửa hàng chịu mất. Trừ trong hai trường
+     * hợp đó là tự tặng cho mình một khoản lãi không có thật.
+     */
+    public function tienThucTe(): string
+    {
+        if ($this->tra_lai_tien === null) {
+            return bcadd((string) $this->total_cost, '0', 2);
+        }
+
+        return bcsub((string) $this->total_cost, (string) $this->tra_lai_tien, 2);
+    }
+
+    public function daTraLai(): bool
+    {
+        return $this->tra_lai_qty !== null;
     }
 
     /**

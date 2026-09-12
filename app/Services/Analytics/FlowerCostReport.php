@@ -54,6 +54,7 @@ class FlowerCostReport
      *     doanh_thu: string, gia_von: string, lai_gop: ?string,
      *     so_lo_dong: int, so_lo_con_mo: int, tien_lo_con_mo: string,
      *     lo_qua_han: int, hao_hut_trung_binh: ?float,
+     *     tien_tra_lai: string, so_lo_phai_tra: int,
      * }
      */
     public function baoCao(): array
@@ -87,6 +88,16 @@ class FlowerCostReport
                 ->count(),
 
             'hao_hut_trung_binh' => $this->haoHutTrungBinh(),
+
+            /*
+             * TRẢ LẠI VỰA — hiện cạnh giá vốn, không trộn vào.
+             *
+             * Người đọc cần thấy CẢ HAI: tiền đã lấy lại được, và số lô
+             * phải trả hàng. Con số thứ hai là thước đo chất lượng nguồn
+             * hàng, không phải thước đo tiền.
+             */
+            'tien_tra_lai' => $this->tienTraLai(),
+            'so_lo_phai_tra' => (clone $this->truyVanLoDaDong())->whereNotNull('tra_lai_qty')->count(),
         ];
     }
 
@@ -140,9 +151,43 @@ class FlowerCostReport
         return $q;
     }
 
+    /**
+     * Giá vốn hoa: tiền các lô đã đóng, TRỪ phần đã trả lại vựa và được
+     * hoàn tiền.
+     *
+     * ============================================================
+     * CHỈ TRỪ KHI TIỀN QUAY VỀ.
+     *
+     * Vựa đổi hàng khác thì cửa hàng vẫn nhận đủ hoa — tiền đã tiêu đúng
+     * bằng số đó. Trả mà không được gì thì cửa hàng chịu mất, tiền cũng
+     * đã tiêu. Trừ ở hai trường hợp này là tự tặng cho mình một khoản lãi
+     * không có thật, và nó rất dễ xảy ra vì "đã trả hàng rồi thì trừ tiền
+     * đi" nghe rất thuận tai.
+     *
+     * Cộng bằng bcmath chứ không bằng SQL: với tiền thì mỗi phép cộng
+     * dấu phẩy động là một lần làm tròn.
+     */
     private function giaVonLoDaDong(): string
     {
-        return bcadd((string) (clone $this->truyVanLoDaDong())->sum('total_cost'), '0', 2);
+        $tong = '0.00';
+
+        foreach ((clone $this->truyVanLoDaDong())->get(['total_cost', 'tra_lai_tien']) as $l) {
+            $tong = bcadd($tong, $l->tienThucTe(), 2);
+        }
+
+        return $tong;
+    }
+
+    /** Tiền đã lấy lại được từ vựa, trong các lô đóng ở kỳ này. */
+    private function tienTraLai(): string
+    {
+        $tong = '0.00';
+
+        foreach ((clone $this->truyVanLoDaDong())->whereNotNull('tra_lai_tien')->get(['tra_lai_tien']) as $l) {
+            $tong = bcadd($tong, (string) $l->tra_lai_tien, 2);
+        }
+
+        return $tong;
     }
 
     /**

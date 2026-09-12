@@ -41,6 +41,9 @@ class StockReceipt extends Model
         return [
             'received_at' => 'date',
             'kind' => StockReceiptKind::class,
+            'return_reason' => \App\Enums\ReturnReason::class,
+            'settlement' => \App\Enums\ReturnSettlement::class,
+            'settlement_amount' => 'decimal:2',
             'status' => StockReceiptStatus::class,
             'posted_at' => 'datetime',
         ];
@@ -74,6 +77,17 @@ class StockReceipt extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function laPhieuTra(): bool
+    {
+        return $this->kind === StockReceiptKind::TraNcc;
+    }
+
+    /** Phiếu nhập gốc mà phiếu trả này trỏ về. */
+    public function phieuGoc(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'return_of_id');
     }
 
     public function laTonDauKy(): bool

@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\PricingAdvisorController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\SupplierReturnController;
 use App\Http\Controllers\Admin\FlowerKindController;
 use App\Http\Controllers\Admin\FlowerLotController;
 use App\Http\Controllers\Admin\OpeningStockController;
@@ -1052,6 +1053,25 @@ Route::prefix('admin')
         Route::patch('lo-hoa/{flowerLot}/dong', [FlowerLotController::class, 'close'])
             ->middleware(['quyen:kho', 'throttle:30,1'])
             ->name('flower-lots.close');
+
+        /*
+         * TRẢ HÀNG CHO NHÀ CUNG CẤP.
+         *
+         * Một trang cho cả hai loại hàng; bên dưới là hai cơ chế khác
+         * nhau (phiếu số âm cho hàng đếm được, ghi thẳng lên lô cho hoa)
+         * nhưng với người dùng đó là MỘT việc.
+         */
+        Route::get('tra-hang-ncc', [SupplierReturnController::class, 'index'])
+            ->middleware('quyen:kho')
+            ->name('supplier-returns.index');
+
+        Route::post('tra-hang-ncc/phieu/{stockReceipt}', [SupplierReturnController::class, 'storeGoods'])
+            ->middleware(['quyen:kho', 'throttle:20,1'])
+            ->name('supplier-returns.goods');
+
+        Route::post('tra-hang-ncc/lo-hoa/{flowerLot}', [SupplierReturnController::class, 'storeFlower'])
+            ->middleware(['quyen:kho', 'throttle:20,1'])
+            ->name('supplier-returns.flower');
 
         Route::get('ton-dau-ky', [OpeningStockController::class, 'create'])
             ->middleware('quyen:kho')

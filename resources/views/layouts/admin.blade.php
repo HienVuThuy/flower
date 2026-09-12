@@ -144,6 +144,11 @@
                 <x-site.icon name="tags" />
                 <span>Loại hoa thu mua</span>
             </a>
+
+            <a data-admin-link href="{{ route('admin.supplier-returns.index') }}" class="admin-nav-link {{ request()->routeIs('admin.supplier-returns.*') ? 'is-active' : '' }}">
+                <x-site.icon name="arrow-repeat" />
+                <span>Trả hàng nhà cung cấp</span>
+            </a>
             @endcan
         </nav>
         @endcanany

@@ -7678,3 +7678,74 @@ một sản phẩm mới cho nó.
 
 Bài kiểm thử có cả **bài đối chứng** (kiểm kê VẪN nhận hoa): không có nó
 thì một thay đổi loại hoa ra khỏi mọi chứng từ kho cũng đi qua sạch sẽ.
+
+---
+
+## QĐ-258. Trả hàng cho nhà cung cấp: cách xử lý tiền quyết định giá vốn
+
+**Không tạo bảng mới cho hàng đếm được.** Hệ thống đã có đúng cơ chế cần
+thiết, và nó đã được ghi rõ trong ProfitReport: dòng phiếu nhập với **số
+lượng âm** được lũy kế vào bảng giá vốn — *"phiếu điều chỉnh nhập nhầm 5
+cái @48.000 phải kéo giá vốn về đúng như chưa từng nhập nhầm"*.
+
+Trả hàng cho vựa chính là việc đó: bớt N cái khỏi kho VÀ khỏi nền giá
+vốn, ở **đúng đơn giá đã mua**. Dựng bảng riêng rồi dạy lại ProfitReport
+cách trừ là chép lại một logic đã đúng, và hai bản chép sẽ lệch nhau ở
+đúng chỗ khó thấy nhất. Nên phiếu trả là một `stock_receipt` với
+`kind = tra_ncc`, cộng ba cột cho phần nghiệp vụ mà phiếu nhập không có.
+
+**Hoa đi đường khác vì hoa không có tồn kho để bớt.** Lô giữ tiền ở mức
+lô, nên trả hàng là bớt tiền của chính lô đó, ghi thẳng lên lô.
+
+**Một khái niệm cho người dùng, hai cơ chế bên dưới.** Với người đứng ở
+quầy thì đó là MỘT việc: "hàng này hỏng, trả lại vựa". Bắt họ nhớ hai chỗ
+khác nhau tuỳ loại hàng là bắt họ học cấu trúc bên trong của phần mềm.
+
+### Chỗ dễ sai nhất của cả tính năng
+
+**Cách xử lý tiền quyết định giá vốn có giảm hay không:**
+
+| Xử lý | Tiền | Giá vốn |
+|---|---|---|
+| Vựa hoàn tiền | quay về | **giảm** |
+| Trừ vào lần lấy sau | quay về | **giảm** |
+| Vựa đổi hàng khác | không | **giữ nguyên** — vẫn nhận đủ hàng |
+| Không được gì | không | **giữ nguyên** — cửa hàng chịu |
+
+*"Đã trả hàng rồi thì trừ tiền đi"* nghe rất thuận tai, và nó **sai trong
+hai trên bốn trường hợp** — sai theo hướng làm lãi đẹp lên, tức hướng
+không ai tự đi kiểm. Bảng này được in ngay trên trang, và có bài kiểm thử
+riêng cho từng ô.
+
+### Vài luật nhỏ hơn nhưng cũng tốn tiền nếu sai
+
+- **Chỉ trả được hàng của phiếu ĐÃ GHI SỔ.** Phiếu nháp thì hàng chưa vào
+  kho và chưa vào nền giá vốn; "trả lại" thứ chưa từng được ghi nhận sẽ
+  đẩy tồn xuống âm và kéo giá vốn đi lệch. Nháp thì sửa phiếu gốc.
+- **Đơn giá của dòng trả phải đúng bằng giá đã mua.** Lấy giá khác là làm
+  lệch giá vốn bình quân của phần hàng còn giữ lại.
+- **Tiền lấy lại để NULL khi không có, không ghi 0.** 0 là "được trả 0
+  đồng" — một khẳng định khác hẳn, và nó sẽ vào bảng so sánh nhà cung cấp
+  như một lần vựa từ chối trả tiền.
+- **Tiền trả lại của lô hoa tính theo đơn giá của chính lô**, không hỏi
+  người dùng gõ: gõ tay thì một con số lệch đi thẳng vào giá vốn hoa của
+  kỳ, và không có gì đối chiếu. Với hàng đếm được thì có ô gõ tay, vì vựa
+  hay trả ít hơn giá mua — nhưng để trống thì tính theo đơn giá.
+- **Lý do trả là enum, không phải ô chữ tự do**, vì đây chính là số liệu
+  để chấm nguồn hàng ở phần phân tích thu mua.
+
+---
+
+## QĐ-259. SỰ CỐ: một biến Blade bị đè trong vòng lặp làm hỏng cả trang
+
+Trang trả hàng dùng `$daTra` cho danh sách phiếu đã trả, rồi bên trong
+vòng lặp lại viết `@php $daTra = $daTraTheoDong($d->id); @endphp` — đè
+biến đó thành một số nguyên. Cuối trang `$daTra->isNotEmpty()` ném
+`Call to a member function isNotEmpty() on int`, cả trang lỗi 500.
+
+Blade không có phạm vi biến riêng cho vòng lặp: mọi gán trong `@php` đều
+ghi vào cùng một phạm vi của view. Đặt tên trùng là đè, không cảnh báo.
+
+Bài kiểm thử đi qua giao diện bắt được ngay lần chạy đầu — đó là lý do
+mỗi tính năng đều có ít nhất một bài mở trang thật, không chỉ gọi dịch
+vụ.
