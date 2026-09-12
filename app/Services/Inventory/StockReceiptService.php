@@ -95,8 +95,18 @@ class StockReceiptService
                 throw new StockReceiptException('Phiếu chưa có dòng hàng nào để ghi sổ.');
             }
 
-            foreach ($receipt->items as $dong) {
-                $this->congVaoKho($dong->product_variant_id, $dong->product_id, $dong->quantity, $dong->product_name);
+            /*
+             * PHIẾU TỒN ĐẦU KỲ KHÔNG CỘNG VÀO KHO.
+             *
+             * Hàng đã nằm trên kệ từ trước khi có hệ thống — phiếu này
+             * chỉ khai GIÁ VỐN cho số đang có, không khai thêm hàng.
+             * Cộng vào là nhân đôi tồn của cả cửa hàng, và sai lệch chỉ
+             * lộ ra ở lần kiểm kê đầu tiên, lúc không ai còn nhớ vì sao.
+             */
+            if ($khoa->kind->congVaoKho()) {
+                foreach ($receipt->items as $dong) {
+                    $this->congVaoKho($dong->product_variant_id, $dong->product_id, $dong->quantity, $dong->product_name);
+                }
             }
 
             $receipt->forceFill([

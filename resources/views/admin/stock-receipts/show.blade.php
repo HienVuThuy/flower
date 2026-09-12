@@ -10,7 +10,18 @@
 
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
     <div>
-        <h1 class="admin-page-title">Phiếu nhập {{ $receipt->code }}</h1>
+        <h1 class="admin-page-title">
+            {{ $receipt->laTonDauKy() ? 'Phiếu tồn đầu kỳ' : 'Phiếu nhập' }} {{ $receipt->code }}
+        </h1>
+
+        {{--
+            NÓI RÕ LOẠI PHIẾU NGAY DƯỚI TIÊU ĐỀ.
+
+            Hai loại khác nhau ở một điểm sống còn: phiếu tồn đầu kỳ KHÔNG
+            cộng vào kho. Người ghi sổ phải biết điều đó trước khi bấm,
+            không phải sau.
+        --}}
+        <p class="admin-page-subtitle mb-0">{{ $receipt->kind->hint() }}</p>
         <p class="admin-page-subtitle mb-0">
             <span class="status-pill status-pill--{{ $receipt->status->badge() }}">
                 {{ $receipt->status->label() }}
@@ -29,7 +40,7 @@
                 không được xảy ra chỉ vì một cú bấm nhầm.
             --}}
             <form method="POST" action="{{ route('admin.stock-receipts.post', $receipt) }}"
-                  onsubmit="return confirm('Ghi sổ phiếu {{ $receipt->code }}? Tồn kho sẽ được cộng thêm và không hoàn tác được.');">
+                  onsubmit="return confirm('Ghi sổ phiếu {{ $receipt->code }}? {{ $receipt->laTonDauKy() ? 'Phiếu này chỉ khai giá vốn, KHÔNG cộng vào tồn.' : 'Tồn kho sẽ được cộng thêm và không hoàn tác được.' }}');">
                 @csrf
                 <button type="submit" class="btn btn-primary-brand">Ghi sổ &amp; cộng vào kho</button>
             </form>

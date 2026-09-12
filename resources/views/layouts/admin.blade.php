@@ -128,6 +128,11 @@
                 <x-site.icon name="people" />
                 <span>Nhà cung cấp</span>
             </a>
+
+            <a data-admin-link href="{{ route('admin.opening-stock.create') }}" class="admin-nav-link {{ request()->routeIs('admin.opening-stock.*') ? 'is-active' : '' }}">
+                <x-site.icon name="journal" />
+                <span>Tồn đầu kỳ</span>
+            </a>
             @endcan
         </nav>
         @endcanany

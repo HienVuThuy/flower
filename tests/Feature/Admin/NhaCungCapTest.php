@@ -175,11 +175,15 @@ class NhaCungCapTest extends TestCase
             'supplier_id' => $ncc->id,
             'received_at' => now()->toDateString(),
             'items' => [
-                ['product_id' => $sp->id, 'quantity' => 3, 'unit_cost' => 50000],
+                ['mat_hang' => (string) $sp->id, 'quantity' => 3, 'unit_cost' => 50000],
             ],
         ])->assertSessionHasNoErrors()->assertRedirect();
 
         $phieu = StockReceipt::firstOrFail();
+
+        // Phiếu phải thật sự có dòng hàng — không có khẳng định này thì
+        // một biểu mẫu gửi sai tên trường vẫn cho bài xanh.
+        $this->assertSame(1, $phieu->items()->count());
 
         $this->assertSame($ncc->id, $phieu->supplier_id);
         $this->assertSame('Vựa tên cũ', $phieu->supplier);
@@ -202,7 +206,7 @@ class NhaCungCapTest extends TestCase
 
         $this->actingAs($this->admin())->post('/admin/nhap-kho', [
             'received_at' => now()->toDateString(),
-            'items' => [['product_id' => $sp->id, 'quantity' => 1, 'unit_cost' => 1000]],
+            'items' => [['mat_hang' => (string) $sp->id, 'quantity' => 1, 'unit_cost' => 1000]],
         ])->assertSessionHasNoErrors()->assertRedirect();
 
         $this->assertNull(StockReceipt::firstOrFail()->supplier_id);
@@ -216,7 +220,7 @@ class NhaCungCapTest extends TestCase
         $this->actingAs($this->admin())->post('/admin/nhap-kho', [
             'supplier_id' => 999999,
             'received_at' => now()->toDateString(),
-            'items' => [['product_id' => $sp->id, 'quantity' => 1, 'unit_cost' => 1000]],
+            'items' => [['mat_hang' => (string) $sp->id, 'quantity' => 1, 'unit_cost' => 1000]],
         ])->assertSessionHasErrors('supplier_id');
 
         $this->assertSame(0, StockReceipt::count());

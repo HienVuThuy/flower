@@ -112,6 +112,19 @@ class SupplierController extends Controller
             'note' => 'ghi chú',
         ]);
 
+        /*
+         * LỚP THỨ HAI, CÓ CHỦ Ý — và đã kiểm là nó đang là lớp thứ hai.
+         *
+         * Middleware `TrimStrings` của Laravel đã cắt khoảng trắng mọi ô
+         * chữ trước khi tới đây; phép đột biến bỏ dòng này đi mà bài kiểm
+         * thử vẫn xanh, đúng như vậy.
+         *
+         * Vẫn giữ: quy tắc "không hai dòng cùng một tên" đứng hay đổ hoàn
+         * toàn dựa vào việc tên đã được cắt. Để nó phụ thuộc vào một
+         * middleware toàn cục mà chỗ này không nói gì là đặt một quy tắc
+         * quan trọng lên một thứ ai cũng có thể tắt mà không biết mình
+         * vừa làm gì.
+         */
         $data['name'] = trim($data['name']);
 
         /*

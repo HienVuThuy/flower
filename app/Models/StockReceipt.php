@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\StockReceiptKind;
 use App\Enums\StockReceiptStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -39,6 +40,7 @@ class StockReceipt extends Model
     {
         return [
             'received_at' => 'date',
+            'kind' => StockReceiptKind::class,
             'status' => StockReceiptStatus::class,
             'posted_at' => 'datetime',
         ];
@@ -72,6 +74,11 @@ class StockReceipt extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function laTonDauKy(): bool
+    {
+        return $this->kind === StockReceiptKind::TonDauKy;
     }
 
     public function isPosted(): bool

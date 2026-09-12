@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\PricingAdvisorController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\OpeningStockController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Api\SearchSuggestionController;
 use App\Http\Controllers\Auth\AuthController;
@@ -1008,6 +1009,21 @@ Route::prefix('admin')
          * KHÔNG có destroy: phiếu nhập cũ trỏ tới đây, xoá là mất dấu vết
          * những lần đã mua. Ngừng làm ăn thì tắt `is_active`.
          */
+        /*
+         * TỒN ĐẦU KỲ — khai giá vốn cho hàng đã có sẵn trên kệ.
+         *
+         * Chỉ có create + store: đây là việc làm một lần, và kết quả là
+         * một phiếu nhập bình thường (loại `ton_dau_ky`) nên xem và ghi
+         * sổ đi theo đường của phiếu nhập.
+         */
+        Route::get('ton-dau-ky', [OpeningStockController::class, 'create'])
+            ->middleware('quyen:kho')
+            ->name('opening-stock.create');
+
+        Route::post('ton-dau-ky', [OpeningStockController::class, 'store'])
+            ->middleware(['quyen:kho', 'throttle:10,1'])
+            ->name('opening-stock.store');
+
         Route::get('nha-cung-cap', [SupplierController::class, 'index'])
             ->middleware('quyen:kho')
             ->name('suppliers.index');
