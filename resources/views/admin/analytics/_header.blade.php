@@ -2,7 +2,7 @@
     ĐẦU TRANG CHUNG của mọi trang con Phân tích: tiêu đề, ô chọn kỳ, nút xuất,
     và thanh tab.
     ============================================================
-    Biến cần có: $tieuDe, $moTa, $period, $periods.
+    Biến cần có: $tieuDe, $moTa, $ky, $period, $periods.
 
     MỘT BẢN, không phải năm bản. Năm trang tự dựng ô chọn kỳ thì chỉ cần một
     trang quên `(string) $value` là nút kỳ đang chọn không được tô đậm — lỗi
@@ -30,16 +30,11 @@
         <p class="admin-page-subtitle mb-0">{{ $moTa }}</p>
     </div>
 
-    <div class="d-flex flex-wrap gap-2">
-        @foreach($periods as $value => $label)
-            <a data-admin-link href="{{ route($trangNay, ['ky' => $value]) }}"
-               class="btn btn-sm {{ $period === (string) $value ? 'btn-primary-brand' : 'btn-outline-admin' }}">
-                {{ $label }}
-            </a>
-        @endforeach
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <x-admin.chon-ky :ky="$ky" :periods="$periods" :route="$trangNay" />
 
         {{-- Xuất theo ĐÚNG kỳ đang xem: tệp tải về phải khớp màn hình. --}}
-        <a data-admin-link href="{{ route('admin.analytics.export-form', ['ky' => $period]) }}"
+        <a data-admin-link href="{{ route('admin.analytics.export-form', $ky->thamSo()) }}"
            class="btn btn-sm btn-outline-admin">
             Xuất dữ liệu…
         </a>
@@ -48,7 +43,7 @@
 
 <nav class="analytics-tabs mb-4" aria-label="Các trang phân tích">
     @foreach($cacTab as $ten => $nhan)
-        <a data-admin-link href="{{ route($ten, ['ky' => $period]) }}"
+        <a data-admin-link href="{{ route($ten, $ky->thamSo()) }}"
            class="analytics-tabs__tab {{ $trangNay === $ten ? 'is-active' : '' }}"
            @if($trangNay === $ten) aria-current="page" @endif>
             {{ $nhan }}

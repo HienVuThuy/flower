@@ -24,6 +24,7 @@ import { initAdminNav } from './admin/nav';
 import { initExportPicker } from './admin/export-picker';
 import { initReceiptLines } from './admin/receipt-lines';
 import { initStockLock } from './admin/stock-lock';
+import { initChonKy } from './admin/chon-ky';
 import { initProductBlocks } from './admin/product-blocks';
 import { initVideoEmbed } from './components/video-embed';
 
@@ -76,6 +77,7 @@ export function bootUi() {
     initExportPicker();
     initReceiptLines();
     initStockLock();
+    initChonKy();
     initProductBlocks();
     initVideoEmbed();
 }

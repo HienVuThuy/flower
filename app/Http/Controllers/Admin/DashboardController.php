@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Admin\WorkQueue;
 use App\Services\Analytics\AnalyticsService;
+use App\Services\Analytics\ChonKy;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -44,9 +45,10 @@ class DashboardController extends Controller
 
     public function index(Request $request): View
     {
-        $period = AnalyticsService::hopLeKy($request->query('ky'));
+        $ky = ChonKy::tuRequest($request);
+        $period = $ky->ma;
 
-        $this->analytics->forPeriod($period);
+        $ky->apDung($this->analytics);
 
         /*
          * ĐỌC SỐ CỦA KỲ NÀY TRƯỚC.
@@ -72,11 +74,12 @@ class DashboardController extends Controller
             $previous = $this->analytics->orderStats();
         }
 
-        $this->analytics->forPeriod($period);
+        $ky->apDung($this->analytics);
 
         return view('admin.dashboard', [
             'todo' => $this->queue->items(),
 
+            'ky' => $ky,
             'period' => $period,
             'periods' => AnalyticsService::PERIODS,
 

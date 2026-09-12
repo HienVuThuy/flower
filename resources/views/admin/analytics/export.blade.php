@@ -86,12 +86,41 @@
                     @foreach($periods as $value => $label)
                         <label class="export-item">
                             <input type="radio" class="form-check-input" name="ky"
-                                   value="{{ $value }}" @checked($period === (string) $value)>
+                                   value="{{ $value }}" @checked(! $ky->laTuyChon() && $ky->ma === (string) $value)>
                             <span class="export-item__body">
                                 <span class="export-item__name">{{ $label }}</span>
                             </span>
                         </label>
                     @endforeach
+
+                    {{--
+                        KHOẢNG TỰ CHỌN đi cùng hai ô ngày ngay bên dưới.
+
+                        Không giấu nó sau một nút "nâng cao": người vào đây
+                        từ trang Phân tích đang xem một khoảng cụ thể thì
+                        tệp tải về phải khớp đúng khoảng đó, và họ cần thấy
+                        ngay là nó đang được giữ.
+                    --}}
+                    <label class="export-item">
+                        <input type="radio" class="form-check-input" name="ky"
+                               value="{{ \App\Services\Analytics\ChonKy::TUY_CHON }}"
+                               @checked($ky->laTuyChon())>
+                        <span class="export-item__body">
+                            <span class="export-item__name">Khoảng ngày tự chọn</span>
+                        </span>
+                    </label>
+
+                    <div class="export-khoang">
+                        <label class="visually-hidden" for="xuat-tu">Từ ngày</label>
+                        <input type="date" id="xuat-tu" name="tu" class="form-control form-control-sm"
+                               value="{{ $ky->oTu() }}" max="{{ \App\Services\Time\Gio::choONgay(now()) }}">
+
+                        <span aria-hidden="true">–</span>
+
+                        <label class="visually-hidden" for="xuat-den">Đến ngày</label>
+                        <input type="date" id="xuat-den" name="den" class="form-control form-control-sm"
+                               value="{{ $ky->oDen() }}" max="{{ \App\Services\Time\Gio::choONgay(now()) }}">
+                    </div>
                 </div>
 
                 <h2 class="h6 fw-bold mb-3">Định dạng</h2>

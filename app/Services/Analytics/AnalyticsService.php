@@ -73,6 +73,20 @@ class AnalyticsService
     }
 
     /**
+     * Khoảng ngày do admin tự chọn.
+     *
+     * `$den` là mốc MỞ — nửa đêm của ngày kế tiếp ngày cuối. Xem ChonKy;
+     * mọi nơi áp khoảng đều so bằng `<` ở đầu này.
+     */
+    public function forRange(Carbon $tu, Carbon $den): static
+    {
+        $this->since = $tu;
+        $this->until = $den;
+
+        return $this;
+    }
+
+    /**
      * Chuyển sang KỲ TRƯỚC, dài đúng bằng kỳ hiện tại.
      * ============================================================
      * "30 ngày qua" thành "30 ngày trước đó nữa", tức là từ ngày thứ 60
@@ -93,6 +107,23 @@ class AnalyticsService
      */
     public function forPreviousPeriod(string $period): bool
     {
+        /*
+         * KHOẢNG TỰ CHỌN có mốc kết thúc riêng, không kéo tới "bây giờ".
+         *
+         * Dùng chung công thức `$start -> now()` cho nó là sai: chọn
+         * 01/09–07/09 rồi so với "kỳ trước" thì kỳ trước phải là
+         * 25/08–31/08, chứ không phải một khoảng dài bằng khoảng từ 01/09
+         * tới hôm nay. Kỳ càng cũ thì sai càng nhiều, và không có gì báo.
+         */
+        if ($this->since !== null && $this->until !== null) {
+            $dai = (int) $this->since->diffInSeconds($this->until);
+
+            $this->until = $this->since->copy();
+            $this->since = $this->since->copy()->subSeconds($dai);
+
+            return true;
+        }
+
         $start = self::startOf($period);
 
         if ($start === null) {

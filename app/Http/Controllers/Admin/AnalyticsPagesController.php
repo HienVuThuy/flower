@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Services\Analytics\AbandonedCarts;
 use App\Services\Analytics\AnalyticsService;
+use App\Services\Analytics\ChonKy;
 use App\Services\Analytics\ProfitReport;
 use App\Services\Analytics\ReviewReport;
 use App\Services\Analytics\SalesBreakdown;
@@ -75,18 +76,19 @@ class AnalyticsPagesController extends Controller
         ]);
     }
 
-    /** @return array{0: string, 1: \App\Services\Analytics\KhoangThoiGian} */
+    /** @return array{0: ChonKy, 1: \App\Services\Analytics\KhoangThoiGian} */
     private function ky(Request $request): array
     {
-        $ky = AnalyticsService::hopLeKy($request->query('ky'));
+        $ky = ChonKy::tuRequest($request);
 
-        return [$ky, $this->analytics->forPeriod($ky)->khoang()];
+        return [$ky, $ky->apDung($this->analytics)->khoang()];
     }
 
-    private function chung(string $ky): array
+    private function chung(ChonKy $ky): array
     {
         return [
-            'period' => $ky,
+            'ky' => $ky,
+            'period' => $ky->ma,
             'periods' => AnalyticsService::PERIODS,
         ];
     }

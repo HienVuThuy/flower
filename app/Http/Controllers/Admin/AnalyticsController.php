@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\UserEventType;
 use App\Http\Controllers\Controller;
 use App\Services\Analytics\AnalyticsService;
+use App\Services\Analytics\ChonKy;
 use App\Services\Analytics\ReportExporter;
 use App\Services\Analytics\ReportSections;
 use App\Services\Shipping\GHNService;
@@ -29,9 +30,10 @@ class AnalyticsController extends Controller
 
     public function index(Request $request, GHNService $ghn): View
     {
-        $period = $this->period($request);
+        $ky = ChonKy::tuRequest($request);
+        $period = $ky->ma;
 
-        $this->analytics->forPeriod($period);
+        $ky->apDung($this->analytics);
 
         /*
          * SO SÁNH VỚI KỲ TRƯỚC.
@@ -53,10 +55,11 @@ class AnalyticsController extends Controller
             ];
         }
 
-        $this->analytics->forPeriod($period);
+        $ky->apDung($this->analytics);
 
         return view('admin.analytics.index', [
             'previous' => $previous,
+            'ky' => $ky,
             'period' => $period,
             'periods' => AnalyticsService::PERIODS,
 
@@ -113,8 +116,11 @@ class AnalyticsController extends Controller
      */
     public function exportForm(Request $request): View
     {
+        $ky = ChonKy::tuRequest($request);
+
         return view('admin.analytics.export', [
-            'period' => $this->period($request),
+            'ky' => $ky,
+            'period' => $ky->ma,
             'periods' => AnalyticsService::PERIODS,
             'sections' => ReportSections::danhSach(),
             'formats' => ReportExporter::DINH_DANG,
@@ -129,8 +135,8 @@ class AnalyticsController extends Controller
      */
     public function export(Request $request, ReportSections $sections, ReportExporter $exporter): Response
     {
-        $period = $this->period($request);
-        $this->analytics->forPeriod($period);
+        $ky = ChonKy::tuRequest($request);
+        $ky->apDung($this->analytics);
 
         $dinhDang = (string) $request->input('dinh_dang', 'csv');
 
@@ -157,7 +163,7 @@ class AnalyticsController extends Controller
         return $exporter->xuat(
             $dinhDang,
             $sections->nhieuBang($chon),
-            AnalyticsService::PERIODS[$period],
+            $ky->nhan(),
         );
     }
 

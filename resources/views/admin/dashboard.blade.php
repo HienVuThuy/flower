@@ -20,14 +20,7 @@
         `href` trần, nên đây là màn hình quản trị DUY NHẤT còn nạp lại
         toàn trang mỗi lần bấm.
     --}}
-    <div class="d-flex flex-wrap gap-2">
-        @foreach($periods as $value => $label)
-            <a data-admin-link href="{{ route('admin.dashboard', ['ky' => $value]) }}"
-               class="btn btn-sm {{ $period === (string) $value ? 'btn-primary-brand' : 'btn-outline-admin' }}">
-                {{ $label }}
-            </a>
-        @endforeach
-    </div>
+    <x-admin.chon-ky :ky="$ky" :periods="$periods" route="admin.dashboard" />
 </div>
 
 {{--
@@ -74,7 +67,7 @@
     Phân tích gọi. Trang này không tự tính lại gì cả, nên hai màn hình
     không thể nói hai con số khác nhau cho cùng một câu hỏi.
 --}}
-<h2 class="admin-section-title">2. {{ $periods[$period] }}</h2>
+<h2 class="admin-section-title">2. {{ $ky->nhan() }}</h2>
 
 <div class="row g-3 mb-4">
 

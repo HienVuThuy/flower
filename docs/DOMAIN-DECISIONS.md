@@ -7295,3 +7295,51 @@ mọi trang quản trị đều trả 403 vẫn xanh"): **mọi bài kiểm th�
 
 Giá: bài quét từ ~2 giây lên ~80 giây. Đắt, nhưng nó mới thật sự mở các
 trang sửa.
+
+---
+
+## QĐ-248. Khoảng ngày tự chọn, và kỳ trước của nó
+
+Trước bản này chỉ có ba mốc dựng sẵn (7 ngày, 30 ngày, toàn bộ). Muốn
+xem "tháng 8" hay "tuần lễ khuyến mại 12–18/09" thì không có cách nào —
+trong khi đó chính là câu hỏi hay gặp nhất sau mỗi đợt bán.
+
+**`ChonKy` là một lớp, không phải ba biến truyền tay.** Kỳ từng chỉ là
+một chuỗi nên truyền đi đâu cũng gọn. Thêm khoảng tự chọn là thành ba
+giá trị phải đi cùng nhau, và chỉ cần MỘT liên kết quên mang `tu`/`den`
+là bấm sang tab khác lặng lẽ nhảy về "30 ngày qua" trong khi tiêu đề vẫn
+ghi khoảng cũ. Gom lại thì mọi liên kết gọi `thamSo()` và không thể quên.
+
+**Mốc kết thúc là mốc MỞ** — nửa đêm của ngày kế tiếp, không phải
+23:59:59. Mọi nơi áp khoảng đều so bằng `<` ở đầu này ([QĐ-204]); để
+23:59:59 là mất đơn đặt trong giây cuối của ngày cuối, lặng lẽ, đúng vào
+ngày người xem quan tâm nhất. Nhãn và ô nhập thì trừ lại một ngày để
+hiện ngày người dùng đã chọn.
+
+**Ngày là ngày trên lịch Việt Nam** ([QĐ-245]). Đơn đặt 00:30 sáng 08/09
+giờ Hà Nội lưu là 17:30 ngày 07/09 UTC — cắt theo lịch UTC là đếm nó
+sang hôm trước.
+
+**`2026-02-31` phải bị từ chối.** `createFromFormat('Y-m-d', ...)` KHÔNG
+báo lỗi với ngày đó — nó dồn sang 03/03. Người gõ nhầm sẽ nhận số liệu
+của một khoảng khác hẳn, mà tiêu đề lại ghi 03/03 nên trông như chính họ
+đã chọn thế. Nên có bước dựng xong rồi kiểm lại chuỗi.
+
+**Kỳ trước của một khoảng dài đúng bằng khoảng đó.** Công thức cũ lấy độ
+dài từ mốc bắt đầu tới *bây giờ* — đúng với "7 ngày qua" nhưng sai hẳn
+với một khoảng đã kết thúc, và kỳ càng cũ thì sai càng nhiều.
+
+**Chọn ngược thì đổi chỗ, không báo lỗi.** "Từ 12/09 đến 01/09" chỉ có
+một cách hiểu hợp lý; bắt bấm lại chỉ để nói điều đã nói rõ là phiền vô
+ích.
+
+**Dấu hiệu "đang chọn" nằm trên cả nhóm ô ngày, không trên nút "Xem".**
+Nút đó bị CSS ẩn đi khi trang có JavaScript (lúc ấy đổi ngày là tự gửi).
+Đặt dấu hiệu ở đó thì khi đang xem khoảng tự chọn, ba mốc dựng sẵn đều
+nhạt và không có gì sáng lên — người xem không biết mình đang ở đâu. Lỗi
+này do chính bản đầu của tính năng tạo ra, phát hiện khi đo trên trình
+duyệt.
+
+Nút "Xem" vẫn nằm trong HTML và vẫn chạy khi không có JavaScript. Ẩn một
+nút mà không thay được việc nó làm là bỏ rơi người không chạy được
+script.
