@@ -1361,3 +1361,43 @@ html.has-js .chon-ky__xem {
 html.has-js .tuoi-so-lieu__tu-dong {
     display: flex;
 }
+
+/* ============================================================
+   ĐẦU TRANG PHÂN TÍCH — bộ lọc phải giống hệt nhau ở mọi tab
+   ============================================================
+   Lỗi đã sửa: khối lọc nằm chung hàng với tiêu đề nên bị phần chữ ép.
+   Mô tả mỗi tab một độ dài -> khối lọc rộng 503..592px tuỳ tab, và các
+   nút xuống dòng khác nhau. Chuyển tab thấy bộ lọc "nhảy".
+
+   Cách khoá: phần chữ được phép co (min-width: 0 là bắt buộc — không có
+   nó thì mục flex không co xuống dưới kích thước nội dung), còn khối lọc
+   thì KHÔNG co, và xuống hẳn một dòng khi hết chỗ. */
+.analytics-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.analytics-header__chu {
+    flex: 1 1 18rem;
+    min-width: 0;
+}
+
+.analytics-header__loc {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+
+    /* Không co: đây chính là thứ đã gây lỗi. */
+    flex: 0 0 auto;
+}
+
+/* Khoảng ngày thật của kỳ — xuống dòng riêng, không chen vào hàng nút. */
+.chon-ky__khoang-chu {
+    flex: 1 0 100%;
+    font-size: .8125rem;
+    color: var(--admin-ink-muted);
+}

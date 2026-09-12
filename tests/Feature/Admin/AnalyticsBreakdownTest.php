@@ -174,14 +174,57 @@ class AnalyticsBreakdownTest extends TestCase
          */
         Carbon::setTestNow(Carbon::parse('2026-09-12 05:00:00', 'UTC')); // 12h trưa 12/09 giờ VN
 
-        // 00:30 ngày 05/09 giờ VN = 17:30 UTC ngày 04/09 — thuộc kỳ.
-        $this->don(['luc' => Carbon::parse('2026-09-04 17:30:00', 'UTC'), 'tien' => '100000.00']);
-        // 23:30 ngày 04/09 giờ VN = 16:30 UTC ngày 04/09 — ngoài kỳ.
-        $this->don(['luc' => Carbon::parse('2026-09-04 16:30:00', 'UTC'), 'tien' => '999000.00']);
+        // 00:30 ngày 06/09 giờ VN = 17:30 UTC ngày 05/09 — thuộc kỳ.
+        $this->don(['luc' => Carbon::parse('2026-09-05 17:30:00', 'UTC'), 'tien' => '100000.00']);
+        // 23:30 ngày 05/09 giờ VN = 16:30 UTC ngày 05/09 — ngoài kỳ.
+        $this->don(['luc' => Carbon::parse('2026-09-05 16:30:00', 'UTC'), 'tien' => '999000.00']);
 
         $s = app(AnalyticsService::class)->forPeriod('7')->orderStats();
 
         $this->assertSame(100000.0, $s['revenue']);
+    }
+
+    #[Test]
+    public function bay_ngay_qua_dung_la_BAY_ngay_chu_khong_phai_tam(): void
+    {
+        /*
+         * LỖI ĐÃ SỬA, và nó im lặng suốt.
+         *
+         * Trước đây mốc đầu kỳ là nửa đêm của 7 ngày TRƯỚC, nên cửa sổ phủ
+         * 8 ngày lịch: đo được 06/09 00:00 đến 13/09 01:22 trong khi nhãn
+         * ghi "7 ngày qua". Không trang nào báo, mà mọi so sánh "kỳ này với
+         * kỳ trước" đều dịch theo — kỳ trước cũng dài 8 ngày, nên hai con
+         * số trông vẫn hợp lý.
+         *
+         * Hôm nay là một trong bảy ngày đó, nên mốc đầu là nửa đêm của
+         * ngày thứ 7 tính ngược lại, tức hôm nay trừ 6.
+         */
+        Carbon::setTestNow(Carbon::parse('2026-09-12 05:00:00', 'UTC')); // 12h trưa 12/09 giờ VN
+
+        foreach ([7 => '2026-09-06', 30 => '2026-08-14'] as $soNgay => $ngayDau) {
+            $kh = app(AnalyticsService::class)->forPeriod((string) $soNgay)->khoang();
+
+            $tu = \App\Services\Time\Gio::hien($kh->tu);
+
+            $this->assertSame($ngayDau, $tu->toDateString(), 'Sai ngày đầu của kỳ ' . $soNgay);
+            $this->assertSame('00:00:00', $tu->format('H:i:s'), 'Phải bắt đầu từ nửa đêm giờ Việt Nam');
+
+            /*
+             * Đếm theo NGÀY LỊCH, không theo số giờ chênh nhau.
+             *
+             * `diffInDays` trên hai mốc có giờ khác nhau trả về số lẻ
+             * (6,99…), cộng 1 thành 7,99 — con số đó không trả lời được
+             * câu "kỳ này gồm mấy ngày". Cắt cả hai về đầu ngày trước.
+             */
+            $soNgayPhu = (int) $tu->copy()->startOfDay()
+                ->diffInDays(\App\Services\Time\Gio::hien(now())->startOfDay()) + 1;
+
+            $this->assertSame(
+                $soNgay,
+                $soNgayPhu,
+                'Kỳ "' . $soNgay . ' ngày qua" phải phủ đúng ' . $soNgay . ' ngày lịch',
+            );
+        }
     }
 
     /* ================= 2. DANH MỤC ================= */

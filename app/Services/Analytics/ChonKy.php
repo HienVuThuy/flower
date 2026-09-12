@@ -118,6 +118,42 @@ final class ChonKy
     }
 
     /**
+     * Khoảng ngày THẬT của kỳ này, viết cho người đọc.
+     *
+     * ============================================================
+     * VÌ SAO PHẢI HIỆN RA.
+     *
+     * "30 ngày qua" không nói được nó bắt đầu từ ngày nào, kết thúc lúc
+     * nào, có tính hôm nay không. Người đọc báo cáo phải đoán — và người
+     * đã từng hỏi câu đó sẽ hỏi lại vào lần sau.
+     *
+     * Hiện ngày thật thì câu hỏi biến mất, và nếu mốc có sai thì sai đó
+     * nằm ngay trên màn hình chứ không nấp trong mã.
+     *
+     * Trả null với "Toàn bộ": không có mốc bắt đầu nào để nói.
+     */
+    public function khoangHienThi(): ?string
+    {
+        if ($this->laTuyChon()) {
+            return $this->nhan();
+        }
+
+        $soNgay = match ($this->ma) {
+            '7' => 7,
+            '30' => 30,
+            default => null,
+        };
+
+        if ($soNgay === null) {
+            return null;
+        }
+
+        $tu = now(Gio::mui())->subDays($soNgay - 1)->startOfDay();
+
+        return $tu->format('d/m/Y') . ' – ' . now(Gio::mui())->format('d/m/Y H:i');
+    }
+
+    /**
      * Tham số URL để mọi liên kết mang kỳ này đi theo.
      *
      * @return array<string, string>

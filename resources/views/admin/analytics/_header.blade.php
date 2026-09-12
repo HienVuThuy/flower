@@ -24,13 +24,24 @@
     $trangNay = request()->route()?->getName();
 @endphp
 
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-3">
-    <div>
+{{--
+    KHỐI LỌC KHÔNG ĐƯỢC CO GIÃN THEO ĐỘ DÀI TIÊU ĐỀ.
+
+    Lỗi đã sửa: tiêu đề, mô tả và khối lọc nằm chung một hàng flex, mà mô
+    tả mỗi tab một độ dài. Đo được khối lọc rộng 503 / 513 / 521 / 528 /
+    592px ở năm tab — trong khi hai phần bên trong nó luôn 319 và 360px.
+    Nghĩa là chỉ riêng phần chữ bên trái đã đủ làm các nút xuống dòng khác
+    nhau, và chuyển tab thấy bộ lọc "nhảy".
+
+    `.analytics-header` khoá lại: phần chữ co được, khối lọc thì không.
+--}}
+<div class="analytics-header mb-3">
+    <div class="analytics-header__chu">
         <h1 class="admin-page-title">{{ $tieuDe }}</h1>
         <p class="admin-page-subtitle mb-0">{{ $moTa }}</p>
     </div>
 
-    <div class="d-flex flex-wrap align-items-center gap-2">
+    <div class="analytics-header__loc">
         <x-admin.tuoi-so-lieu />
 
         <x-admin.chon-ky :ky="$ky" :periods="$periods" :route="$trangNay" />

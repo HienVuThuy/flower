@@ -60,4 +60,16 @@
         </button>
     </form>
 
+
+    {{--
+        NÓI RÕ KỲ NÀY LÀ TỪ NGÀY NÀO TỚI NGÀY NÀO.
+
+        "30 ngày qua" không cho biết bắt đầu hôm nào, có tính hôm nay
+        không. Hiện ngày thật thì không ai phải đoán, và nếu mốc sai thì
+        sai đó nằm ngay trên màn hình.
+    --}}
+    @if($ky->khoangHienThi())
+        <span class="chon-ky__khoang-chu">{{ $ky->khoangHienThi() }}</span>
+    @endif
+
 </div>

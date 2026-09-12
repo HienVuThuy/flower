@@ -164,9 +164,19 @@ class AnalyticsService
      */
     private static function startOf(string $period): ?Carbon
     {
+        /*
+         * "7 NGÀY QUA" LÀ 7 NGÀY, TÍNH CẢ HÔM NAY.
+         *
+         * Lỗi đã sửa: trước đây lấy nửa đêm của 7 ngày trước, nên cửa sổ
+         * phủ 8 ngày lịch — đo được 06/09 00:00 đến 13/09 01:22. Nhãn nói
+         * 7, số liệu là 8. Lệch âm thầm: không trang nào báo, mà mọi so
+         * sánh "kỳ này với kỳ trước" đều dịch theo.
+         *
+         * Trừ đi 1 vì hôm nay đã là một trong bảy ngày đó.
+         */
         return match ($period) {
-            '7' => KhoangThoiGian::nuaDemTruoc(7),
-            '30' => KhoangThoiGian::nuaDemTruoc(30),
+            '7' => KhoangThoiGian::nuaDemTruoc(7 - 1),
+            '30' => KhoangThoiGian::nuaDemTruoc(30 - 1),
             default => null,
         };
     }
