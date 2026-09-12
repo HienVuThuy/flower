@@ -90,6 +90,8 @@ class RouteSmokeTest extends TestCase
      */
     private const CHUA_PHU = [
         'admin/bulk-inquiries/{bulkInquiry}',
+        // Phiếu đổi hàng cần một đơn ĐÃ GIAO cùng dòng hàng — xem ExchangeTest.
+        'admin/doi-hang/{exchange}',
         'admin/kiem-ke/{stockCount}',
         'admin/nhap-kho/{stockReceipt}',
         'admin/orders/{order}',

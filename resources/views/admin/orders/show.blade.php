@@ -303,6 +303,8 @@
 
             @include('admin.orders._refunds')
 
+            @include('admin.orders._doi-hang')
+
             {{--
                 GHI CHÚ NỘI BỘ — chỉ cửa hàng đọc, khách không bao giờ thấy.
 

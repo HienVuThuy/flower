@@ -7435,3 +7435,61 @@ bài vẫn đo đúng thứ nó nói là đang đo.
 Đây là lý do mỗi phép khẳng định "KHÔNG chứa" đều phải được thử bằng đột
 biến ít nhất một lần: một phép khẳng định phủ định sai chuỗi thì **luôn
 luôn đúng**, và không có cách nào nhận ra bằng cách đọc.
+
+---
+
+## QĐ-252. Đổi hàng: chứng từ riêng, không sửa lại đơn cũ
+
+Chính sách do tôi đề xuất và chủ cửa hàng đồng ý giao quyền quyết định.
+Ba con số nằm trong hằng số và trong enum lý do, không rải rác trong
+controller — đổi chính sách là sửa một chỗ:
+
+1. **Hạn 7 ngày** kể từ khi đơn chuyển sang "đã giao".
+2. **Hoa tươi không đổi** (`product_type = flower`), cả chiều trả về lẫn
+   chiều gửi đi. Hàng tươi sống quay về là hàng bỏ đi — nhận đổi nghĩa là
+   cửa hàng mất trắng món đó. Cây cảnh, chậu, vật tư thì đổi được.
+3. **Lỗi cửa hàng** (giao sai, hàng hỏng) thì cửa hàng chịu phí ship
+   chiều đổi; **khách đổi ý** thì khách trả, và mức phí lấy **đúng phí
+   ship đã thu trên đơn gốc** chứ không nghĩ ra số mới.
+
+**Là chứng từ riêng, không phải "sửa lại đơn cũ".** Đơn hàng là bản chụp
+của một lần mua đã xảy ra và đã xuất hoá đơn. Sửa dòng hàng trên đơn cũ
+là viết lại lịch sử: hoá đơn đã gửi khách nói một đằng, cơ sở dữ liệu nói
+một nẻo. Phiếu không sửa và không xoá được — sai thì huỷ và lập phiếu
+khác, y như hoàn tiền ([QĐ-224]).
+
+**GIÁ: hàng trả theo giá ĐÃ TRẢ, hàng mới theo giá HÔM NAY.** Đây là chỗ
+mất tiền thật. Khách mua chậu 500.000₫ lúc đang giảm còn 350.000₫; tính
+hàng trả theo giá niêm yết là trả cho khách 150.000₫ họ chưa từng bỏ ra.
+Chiều trả về luôn lấy `unit_price` trên dòng đơn. Chiều gửi đi lấy giá
+cuối từ `PricingService` — đọc thẳng `base_price` là bỏ qua mọi chương
+trình đang chạy.
+
+**TIỀN CHỈ CÓ MỘT ĐƯỜNG RA.** Cửa hàng nợ lại thì phiếu đổi **không tự
+trả** — nó lập một chứng từ hoàn tiền và trỏ sang đó. Hoàn tiền đã có sổ
+riêng, có bước xác nhận tiền thật sự đi, và đã được trừ khỏi doanh thu
+thuần. Lý do ghi là **"khác"** chứ không phải "khách trả hàng": lý do sau
+bắt phiếu hoàn tiền tự cộng lại kho, mà hàng đã được phiếu đổi xử lý rồi
+— kho sẽ được cộng **hai lần**.
+
+**KHO: giữ hàng mới ngay, nhận hàng cũ sau.** Không giữ thì giữa lúc hẹn
+với khách và lúc hàng cũ về, món đó đã bán cho người khác. Hàng cũ chỉ
+cộng lại kho khi ĐÃ NHẬN và được đánh dấu còn bán được ([QĐ-226]). Huỷ
+phiếu thì nhả hàng đang giữ; huỷ **sau khi đã nhận** thì còn phải trừ lại
+số đã cộng vào — bỏ qua bước này thì kho thừa, và sai lệch chỉ lộ ra ở
+lần kiểm kê sau.
+
+**"Còn đổi được" trừ CẢ phần đã trả về qua hoàn tiền.** Hai đường đều lấy
+hàng ra khỏi đơn; đếm riêng thì một dòng 3 cái bị lấy ra 4.
+
+**Tiền khách bù được cộng vào doanh thu thuần**, tại đúng một nơi định
+nghĩa doanh thu ([QĐ-218]). Khoản đó không nằm trong `grand_total` của
+đơn — đơn đã chốt từ trước — nên bỏ qua là cửa hàng thu tiền thật mà sổ
+không thấy. Chiều ngược lại KHÔNG cộng: chứng từ hoàn tiền đã trừ rồi,
+cộng nữa là trừ hai lần.
+
+Bộ lọc "chỉ phiếu đã hoàn tất mới tính" **sống sót một phép đột biến** —
+hôm nay `da_thu` chỉ được đặt đúng lúc hoàn tất nên phiếu chưa xong luôn
+bằng 0. Nó đúng nhưng chưa từng được đo, và sẽ gánh việc thật vào ngày có
+người thêm "thu trước một phần". Đã thêm bài ghi thẳng trạng thái vào
+bảng để ghim luật.

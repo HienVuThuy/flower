@@ -402,6 +402,11 @@ class Order extends Model
             ->orderBy('id');
     }
 
+    public function exchanges(): HasMany
+    {
+        return $this->hasMany(Exchange::class)->latest('id');
+    }
+
     public function getRouteKeyName(): string
     {
         return 'order_number';

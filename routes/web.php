@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\RefundController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\ExchangeController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
@@ -1143,6 +1144,39 @@ Route::prefix('admin')
                     ->middleware('throttle:20,1')
                     ->name('refunds.store');
             });
+
+        /*
+         * =========================
+         * ĐỔI HÀNG
+         * =========================
+         * Lập phiếu nằm trong trang đơn (POST vào đường dẫn của đơn); các
+         * bước sau đi theo phiếu. Không dùng Route::resource: phiếu đổi
+         * KHÔNG sửa và KHÔNG xoá được — nó là chứng từ, sai thì huỷ và lập
+         * phiếu khác, y như hoàn tiền.
+         */
+        Route::post('orders/{order}/doi-hang', [ExchangeController::class, 'store'])
+            ->middleware(['quyen:don-hang', 'throttle:20,1'])
+            ->name('exchanges.store');
+
+        Route::get('doi-hang', [ExchangeController::class, 'index'])
+            ->middleware('quyen:don-hang')
+            ->name('exchanges.index');
+
+        Route::get('doi-hang/{exchange}', [ExchangeController::class, 'show'])
+            ->middleware('quyen:don-hang')
+            ->name('exchanges.show');
+
+        Route::patch('doi-hang/{exchange}/nhan-hang', [ExchangeController::class, 'nhanHang'])
+            ->middleware(['quyen:don-hang', 'throttle:20,1'])
+            ->name('exchanges.receive');
+
+        Route::patch('doi-hang/{exchange}/hoan-tat', [ExchangeController::class, 'hoanTat'])
+            ->middleware(['quyen:don-hang', 'throttle:20,1'])
+            ->name('exchanges.complete');
+
+        Route::patch('doi-hang/{exchange}/huy', [ExchangeController::class, 'huy'])
+            ->middleware(['quyen:don-hang', 'throttle:20,1'])
+            ->name('exchanges.cancel');
 
         Route::patch('hoan-tien/{refund}/xac-nhan', [RefundController::class, 'confirm'])
             ->middleware('quyen:tai-chinh')

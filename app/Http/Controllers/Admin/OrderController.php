@@ -133,9 +133,9 @@ class OrderController extends Controller
         ]);
     }
 
-    public function show(Order $order, RefundService $refunds): View
+    public function show(Order $order, RefundService $refunds, \App\Services\Exchange\ExchangeService $doiHang): View
     {
-        $order->load('items', 'user', 'statusEvents.changedBy', 'invoice', 'transactions', 'refunds.items.orderItem', 'refunds.createdBy');
+        $order->load('items.product', 'user', 'statusEvents.changedBy', 'invoice', 'transactions', 'refunds.items.orderItem', 'refunds.createdBy', 'exchanges.items');
 
         return view('admin.orders.show', [
             // statusEvents.changedBy nạp sẵn: dòng thời gian hiện tên người
@@ -147,6 +147,33 @@ class OrderController extends Controller
              * các cách hoàn dùng được, và số còn trả về được của từng dòng.
              * Tính sẵn ở đây để view không phải biết luật nào.
              */
+            /*
+             * ĐỔI HÀNG: cùng lối với hoàn tiền — một câu "vì sao không đổi
+             * được" (null nếu được) và số còn đổi được của từng dòng. Luật
+             * nằm trong ExchangeService, view không phải biết.
+             */
+            'exchangeBlocked' => $doiHang->lyDoKhongDoiDuoc($order),
+            'exchangeable' => $order->items->mapWithKeys(fn ($item) => [
+                $item->id => $doiHang->conDoiDuoc($item),
+            ]),
+            'exchangeWhyNot' => $order->items->mapWithKeys(fn ($item) => [
+                $item->id => $doiHang->lyDoDongKhongDoiDuoc($item),
+            ]),
+
+            /*
+             * HÀNG DÙNG ĐỂ ĐỔI — lọc ngay ở đây, không để người lập phiếu
+             * chọn một món rồi mới bị từ chối.
+             *
+             * Hoa tươi không đổi được nên không xuất hiện trong danh sách;
+             * dịch vụ vẫn kiểm lại lần nữa, vì danh sách chỉ là gợi ý còn
+             * dữ liệu gửi lên thì ai cũng sửa được.
+             */
+            'hangDoiDuoc' => \App\Models\Product::query()
+                ->where('status', 'active')
+                ->where('product_type', '!=', \App\Enums\ProductType::Flower->value)
+                ->orderBy('name')
+                ->get(['id', 'name']),
+
             'refundBlocked' => $refunds->lyDoKhongHoanDuoc($order),
             'refundMethods' => $refunds->cachHoan($order),
             'refundReasons' => \App\Enums\RefundReason::choTrangThai($order->status),

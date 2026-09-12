@@ -376,7 +376,7 @@ class AnalyticsService
      * XONG: một lần "chưa rõ kết quả" chưa chắc tiền đã đi.
      *
      * @return array{total: int, completed: int, cancelled: int,
-     *               revenue: float, refunded: float, net_revenue: float,
+     *               revenue: float, refunded: float, bu_doi_hang: float, net_revenue: float,
      *               average: float|null}
      */
     public function orderStats(): array
@@ -393,13 +393,33 @@ class AnalyticsService
             ->whereIn('order_id', (clone $query)->where('status', OrderStatus::Completed)->select('id'))
             ->sum('amount');
 
+        /*
+         * TIỀN KHÁCH BÙ KHI ĐỔI HÀNG LÀ TIỀN VÀO.
+         *
+         * Khách đổi sang món đắt hơn và trả thêm phần chênh. Khoản đó
+         * không nằm trong `grand_total` của đơn — đơn đã chốt từ trước —
+         * nên bỏ qua nó là cửa hàng thu tiền thật mà sổ không thấy.
+         *
+         * Chiều ngược lại (hàng mới rẻ hơn, cửa hàng trả lại) KHÔNG cộng
+         * ở đây: phiếu đổi đã lập một chứng từ hoàn tiền, và `$refunded`
+         * bên trên đã trừ nó rồi. Cộng thêm lần nữa là trừ hai lần.
+         *
+         * Gắn theo ĐƠN GỐC, cùng cách với hoàn tiền: một lần đổi thuộc về
+         * kỳ của đơn đã bán, không phải kỳ của ngày đi đổi.
+         */
+        $buThem = (float) \App\Models\Exchange::query()
+            ->where('status', \App\Enums\ExchangeStatus::HoanTat->value)
+            ->whereIn('order_id', (clone $query)->where('status', OrderStatus::Completed)->select('id'))
+            ->sum('da_thu');
+
         return [
             'total' => $total,
             'completed' => $completed,
             'cancelled' => $cancelled,
             'revenue' => $revenue,
             'refunded' => $refunded,
-            'net_revenue' => $revenue - $refunded,
+            'bu_doi_hang' => $buThem,
+            'net_revenue' => $revenue - $refunded + $buThem,
             // Chia cho 0 là lỗi; chưa có đơn nào giao thì không có giá
             // trị trung bình, và null khác 0 — giao diện hiển thị khác nhau.
             'average' => $completed > 0 ? $revenue / $completed : null,

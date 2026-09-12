@@ -152,6 +152,12 @@
                     <span>Đơn hàng</span>
                 </a>
             @endif
+
+            <a data-admin-link href="{{ route('admin.exchanges.index') }}"
+               class="admin-nav-link {{ request()->routeIs('admin.exchanges.*') ? 'is-active' : '' }}">
+                <x-site.icon name="arrow-repeat" />
+                <span>Đổi hàng</span>
+            </a>
             @endcan
 
             @can('san-pham')
