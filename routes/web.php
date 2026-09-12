@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\CommunityModerationController;
 use App\Http\Controllers\Admin\PricingAdvisorController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Api\SearchSuggestionController;
 use App\Http\Controllers\Auth\AuthController;
@@ -1000,6 +1001,33 @@ Route::prefix('admin')
          * không có route ghi nào: sửa tồn kho vẫn ở trang sản phẩm, nơi
          * có đủ ngữ cảnh để biết mình đang sửa cái gì.
          */
+        /*
+         * =========================
+         * NHÀ CUNG CẤP
+         * =========================
+         * KHÔNG có destroy: phiếu nhập cũ trỏ tới đây, xoá là mất dấu vết
+         * những lần đã mua. Ngừng làm ăn thì tắt `is_active`.
+         */
+        Route::get('nha-cung-cap', [SupplierController::class, 'index'])
+            ->middleware('quyen:kho')
+            ->name('suppliers.index');
+
+        Route::get('nha-cung-cap/them', [SupplierController::class, 'create'])
+            ->middleware('quyen:kho')
+            ->name('suppliers.create');
+
+        Route::post('nha-cung-cap', [SupplierController::class, 'store'])
+            ->middleware(['quyen:kho', 'throttle:30,1'])
+            ->name('suppliers.store');
+
+        Route::get('nha-cung-cap/{supplier}/sua', [SupplierController::class, 'edit'])
+            ->middleware('quyen:kho')
+            ->name('suppliers.edit');
+
+        Route::put('nha-cung-cap/{supplier}', [SupplierController::class, 'update'])
+            ->middleware(['quyen:kho', 'throttle:30,1'])
+            ->name('suppliers.update');
+
         Route::get('ton-kho', [InventoryController::class, 'index'])
             ->middleware('quyen:kho')
             ->name('inventory.index');

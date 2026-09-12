@@ -20,6 +20,7 @@ class StockReceipt extends Model
 
     protected $fillable = [
         'code',
+        'supplier_id',
         'supplier',
         'note',
         'received_at',
@@ -47,6 +48,24 @@ class StockReceipt extends Model
     public function items(): HasMany
     {
         return $this->hasMany(StockReceiptItem::class)->orderBy('id');
+    }
+
+    /** @return BelongsTo<Supplier, $this> */
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    /**
+     * Tên nhà cung cấp để hiển thị.
+     *
+     * Ưu tiên BẢN CHỤP trên phiếu, không phải tên hiện tại của nhà cung
+     * cấp. Họ đổi tên thì phiếu cũ vẫn phải nói đúng cái tên hồi đó —
+     * cùng nguyên tắc với `order_items.product_name`.
+     */
+    public function tenNhaCungCap(): ?string
+    {
+        return $this->supplier ?: $this->supplier()->first()?->name;
     }
 
     /** @return BelongsTo<User, $this> */

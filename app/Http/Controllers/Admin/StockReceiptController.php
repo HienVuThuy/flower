@@ -67,6 +67,10 @@ class StockReceiptController extends Controller
             'chonSan' => $request->query('mat-hang'),
 
             'donViKho' => $this->donViKho(),
+
+            // Chỉ nơi còn đang lấy hàng mới bày ra để chọn; nơi đã ngừng
+            // vẫn đọc được ở các phiếu cũ.
+            'nhaCungCap' => \App\Models\Supplier::dangHoatDong()->orderBy('name')->get(['id', 'name', 'kind']),
         ]);
     }
 
@@ -75,9 +79,21 @@ class StockReceiptController extends Controller
         $data = $request->validated();
 
         $receipt = DB::transaction(function () use ($data) {
+            /*
+             * CHỤP LẠI TÊN nhà cung cấp lên phiếu, không chỉ giữ id.
+             *
+             * Họ đổi tên hay bị tắt đi thì phiếu cũ vẫn phải đọc được là
+             * hồi đó mua của ai — cùng nguyên tắc với `order_items.
+             * product_name`.
+             */
+            $ncc = isset($data['supplier_id'])
+                ? \App\Models\Supplier::find($data['supplier_id'])
+                : null;
+
             $receipt = StockReceipt::create([
                 'code' => $this->service->sinhMa(),
-                'supplier' => $data['supplier'] ?? null,
+                'supplier_id' => $ncc?->id,
+                'supplier' => $ncc?->name,
                 'note' => $data['note'] ?? null,
                 'received_at' => $data['received_at'],
             ]);

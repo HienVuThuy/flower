@@ -123,6 +123,11 @@
                 <x-site.icon name="check-circle" />
                 <span>Kiểm kê kho</span>
             </a>
+
+            <a data-admin-link href="{{ route('admin.suppliers.index') }}" class="admin-nav-link {{ request()->routeIs('admin.suppliers.*') ? 'is-active' : '' }}">
+                <x-site.icon name="people" />
+                <span>Nhà cung cấp</span>
+            </a>
             @endcan
         </nav>
         @endcanany

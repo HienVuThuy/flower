@@ -76,6 +76,7 @@ class RouteSmokeTest extends TestCase
         'post' => \App\Models\BlogPost::class,
         'blogPost' => \App\Models\BlogPost::class,
         'journal' => \App\Models\Journal::class,
+        'supplier' => \App\Models\Supplier::class,
     ];
 
     /**
@@ -210,6 +211,11 @@ class RouteSmokeTest extends TestCase
             ->create();
 
         \App\Models\Coupon::factory()->create();
+
+        \App\Models\Supplier::create([
+            'name' => 'Vựa quét thử',
+            'kind' => 'vua',
+        ]);
 
         \App\Models\Promotion::create([
             'name' => 'Chương trình quét thử',

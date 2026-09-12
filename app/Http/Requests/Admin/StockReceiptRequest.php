@@ -16,7 +16,18 @@ class StockReceiptRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'supplier' => ['nullable', 'string', 'max:200'],
+            /*
+             * CHỌN TỪ DANH SÁCH, không gõ tay nữa.
+             *
+             * Ô chữ tự do làm mất đúng thứ đáng giá nhất của sổ thu mua:
+             * so sánh. "Vựa Hoa Tươi" và "vựa hoa tuoi" là hai nơi khác
+             * nhau với máy, nên "mua ở đâu rẻ hơn" không trả lời được.
+             *
+             * Vẫn cho để trống: có lần mua lẻ ngoài chợ không thuộc mối
+             * nào, và bắt khai một nhà cung cấp giả chỉ để qua được biểu
+             * mẫu thì còn tệ hơn.
+             */
+            'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
             'note' => ['nullable', 'string', 'max:500'],
 
             /*
@@ -48,7 +59,7 @@ class StockReceiptRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'supplier' => 'nhà cung cấp',
+            'supplier_id' => 'nhà cung cấp',
             'received_at' => 'ngày nhập',
             'items' => 'dòng hàng',
         ];

@@ -126,11 +126,22 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label" for="supplier">Nhà cung cấp</label>
-                    <input type="text" id="supplier" name="supplier" maxlength="200"
-                           class="form-control @error('supplier') is-invalid @enderror"
-                           value="{{ old('supplier') }}" placeholder="Vườn Đà Lạt, chợ Quảng Bá…">
-                    <x-form-error name="supplier" />
+                    <label class="form-label" for="supplier_id">Nhà cung cấp</label>
+                    <select id="supplier_id" name="supplier_id"
+                            class="form-select @error('supplier_id') is-invalid @enderror">
+                        <option value="">— chưa ghi / mua lẻ —</option>
+                        @foreach($nhaCungCap as $ncc)
+                            <option value="{{ $ncc->id }}" @selected(old('supplier_id') == $ncc->id)>
+                                {{ $ncc->name }} ({{ $ncc->kind->label() }})
+                            </option>
+                        @endforeach
+                    </select>
+                    <x-form-error name="supplier_id" />
+                    <div class="form-text">
+                        Chưa có trong danh sách thì
+                        <a data-admin-link href="{{ route('admin.suppliers.create') }}">thêm nhà cung cấp</a>
+                        rồi quay lại. Chọn từ danh sách thì mới so được giá giữa các nơi.
+                    </div>
                 </div>
 
                 <div class="mb-4">
