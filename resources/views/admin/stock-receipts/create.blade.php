@@ -6,6 +6,20 @@
 
 <div class="mb-4">
     <h1 class="admin-page-title">Lập phiếu nhập kho</h1>
+
+    {{--
+        NÓI RÕ RANH GIỚI GIỮA HAI CÁCH TÍNH GIÁ VỐN.
+
+        Không nói thì người dùng đi tìm "hồng đỏ" trong ô chọn, không
+        thấy, và kết luận là hệ thống thiếu — rồi tạo một sản phẩm mới
+        cho nó. Nói ra thì họ biết đi đâu.
+    --}}
+    <p class="admin-page-subtitle mb-0">
+        Phiếu này dành cho <strong>hàng đếm được</strong>: chậu, đất, phân, dụng cụ, cây trong chậu.
+        <strong>Hoa tươi không nhập ở đây</strong> — hoa đi theo
+        <a data-admin-link href="{{ route('admin.flower-lots.index') }}">lô hoa</a>,
+        vì đơn vị mua khác đơn vị bán và số lượng không đếm xuể.
+    </p>
     <p class="admin-page-subtitle">
         {{--
             NÓI TRƯỚC ĐIỀU SẼ XẢY RA.

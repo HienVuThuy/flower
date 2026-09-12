@@ -27,6 +27,11 @@
             Số lượng điền sẵn đúng bằng tồn hiện tại.
         </li>
         <li>
+            <strong>Hoa tươi không khai ở đây.</strong>
+            Giá vốn hoa đến từ <a data-admin-link href="{{ route('admin.flower-lots.index') }}">lô hoa</a>.
+            Khai cả hai chỗ là giá vốn bị đếm hai lần.
+        </li>
+        <li>
             <strong>Không nhớ giá thì để trống.</strong>
             Món để trống vẫn nằm ngoài phần tính lãi, và trang Lãi gộp có đếm và nói ra
             phần nằm ngoài đó. Bịa một con số cho đủ thì biến “chưa biết” thành

@@ -7632,3 +7632,49 @@ luẩn quẩn nào.
 (688px, đều nhau ở năm tab) và cho là xong, nhưng **không đo lại cuộn
 ngang của cả trang** sau khi thêm dòng chữ. Đo đúng một chỉ số rồi kết
 luận cả phần đã ổn là cách bỏ sót đặc trưng.
+
+---
+
+## QĐ-257. Ranh giới giữa lô hoa và kho thường — chỗ dễ đếm hai lần nhất
+
+Câu hỏi của chủ cửa hàng: *có "lô hoa" rồi thì còn cần "nhập kho" và
+"kiểm kê" nữa không?*
+
+**Còn cần cả ba, vì chúng phủ ba việc khác nhau** — nhưng câu hỏi đó lộ
+ra một lỗ hổng thật do chính việc thêm lô hoa tạo ra.
+
+**Lỗ hổng, đo được:** `StockUnits` (danh sách hàng cho phiếu nhập và kiểm
+kê) lấy MỌI sản phẩm có bật theo dõi tồn — và **9 trong 16 sản phẩm hoa
+đang bật**. Nghĩa là trước bản này có thể vừa lập phiếu nhập cho "Bó
+tulip Hà Lan" vừa ghi lô hoa tulip, rồi hai con số cùng vào giá vốn ở
+**hai báo cáo nằm chung một trang**.
+
+**Ranh giới chính xác KHÔNG phải "hoa không có tồn kho".** Nó là:
+
+|  | Hàng đếm được | Hoa tươi |
+|---|---|---|
+| **Nhập kho** (số lượng **và tiền**) | có | **không** |
+| **Tồn đầu kỳ** (khai **tiền**) | có | **không** |
+| **Kiểm kê** (chỉ số lượng) | có | **có** |
+| **Lô hoa** (tiền theo lô) | không | có |
+
+Lý do của từng ô:
+
+- **Phiếu nhập và tồn đầu kỳ đều là chứng từ khai TIỀN**, nên chúng nằm
+  cùng phía ranh giới với giá vốn hoa. Vả lại không ai "nhập kho" 14 bó
+  tulip từ nhà cung cấp — bó là thứ cửa hàng tự bó ra từ cành.
+- **Kiểm kê chỉ sửa SỐ LƯỢNG, không bao giờ đụng tới tiền**, nên nó
+  không gây đếm hai lần. Số bó làm sẵn trong tủ mát vẫn đếm được và vẫn
+  nên đếm nếu cửa hàng muốn chặn bán quá.
+
+**Chặn ở cả hai lớp.** Ô chọn không bày hoa ra nữa, VÀ máy chủ bỏ qua
+dòng hoa nếu có ai gửi thẳng biểu mẫu — `mat_hang` đến từ trình duyệt và
+ai cũng sửa được. Chặn ở giao diện mà không chặn ở máy chủ là khoá cửa
+còn để ngỏ cửa sổ.
+
+**Và nói ra ranh giới ngay trên trang.** Không nói thì người dùng đi tìm
+"hồng đỏ" trong ô chọn, không thấy, rồi kết luận hệ thống thiếu — và tạo
+một sản phẩm mới cho nó.
+
+Bài kiểm thử có cả **bài đối chứng** (kiểm kê VẪN nhận hoa): không có nó
+thì một thay đổi loại hoa ra khỏi mọi chứng từ kho cũng đi qua sạch sẽ.

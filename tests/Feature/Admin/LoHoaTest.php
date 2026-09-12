@@ -407,6 +407,109 @@ class LoHoaTest extends TestCase
         $this->assertSame(1, FlowerKind::count());
     }
 
+    /* ================= RANH GIỚI VỚI KHO THƯỜNG ================= */
+
+    #[Test]
+    public function hoa_tuoi_KHONG_hien_o_o_chon_cua_phieu_nhap(): void
+    {
+        /*
+         * ĐÂY LÀ RANH GIỚI GIỮA HAI CÁCH TÍNH GIÁ VỐN, và để hở nó là
+         * ĐẾM HAI LẦN.
+         *
+         * Đo trên dữ liệu thật lúc làm: 9 sản phẩm hoa đang bật theo dõi
+         * tồn. Trước bản này có thể vừa lập phiếu nhập cho "Bó tulip Hà
+         * Lan" vừa ghi lô hoa tulip — hai con số cùng vào giá vốn, ở hai
+         * báo cáo nằm chung một trang.
+         */
+        $hoa = Product::factory()->for(Category::factory())->stock(10)
+            ->create(['name' => 'Bó tulip Hà Lan', 'product_type' => ProductType::Flower]);
+
+        $chau = Product::factory()->for(Category::factory())->stock(10)
+            ->create(['name' => 'Chậu sứ trắng', 'product_type' => ProductType::Other]);
+
+        $html = $this->actingAs($this->admin())
+            ->get('/admin/nhap-kho/create')
+            ->assertOk()
+            ->getContent();
+
+        // Soi theo giá trị ô chọn, không soi tên trần: tên còn xuất hiện
+        // ở chỗ khác trên trang.
+        $this->assertStringContainsString('value="' . $chau->id . ':"', $html);
+        $this->assertStringNotContainsString('value="' . $hoa->id . ':"', $html);
+    }
+
+    #[Test]
+    public function gui_thang_hoa_vao_phieu_nhap_thi_bi_bo_qua(): void
+    {
+        /*
+         * Ô chọn chỉ là gợi ý; `mat_hang` đến từ trình duyệt và ai cũng
+         * sửa được. Chặn ở giao diện mà không chặn ở máy chủ là khoá cửa
+         * còn để ngỏ cửa sổ.
+         */
+        $hoa = Product::factory()->for(Category::factory())->stock(10)
+            ->create(['product_type' => ProductType::Flower]);
+
+        $chau = Product::factory()->for(Category::factory())->stock(10)
+            ->create(['product_type' => ProductType::Other]);
+
+        $this->actingAs($this->admin())->post('/admin/nhap-kho', [
+            'received_at' => now()->toDateString(),
+            'items' => [
+                ['mat_hang' => (string) $hoa->id, 'quantity' => 5, 'unit_cost' => 100000],
+                ['mat_hang' => (string) $chau->id, 'quantity' => 3, 'unit_cost' => 200000],
+            ],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $phieu = \App\Models\StockReceipt::firstOrFail();
+
+        $this->assertSame(1, $phieu->items()->count(), 'Dòng hoa đã lọt vào phiếu nhập');
+        $this->assertSame($chau->id, $phieu->items()->first()->product_id);
+    }
+
+    #[Test]
+    public function hoa_tuoi_KHONG_hien_o_trang_khai_ton_dau_ky(): void
+    {
+        // Tồn đầu kỳ cũng là chứng từ khai TIỀN, nên cùng phía ranh giới.
+        $hoa = Product::factory()->for(Category::factory())->stock(10)
+            ->create(['product_type' => ProductType::Flower]);
+
+        $chau = Product::factory()->for(Category::factory())->stock(10)
+            ->create(['product_type' => ProductType::Other]);
+
+        $html = $this->actingAs($this->admin())
+            ->get('/admin/ton-dau-ky')
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('items[' . $chau->id . ']', $html);
+        $this->assertStringNotContainsString('items[' . $hoa->id . ']', $html);
+    }
+
+    #[Test]
+    public function kiem_ke_thi_VAN_nhan_hoa(): void
+    {
+        /*
+         * Ranh giới KHÔNG phải "hoa không có tồn kho".
+         *
+         * Số bó làm sẵn trong tủ mát vẫn đếm được, và vẫn nên đếm nếu cửa
+         * hàng muốn chặn bán quá. Kiểm kê chỉ sửa SỐ LƯỢNG, không bao giờ
+         * đụng tới TIỀN — nên nó không gây đếm hai lần.
+         *
+         * Bài này là đối chứng: không có nó thì một thay đổi loại hoa ra
+         * khỏi mọi chứng từ kho cũng đi qua sạch sẽ.
+         */
+        $hoa = Product::factory()->for(Category::factory())->stock(10)
+            ->create(['product_type' => ProductType::Flower]);
+
+        $html = $this->actingAs($this->admin())
+            ->get('/admin/kiem-ke/create')
+            ->assertOk()
+            ->getContent();
+
+        // Biểu mẫu kiểm kê đánh khoá ô theo `dem[<id>:<quy cách>]`.
+        $this->assertStringContainsString('name="dem[' . $hoa->id . ':]', $html);
+    }
+
     /* ================= HỖ TRỢ ================= */
 
     private function doanhThuHoa(string $tien, ProductType $loai = ProductType::Flower): void

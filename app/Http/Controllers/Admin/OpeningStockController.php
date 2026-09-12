@@ -123,6 +123,16 @@ class OpeningStockController extends Controller
         return Product::query()
             ->where('track_inventory', true)
             ->where('stock_quantity', '>', 0)
+
+            /*
+             * BỎ HOA TƯƠI. Đây cũng là chứng từ khai TIỀN, nên nó nằm
+             * cùng phía ranh giới với phiếu nhập: giá vốn hoa đến từ lô.
+             *
+             * Đo được lúc làm: 9 sản phẩm hoa đang bật theo dõi tồn, nên
+             * không có dòng này thì chúng hiện ngay ở trang khai và giá
+             * vốn hoa bị đếm hai lần.
+             */
+            ->where('product_type', '!=', \App\Enums\ProductType::Flower->value)
             ->whereNotIn('id', StockReceiptItem::query()
                 ->whereNotNull('product_id')
                 ->whereNotNull('unit_cost')

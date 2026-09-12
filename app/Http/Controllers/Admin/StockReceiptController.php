@@ -162,7 +162,11 @@ class StockReceiptController extends Controller
      */
     private function donViKho()
     {
-        return app(StockUnits::class)->danhSach()
+        /*
+         * BỎ HOA TƯƠI: giá vốn của hoa đến từ LÔ, không đến từ phiếu
+         * nhập. Để hở là đếm hai lần — xem chú thích ở StockUnits.
+         */
+        return app(StockUnits::class)->danhSach(boQuaHoa: true)
             ->map(fn (array $d) => ['value' => $d['value'], 'label' => $d['label']]);
     }
 
@@ -195,6 +199,18 @@ class StockReceiptController extends Controller
             $product = Product::find((int) $productId);
 
             if (! $product) {
+                continue;
+            }
+
+            /*
+             * TỪ CHỐI HOA Ở PHÍA MÁY CHỦ, không chỉ ẩn khỏi ô chọn.
+             *
+             * Ô chọn chỉ là gợi ý; `mat_hang` đến từ trình duyệt và ai
+             * cũng sửa được. Bỏ dòng này ra thì đủ để một lần gửi thẳng
+             * biểu mẫu làm giá vốn hoa bị đếm hai lần — một lần ở phiếu
+             * nhập, một lần ở lô.
+             */
+            if ($product->product_type === \App\Enums\ProductType::Flower) {
                 continue;
             }
 
