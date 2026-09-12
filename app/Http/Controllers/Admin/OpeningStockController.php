@@ -138,7 +138,7 @@ class OpeningStockController extends Controller
                 ->whereNotNull('unit_cost')
                 ->select('product_id'))
             ->orderBy('name')
-            ->get(['id', 'name', 'sku', 'stock_quantity', 'base_price']);
+            ->get(['id', 'name', 'product_code', 'stock_quantity', 'base_price']);
     }
 
     /**
@@ -150,7 +150,7 @@ class OpeningStockController extends Controller
         $ket = [];
 
         $sanPham = Product::whereIn('id', array_map('intval', array_keys($items)))
-            ->get(['id', 'name', 'sku'])
+            ->get(['id', 'name', 'product_code'])
             ->keyBy('id');
 
         foreach ($items as $id => $dong) {

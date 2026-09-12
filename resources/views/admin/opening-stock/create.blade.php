@@ -89,8 +89,8 @@
                                     <tr>
                                         <td>
                                             {{ $sp->name }}
-                                            @if($sp->sku)
-                                                <span class="d-block admin-page-subtitle small">{{ $sp->sku }}</span>
+                                            @if($sp->product_code)
+                                                <span class="d-block admin-page-subtitle small">{{ $sp->product_code }}</span>
                                             @endif
                                         </td>
                                         <td>

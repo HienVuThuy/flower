@@ -154,6 +154,48 @@ trống không ai biết.
 
 ---
 
+## Chỗ thứ hai không kiểm được: GÕ SAI TÊN CỘT
+
+Bộ kiểm thử chạy trên **SQLite**, còn ứng dụng chạy trên **MySQL**. Có
+một khác biệt giữa hai cái làm cả 905 bài mù trước một loại lỗi:
+
+> SQLite coi định danh trong nháy kép mà **không khớp cột nào** là một
+> **chuỗi ký tự**, và không báo lỗi.
+
+Chứng minh được trong bốn dòng:
+
+```php
+$db = new PDO('sqlite::memory:');
+$db->exec('CREATE TABLE t (id INTEGER, name TEXT)');
+$db->query('select "id", "name", "sku" from t')->fetch();
+// => ['id' => 1, 'name' => 'abc', '"sku"' => 'sku']   — KHÔNG lỗi
+```
+
+Laravel bọc mọi định danh trong nháy kép khi sinh SQL cho SQLite. Nên:
+
+```php
+Product::get(['id', 'name', 'sku', 'stock_quantity']);
+```
+
+**đi lọt qua toàn bộ bộ kiểm thử** dù bảng `products` không hề có cột
+`sku` (cột thật tên `product_code`), rồi nổ `SQLSTATE[42S22]` trên MySQL
+lúc người dùng mở trang. Đã xảy ra thật ở trang Tồn đầu kỳ.
+
+**Không tắt được bằng cấu hình.** Cơ chế đó gỡ được bằng cờ biên dịch
+`SQLITE_DQS=0` của SQLite, không có PRAGMA nào bật/tắt lúc chạy, và bản
+SQLite đi kèm PHP thì bật sẵn.
+
+**Cách đã dùng để bù:** một kịch bản soát toàn bộ `app/`, rút mọi tên cột
+viết tay trong `get([...])`, `select([...])`, `pluck()`, `sum()`,
+`orderBy()`… rồi đối chiếu với lược đồ **thật của MySQL**. Chạy một lần
+tìm ra đúng một lỗi (`sku`) trên 309 tệp; 20 kết quả còn lại đều là bí
+danh từ `selectRaw(... as total)`, đã kiểm tay từng cái.
+
+Nên nhớ khi thêm cột hay đổi tên cột: **bài xanh không có nghĩa là tên
+cột đúng.** Mở thật một lần trên MySQL, hoặc chạy lại kịch bản soát.
+
+---
+
 ## Còn thiếu
 
 Cố ý ghi ra thay vì lờ đi:
