@@ -133,6 +133,17 @@
                 <x-site.icon name="journal" />
                 <span>Tồn đầu kỳ</span>
             </a>
+
+            {{-- Hoa tươi đi đường riêng: không đếm theo cành mà theo lô. --}}
+            <a data-admin-link href="{{ route('admin.flower-lots.index') }}" class="admin-nav-link {{ request()->routeIs('admin.flower-lots.*') ? 'is-active' : '' }}">
+                <x-site.icon name="flower1" />
+                <span>Lô hoa</span>
+            </a>
+
+            <a data-admin-link href="{{ route('admin.flower-kinds.index') }}" class="admin-nav-link {{ request()->routeIs('admin.flower-kinds.*') ? 'is-active' : '' }}">
+                <x-site.icon name="tags" />
+                <span>Loại hoa thu mua</span>
+            </a>
             @endcan
         </nav>
         @endcanany

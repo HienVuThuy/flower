@@ -21,6 +21,18 @@
     Hai ô ngày và một nút Xem — không phụ thuộc script nào. Nút "Xem" chỉ
     ẩn đi khi có JS (xem CSS `.has-js`), lúc đó đổi ngày là tự gửi.
 --}}
+{{--
+    BỌC NGOÀI LÀ MỘT KHỐI THƯỜNG, không phải flex.
+
+    Lỗi đã sửa: dòng khoảng ngày từng là một mục flex với `flex: 1 0 100%`
+    nằm trong một khối co theo nội dung. Phần trăm đó giải ra theo chiều
+    rộng cuối của khối, mà khối lại đang co theo nội dung — đo được nó nở
+    thành 890px và đẩy cả trang lệch ngang 1610px trên màn 1425px.
+
+    Tách hai tầng: hàng nút là flex, dòng chữ là block bên dưới. Không có
+    phần trăm nào trong flex thì không có vòng luẩn quẩn nào.
+--}}
+<div class="chon-ky-boc">
 <div class="chon-ky">
 
     <div class="chon-ky__moc">
@@ -68,6 +80,8 @@
         không. Hiện ngày thật thì không ai phải đoán, và nếu mốc sai thì
         sai đó nằm ngay trên màn hình.
     --}}
+</div>
+
     @if($ky->khoangHienThi())
         <span class="chon-ky__khoang-chu">{{ $ky->khoangHienThi() }}</span>
     @endif

@@ -165,4 +165,98 @@
     </div>
 </div>
 
+{{--
+    ============================================================
+    HOA TƯƠI — TÍNH THEO LÔ, Ở MỨC KỲ
+    ============================================================
+    Đặt thành khối riêng, có chủ ý. Bảng lãi theo sản phẩm ở trên ghép
+    giá vốn vào TỪNG DÒNG ĐƠN; hoa không làm được thế, và không phải vì
+    hệ thống thiếu sót:
+
+        Không ai biết bó hoa bán hôm qua dùng cành của lô nào.
+
+    Gộp hai thứ vào một bảng là bịa ra một độ chính xác không có. Để hoa
+    nằm im trong phần "chưa có giá vốn" thì lại mất con số lãi của mảng
+    chiếm phần lớn doanh thu một cửa hàng hoa.
+--}}
+<h2 class="admin-section-title mt-4">Hoa tươi — tính theo lô</h2>
+
+<div class="admin-panel p-4 mb-3">
+    <p class="admin-page-subtitle">
+        Hoa không đếm theo cành mà theo lô. Giá vốn hoa của kỳ này là
+        <strong>tiền các lô đã đóng trong kỳ</strong> — không phải tiền các lô đã mua:
+        lô mua cuối tháng mà dùng sang tháng sau thì tiền của nó thuộc tháng sau.
+    </p>
+
+    <div class="row g-3">
+        <div class="col-6 col-lg-3">
+            <x-admin.kpi label="Doanh thu hoa" note="Chỉ đơn đã giao, chưa gồm VAT.">
+                <x-site.money :amount="$hoa['doanh_thu']" />
+            </x-admin.kpi>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <x-admin.kpi label="Giá vốn hoa"
+                         :note="$hoa['so_lo_dong'] . ' lô đã đóng trong kỳ'">
+                <x-site.money :amount="$hoa['gia_von']" />
+            </x-admin.kpi>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <x-admin.kpi label="Lãi gộp hoa" note="Doanh thu hoa trừ tiền lô đã đóng.">
+                @if($hoa['lai_gop'] === null)
+                    {{-- null khác 0: chưa đóng lô nào thì KHÔNG CÓ lãi để nói.
+                         In ra "lãi = doanh thu" là câu sai hoàn toàn, và là câu
+                         dễ tin nhất vì trông như cửa hàng lãi 100%. --}}
+                    <span class="admin-page-subtitle">chưa tính được</span>
+                @else
+                    <x-site.money :amount="$hoa['lai_gop']" />
+                @endif
+            </x-admin.kpi>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <x-admin.kpi label="Hao hụt trung bình"
+                         note="Trên tổng số lượng các lô đã đóng, không phải trung bình các tỉ lệ.">
+                @if($hoa['hao_hut_trung_binh'] === null)
+                    <span class="admin-page-subtitle">chưa có</span>
+                @else
+                    {{ number_format($hoa['hao_hut_trung_binh'], 1, ',', '.') }}%
+                @endif
+            </x-admin.kpi>
+        </div>
+    </div>
+
+    @if($hoa['lai_gop'] === null)
+        <div class="alert alert-warning mt-3 mb-0">
+            <strong>Chưa đóng lô nào trong kỳ này.</strong>
+            Tiền mua hoa chỉ vào giá vốn khi lô được đóng — đó là lúc người bán nói
+            “lô này hết rồi”. Chưa đóng thì hoa vẫn còn trong xô, chưa thành chi phí.
+            <a data-admin-link href="{{ route('admin.flower-lots.index') }}" class="alert-link">Xem lô hoa</a>
+        </div>
+    @endif
+
+    @if($hoa['lo_qua_han'] > 0)
+        {{--
+            NÓI RA CHIỀU SAI CỦA CON SỐ.
+
+            Quên đóng lô làm giá vốn thấp hơn sự thật và lãi cao hơn sự thật.
+            Sai theo hướng dễ chịu là hướng không ai tự đi tìm.
+        --}}
+        <div class="alert alert-warning mt-3 mb-0">
+            <strong>{{ $hoa['lo_qua_han'] }} lô mở quá lâu chưa đóng.</strong>
+            Chừng nào chưa đóng, giá vốn hoa đang <em>thấp hơn</em> sự thật và lãi gộp hoa
+            đang <em>cao hơn</em> sự thật.
+            <a data-admin-link href="{{ route('admin.flower-lots.index') }}" class="alert-link">Đóng lô</a>
+        </div>
+    @endif
+
+    @if($hoa['so_lo_con_mo'] > 0)
+        <p class="admin-page-subtitle small mt-3 mb-0">
+            Đang có {{ $hoa['so_lo_con_mo'] }} lô còn dùng, trị giá
+            {{ $tien($hoa['tien_lo_con_mo']) }} — số này <strong>chưa</strong> tính vào giá vốn kỳ nào.
+        </p>
+    @endif
+</div>
+
 @endsection

@@ -1395,9 +1395,15 @@ html.has-js .tuoi-so-lieu__tu-dong {
     flex: 0 0 auto;
 }
 
-/* Khoảng ngày thật của kỳ — xuống dòng riêng, không chen vào hàng nút. */
+/* Khoảng ngày thật của kỳ — một dòng block dưới hàng nút.
+   KHÔNG dùng flex-basis phần trăm: xem chú thích trong component. */
+.chon-ky-boc {
+    max-width: 100%;
+}
+
 .chon-ky__khoang-chu {
-    flex: 1 0 100%;
+    display: block;
+    margin-top: .35rem;
     font-size: .8125rem;
     color: var(--admin-ink-muted);
 }

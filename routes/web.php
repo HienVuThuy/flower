@@ -21,6 +21,8 @@ use App\Http\Controllers\Admin\PricingAdvisorController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\FlowerKindController;
+use App\Http\Controllers\Admin\FlowerLotController;
 use App\Http\Controllers\Admin\OpeningStockController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Api\SearchSuggestionController;
@@ -1016,6 +1018,41 @@ Route::prefix('admin')
          * một phiếu nhập bình thường (loại `ton_dau_ky`) nên xem và ghi
          * sổ đi theo đường của phiếu nhập.
          */
+        /*
+         * =========================
+         * HOA TƯƠI: LOẠI HOA VÀ LÔ
+         * =========================
+         * Lô đã đóng KHÔNG sửa và KHÔNG xoá: nó là một con số đã đi vào
+         * giá vốn của một kỳ. Cùng nguyên tắc với phiếu nhập đã ghi sổ.
+         */
+        Route::get('loai-hoa', [FlowerKindController::class, 'index'])
+            ->middleware('quyen:kho')
+            ->name('flower-kinds.index');
+
+        Route::post('loai-hoa', [FlowerKindController::class, 'store'])
+            ->middleware(['quyen:kho', 'throttle:30,1'])
+            ->name('flower-kinds.store');
+
+        Route::put('loai-hoa/{flowerKind}', [FlowerKindController::class, 'update'])
+            ->middleware(['quyen:kho', 'throttle:30,1'])
+            ->name('flower-kinds.update');
+
+        Route::get('lo-hoa', [FlowerLotController::class, 'index'])
+            ->middleware('quyen:kho')
+            ->name('flower-lots.index');
+
+        Route::get('lo-hoa/ghi', [FlowerLotController::class, 'create'])
+            ->middleware('quyen:kho')
+            ->name('flower-lots.create');
+
+        Route::post('lo-hoa', [FlowerLotController::class, 'store'])
+            ->middleware(['quyen:kho', 'throttle:30,1'])
+            ->name('flower-lots.store');
+
+        Route::patch('lo-hoa/{flowerLot}/dong', [FlowerLotController::class, 'close'])
+            ->middleware(['quyen:kho', 'throttle:30,1'])
+            ->name('flower-lots.close');
+
         Route::get('ton-dau-ky', [OpeningStockController::class, 'create'])
             ->middleware('quyen:kho')
             ->name('opening-stock.create');

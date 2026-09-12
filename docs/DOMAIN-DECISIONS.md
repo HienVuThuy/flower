@@ -7493,3 +7493,142 @@ hôm nay `da_thu` chỉ được đặt đúng lúc hoàn tất nên phiếu ch�
 bằng 0. Nó đúng nhưng chưa từng được đo, và sẽ gánh việc thật vào ngày có
 người thêm "thu trước một phần". Đã thêm bài ghi thẳng trạng thái vào
 bảng để ghim luật.
+
+---
+
+## QĐ-253. Nhà cung cấp là một bảng, không phải ô chữ tự do
+
+`stock_receipts.supplier` từng là `string` gõ tay. Tiện, nhưng nó làm mất
+đúng thứ đáng giá nhất của sổ thu mua: **so sánh**. "Vựa Hoa Tươi", "vựa
+hoa tươi" và "Vua hoa tuoi" là ba nơi khác nhau với máy, nên câu "cùng
+loại hồng này mua ở đâu rẻ hơn" — cả lý do người ta chịu ghi chép —
+không trả lời được.
+
+**Loại nguồn hàng không phải nhãn cho đẹp.** Cùng một giá tiền, ba nguồn
+này không phải cùng một lựa chọn: nông dân rẻ nhất nhưng phải đặt trước
+và theo mùa; vựa đắt hơn nhưng lúc nào cũng có và giao tận nơi; chợ đầu
+mối rẻ lúc sáng sớm nhưng phải tự đi lấy. So thẳng giá chợ với giá vựa
+rồi kết luận "vựa đắt" là bỏ qua tiền xăng, tiền công và rủi ro hết hàng.
+
+Có cả **"vườn nhà"**: cây tự trồng không mất tiền mua nhưng KHÔNG PHẢI
+không có giá vốn (giống, đất, phân, công).
+
+**Phiếu nhập chụp lại TÊN**, không chỉ giữ id — nhà cung cấp đổi tên thì
+phiếu cũ vẫn phải đọc được là hồi đó mua của ai. Cùng nguyên tắc với
+`order_items.product_name`.
+
+**Không có nút xoá.** Phiếu cũ trỏ tới đây; xoá là mất dấu vết những lần
+đã mua, đúng thứ người ta giữ sổ để có. Ngừng làm ăn thì tắt `is_active`.
+
+**Vẫn cho để trống nhà cung cấp trên phiếu.** Có lần mua lẻ ngoài chợ
+không thuộc mối nào; bắt khai một cái tên giả chỉ để qua được biểu mẫu
+làm hỏng chính phần so sánh mà bảng này sinh ra.
+
+---
+
+## QĐ-254. Tồn đầu kỳ: hàng đã trên kệ trước khi có hệ thống
+
+**Đo trên dữ liệu thật:** 45 mặt hàng có tồn > 0, **không** mặt hàng nào
+từng có phiếu nhập. Trang Lãi gộp báo "0,0% doanh thu có giá vốn" — nó
+không hỏng, nó đang nói thật, và nó sẽ nói thật như vậy **mãi mãi**: luật
+tính giá vốn là bình quân các lần nhập tới ngày bán, và dòng bán trước
+lần nhập đầu tiên thì không có giá vốn ([QĐ-210]). Đúng về nguyên tắc,
+nhưng nó biến toàn bộ hàng có sẵn thành vùng tối vĩnh viễn.
+
+Cách chuẩn của kế toán kho: một chứng từ **tồn đầu kỳ**, lập vào ngày bắt
+đầu dùng hệ thống, khai số đang có và giá vốn ước tính.
+
+**KHÁC BIỆT SỐNG CÒN: phiếu tồn đầu kỳ KHÔNG cộng vào kho.** Hàng đã nằm
+trên kệ rồi; cộng thêm là nhân đôi tồn của cả cửa hàng, và sai lệch chỉ
+lộ ra ở lần kiểm kê đầu tiên — lúc không ai còn nhớ vì sao. Có bài kiểm
+thử cho điều này **và bài đối chứng** (phiếu nhập thường thì vẫn phải
+cộng): không có bài đối chứng thì một thay đổi làm mọi phiếu ngừng cộng
+kho cũng đi qua sạch sẽ.
+
+**Một trang riêng, không phải "một phiếu nhập như mọi phiếu".** Việc này
+làm đúng một lần, cho hàng chục mặt hàng, và câu hỏi mỗi dòng là "cái này
+hồi đó mua bao nhiêu" chứ không phải "nhập thêm bao nhiêu". Bắt người ta
+tự nhớ chọn đúng loại phiếu rồi tự gõ lại số tồn của từng món là cách
+chắc chắn nhất để có một phiếu sai.
+
+**Không ép khai đủ.** Không nhớ giá thì để trống; món đó vẫn nằm ngoài
+phần tính lãi, và trang Lãi gộp đã đếm và nói ra phần nằm ngoài. Giá vốn
+**0 bị từ chối**: 0 là "nhận không mất tiền" ([QĐ-214]), không phải "chưa
+biết". Bịa 0 cho đủ là biến "chưa biết" thành "biết sai", và về sau không
+ai phân biệt được nữa.
+
+---
+
+## QĐ-255. Hoa tươi đếm theo LÔ, không đếm theo cành
+
+Hoa không dùng được cách tính của hàng thường, vì **bốn lý do cùng lúc**:
+
+1. **Đơn vị mua khác đơn vị bán.** Mua theo bó buôn hoặc theo cân; bán
+   theo bó đặt riêng mà mỗi khách một kiểu. Không có tỉ lệ cố định nào.
+2. **Số lượng quá lớn để đếm.** Một lần lấy là hàng trăm cành. Đếm từng
+   cành mỗi ngày là cuộc chiến không thắng được, và số đếm sai còn tệ hơn
+   không đếm.
+3. **Hao hụt là bình thường và lớn.** Hệ thống đếm từng cái sẽ báo
+   "thiếu hàng" mỗi ngày, người dùng học cách lờ cảnh báo — rồi lờ luôn
+   cảnh báo thật.
+4. **Mỗi loại một đặc thù.** Hồng giữ lâu hơn ly; cúc rẻ nhưng phải lấy
+   nhiều.
+
+**Mô hình: một lần lấy hàng = một lô.** Lô ghi hoa gì, của ai, ngày nào,
+bao nhiêu (theo đơn vị lúc mua), hết bao nhiêu tiền. Dùng hết thì **đóng
+lô**, và lúc đó mới ghi hao hụt — một lần, bằng ước lượng.
+
+**Giá vốn hoa của một kỳ = tiền các lô ĐÃ ĐÓNG trong kỳ.** Con số ở mức
+KỲ, không phải mức từng đơn — và đó là sự thật chứ không phải thiếu sót:
+**không ai biết bó hoa bán hôm qua dùng cành của lô nào.** Ép một con số
+vào đó là bịa. Nên hoa có khối báo cáo riêng trên trang Lãi gộp.
+
+**"Đã đóng trong kỳ", không phải "đã mua trong kỳ".** Lô mua ngày 28 mà
+dùng sang đầu tháng sau thì tiền thuộc tháng sau. Lấy theo ngày mua thì
+cuối mỗi tháng lãi bị kéo xuống bởi lô vừa lấy về còn nguyên trong xô.
+
+**Hệ quả phải nói ra: quên đóng lô làm giá vốn THẤP hơn sự thật và lãi
+CAO hơn sự thật.** Sai theo hướng dễ chịu là hướng không ai tự đi tìm,
+nên nó phải tự tìm đến người dùng: danh sách lô và trang Lãi gộp đều nhắc
+số lô mở quá 10 ngày, kèm đúng câu "đang thấp hơn / đang cao hơn".
+
+**Chưa đóng lô nào thì lãi gộp hoa là `null`, không phải bằng doanh thu.**
+"Lãi gộp bằng đúng doanh thu" là câu sai hoàn toàn, và là câu dễ tin nhất
+vì trông như một cửa hàng lãi 100%.
+
+**Hao hụt KHÔNG làm giảm giá vốn** — tiền đã trả rồi. Nó là thước đo
+**chất lượng**: cùng một giá, vựa hao 5% và vựa hao 20% không phải hai
+lựa chọn ngang nhau. Và hao hụt trung bình tính trên **tổng số lượng**,
+không phải trung bình của các tỉ lệ: một lô 2 bó hao sạch và một lô 200
+bó hao 1 bó không phải "hao trung bình 50%".
+
+**Loại hoa là một bảng riêng, và KHÔNG dùng `plant_taxa`.** Cây đó là
+phân loại sinh học (Thực vật → Hạt kín → Hoa hồng); đây là trục **thu
+mua** — thứ người ta gọi tên khi ra chợ. Trộn hai trục là lỗi đã cảnh báo
+ở [QĐ-08].
+
+**Đơn vị nằm trên từng lô**, vì có hôm mua theo bó ở vựa có hôm mua theo
+cân ngoài chợ. Hệ quả phải nhớ khi so giá: **giá mỗi bó và giá mỗi cân
+không so được với nhau** — mọi phép so phải gom theo cặp (loại hoa + đơn
+vị).
+
+---
+
+## QĐ-256. `flex-basis` phần trăm trong một khối co theo nội dung
+
+Dòng "khoảng ngày thật của kỳ" được thêm vào ô chọn kỳ với
+`flex: 1 0 100%`. Khối cha (`.analytics-header__loc`) là `flex: 0 0 auto`
+— tức là co theo nội dung. Phần trăm giải ra theo chiều rộng cuối của
+khối, mà chiều rộng đó lại do nội dung quyết định.
+
+Kết quả đo được: dòng chữ nở thành **890px** (chữ thật chỉ ~200px), đẩy
+trang thành **1610px trên màn 1425px** — cuộn ngang.
+
+Sửa: tách hai tầng. Hàng nút là flex, dòng chữ là block bên dưới, trong
+một khối bọc thường. Không có phần trăm nào trong flex thì không có vòng
+luẩn quẩn nào.
+
+Đáng ghi vì nó lọt qua một lần đo: lần trước tôi đo bề rộng khối lọc
+(688px, đều nhau ở năm tab) và cho là xong, nhưng **không đo lại cuộn
+ngang của cả trang** sau khi thêm dòng chữ. Đo đúng một chỉ số rồi kết
+luận cả phần đã ổn là cách bỏ sót đặc trưng.

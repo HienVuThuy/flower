@@ -73,6 +73,17 @@ class AnalyticsPagesController extends Controller
         return view('admin.analytics.profit', $this->chung($ky) + [
             'loi' => $bao->trong($khoang)->baoCao(),
             'buShip' => $this->analytics->shippingCost(),
+
+            /*
+             * HOA TƯƠI CÓ BÁO CÁO RIÊNG, ở mức KỲ.
+             *
+             * Không ai biết bó hoa bán hôm qua dùng cành của lô nào, nên
+             * hoa không ghép giá vốn vào từng dòng đơn được. Gộp nó vào
+             * bảng lãi theo sản phẩm là bịa; để nó nằm im trong phần
+             * "chưa có giá vốn" thì mất luôn con số lãi của mảng chiếm
+             * phần lớn doanh thu một cửa hàng hoa.
+             */
+            'hoa' => app(\App\Services\Analytics\FlowerCostReport::class)->trong($khoang)->baoCao(),
         ]);
     }
 
