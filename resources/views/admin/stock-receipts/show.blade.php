@@ -119,7 +119,7 @@
                 </div>
 
                 @if($receipt->isPosted())
-                    <div><dt>Ghi sổ lúc</dt><dd>{{ $receipt->posted_at?->format('H:i d/m/Y') }}</dd></div>
+                    <div><dt>Ghi sổ lúc</dt><dd><x-site.time :at="$receipt->posted_at" /></dd></div>
                 @endif
             </dl>
 

@@ -69,9 +69,9 @@
                     <dt>Dự kiến giao</dt>
                     <dd>
                         @if($den && ! $den->isSameDay($tu))
-                            {{ $tu->format('d/m') }} &ndash; {{ $den->format('d/m/Y') }}
+                            <x-site.time :at="$tu" format="d/m" /> &ndash; <x-site.time :at="$den" format="d/m/Y" />
                         @else
-                            {{ $tu->format('d/m/Y') }}
+                            <x-site.time :at="$tu" format="d/m/Y" />
                         @endif
                     </dd>
                 </div>

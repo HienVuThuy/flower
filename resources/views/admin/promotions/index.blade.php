@@ -90,9 +90,9 @@
 
                     <td>
                         <small class="text-muted">
-                            {{ $promotion->starts_at?->format('d/m/Y') ?? '—' }}
+                            <x-site.time :at="$promotion->starts_at" format="d/m/Y">—</x-site.time>
                             &rarr;
-                            {{ $promotion->ends_at?->format('d/m/Y') ?? '—' }}
+                            <x-site.time :at="$promotion->ends_at" format="d/m/Y">—</x-site.time>
                         </small>
                     </td>
 

@@ -37,7 +37,7 @@
             <h1 style="margin:8px 0 4px 0; font-size:20px;">Cửa hàng đã xác nhận đơn của bạn</h1>
             <p style="margin:0; font-size:14px; color:#5d6660;">
                 Mã đơn <strong style="color:#1e231f;">{{ $order->order_number }}</strong>
-                &middot; đặt lúc {{ $order->created_at->format('H:i d/m/Y') }}
+                &middot; đặt lúc <x-site.time :at="$order->created_at" />
             </p>
         </td>
     </tr>

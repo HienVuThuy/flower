@@ -83,7 +83,7 @@
                             @if($moc->isDone())
                                 {{-- NGÀY XONG, không chỉ là "đã xong": đó là thứ
                                      dựng được câu "mất ba tuần cho bước này". --}}
-                                Xong {{ $moc->done_at->format('d/m/Y') }}
+                                Xong <x-site.time :at="$moc->done_at" format="d/m/Y" />
                             @elseif($moc->due_date)
                                 @if($moc->isOverdue())
                                     Quá hạn {{ $moc->due_date->format('d/m/Y') }}

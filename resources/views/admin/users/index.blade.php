@@ -125,7 +125,7 @@
                         @endif
                     </td>
 
-                    <td><small class="text-muted">{{ $user->created_at->format('d/m/Y') }}</small></td>
+                    <td><small class="text-muted"><x-site.time :at="$user->created_at" format="d/m/Y" /></small></td>
 
                     <td class="text-end">
                         @if($user->is(auth()->user()))

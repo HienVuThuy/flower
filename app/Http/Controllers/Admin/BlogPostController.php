@@ -150,6 +150,15 @@ class BlogPostController extends Controller
         ]);
 
         /*
+         * GIỜ ĐĂNG là giờ trên đồng hồ người biên tập, không phải giờ lưu.
+         *
+         * Ô `datetime-local` gửi lên "2026-09-10T08:00" mà không kèm múi
+         * giờ. Cất thẳng vào cột là hẹn đăng lúc 15h thay vì 8h sáng — và
+         * bài viết nằm im suốt buổi sáng mà không ai hiểu vì sao.
+         */
+        $data = array_replace($data, \App\Services\Time\Gio::doiONhap($data, 'published_at'));
+
+        /*
          * LÀM SẠCH HTML — bước không được bỏ. Xem chú thích đầu lớp.
          */
         $data['body'] = app(HtmlSanitizer::class)->lamSach($data['body']);

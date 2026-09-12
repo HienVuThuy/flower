@@ -12,7 +12,7 @@
         </h1>
 
         <p class="admin-page-subtitle">
-            Gửi lúc {{ $bulkInquiry->created_at->format('d/m/Y H:i') }}
+            Gửi lúc <x-site.time :at="$bulkInquiry->created_at" format="d/m/Y H:i" />
         </p>
     </div>
 
@@ -175,7 +175,7 @@
             @if($bulkInquiry->handledBy)
                 <div class="mb-3 small text-muted">
                     Cập nhật lần cuối bởi {{ $bulkInquiry->handledBy->name }}
-                    lúc {{ $bulkInquiry->handled_at->format('d/m/Y H:i') }}
+                    lúc <x-site.time :at="$bulkInquiry->handled_at" format="d/m/Y H:i" />
                 </div>
             @endif
 

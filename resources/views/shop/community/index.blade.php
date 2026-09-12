@@ -61,7 +61,7 @@
 
                                         <p class="community-card__meta">
                                             {{ $post->user?->name ?? 'Khách' }}
-                                            &middot; {{ $post->approved_at->diffForHumans() }}
+                                            &middot; <x-site.time :at="$post->approved_at" relative />
                                         </p>
                                     </div>
                                 </article>

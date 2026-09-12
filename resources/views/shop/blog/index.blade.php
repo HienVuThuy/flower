@@ -78,7 +78,7 @@
                         @endif
 
                         <span class="post-card__meta">
-                            {{ $noiBat->published_at->format('d/m/Y') }}
+                            <x-site.time :at="$noiBat->published_at" format="d/m/Y" />
                             &middot; khoảng {{ $noiBat->readingMinutes() }} phút đọc
                         </span>
                     </div>
@@ -111,7 +111,7 @@
                                 @endif
 
                                 <span class="post-card__meta">
-                                    {{ $post->published_at->format('d/m/Y') }}
+                                    <x-site.time :at="$post->published_at" format="d/m/Y" />
                                     &middot; khoảng {{ $post->readingMinutes() }} phút đọc
                                 </span>
                             </span>

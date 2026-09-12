@@ -217,14 +217,14 @@
                     <div class="mb-3">
                         <label class="form-label" for="starts_at">Bắt đầu</label>
                         <input type="datetime-local" id="starts_at" name="starts_at"
-                               value="{{ old('starts_at', $coupon->starts_at?->format('Y-m-d\TH:i')) }}"
+                               value="{{ old('starts_at', \App\Services\Time\Gio::choO($coupon->starts_at)) }}"
                                class="form-control">
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label" for="ends_at">Kết thúc</label>
                         <input type="datetime-local" id="ends_at" name="ends_at"
-                               value="{{ old('ends_at', $coupon->ends_at?->format('Y-m-d\TH:i')) }}"
+                               value="{{ old('ends_at', \App\Services\Time\Gio::choO($coupon->ends_at)) }}"
                                class="form-control @error('ends_at') is-invalid @enderror">
                         <div class="form-text">Bỏ trống cả hai là không giới hạn thời gian.</div>
                         <x-form-error name="ends_at" />

@@ -5,7 +5,7 @@
         <dl class="profile-summary">
             <div class="profile-summary__row">
                 <dt>Tham gia từ</dt>
-                <dd>{{ $user->created_at->format('d/m/Y') }}</dd>
+                <dd><x-site.time :at="$user->created_at" format="d/m/Y" /></dd>
             </div>
             <div class="profile-summary__row">
                 <dt>Đơn hàng</dt>

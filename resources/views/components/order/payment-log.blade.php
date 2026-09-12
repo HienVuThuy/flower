@@ -28,7 +28,7 @@
                 <tbody>
                     @foreach($transactions as $tx)
                         <tr>
-                            <td>{{ $tx->created_at->format('d/m/Y H:i') }}</td>
+                            <td><x-site.time :at="$tx->created_at" format="d/m/Y H:i" /></td>
                             <td>{{ strtoupper($tx->gateway) }}</td>
                             <td>
                                 <span class="status-pill status-pill--{{ $tx->status->badge() }}">

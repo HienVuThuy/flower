@@ -49,9 +49,9 @@
             <h2 class="voucher-terms__heading">Hạn sử dụng mã</h2>
             <p class="voucher-terms__text">
                 @if($coupon->starts_at || $coupon->ends_at)
-                    {{ $coupon->starts_at?->format('H:i d/m/Y') ?? 'Từ khi mở' }}
+                    <x-site.time :at="$coupon->starts_at">Từ khi mở</x-site.time>
                     &ndash;
-                    {{ $coupon->ends_at?->format('H:i d/m/Y') ?? 'chưa có ngày kết thúc' }}
+                    <x-site.time :at="$coupon->ends_at">chưa có ngày kết thúc</x-site.time>
                 @else
                     Không giới hạn thời gian.
                 @endif

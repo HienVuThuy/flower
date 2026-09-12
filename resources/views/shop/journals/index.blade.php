@@ -115,7 +115,7 @@
                                      nói không đúng việc. --}}
                                 {{ $journal->entries_count }} {{ $journal->kind->entryWords()['one'] }}
                                 @if($journal->entries_count > 0)
-                                    · sửa {{ $journal->updated_at->diffForHumans() }}
+                                    · sửa <x-site.time :at="$journal->updated_at" relative />
                                 @endif
                             </span>
                         </a>

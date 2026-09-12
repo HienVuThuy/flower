@@ -419,7 +419,7 @@
 @if($banHang->ban_gan_nhat)
     <p class="admin-page-subtitle small mt-2">
         Lần bán gần nhất:
-        {{ \App\Services\Analytics\KhoangThoiGian::diaPhuong(\Illuminate\Support\Carbon::parse($banHang->ban_gan_nhat, config('app.timezone')))->format('d/m/Y') }}
+        <x-site.time :at="$banHang->ban_gan_nhat" format="d/m/Y" />
     </p>
 @endif
 

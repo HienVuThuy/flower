@@ -34,8 +34,8 @@
                 Khách đã tự huỷ đơn {{ $order->order_number }}
             </h1>
             <p style="margin:0; font-size:13px; color:#5d6660;">
-                Huỷ lúc {{ $order->cancelled_at?->format('H:i d/m/Y') ?? now()->format('H:i d/m/Y') }}
-                &middot; đặt lúc {{ $order->created_at->format('H:i d/m/Y') }}
+                Huỷ lúc <x-site.time :at="$order->cancelled_at ?? now()" />
+                &middot; đặt lúc <x-site.time :at="$order->created_at" />
             </p>
         </td>
     </tr>

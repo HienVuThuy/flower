@@ -106,11 +106,15 @@ class StoreProfile
     /**
      * Số hotline — CHỈ KHI NÓ LÀ MỘT SỐ ĐIỆN THOẠI.
      *
-     * Cơ sở dữ liệu đang lưu `site_hotline = "demo"`. Trả nguyên chuỗi đó
-     * thì mọi email gửi khách in "Gọi demo hoặc trả lời email này", chân
-     * trang in "demo" cạnh biểu tượng điện thoại, và trang theo dõi đơn nói
+     * Cơ sở dữ liệu ĐÃ TỪNG lưu `site_hotline = "demo"`, và chuỗi đó đi
+     * thẳng vào email gửi khách: "Gọi demo hoặc trả lời email này", chân
+     * trang in "demo" cạnh biểu tượng điện thoại, trang theo dõi đơn nói
      * "liên hệ cửa hàng theo số demo". Một số không gọi được còn tệ hơn
      * không có số: khách thử gọi, rồi nghĩ cửa hàng không có thật.
+     *
+     * Ô nhập đã được kiểm từ QĐ-229 nên không nhận chữ như vậy nữa, nhưng
+     * lớp lọc này vẫn giữ: dữ liệu cũ trong cơ sở dữ liệu không đi qua
+     * biểu mẫu, và một ngày nào đó sẽ có người sửa thẳng bằng SQL.
      *
      * Không phải số thì trả null — mọi nơi hiển thị đã có nhánh "chưa có
      * hotline" (trả lời email này), và giờ nhánh đó được dùng đúng lúc.

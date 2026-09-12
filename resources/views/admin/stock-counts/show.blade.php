@@ -113,7 +113,7 @@
                     <dd class="fw-bold {{ bccomp($tongGiaTri, '0', 2) < 0 ? 'text-danger' : '' }}">{{ $tien($tongGiaTri) }}</dd>
                 </div>
                 @if($phieu->isPosted())
-                    <div><dt>Ghi sổ lúc</dt><dd>{{ \App\Services\Analytics\KhoangThoiGian::diaPhuong($phieu->posted_at)->format('H:i d/m/Y') }}</dd></div>
+                    <div><dt>Ghi sổ lúc</dt><dd><x-site.time :at="$phieu->posted_at" /></dd></div>
                 @endif
             </dl>
 

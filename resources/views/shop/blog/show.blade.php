@@ -27,7 +27,7 @@
                 @if($post->author)
                     {{ $post->author->name }} &middot;
                 @endif
-                {{ $post->published_at->format('d/m/Y') }}
+                <x-site.time :at="$post->published_at" format="d/m/Y" />
                 &middot; khoảng {{ $post->readingMinutes() }} phút đọc
             </p>
         </header>

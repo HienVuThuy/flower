@@ -144,7 +144,7 @@
                     <label class="form-label" for="published_at">Ngày đăng</label>
                     <input type="datetime-local" name="published_at" id="published_at"
                            class="form-control @error('published_at') is-invalid @enderror"
-                           value="{{ old('published_at', $post->published_at?->format('Y-m-d\TH:i')) }}">
+                           value="{{ old('published_at', \App\Services\Time\Gio::choO($post->published_at)) }}">
                     <x-form-error name="published_at"/>
                     {{--
                         Một ô trả lời ba câu: để trống là bản nháp, ngày quá khứ

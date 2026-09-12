@@ -208,7 +208,7 @@
                     <input type="date" name="started_at" id="started_at"
                            class="form-control @error('started_at') is-invalid @enderror"
                            value="{{ old('started_at', $journal->started_at?->format('Y-m-d')) }}"
-                           max="{{ now()->format('Y-m-d') }}">
+                           max="{{ \App\Services\Time\Gio::choONgay(now()) }}">
                     <x-form-error name="started_at"/>
                 </div>
             </div>

@@ -86,9 +86,9 @@
                     @forelse($logs as $log)
                         <tr>
                             <td class="text-nowrap">
-                                {{ $log->created_at->format('H:i d/m/Y') }}
+                                <x-site.time :at="$log->created_at" />
                                 <div class="admin-page-subtitle">
-                                    {{ $log->created_at->diffForHumans() }}
+                                    <x-site.time :at="$log->created_at" relative />
                                 </div>
                             </td>
 

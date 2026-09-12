@@ -117,7 +117,7 @@
                         </div>
 
                         <span class="review-item__date">
-                            {{ $review->created_at->format('d/m/Y') }}
+                            <x-site.time :at="$review->created_at" format="d/m/Y" />
                         </span>
                     </div>
 
@@ -145,7 +145,7 @@
                                 <strong>Phản hồi từ {{ \App\Services\Shop\StoreProfile::name() }}</strong>
                                 @if($review->admin_replied_at)
                                     <span class="review-item__date">
-                                        {{ $review->admin_replied_at->format('d/m/Y') }}
+                                        <x-site.time :at="$review->admin_replied_at" format="d/m/Y" />
                                     </span>
                                 @endif
                             </div>

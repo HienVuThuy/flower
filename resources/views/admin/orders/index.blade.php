@@ -180,7 +180,7 @@
                                     </span>
                                 </td>
 
-                                <td>{{ $order->created_at->format('d/m/Y H:i') }}</td>
+                                <td><x-site.time :at="$order->created_at" format="d/m/Y H:i" /></td>
 
                                 <td class="text-end">
                                     <a href="{{ route('admin.orders.show', $order) }}" class="btn btn-outline-admin btn-sm">

@@ -97,9 +97,9 @@
                                 </td>
 
                                 <td class="admin-page-subtitle">
-                                    {{ $coupon->starts_at?->format('d/m/Y') ?? 'Không giới hạn' }}
+                                    <x-site.time :at="$coupon->starts_at" format="d/m/Y">Không giới hạn</x-site.time>
                                     &rarr;
-                                    {{ $coupon->ends_at?->format('d/m/Y') ?? 'Không giới hạn' }}
+                                    <x-site.time :at="$coupon->ends_at" format="d/m/Y">Không giới hạn</x-site.time>
                                 </td>
 
                                 <td>

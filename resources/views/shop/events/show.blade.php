@@ -56,9 +56,9 @@
                 @if($promotion->starts_at || $promotion->ends_at)
                     <span class="event-hero__fact">
                         <x-site.icon name="arrow-repeat" />
-                        {{ $promotion->starts_at?->format('d/m/Y') ?? 'Từ khi mở' }}
+                        <x-site.time :at="$promotion->starts_at" format="d/m/Y">Từ khi mở</x-site.time>
                         &ndash;
-                        {{ $promotion->ends_at?->format('d/m/Y') ?? 'chưa có ngày kết thúc' }}
+                        <x-site.time :at="$promotion->ends_at" format="d/m/Y">chưa có ngày kết thúc</x-site.time>
                     </span>
                 @endif
 

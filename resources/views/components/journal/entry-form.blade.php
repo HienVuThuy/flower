@@ -33,8 +33,8 @@
         --}}
         <input type="date" name="entry_date" id="entry_date"
                class="form-control @error('entry_date') is-invalid @enderror"
-               value="{{ old('entry_date', now()->format('Y-m-d')) }}"
-               max="{{ now()->format('Y-m-d') }}" required>
+               value="{{ old('entry_date', \App\Services\Time\Gio::choONgay(now())) }}"
+               max="{{ \App\Services\Time\Gio::choONgay(now()) }}" required>
         <x-form-error name="entry_date"/>
     </div>
 

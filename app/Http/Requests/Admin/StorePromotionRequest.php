@@ -25,6 +25,14 @@ class StorePromotionRequest extends FormRequest
                 ? Str::slug($this->input('slug'))
                 : ($name !== '' ? Str::slug($name) : null),
         ]);
+
+        /*
+         * Ô `datetime-local` gửi lên GIỜ TRÊN ĐỒNG HỒ NGƯỜI GÕ, không kèm
+         * múi giờ. Cất thẳng vào cột là cất giờ Hà Nội dưới nhãn UTC:
+         * chương trình hẹn chạy 8h sáng sẽ chạy lúc 15h. Đổi ở đây, trước
+         * khi kiểm tra, để `after_or_equal:starts_at` so hai mốc cùng múi.
+         */
+        $this->merge(\App\Services\Time\Gio::doiONhap($this->all(), 'starts_at', 'ends_at'));
     }
 
     public function rules(): array

@@ -34,7 +34,7 @@
                         </span>
                         <span class="session-list__meta">
                             IP {{ $session['ip'] }}
-                            &middot; hoạt động lúc {{ $session['lastActive']->format('H:i d/m/Y') }}
+                            &middot; hoạt động lúc <x-site.time :at="$session['lastActive']" />
                         </span>
                     </div>
 

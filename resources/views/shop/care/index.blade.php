@@ -85,7 +85,7 @@
                                 @endif
 
                                 &middot; mỗi {{ $reminder->interval_days }} ngày
-                                &middot; {{ $reminder->next_due_at->format('d/m/Y') }}
+                                &middot; <x-site.time :at="$reminder->next_due_at" format="d/m/Y" />
                             </p>
                         </div>
 

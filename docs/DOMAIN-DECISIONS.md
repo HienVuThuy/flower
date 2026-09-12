@@ -7182,3 +7182,116 @@ nhượng.
 khai cột nào là tiền, cột nào là mã; đoán bừa thì mã sản phẩm `1234` sẽ
 thành `1.234`. Muốn số đẹp trong PDF thì phải khai kiểu cột trong
 `ReportSections` trước — việc riêng, chưa làm.
+
+---
+
+## QĐ-245. Giờ Việt Nam ở CẢ HAI ĐẦU: lúc in ra và lúc nhận vào
+
+**Lỗi đo được trước khi sửa:** đơn đặt lúc **18:42** giờ Hà Nội hiện ra
+**11:42** ở trang đơn của khách, trang quản trị và email xác nhận. Sớm
+đúng 7 tiếng, ở 90 chỗ trong 55 tệp, và **toàn bộ 803 bài kiểm thử vẫn
+xanh** — vì không bài nào đo giờ hiển thị.
+
+Ứng dụng lưu UTC ([QĐ-230]) còn Blade in thẳng `->format(...)`.
+
+**Không đổi `app.timezone` thành Asia/Ho_Chi_Minh.** Cột DATETIME của
+MySQL không mang múi giờ — nó chỉ là một chuỗi số. Toàn bộ dữ liệu cũ đã
+ghi theo UTC; đổi cấu hình thì cùng chuỗi đó được đọc thành giờ Hà Nội,
+mọi mốc quá khứ lệch 7 tiếng vĩnh viễn, và không có cách nào phân biệt
+dòng nào ghi theo cách nào. Nên: **lưu vẫn UTC, chỉ đổi ở hai đầu.**
+
+`App\Services\Time\Gio` là nơi DUY NHẤT khai múi giờ hiển thị;
+`KhoangThoiGian::muiGio()` uỷ cho nó. Khai hai nơi thì báo cáo gom theo
+một múi còn trang đơn hiện theo múi khác, và con số trên biểu đồ không
+khớp với con số đếm bằng tay trên danh sách đơn.
+
+**Chiều đọc ra: `<x-site.time>`**, cùng lối với `<x-site.money>` ở
+[QĐ-120]. In ra thẻ `<time datetime="...+07:00">` nên trình đọc màn hình
+và máy móc đọc lại được. `:at` là null thì in phần thân — chỗ gọi tự nói
+"chưa giao", "chưa có ngày kết thúc". Null nghĩa là **chưa có mốc nào**;
+in bừa giờ hiện tại là bịa ra một sự kiện chưa xảy ra.
+
+**Chiều ghi vào — phần nặng hơn, và suýt bị bỏ sót.** Ô `datetime-local`
+gửi lên giờ trên đồng hồ người gõ, không kèm múi giờ. Chuỗi đó đang được
+cất thẳng vào cột như thể là UTC, nên **khuyến mại hẹn 8h sáng chạy lúc
+15h** — không chỉ hiện sai mà CHẠY sai. Sửa một đầu mà quên đầu kia còn
+tệ hơn: cơ sở dữ liệu đúng lên trong khi biểu mẫu hiện lệch, và mỗi lần
+bấm Lưu lại đẩy mốc đi thêm 7 tiếng.
+
+`Gio::doiONhap()` gọi trong `prepareForValidation()` — trước khi kiểm
+tra, để `after_or_equal:starts_at` so hai mốc cùng múi. Chỉ đụng ô CÓ gửi
+lên và KHÔNG rỗng: ô trống nghĩa là "không đặt mốc", tự điền vào là đặt
+hạn cho thứ người dùng cố ý để chạy mãi. Và chỉ nhận CHUỖI —
+`starts_at[]=1` trên URL là một mảng, `trim([])` là TypeError làm vỡ
+trang trước cả bước kiểm tra dữ liệu.
+
+**Cột ngày thuần không đụng tới** (`entry_date`, `delivery_date`,
+`received_at`, `counted_at`, `event_date`, `due_date`, `target_date`,
+`started_at`). Chúng lưu `YYYY-MM-DD`, đổi múi giờ rồi in ra vẫn đúng
+ngày đó — đổi chỉ thêm rủi ro chứ không thêm gì.
+
+**Không chuyển đổi dữ liệu cũ hàng loạt.** Nhìn vào dữ liệu thật: các
+dòng gieo sẵn có `starts_at` trùng tới từng giây với `created_at`, tức là
+sinh từ `now()` nên vốn đã đúng UTC. Chỉ một khuyến mại gõ tay
+(`08:00:00` tròn giờ) là lệch, mà nó đã hết hạn. Trừ 7 tiếng cho tất cả
+sẽ làm hỏng những dòng đang đúng.
+
+**`now()->format('Y-m-d')` cũng sai, và đây là chỗ ngầm nhất.** Đó là
+ngày theo UTC: từ 0h tới 7h sáng giờ Hà Nội, UTC vẫn ở NGÀY HÔM QUA. Ô
+chọn ngày mặc định lùi một ngày và `max` chặn mất chính ngày hôm nay —
+người mở nhật ký lúc 6h sáng không ghi được cho hôm nay, không có thông
+báo nào giải thích.
+
+---
+
+## QĐ-246. SỰ CỐ: trang sửa khuyến mại lỗi 500 trên nhánh chính
+
+Phát hiện tình cờ khi viết bài kiểm thử cho [QĐ-245]. Trang
+`/admin/promotions/{id}/edit` **vỡ thành lỗi 500**, đã nằm như vậy trên
+`main`. Hai nguyên nhân, cùng một chỉ thị `@@json`:
+
+**1. Blade nhận diện chỉ thị kể cả trong chú thích JavaScript.** Một câu
+chú thích viết "truyền tham số xuống bằng @@json" — tên chỉ thị trần,
+không ngoặc — biên dịch thành `json_encode(, 15, 512)`.
+
+**2. Chỉ thị đó cắt biểu thức theo dấu phẩy** để lấy tham số thứ hai và
+thứ ba. Đưa một mảng viết thẳng vào là mảng bị cắt làm đôi:
+`json_encode(['code' => ..., 15, 512)` — thiếu dấu `]`.
+
+Cả hai thay bằng `Illuminate\Support\Js::from()`: không có hai bẫy đó,
+và còn thoát ký tự cho đúng ngữ cảnh JavaScript.
+
+Đáng chú ý: khi viết lại đoạn chú thích để **giải thích** bẫy thứ nhất,
+tôi dính đúng bẫy đó một lần nữa — vì trong câu giải thích lại có tên chỉ
+thị trần. Trong tệp Blade, mọi chỗ nhắc tên chỉ thị đều phải viết nhân
+đôi dấu `@`, kể cả trong chú thích.
+
+---
+
+## QĐ-247. Bài quét trang phải mở cả đường dẫn có tham số — và tự kiểm
+
+`RouteSmokeTest` bỏ qua mọi đường dẫn chứa `{`, với lý do "việc đó thuộc
+bài kiểm thử của từng tính năng". Nghe hợp lý, nhưng đó **đúng là chỗ đã
+để lọt** lỗi 500 ở [QĐ-246]: trang danh sách thì bài nào cũng mở, còn
+trang sửa từng bản ghi — nơi có nhiều mã Blade nhất — thì không ai mở.
+
+Nay thay tham số bằng khoá của bản ghi thật (`getRouteKey()`, nên đúng cả
+với `Order` dùng `order_number` và `Coupon` dùng `code`).
+
+**Bản đầu của phần này KHÔNG bắt được lỗi nó sinh ra để bắt.** Seeder
+không tạo khuyến mại, đơn, mã giảm giá hay bài viết nào, nên mọi trang
+sửa lại bị bỏ qua — lần này lặng lẽ, và bài vẫn xanh. Chỉ phát hiện ra
+nhờ trả lại lỗi cũ rồi xem bài có đỏ không; nó không đỏ.
+
+Sửa: bài tự dựng mỗi loại một bản ghi tối thiểu, **và** khẳng định danh
+sách đường dẫn bỏ qua ĐÚNG BẰNG danh sách đã khai (`CHUA_PHU`). Thêm một
+đường dẫn có tham số mới thì bài đỏ cho tới khi người thêm hoặc dựng dữ
+liệu cho nó, hoặc ghi nó vào danh sách kèm lý do — một quyết định có ý
+thức, không phải một khoảng lặng.
+
+Cùng bài học với chính đoạn tự kiểm sẵn có của tệp này ("một bài quét mà
+mọi trang quản trị đều trả 403 vẫn xanh"): **mọi bài kiểm thử phủ rộng
+đều phải tự chứng minh là nó có đi qua thứ nó nói là đang canh.**
+
+Giá: bài quét từ ~2 giây lên ~80 giây. Đắt, nhưng nó mới thật sự mở các
+trang sửa.

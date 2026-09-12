@@ -61,7 +61,7 @@
 
                                 <div class="text-caption">
                                     {{ $review->rating }}/5 sao
-                                    &middot; {{ $review->created_at->format('d/m/Y') }}
+                                    &middot; <x-site.time :at="$review->created_at" format="d/m/Y" />
                                     @unless($review->is_visible)
                                         {{--
                                             Nói thẳng khi bài đang bị ẩn. Không nói

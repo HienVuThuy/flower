@@ -89,7 +89,7 @@
                     </td>
 
                     <td>
-                        <small class="text-muted">{{ $inquiry->created_at->format('d/m/Y H:i') }}</small>
+                        <small class="text-muted"><x-site.time :at="$inquiry->created_at" format="d/m/Y H:i" /></small>
                     </td>
 
                     <td class="text-end">

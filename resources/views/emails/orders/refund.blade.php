@@ -71,7 +71,7 @@
                 @endif
                 <tr>
                     <td style="padding:6px 0; color:#5d6660;">Thời điểm</td>
-                    <td style="padding:6px 0;">{{ $refund->completed_at?->format('H:i d/m/Y') }}</td>
+                    <td style="padding:6px 0;"><x-site.time :at="$refund->completed_at" /></td>
                 </tr>
             </table>
 

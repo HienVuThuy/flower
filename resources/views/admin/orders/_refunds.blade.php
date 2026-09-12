@@ -63,7 +63,7 @@
                     </div>
 
                     <div class="admin-page-subtitle">
-                        {{ $r->created_at->format('H:i d/m/Y') }} &middot; {{ $r->actorLabel() }}
+                        <x-site.time :at="$r->created_at" /> &middot; {{ $r->actorLabel() }}
                         @if($r->reference)
                             &middot; mã giao dịch <span data-copy-value="{{ $r->reference }}">{{ $r->reference }}</span>
                         @endif

@@ -46,7 +46,7 @@
                     </div>
 
                     <div class="order-timeline__time">
-                        {{ $event->created_at->format('H:i d/m/Y') }}
+                        <x-site.time :at="$event->created_at" />
                         @if($showActor)
                             — {{ $event->actorLabel() }}
                         @endif

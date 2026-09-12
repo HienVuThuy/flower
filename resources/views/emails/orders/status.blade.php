@@ -52,7 +52,7 @@
 
             <p style="margin:0; font-size:14px; color:#5d6660;">
                 Đơn <strong style="color:#1e231f;">{{ $order->order_number }}</strong>
-                &middot; đặt lúc {{ $order->created_at->format('H:i d/m/Y') }}
+                &middot; đặt lúc <x-site.time :at="$order->created_at" />
             </p>
         </td>
     </tr>

@@ -116,7 +116,7 @@
                                         @endif
                                     </td>
                                     <td class="text-end text-nowrap">
-                                        {{ \App\Services\Analytics\KhoangThoiGian::diaPhuong($g['lan_cuoi'])->format('d/m H:i') }}
+                                        <x-site.time :at="$g['lan_cuoi']" format="d/m H:i" />
                                         <div class="admin-page-subtitle small">{{ $g['so_ngay'] }} ngày</div>
                                     </td>
                                 </tr>

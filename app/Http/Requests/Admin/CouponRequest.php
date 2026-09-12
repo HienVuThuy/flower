@@ -20,6 +20,13 @@ class CouponRequest extends FormRequest
         // thì lần lưu sau `is_public` vắng mặt, validated() không có khoá
         // đó, và cột giữ nguyên giá trị cũ — bỏ tích mà không tắt được.
         $this->merge(['is_public' => $this->boolean('is_public')]);
+
+        /*
+         * Ô `datetime-local` gửi lên GIỜ TRÊN ĐỒNG HỒ NGƯỜI GÕ, không kèm
+         * múi giờ. Cất thẳng vào cột là cất giờ Hà Nội dưới nhãn UTC: mã
+         * hẹn mở lúc 8h sáng sẽ mở lúc 15h.
+         */
+        $this->merge(\App\Services\Time\Gio::doiONhap($this->all(), 'starts_at', 'ends_at'));
     }
 
     public function rules(): array

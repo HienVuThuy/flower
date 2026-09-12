@@ -33,7 +33,7 @@
                         <div class="order-history__main">
                             <div class="order-history__number">{{ $order->order_number }}</div>
                             <div class="order-history__meta">
-                                {{ $order->created_at->format('d/m/Y H:i') }}
+                                <x-site.time :at="$order->created_at" format="d/m/Y H:i" />
                                 &middot; {{ $order->items_count }} sản phẩm
 
                                 {{--

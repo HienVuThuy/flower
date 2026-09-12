@@ -296,7 +296,7 @@
                                         @if($r->status === \App\Enums\RefundStatus::Completed)
                                             &middot; {{-- "qua MoMo", không phải "về ví MoMo": khách trả bằng thẻ thì tiền về thẻ. --}}
                                             {{ $r->method === \App\Enums\RefundMethod::Momo ? 'qua MoMo' : ($r->method === \App\Enums\RefundMethod::Cash ? 'tiền mặt' : 'chuyển khoản') }}
-                                            &middot; {{ $r->completed_at?->format('d/m/Y') }}
+                                            &middot; <x-site.time :at="$r->completed_at" format="d/m/Y" />
                                         @else
                                             &middot; đang xử lý qua MoMo
                                         @endif

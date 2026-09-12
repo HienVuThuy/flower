@@ -76,7 +76,7 @@
                 {{-- Hạn dùng là thứ khách cần biết nhất sau con số giảm.
                      Ghi ngày cụ thể chứ không ghi "còn 3 ngày": khách mở
                      lại trang sau một tuần thì câu đếm ngược đã sai. --}}
-                &middot; HSD {{ $coupon->ends_at->format('d/m/Y') }}
+                &middot; HSD <x-site.time :at="$coupon->ends_at" format="d/m/Y" />
             @endif
 
             @if($lowStock)

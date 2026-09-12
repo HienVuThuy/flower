@@ -222,14 +222,28 @@
      * đổi mà riêng ô xem trước này vẫn hiện ký hiệu cũ — và admin sẽ tin
      * vào con số sai đơn vị ngay lúc đang đặt giá.
      *
-     * Truyền tham số xuống bằng @json để hai bên luôn cùng một nguồn.
+     * Truyền tham số xuống bằng Js::from() để hai bên luôn cùng một nguồn.
+     *
+     * ============================================================
+     * HAI CÁI BẪY CỦA CHỈ THỊ @@json — CẢ HAI ĐÃ LÀM TRANG NÀY LỖI 500.
+     *
+     * 1. Blade nhận diện chỉ thị KỂ CẢ trong chú thích JavaScript. Viết
+     *    tên chỉ thị trần trong đoạn văn này (không ngoặc) là nó biên
+     *    dịch thành `json_encode(, 15, 512)`. Nên ở đây viết `@@json`.
+     *
+     * 2. Chỉ thị đó CẮT BIỂU THỨC THEO DẤU PHẨY để lấy tham số thứ hai,
+     *    thứ ba. Đưa một mảng viết thẳng vào là mảng bị cắt làm đôi:
+     *    `json_encode(['code' => ..., 15, 512)` — thiếu dấu `]`.
+     *
+     * `Js::from()` không có cả hai bẫy đó, và còn thoát ký tự cho đúng
+     * ngữ cảnh JavaScript.
      */
-    const tienTe = @json([
+    const tienTe = {{ \Illuminate\Support\Js::from([
         'code' => \App\Services\Shop\Money::code(),
         'symbol' => \App\Services\Shop\Money::symbol(),
         'position' => \App\Services\Shop\Money::position(),
         'decimals' => \App\Services\Shop\Money::decimals(),
-    ]);
+    ]) }};
 
     const fmt = (n) => {
         const so = new Intl.NumberFormat(tienTe.code === 'USD' ? 'en-US' : 'vi-VN', {

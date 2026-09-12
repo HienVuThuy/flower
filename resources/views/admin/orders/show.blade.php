@@ -8,7 +8,7 @@
         <div>
             <h1 class="admin-page-title">{{ $order->order_number }}</h1>
             <p class="admin-page-subtitle">
-                Đặt lúc {{ $order->created_at->format('H:i d/m/Y') }}
+                Đặt lúc <x-site.time :at="$order->created_at" />
                 @if($order->user)
                     &middot; tài khoản {{ $order->user->email }}
                 @else

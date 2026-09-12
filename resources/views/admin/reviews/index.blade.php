@@ -158,7 +158,7 @@
                                         <summary class="admin-page-subtitle" style="cursor:pointer">
                                             @if($review->hasReply())
                                                 Đã phản hồi
-                                                {{ $review->admin_replied_at?->format('d/m/Y') }}
+                                                <x-site.time :at="$review->admin_replied_at" format="d/m/Y" />
                                             @else
                                                 Trả lời khách
                                             @endif
@@ -193,7 +193,7 @@
                                 </td>
 
                                 <td class="admin-page-subtitle text-nowrap">
-                                    {{ $review->created_at->format('d/m/Y') }}
+                                    <x-site.time :at="$review->created_at" format="d/m/Y" />
                                 </td>
 
                                 <td>

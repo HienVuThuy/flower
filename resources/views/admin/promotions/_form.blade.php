@@ -129,7 +129,7 @@
                     type="datetime-local"
                     name="starts_at"
                     class="form-control @error('starts_at') is-invalid @enderror"
-                    value="{{ old('starts_at', optional($promotion->starts_at ?? null)->format('Y-m-d\TH:i')) }}"
+                    value="{{ old('starts_at', \App\Services\Time\Gio::choO($promotion->starts_at ?? null)) }}"
                 >
                 <x-form-error name="starts_at"/>
             </div>
@@ -140,7 +140,7 @@
                     type="datetime-local"
                     name="ends_at"
                     class="form-control @error('ends_at') is-invalid @enderror"
-                    value="{{ old('ends_at', optional($promotion->ends_at ?? null)->format('Y-m-d\TH:i')) }}"
+                    value="{{ old('ends_at', \App\Services\Time\Gio::choO($promotion->ends_at ?? null)) }}"
                 >
                 <div class="form-text">Bỏ trống nghĩa là không giới hạn.</div>
                 <x-form-error name="ends_at"/>

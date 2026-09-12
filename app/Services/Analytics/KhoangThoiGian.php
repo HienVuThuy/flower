@@ -39,10 +39,17 @@ final class KhoangThoiGian
     ) {
     }
 
-    /** Múi giờ người dùng đọc báo cáo. */
+    /**
+     * Múi giờ người dùng đọc báo cáo.
+     *
+     * Uỷ cho App\Services\Time\Gio — nơi duy nhất khai múi giờ hiển thị,
+     * dùng chung với phần in ngày giờ ở mọi trang. Khai hai nơi thì báo
+     * cáo gom theo một múi còn trang đơn hiện theo múi khác, và con số
+     * trên biểu đồ không khớp với con số người ta đếm bằng tay.
+     */
     public static function muiGio(): string
     {
-        return (string) config('app.display_timezone', 'Asia/Ho_Chi_Minh');
+        return \App\Services\Time\Gio::mui();
     }
 
     /** Đổi một mốc đã lưu sang giờ địa phương để gom nhóm hoặc hiển thị. */

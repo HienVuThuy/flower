@@ -46,7 +46,7 @@
                             <div>
                                 <strong>{{ $post->user?->name ?? 'Người dùng đã xoá' }}</strong>
                                 <span class="admin-page-subtitle">
-                                    {{ $post->user?->email }} · {{ $post->created_at->format('d/m/Y H:i') }}
+                                    {{ $post->user?->email }} · <x-site.time :at="$post->created_at" format="d/m/Y H:i" />
                                 </span>
                             </div>
 

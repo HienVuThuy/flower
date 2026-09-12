@@ -72,7 +72,7 @@
 
                 @if($expiresAt)
                     <p class="text-caption mt-2 mb-0 text-center">
-                        Mã còn hiệu lực tới {{ $expiresAt->format('H:i') }}.
+                        Mã còn hiệu lực tới <x-site.time :at="$expiresAt" format="H:i" />.
                     </p>
                 @endif
             </div>
