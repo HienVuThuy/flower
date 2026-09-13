@@ -1367,6 +1367,18 @@ Route::prefix('admin')
          * =========================
          */
 
+        /*
+         * TRANG NỘI DUNG (giới thiệu, chính sách) — sửa được mà không đụng
+         * mã nguồn. Quyền hệ thống, cùng chỗ với Cài đặt.
+         */
+        Route::get('trang-noi-dung', [\App\Http\Controllers\Admin\PageContentController::class, 'edit'])
+            ->middleware('quyen:he-thong')
+            ->name('page-contents.edit');
+
+        Route::put('trang-noi-dung', [\App\Http\Controllers\Admin\PageContentController::class, 'update'])
+            ->middleware(['quyen:he-thong', 'throttle:20,1'])
+            ->name('page-contents.update');
+
         Route::get('users', [UserController::class, 'index'])
             ->middleware('quyen:he-thong')
             ->name('users.index');

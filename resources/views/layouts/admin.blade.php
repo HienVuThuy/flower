@@ -293,6 +293,10 @@
                 <x-site.icon name="clock-history" />
                 <span>Nhật ký</span>
             </a>
+            <a data-admin-link href="{{ route('admin.page-contents.edit') }}" class="admin-nav-link {{ request()->routeIs('admin.page-contents.*') ? 'is-active' : '' }}">
+                <x-site.icon name="journal" />
+                <span>Trang nội dung</span>
+            </a>
             <a data-admin-link href="{{ route('admin.settings.edit') }}" class="admin-nav-link {{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">
                 <x-site.icon name="gear" />
                 <span>Cài đặt</span>

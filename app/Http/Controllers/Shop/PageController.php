@@ -47,6 +47,20 @@ class PageController extends Controller
 
         [$view, $title] = self::PAGES[$slug];
 
+        /*
+         * NỘI DUNG CỬA HÀNG ĐÃ SỬA thì dùng nó; để trống thì dùng bản viết
+         * sẵn. Xem Admin\PageContentController.
+         */
+        $noiDung = trim((string) \App\Models\Setting::get(\App\Http\Controllers\Admin\PageContentController::KHOA . $slug, ''));
+
+        if ($noiDung !== '') {
+            return view('shop.pages.custom', [
+                'title' => $title,
+                'slug' => $slug,
+                'noiDung' => $noiDung,
+            ]);
+        }
+
         return view('shop.pages.'.$view, [
             'title' => $title,
             'slug' => $slug,
