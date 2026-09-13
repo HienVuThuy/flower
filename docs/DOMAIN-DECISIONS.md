@@ -7947,3 +7947,59 @@ dòng** (`assertDatabaseMissing`), không phải "đọc ra rỗng".
 Đợt này cũng thêm một chốt vào chuỗi lệnh: **còn đột biến lọt thì không
 commit** — trước đó chuỗi chỉ chặn khi có bài đỏ, và hồ sơ khách hàng đã
 được commit trong khi còn hai đột biến lọt (sửa ở commit liền sau).
+
+
+---
+
+## QĐ-275. Trang phụ thành tab của trang chính; thanh bên chỉ giữ trang chính
+
+Thanh bên từng có sáu mục chỉ là việc phụ của một trang: Tồn đầu kỳ, Trả
+hàng nhà cung cấp (của Nhập kho), Loại hoa (của Lô hoa), Chuyên mục (của
+Cẩm nang), Trang nội dung (của Cài đặt), Phân tích thu mua (đã có tab trong
+Phân tích). Nay chúng là hàng tab trên trang chính (`x-admin.nhom-tab`, các
+nhóm khai ở một chỗ); mục cha trên thanh bên vẫn sáng khi đang ở trang con.
+Biểu mẫu viết bài dẫn tới trang chuyên mục ngay dưới ô chọn — tạo chuyên mục
+trước khi viết bài.
+
+## QĐ-276. Nội dung trang chính sách: MỘT nguồn, ô soạn điền sẵn
+
+Bản viết sẵn chuyển từ năm tệp Blade sang `resources/content/trang/*.txt`,
+cùng định dạng với bản cửa hàng sửa — sửa một câu thì sửa đúng câu đó,
+không chép lại cả trang. Lưu y nguyên bản viết sẵn thì không ghi đè (để bản
+viết sẵn cập nhật về sau vẫn tới trang). Định dạng đủ cho các trang cũ (tiêu
+đề, danh sách, bảng, khối thông tin, khung lưu ý, liên kết), có chỗ tự điền
+theo Cài đặt; escape toàn bộ trước khi áp quy ước, liên kết chỉ nhận `/…`,
+`http(s)://`, `mailto:`.
+
+## QĐ-277. Dữ liệu mẫu kho SUY RA từ đơn hàng cũ, không đặt con số cố định
+
+`DuLieuMauKhoSeeder` (chạy bằng tay) giữ nguyên tồn kho hiện tại và tính
+ngược tồn đầu kỳ sao cho
+
+    đầu kỳ + nhập − trả NCC − đã bán − đổi gửi đi + đổi nhận về = tồn hiện tại
+
+Giá vốn hoa theo tháng bám doanh thu hoa thật (≈44%). Mọi chứng từ đi qua
+service thật với đồng hồ đặt lùi về ngày chứng từ, trong một transaction,
+mang dấu "[dữ liệu mẫu]". Chạy trên dữ liệu thật: 6 nhà cung cấp, 7 phiếu
+kho, 12 lô hoa, 2 phiếu đổi, 2 khoản hoàn — tồn kho không lệch mặt hàng nào.
+
+## QĐ-278. Lãi gộp theo phiếu nhập KHÔNG gồm hoa tươi
+
+Hoa không nhập kho theo phiếu (giá vốn theo lô, ở cuối cùng trang). Để dòng
+hoa lọt vào bảng thì chúng luôn "không có giá vốn": đo trên dữ liệu thật, tỉ
+lệ phủ 36% và trang giục lập phiếu nhập cho hộp hồng, cành đào. Sau khi sửa:
+76,5%.
+
+## QĐ-279. Dòng bán không ghi quy cách dùng giá vốn bình quân các quy cách
+
+Đơn cũ chỉ ghi sản phẩm, giá vốn lưu theo quy cách → không bao giờ khớp.
+Không đoán quy cách nào đã bán; dùng bình quân mọi quy cách tới ngày bán.
+Dòng có quy cách vẫn dùng đúng giá của quy cách đó.
+
+## QĐ-280. Không giục một việc người dùng không làm được
+
+- Món tắt theo dõi tồn kho không có trong biểu mẫu nhập kho → trang Lãi gộp
+  chỉ đúng chỗ bật, thay vì "nhập giá vốn cho món này".
+- Nhà cung cấp: "Số lần lấy hàng" = phiếu nhập mới + lô hoa (vựa hoa từng
+  hiện 0 lần), không đếm phiếu trả hàng.
+- Danh sách phiếu kho ghi rõ loại phiếu trả NCC / tồn đầu kỳ.
