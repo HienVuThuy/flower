@@ -104,6 +104,130 @@ class FlowerLotService
         );
     }
 
+    /**
+     * Sửa một lô CÒN MỞ — cho lỗi gõ nhầm lúc ghi.
+     * ============================================================
+     * VÌ SAO PHẢI CHO SỬA: gõ nhầm 5.000.000 thành 50.000.000 mà không sửa
+     * được thì con số đó đi thẳng vào giá vốn khi đóng lô. Phiếu nhập nháp
+     * xoá được; lô mở cũng phải gỡ được.
+     *
+     * HAI CHỖ CHẶN, cả hai đọc lại SAU KHI KHOÁ:
+     *   - Lô đã đóng: tiền đã vào giá vốn của một kỳ — sửa là sửa lại một
+     *     báo cáo đã đọc.
+     *   - Lô đã ghi trả hàng: tiền lấy lại được tính theo đơn giá CŨ. Đổi
+     *     số lượng hay tổng tiền là tiền trả lại không còn khớp với lô.
+     *
+     * @param  array<string, mixed>  $data  đã validate, kèm supplier_name bản chụp
+     *
+     * @throws FlowerLotException
+     */
+    public function capNhatLo(FlowerLot $lo, array $data): void
+    {
+        $truoc = [];
+
+        DB::transaction(function () use ($lo, $data, &$truoc) {
+            $khoa = $this->khoaLoConSuaDuoc($lo);
+
+            $truoc = $khoa->only(array_keys($data));
+
+            $khoa->forceFill($data)->save();
+        });
+
+        $lo->refresh();
+
+        // Chỉ ghi những trường THẬT SỰ đổi, dạng "trước → sau": nhật ký
+        // phải trả lời được "ai đổi tổng tiền lô này từ bao nhiêu".
+        $doi = [];
+
+        foreach ($truoc as $truong => $cu) {
+            $moi = $lo->getAttribute($truong);
+            $cuChu = $cu instanceof \BackedEnum ? $cu->value : (string) $cu;
+            $moiChu = $moi instanceof \BackedEnum ? $moi->value : (string) $moi;
+
+            if ($cu instanceof \DateTimeInterface) {
+                $cuChu = $cu->format('Y-m-d');
+                $moiChu = $moi?->format('Y-m-d') ?? '';
+            }
+
+            if ($cuChu !== $moiChu) {
+                $doi[$truong] = $cuChu . ' → ' . $moiChu;
+            }
+        }
+
+        $this->audit->log(
+            'kho.sua-lo-hoa',
+            sprintf('Sửa lô hoa %s', $lo->code),
+            $lo,
+            ['code' => $lo->code] + $doi,
+        );
+    }
+
+    /**
+     * Xoá một lô CÒN MỞ — cho lô ghi nhầm hẳn (ghi trùng hai lần).
+     *
+     * Cùng hai chỗ chặn với capNhatLo(). Có ghi nhật ký kèm số tiền: xoá
+     * một lô 3.000.000 mà không để lại dấu vết thì không ai đối chiếu được.
+     *
+     * @throws FlowerLotException
+     */
+    public function xoaLo(FlowerLot $lo): void
+    {
+        $banChup = [];
+
+        DB::transaction(function () use ($lo, &$banChup) {
+            $khoa = $this->khoaLoConSuaDuoc($lo);
+
+            $banChup = [
+                'code' => $khoa->code,
+                'total_cost' => (string) $khoa->total_cost,
+                'quantity' => (string) $khoa->quantity . ' ' . $khoa->unit->value,
+            ];
+
+            $khoa->delete();
+        });
+
+        $this->audit->log(
+            'kho.xoa-lo-hoa',
+            sprintf('Xoá lô hoa %s (%s đ)', $banChup['code'], $banChup['total_cost']),
+            null,
+            $banChup,
+        );
+    }
+
+    /** Lô còn sửa/xoá được không — để giao diện chỉ hiện nút khi bấm được. */
+    public static function conSuaDuoc(FlowerLot $lo): bool
+    {
+        return ! $lo->daDong() && ! $lo->daTraLai();
+    }
+
+    /**
+     * Khoá dòng, đọc lại, và từ chối nếu lô không còn sửa được.
+     *
+     * @throws FlowerLotException
+     */
+    private function khoaLoConSuaDuoc(FlowerLot $lo): FlowerLot
+    {
+        $khoa = FlowerLot::whereKey($lo->id)->lockForUpdate()->first();
+
+        if (! $khoa) {
+            throw new FlowerLotException('Không tìm thấy lô hoa.');
+        }
+
+        if ($khoa->daDong()) {
+            throw new FlowerLotException(
+                'Lô ' . $khoa->code . ' đã đóng — tiền đã vào giá vốn của một kỳ nên không sửa hay xoá được.'
+            );
+        }
+
+        if ($khoa->daTraLai()) {
+            throw new FlowerLotException(
+                'Lô ' . $khoa->code . ' đã ghi trả hàng cho vựa — tiền lấy lại tính theo đơn giá cũ, sửa lô là lệch.'
+            );
+        }
+
+        return $khoa;
+    }
+
     /** Lô còn mở quá lâu — gần như chắc chắn đã hết mà quên đóng. */
     public function loQuenDong(): \Illuminate\Database\Eloquent\Collection
     {

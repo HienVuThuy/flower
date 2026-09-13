@@ -77,6 +77,7 @@ class RouteSmokeTest extends TestCase
         'blogPost' => \App\Models\BlogPost::class,
         'journal' => \App\Models\Journal::class,
         'supplier' => \App\Models\Supplier::class,
+        'flowerLot' => \App\Models\FlowerLot::class,
     ];
 
     /**
@@ -216,6 +217,18 @@ class RouteSmokeTest extends TestCase
             'name' => 'Vựa quét thử',
             'kind' => 'vua',
         ]);
+
+        // Lô CÒN MỞ: trang sửa lô chỉ mở được với lô chưa đóng.
+        $loai = \App\Models\FlowerKind::create(['name' => 'Hoa quét thử', 'default_unit' => 'bo']);
+        (new \App\Models\FlowerLot())->forceFill([
+            'code' => 'LH-QUET-THU',
+            'flower_kind_id' => $loai->id,
+            'purchased_at' => now()->toDateString(),
+            'quantity' => '10.00',
+            'unit' => 'bo',
+            'total_cost' => '500000.00',
+            'status' => 'dang_dung',
+        ])->save();
 
         \App\Models\Promotion::create([
             'name' => 'Chương trình quét thử',

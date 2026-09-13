@@ -134,6 +134,21 @@
                                     Đóng lô
                                 </button>
                             @endunless
+
+                            {{-- Sửa / xoá chỉ hiện khi bấm được: lô còn mở và chưa ghi trả hàng. --}}
+                            @if(\App\Services\Inventory\FlowerLotService::conSuaDuoc($l))
+                                <div class="d-flex gap-1 mt-1">
+                                    <a data-admin-link href="{{ route('admin.flower-lots.edit', $l) }}"
+                                       class="btn btn-sm btn-outline-admin">Sửa</a>
+
+                                    <form method="POST" action="{{ route('admin.flower-lots.destroy', $l) }}"
+                                          onsubmit="return confirm('Xoá lô {{ $l->code }}? Chỉ dùng khi ghi nhầm hoặc ghi trùng.');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Xoá</button>
+                                    </form>
+                                </div>
+                            @endif
                         </td>
                     </tr>
 

@@ -22,6 +22,9 @@ use Illuminate\View\View;
  * ============================================================
  * KHÔNG SỬA, KHÔNG XOÁ LÔ ĐÃ ĐÓNG.
  *
+ * Lô CÒN MỞ thì sửa và xoá được (lỗi gõ nhầm lúc ghi), trừ khi đã ghi
+ * trả hàng cho vựa — xem FlowerLotService::capNhatLo().
+ *
  * Lô đã đóng là một con số đã đi vào giá vốn của một kỳ. Sửa nó là sửa
  * lại một báo cáo đã đọc — cùng nguyên tắc với phiếu nhập đã ghi sổ và
  * phiếu hoàn tiền.
@@ -73,16 +76,108 @@ class FlowerLotController extends Controller
 
     public function create(): View
     {
-        return view('admin.flower-lots.create', [
-            'loaiHoa' => FlowerKind::dangDung()->orderBy('name')->get(),
-            'nhaCungCap' => Supplier::dangHoatDong()->orderBy('name')->get(['id', 'name', 'kind']),
-            'donVi' => FlowerUnit::cases(),
-        ]);
+        return view('admin.flower-lots.create', $this->duLieuBieuMau(null));
+    }
+
+    public function edit(FlowerLot $flowerLot): View|RedirectResponse
+    {
+        if (! FlowerLotService::conSuaDuoc($flowerLot)) {
+            return redirect()
+                ->route('admin.flower-lots.index')
+                ->with('error', 'Lô ' . $flowerLot->code . ' đã đóng hoặc đã ghi trả hàng nên không sửa được.');
+        }
+
+        return view('admin.flower-lots.create', $this->duLieuBieuMau($flowerLot));
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate([
+        $data = $request->validate($this->quyTac(), [], $this->tenTruong());
+
+        $ncc = isset($data['supplier_id']) ? Supplier::find($data['supplier_id']) : null;
+
+        $lo = new FlowerLot();
+
+        // `code`, `status`, `created_by` không nằm trong $fillable.
+        $lo->forceFill(array_merge($data, [
+            'code' => $this->service->sinhMa(),
+            'supplier_id' => $ncc?->id,
+            'supplier_name' => $ncc?->name,
+            'status' => FlowerLotStatus::DangDung,
+            'created_by' => Auth::id(),
+        ]))->save();
+
+        return redirect()
+            ->route('admin.flower-lots.index')
+            ->with('success', 'Đã ghi lô ' . $lo->code . '. Dùng hết thì nhớ đóng lô — chưa đóng thì tiền chưa vào giá vốn.');
+    }
+
+    public function update(Request $request, FlowerLot $flowerLot): RedirectResponse
+    {
+        // CÙNG MỘT BỘ QUY TẮC với lúc ghi: sửa mà lỏng hơn ghi là cửa sau
+        // để đưa lô 0 đồng hay số lượng âm vào sổ.
+        $data = $request->validate($this->quyTac(), [], $this->tenTruong());
+
+        $ncc = isset($data['supplier_id']) ? Supplier::find($data['supplier_id']) : null;
+
+        try {
+            $this->service->capNhatLo($flowerLot, array_merge($data, [
+                'supplier_id' => $ncc?->id,
+                // Đổi nguồn thì đổi luôn bản chụp tên — bản chụp là tên
+                // của nguồn ĐANG GẮN với lô, không phải của nguồn cũ.
+                'supplier_name' => $ncc?->name,
+                'quality' => $data['quality'] ?? null,
+                'note' => $data['note'] ?? null,
+            ]));
+        } catch (FlowerLotException $e) {
+            return redirect()->route('admin.flower-lots.index')->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.flower-lots.index')
+            ->with('success', 'Đã sửa lô ' . $flowerLot->code . '.');
+    }
+
+    public function destroy(FlowerLot $flowerLot): RedirectResponse
+    {
+        try {
+            $this->service->xoaLo($flowerLot);
+        } catch (FlowerLotException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.flower-lots.index')
+            ->with('success', 'Đã xoá lô ' . $flowerLot->code . '.');
+    }
+
+    /**
+     * Dữ liệu cho biểu mẫu ghi / sửa lô — MỘT biểu mẫu cho cả hai.
+     *
+     * Khi sửa, loại hoa và nhà cung cấp ĐANG GẮN với lô vẫn phải có trong
+     * ô chọn dù đã ngừng dùng: thiếu nó thì ô chọn tự nhảy sang mục đầu
+     * tiên, và bấm Lưu là lặng lẽ đổi nguồn của lô.
+     */
+    private function duLieuBieuMau(?FlowerLot $lo): array
+    {
+        return [
+            'lo' => $lo,
+            'loaiHoa' => FlowerKind::query()
+                ->where(fn ($q) => $q->dangDung()->when($lo, fn ($q) => $q->orWhere('id', $lo->flower_kind_id)))
+                ->orderBy('name')
+                ->get(),
+            'nhaCungCap' => Supplier::query()
+                ->where(fn ($q) => $q->dangHoatDong()->when($lo?->supplier_id, fn ($q) => $q->orWhere('id', $lo->supplier_id)))
+                ->orderBy('name')
+                ->get(['id', 'name', 'kind']),
+            'donVi' => FlowerUnit::cases(),
+        ];
+    }
+
+    /** Quy tắc cho CẢ ghi lẫn sửa — một chỗ, không hai bản để lệch nhau. */
+    private function quyTac(): array
+    {
+        return [
             'flower_kind_id' => ['required', 'integer', 'exists:flower_kinds,id'],
             'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
             'purchased_at' => ['required', 'date', 'before_or_equal:today'],
@@ -103,29 +198,17 @@ class FlowerLotController extends Controller
 
             'quality' => ['nullable', Rule::enum(FlowerQuality::class)],
             'note' => ['nullable', 'string', 'max:1000'],
-        ], [], [
+        ];
+    }
+
+    private function tenTruong(): array
+    {
+        return [
             'flower_kind_id' => 'loại hoa',
             'purchased_at' => 'ngày lấy hàng',
             'quantity' => 'số lượng',
             'total_cost' => 'tổng tiền',
-        ]);
-
-        $ncc = isset($data['supplier_id']) ? Supplier::find($data['supplier_id']) : null;
-
-        $lo = new FlowerLot();
-
-        // `code`, `status`, `created_by` không nằm trong $fillable.
-        $lo->forceFill(array_merge($data, [
-            'code' => $this->service->sinhMa(),
-            'supplier_id' => $ncc?->id,
-            'supplier_name' => $ncc?->name,
-            'status' => FlowerLotStatus::DangDung,
-            'created_by' => Auth::id(),
-        ]))->save();
-
-        return redirect()
-            ->route('admin.flower-lots.index')
-            ->with('success', 'Đã ghi lô ' . $lo->code . '. Dùng hết thì nhớ đóng lô — chưa đóng thì tiền chưa vào giá vốn.');
+        ];
     }
 
     public function close(Request $request, FlowerLot $flowerLot): RedirectResponse

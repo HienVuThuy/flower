@@ -1,11 +1,18 @@
 @extends('layouts.admin')
 
-@section('title', 'Ghi lô hoa')
+@php
+    /* MỘT biểu mẫu cho cả ghi mới và sửa: hai bản thì sớm muộn một bản
+       thiếu ô, và sửa lô là lặng lẽ xoá mất giá trị ô đó. */
+    $lo = $lo ?? null;
+    $tieuDe = $lo ? 'Sửa lô ' . $lo->code : 'Ghi lô hoa';
+@endphp
+
+@section('title', $tieuDe)
 
 @section('content')
 
 <div class="mb-4">
-    <h1 class="admin-page-title">Ghi lô hoa</h1>
+    <h1 class="admin-page-title">{{ $tieuDe }}</h1>
     <p class="admin-page-subtitle">
         Một lần lấy hàng là một lô. Ghi số lượng và tiền theo <strong>đơn vị lúc mua</strong>
         (bó, cân, thùng…), không quy về cành.
@@ -23,8 +30,11 @@
         </a>
     </div>
 @else
-<form method="POST" action="{{ route('admin.flower-lots.store') }}">
+<form method="POST" action="{{ $lo ? route('admin.flower-lots.update', $lo) : route('admin.flower-lots.store') }}">
     @csrf
+    @if($lo)
+        @method('PUT')
+    @endif
 
     <div class="row g-3">
         <div class="col-lg-7">
@@ -36,7 +46,7 @@
                             class="form-select @error('flower_kind_id') is-invalid @enderror">
                         <option value="">— chọn —</option>
                         @foreach($loaiHoa as $lh)
-                            <option value="{{ $lh->id }}" @selected(old('flower_kind_id') == $lh->id)
+                            <option value="{{ $lh->id }}" @selected(old('flower_kind_id', $lo?->flower_kind_id) == $lh->id)
                                     data-don-vi="{{ $lh->default_unit->value }}">
                                 {{ $lh->name }}
                             </option>
@@ -50,7 +60,7 @@
                         <label class="form-label" for="quantity">Số lượng <span aria-hidden="true">*</span></label>
                         <input type="number" id="quantity" name="quantity" required
                                class="form-control @error('quantity') is-invalid @enderror"
-                               min="0.01" step="0.01" value="{{ old('quantity') }}">
+                               min="0.01" step="0.01" value="{{ old('quantity', $lo ? rtrim(rtrim((string) $lo->quantity, '0'), '.') : null) }}">
                         <x-form-error name="quantity" />
                         {{-- Có phần thập phân: mua theo cân thì 3,5kg là chuyện thường. --}}
                         <div class="form-text">Được ghi số lẻ, ví dụ 3,5 kg.</div>
@@ -60,7 +70,7 @@
                         <label class="form-label" for="unit">Đơn vị</label>
                         <select id="unit" name="unit" class="form-select @error('unit') is-invalid @enderror">
                             @foreach($donVi as $dv)
-                                <option value="{{ $dv->value }}" @selected(old('unit', 'bo') === $dv->value)>
+                                <option value="{{ $dv->value }}" @selected(old('unit', $lo?->unit->value ?? 'bo') === $dv->value)>
                                     {{ $dv->label() }}
                                 </option>
                             @endforeach
@@ -72,7 +82,7 @@
                         <label class="form-label" for="total_cost">Tổng tiền <span aria-hidden="true">*</span></label>
                         <input type="number" id="total_cost" name="total_cost" required
                                class="form-control @error('total_cost') is-invalid @enderror"
-                               min="1" step="1" value="{{ old('total_cost') }}">
+                               min="1" step="1" value="{{ old('total_cost', $lo ? (int) $lo->total_cost : null) }}">
                         <x-form-error name="total_cost" />
                         <div class="form-text">Tiền cả lô, không phải giá mỗi đơn vị.</div>
                     </div>
@@ -82,7 +92,7 @@
                     <label class="form-label" for="note">Ghi chú</label>
                     <textarea id="note" name="note" rows="3" maxlength="1000"
                               class="form-control @error('note') is-invalid @enderror"
-                              placeholder="Hoa hơi non, để được lâu. Giá đang lên vì gần lễ.">{{ old('note') }}</textarea>
+                              placeholder="Hoa hơi non, để được lâu. Giá đang lên vì gần lễ.">{{ old('note', $lo?->note) }}</textarea>
                     <x-form-error name="note" />
                 </div>
 
@@ -98,7 +108,7 @@
                             class="form-select @error('supplier_id') is-invalid @enderror">
                         <option value="">— chưa ghi / mua lẻ —</option>
                         @foreach($nhaCungCap as $ncc)
-                            <option value="{{ $ncc->id }}" @selected(old('supplier_id') == $ncc->id)>
+                            <option value="{{ $ncc->id }}" @selected(old('supplier_id', $lo?->supplier_id) == $ncc->id)>
                                 {{ $ncc->name }} ({{ $ncc->kind->label() }})
                             </option>
                         @endforeach
@@ -115,7 +125,7 @@
                     <label class="form-label" for="purchased_at">Ngày lấy hàng</label>
                     <input type="date" id="purchased_at" name="purchased_at" required
                            class="form-control @error('purchased_at') is-invalid @enderror"
-                           value="{{ old('purchased_at', \App\Services\Time\Gio::choONgay(now())) }}"
+                           value="{{ old('purchased_at', $lo ? $lo->purchased_at->toDateString() : \App\Services\Time\Gio::choONgay(now())) }}"
                            max="{{ \App\Services\Time\Gio::choONgay(now()) }}">
                     <x-form-error name="purchased_at" />
                 </div>
@@ -125,7 +135,7 @@
                     <select id="quality" name="quality" class="form-select @error('quality') is-invalid @enderror">
                         <option value="">— chưa đánh giá —</option>
                         @foreach(\App\Enums\FlowerQuality::cases() as $cl)
-                            <option value="{{ $cl->value }}" @selected(old('quality') === $cl->value)>
+                            <option value="{{ $cl->value }}" @selected(old('quality', $lo?->quality?->value) === $cl->value)>
                                 {{ $cl->label() }}
                             </option>
                         @endforeach
@@ -136,11 +146,16 @@
                     <div class="form-text">Để so cùng với giá: rẻ hơn mà hay dập thì không rẻ hơn.</div>
                 </div>
 
-                <button type="submit" class="btn btn-primary-brand w-100">Ghi lô</button>
+                <button type="submit" class="btn btn-primary-brand w-100">{{ $lo ? 'Lưu thay đổi' : 'Ghi lô' }}</button>
 
                 <p class="admin-page-subtitle small mt-2 mb-0">
-                    Ghi xong là lô <strong>đang dùng</strong>. Dùng hết thì đóng lô ở
-                    trang danh sách — chưa đóng thì tiền chưa vào giá vốn.
+                    @if($lo)
+                        Chỉ sửa được khi lô <strong>còn mở</strong>. Mọi thay đổi được ghi vào
+                        nhật ký kèm giá trị cũ.
+                    @else
+                        Ghi xong là lô <strong>đang dùng</strong>. Dùng hết thì đóng lô ở
+                        trang danh sách — chưa đóng thì tiền chưa vào giá vốn.
+                    @endif
                 </p>
             </div>
         </div>

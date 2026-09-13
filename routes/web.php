@@ -1065,6 +1065,19 @@ Route::prefix('admin')
             ->middleware(['quyen:kho', 'throttle:30,1'])
             ->name('flower-lots.close');
 
+        // Sửa / xoá chỉ cho lô CÒN MỞ và chưa ghi trả hàng — service chặn.
+        Route::get('lo-hoa/{flowerLot}/sua', [FlowerLotController::class, 'edit'])
+            ->middleware('quyen:kho')
+            ->name('flower-lots.edit');
+
+        Route::put('lo-hoa/{flowerLot}', [FlowerLotController::class, 'update'])
+            ->middleware(['quyen:kho', 'throttle:30,1'])
+            ->name('flower-lots.update');
+
+        Route::delete('lo-hoa/{flowerLot}', [FlowerLotController::class, 'destroy'])
+            ->middleware(['quyen:kho', 'throttle:30,1'])
+            ->name('flower-lots.destroy');
+
         /*
          * TRẢ HÀNG CHO NHÀ CUNG CẤP.
          *
