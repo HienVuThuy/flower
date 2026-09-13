@@ -375,4 +375,105 @@ class DashboardTodoTest extends TestCase
             ->get('/admin/dashboard')
             ->assertForbidden();
     }
+
+    /* ================= LÔ HOA VÀ ĐỔI HÀNG ================= */
+
+    private function loHoa(int $ngayTruoc, string $trangThai = 'dang_dung'): \App\Models\FlowerLot
+    {
+        $loai = \App\Models\FlowerKind::firstOrCreate(['name' => 'Hồng thử'], ['default_unit' => 'bo']);
+
+        $lo = new \App\Models\FlowerLot();
+        $lo->forceFill([
+            'code' => 'LH-' . uniqid(),
+            'flower_kind_id' => $loai->id,
+            'purchased_at' => now()->subDays($ngayTruoc)->toDateString(),
+            'quantity' => '10.00',
+            'unit' => 'bo',
+            'total_cost' => '500000.00',
+            'status' => $trangThai,
+            'closed_at' => $trangThai === 'da_dong' ? now() : null,
+        ])->save();
+
+        return $lo;
+    }
+
+    private function doiHang(\App\Enums\ExchangeStatus $trangThai): \App\Models\Exchange
+    {
+        $don = $this->order(OrderStatus::Completed, PaymentStatus::Paid);
+
+        $phieu = new \App\Models\Exchange();
+        $phieu->forceFill([
+            'code' => 'DH-' . strtoupper(bin2hex(random_bytes(3))),
+            'order_id' => $don->id,
+            'reason' => 'hang_hong',
+            'status' => $trangThai,
+        ])->save();
+
+        return $phieu;
+    }
+
+    #[Test]
+    public function nhac_lo_hoa_mo_qua_lau_ma_chua_dong(): void
+    {
+        /*
+         * Quên đóng lô là giá vốn hoa thấp hơn sự thật. Trước đây chỉ
+         * trang Lợi nhuận và trang Lô hoa đếm số này — chỉ ai cố ý đi
+         * xem mới thấy.
+         */
+        $this->loHoa(\App\Services\Inventory\FlowerLotService::NGAY_NHAC_DONG + 2);
+
+        $html = $this->dashboard()->assertOk()->assertSee('lô hoa mở quá')->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '#href="[^"]*admin/lo-hoa\?[^"]*trang_thai=dang_dung#',
+            $html,
+            'Dòng lô quên đóng phải dẫn tới danh sách lô đang mở.',
+        );
+    }
+
+    #[Test]
+    public function lo_moi_lay_hoac_DA_DONG_khong_phai_la_viec(): void
+    {
+        $this->loHoa(2);
+        $this->loHoa(30, 'da_dong');
+
+        $this->dashboard()->assertOk()->assertDontSee('lô hoa mở quá');
+    }
+
+    #[Test]
+    public function doi_hang_DA_NHAN_hang_tra_ma_chua_hoan_tat_la_viec_cua_cua_hang(): void
+    {
+        $this->doiHang(\App\Enums\ExchangeStatus::DaNhan);
+
+        $html = $this->dashboard()
+            ->assertOk()
+            ->assertSee('phiếu đổi hàng đã nhận hàng trả nhưng chưa hoàn tất')
+            ->assertDontSee('phiếu đổi hàng đang chờ khách gửi hàng về')
+            ->getContent();
+
+        $this->assertMatchesRegularExpression('#href="[^"]*admin/doi-hang\?[^"]*trang_thai=da_nhan#', $html);
+    }
+
+    #[Test]
+    public function doi_hang_CHO_NHAN_la_muc_rieng(): void
+    {
+        $this->doiHang(\App\Enums\ExchangeStatus::ChoNhan);
+
+        $html = $this->dashboard()
+            ->assertOk()
+            ->assertSee('phiếu đổi hàng đang chờ khách gửi hàng về')
+            ->assertDontSee('đã nhận hàng trả nhưng chưa hoàn tất')
+            ->getContent();
+
+        $this->assertMatchesRegularExpression('#href="[^"]*admin/doi-hang\?[^"]*trang_thai=cho_nhan#', $html);
+    }
+
+    #[Test]
+    public function doi_hang_HOAN_TAT_hoac_HUY_khong_con_la_viec(): void
+    {
+        $this->doiHang(\App\Enums\ExchangeStatus::HoanTat);
+        $this->doiHang(\App\Enums\ExchangeStatus::Huy);
+
+        $this->dashboard()->assertOk()->assertDontSee('phiếu đổi hàng');
+    }
 }

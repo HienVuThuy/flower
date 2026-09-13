@@ -2,6 +2,8 @@
 
 namespace App\Services\Admin;
 
+use App\Enums\ExchangeStatus;
+use App\Enums\FlowerLotStatus;
 use App\Enums\InquiryStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
@@ -9,11 +11,13 @@ use App\Enums\StockCountStatus;
 use App\Enums\StockReceiptStatus;
 use App\Models\BulkOrderInquiry;
 use App\Models\CommunityPost;
+use App\Models\Exchange;
 use App\Models\Order;
 use App\Models\Review;
 use App\Models\StockCount;
 use App\Models\StockReceipt;
 use App\Services\Analytics\InventoryReport;
+use App\Services\Inventory\FlowerLotService;
 
 /**
  * HÀNG ĐỢI VIỆC của trang quản trị.
@@ -185,6 +189,47 @@ class WorkQueue
                 'url' => route('admin.stock-counts.index', ['trang-thai' => StockCountStatus::Draft->value]),
                 'tone' => 'info',
                 'hint' => 'Đã đếm hàng thật nhưng tồn trên hệ thống vẫn là số cũ.',
+            ],
+
+            /*
+             * LÔ HOA QUÊN ĐÓNG = GIÁ VỐN HOA THẤP HƠN SỰ THẬT.
+             *
+             * Trước đây chỉ trang Lợi nhuận và trang Lô hoa đếm số này —
+             * tức là chỉ ai CỐ Ý đi xem mới thấy. Sai theo hướng làm lãi
+             * đẹp lên là hướng không ai tự đi tìm, nên nó phải nằm ở đây.
+             *
+             * Đếm bằng CHÍNH hàm mà trang Lô hoa dùng để nhắc: hai định
+             * nghĩa "quên đóng" thì hai trang báo hai con số.
+             */
+            [
+                'label' => 'lô hoa mở quá ' . FlowerLotService::NGAY_NHAC_DONG . ' ngày, có thể đã dùng hết mà quên đóng',
+                'count' => app(FlowerLotService::class)->loQuenDong()->count(),
+                'url' => route('admin.flower-lots.index', ['trang_thai' => FlowerLotStatus::DangDung->value]),
+                'tone' => 'warning',
+                'hint' => 'Chưa đóng thì tiền lô chưa vào giá vốn — lãi gộp hoa đang cao hơn sự thật.',
+            ],
+
+            /*
+             * ĐỔI HÀNG DỞ DANG — HAI MỤC, vì là hai việc của hai người.
+             *
+             * Chờ nhận: đang đợi KHÁCH gửi hàng về, cửa hàng chỉ cần theo
+             * dõi. Đã nhận: hàng trả đã nằm ở cửa hàng mà khách chưa có
+             * hàng đổi — đó là việc của CỬA HÀNG, và khách đang đợi.
+             */
+            [
+                'label' => 'phiếu đổi hàng đã nhận hàng trả nhưng chưa hoàn tất',
+                'count' => Exchange::where('status', ExchangeStatus::DaNhan)->count(),
+                'url' => route('admin.exchanges.index', ['trang_thai' => ExchangeStatus::DaNhan->value]),
+                'tone' => 'warning',
+                'hint' => 'Khách đã gửi hàng lại và đang đợi hàng đổi.',
+            ],
+
+            [
+                'label' => 'phiếu đổi hàng đang chờ khách gửi hàng về',
+                'count' => Exchange::where('status', ExchangeStatus::ChoNhan)->count(),
+                'url' => route('admin.exchanges.index', ['trang_thai' => ExchangeStatus::ChoNhan->value]),
+                'tone' => 'info',
+                'hint' => 'Theo dõi để nhắc khách nếu để lâu.',
             ],
 
             /*
