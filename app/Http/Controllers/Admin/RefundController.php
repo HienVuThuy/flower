@@ -27,6 +27,53 @@ class RefundController extends Controller
     ) {
     }
 
+    /**
+     * Mọi khoản hoàn tiền, lọc theo trạng thái / cách hoàn / mã.
+     *
+     * CON SỐ "ĐÃ HOÀN" CHỈ CỘNG KHOẢN ĐÃ XONG. Khoản chưa rõ kết quả (MoMo
+     * chưa trả lời, chuyển khoản chưa xác nhận) chưa phải tiền đã rời cửa
+     * hàng; khoản thất bại thì không bao giờ rời. Cộng chung là con số đối
+     * soát lệch với sao kê ngân hàng.
+     */
+    public function index(\Illuminate\Http\Request $request): \Illuminate\View\View
+    {
+        $q = Refund::query();
+
+        if ($tt = \App\Enums\RefundStatus::tryFrom((string) $request->query('trang_thai'))) {
+            $q->where('status', $tt->value);
+        }
+
+        if ($pt = \App\Enums\RefundMethod::tryFrom((string) $request->query('phuong_thuc'))) {
+            $q->where('method', $pt->value);
+        }
+
+        if ($tim = trim((string) $request->query('q'))) {
+            $q->where(fn ($w) => $w
+                ->where('code', 'like', '%' . $tim . '%')
+                ->orWhereHas('order', fn ($o) => $o->where('order_number', 'like', '%' . $tim . '%')));
+        }
+
+        // Cộng bằng bcmath, không bằng SUM của cơ sở dữ liệu: cùng lý do
+        // với mọi báo cáo tiền khác trong dự án.
+        $daHoan = '0.00';
+
+        foreach ((clone $q)->where('status', \App\Enums\RefundStatus::Completed->value)->pluck('amount') as $tien) {
+            $daHoan = bcadd($daHoan, (string) $tien, 2);
+        }
+
+        return view('admin.refunds.index', [
+            'hoanTien' => (clone $q)
+                ->with('order:id,order_number,recipient_name')
+                ->latest('id')
+                ->paginate(25)
+                ->withQueryString(),
+            'daHoan' => $daHoan,
+            'chuaRo' => (clone $q)->where('status', \App\Enums\RefundStatus::Pending->value)->count(),
+            'trangThai' => \App\Enums\RefundStatus::cases(),
+            'phuongThuc' => \App\Enums\RefundMethod::cases(),
+        ]);
+    }
+
     public function store(RefundRequest $request, Order $order): RedirectResponse
     {
         try {

@@ -192,6 +192,15 @@
                 <x-site.icon name="arrow-repeat" />
                 <span>Đổi hàng</span>
             </a>
+
+            {{-- Mọi khoản hoàn tiền ở một chỗ, để đối soát. Quyền tài chính. --}}
+            @can('tai-chinh')
+            <a data-admin-link href="{{ route('admin.refunds.index') }}"
+               class="admin-nav-link {{ request()->routeIs('admin.refunds.index') ? 'is-active' : '' }}">
+                <x-site.icon name="arrow-counterclockwise" />
+                <span>Hoàn tiền</span>
+            </a>
+            @endcan
             @endcan
 
             @can('san-pham')

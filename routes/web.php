@@ -1317,6 +1317,17 @@ Route::prefix('admin')
             ->middleware('throttle:20,1')
             ->name('refunds.fail');
 
+        /*
+         * DANH SÁCH HOÀN TIỀN — mọi khoản, không phải từng đơn.
+         *
+         * Trước đây khoản hoàn chỉ xem được trong trang của từng đơn: muốn
+         * đối soát "tháng này đã trả lại khách bao nhiêu" là mở từng đơn.
+         * Cùng quyền tài chính với nút xác nhận tiền đã đi.
+         */
+        Route::get('hoan-tien', [RefundController::class, 'index'])
+            ->middleware('quyen:tai-chinh')
+            ->name('refunds.index');
+
         Route::prefix('bulk-inquiries')
             ->name('bulk-inquiries.')
             ->middleware('quyen:don-hang')
