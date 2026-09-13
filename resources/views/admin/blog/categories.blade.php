@@ -11,8 +11,9 @@
             Nhóm bài viết theo chủ đề. Chuyên mục còn bài thì không xoá được — chuyển bài sang chỗ khác trước.
         </p>
     </div>
-    <a data-admin-link href="{{ route('admin.blog.index') }}" class="btn btn-outline-admin">Về danh sách bài viết</a>
 </div>
+
+<x-admin.nhom-tab ten="cam-nang" />
 
 <div class="row g-3">
     <div class="col-lg-8">

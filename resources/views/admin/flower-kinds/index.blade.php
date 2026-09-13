@@ -12,6 +12,8 @@
     </p>
 </div>
 
+<x-admin.nhom-tab ten="lo-hoa" />
+
 <div class="row g-3">
 
     <div class="col-lg-5">

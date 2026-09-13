@@ -15,6 +15,8 @@
     <a href="{{ route('admin.blog.create') }}" class="btn btn-primary-brand">Viết bài mới</a>
 </div>
 
+<x-admin.nhom-tab ten="cam-nang" />
+
 <div class="admin-panel p-4">
     <form method="GET" class="mb-3">
         <input type="search" name="q" value="{{ $q }}" class="form-control"

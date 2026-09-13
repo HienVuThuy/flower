@@ -31,6 +31,8 @@
     </div>
 </div>
 
+<x-admin.nhom-tab ten="nhap-kho" />
+
 <div class="admin-panel p-4">
     @if($receipts->isEmpty())
         <p class="analytics-empty mb-0">Chưa có phiếu nhập nào.</p>

@@ -166,6 +166,16 @@
                             </option>
                         @endforeach
                     </select>
+
+                    {{-- Chuyên mục chưa có thì phải tạo TRƯỚC khi viết bài: nói ra
+                         ngay cạnh ô chọn, không để người viết tự đi tìm. --}}
+                    <div class="form-text">
+                        @if($categories->isEmpty())
+                            Chưa có chuyên mục nào.
+                        @endif
+                        <a data-admin-link href="{{ route('admin.blog-categories.index') }}">Thêm hoặc sửa chuyên mục</a>
+                        — nên tạo chuyên mục trước khi viết bài.
+                    </div>
                 </div>
 
                 <div class="mb-0">

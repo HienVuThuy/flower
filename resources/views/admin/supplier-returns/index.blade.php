@@ -15,6 +15,8 @@
     </p>
 </div>
 
+<x-admin.nhom-tab ten="nhap-kho" />
+
 {{--
     NÓI TRƯỚC ĐIỀU DỄ LÀM SAI NHẤT.
 

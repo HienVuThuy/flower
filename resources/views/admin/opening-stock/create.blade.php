@@ -12,6 +12,8 @@
     </p>
 </div>
 
+<x-admin.nhom-tab ten="nhap-kho" />
+
 {{--
     NÓI TRƯỚC HAI ĐIỀU DỄ HIỂU NHẦM NHẤT, ngay trên biểu mẫu.
 

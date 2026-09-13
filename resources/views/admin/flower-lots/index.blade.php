@@ -18,6 +18,8 @@
     </a>
 </div>
 
+<x-admin.nhom-tab ten="lo-hoa" />
+
 {{--
     NHẮC LÔ QUÊN ĐÓNG — ĐẶT TRÊN CÙNG, CÓ CHỦ Ý.
 

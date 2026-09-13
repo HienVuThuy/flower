@@ -12,6 +12,8 @@
     </p>
 </div>
 
+<x-admin.nhom-tab ten="cai-dat" />
+
 <form method="POST" action="{{ route('admin.page-contents.update') }}">
     @csrf
     @method('PUT')

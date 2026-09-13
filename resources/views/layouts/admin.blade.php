@@ -114,7 +114,8 @@
 
             {{-- Tồn kho là XEM, nhập kho là GHI — hai việc khác nhau nên
                  hai mục khác nhau. --}}
-            <a data-admin-link href="{{ route('admin.stock-receipts.index') }}" class="admin-nav-link {{ request()->routeIs('admin.stock-receipts.*') ? 'is-active' : '' }}">
+            {{-- Tồn đầu kỳ và Trả hàng nhà cung cấp là tab của trang này (x-admin.nhom-tab). --}}
+            <a data-admin-link href="{{ route('admin.stock-receipts.index') }}" class="admin-nav-link {{ request()->routeIs('admin.stock-receipts.*', 'admin.opening-stock.*', 'admin.supplier-returns.*') ? 'is-active' : '' }}">
                 <x-site.icon name="plus" />
                 <span>Nhập kho</span>
             </a>
@@ -129,33 +130,10 @@
                 <span>Nhà cung cấp</span>
             </a>
 
-            {{-- So giá giữa các nguồn: đứng ở nhóm Kho chứ không ở Phân
-                 tích, vì người dùng nó là người đi lấy hàng — và người đó
-                 có thể không có quyền xem báo cáo bán hàng. --}}
-            <a data-admin-link href="{{ route('admin.analytics.purchasing') }}" class="admin-nav-link {{ request()->routeIs('admin.analytics.purchasing') ? 'is-active' : '' }}">
-                <x-site.icon name="bar-chart" />
-                <span>Phân tích thu mua</span>
-            </a>
-
-            <a data-admin-link href="{{ route('admin.opening-stock.create') }}" class="admin-nav-link {{ request()->routeIs('admin.opening-stock.*') ? 'is-active' : '' }}">
-                <x-site.icon name="journal" />
-                <span>Tồn đầu kỳ</span>
-            </a>
-
             {{-- Hoa tươi đi đường riêng: không đếm theo cành mà theo lô. --}}
-            <a data-admin-link href="{{ route('admin.flower-lots.index') }}" class="admin-nav-link {{ request()->routeIs('admin.flower-lots.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.flower-lots.index') }}" class="admin-nav-link {{ request()->routeIs('admin.flower-lots.*', 'admin.flower-kinds.*') ? 'is-active' : '' }}">
                 <x-site.icon name="flower1" />
                 <span>Lô hoa</span>
-            </a>
-
-            <a data-admin-link href="{{ route('admin.flower-kinds.index') }}" class="admin-nav-link {{ request()->routeIs('admin.flower-kinds.*') ? 'is-active' : '' }}">
-                <x-site.icon name="tags" />
-                <span>Loại hoa thu mua</span>
-            </a>
-
-            <a data-admin-link href="{{ route('admin.supplier-returns.index') }}" class="admin-nav-link {{ request()->routeIs('admin.supplier-returns.*') ? 'is-active' : '' }}">
-                <x-site.icon name="arrow-repeat" />
-                <span>Trả hàng nhà cung cấp</span>
             </a>
             @endcan
         </nav>
@@ -204,14 +182,9 @@
             @endcan
 
             @can('san-pham')
-            <a data-admin-link href="{{ route('admin.blog.index') }}" class="admin-nav-link {{ request()->routeIs('admin.blog.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.blog.index') }}" class="admin-nav-link {{ request()->routeIs('admin.blog.*', 'admin.blog-categories.*') ? 'is-active' : '' }}">
                 <x-site.icon name="list" />
                 <span>Cẩm nang</span>
-            </a>
-
-            <a data-admin-link href="{{ route('admin.blog-categories.index') }}" class="admin-nav-link {{ request()->routeIs('admin.blog-categories.*') ? 'is-active' : '' }}">
-                <x-site.icon name="tags" />
-                <span>Chuyên mục cẩm nang</span>
             </a>
 
             @endcan
@@ -293,11 +266,7 @@
                 <x-site.icon name="clock-history" />
                 <span>Nhật ký</span>
             </a>
-            <a data-admin-link href="{{ route('admin.page-contents.edit') }}" class="admin-nav-link {{ request()->routeIs('admin.page-contents.*') ? 'is-active' : '' }}">
-                <x-site.icon name="journal" />
-                <span>Trang nội dung</span>
-            </a>
-            <a data-admin-link href="{{ route('admin.settings.edit') }}" class="admin-nav-link {{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.settings.edit') }}" class="admin-nav-link {{ request()->routeIs('admin.settings.*', 'admin.page-contents.*') ? 'is-active' : '' }}">
                 <x-site.icon name="gear" />
                 <span>Cài đặt</span>
             </a>

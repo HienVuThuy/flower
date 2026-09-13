@@ -9,6 +9,8 @@
     <p class="admin-page-subtitle">Đổi theme và thông tin liên hệ — áp dụng ngay, không cần deploy lại.</p>
 </div>
 
+<x-admin.nhom-tab ten="cai-dat" />
+
 <div class="row g-4">
 
     <div class="col-lg-8">
