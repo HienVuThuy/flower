@@ -1,0 +1,47 @@
+{ten_cua_hang} là cửa hàng hoa tươi và cây cảnh đặt tại Hà Nội.
+Chúng tôi bán hoa cắt cành, cây trồng chậu, bonsai và vật tư chăm cây —
+cùng với phần khó hơn nhiều: giúp bạn chọn đúng thứ hợp với chỗ bạn định đặt nó.
+
+## Cửa hàng bán gì
+
+- **Hoa tươi** — bó, hộp, giỏ, lẵng khai trương. Hoa cưới và hoa sự kiện làm theo đơn, không có sẵn.
+- **Cây cảnh** — cây để bàn, cây lọc không khí, sen đá, xương rồng, bonsai.
+- **Phụ kiện và vật tư** — chậu, đất trồng, phân bón, dụng cụ chăm cây.
+
+## Cách chúng tôi làm việc
+
+### Hoa cắt cành làm theo ngày
+
+Hoa tươi không có tồn kho theo nghĩa thông thường. Đơn đặt hôm nay được
+gói bằng hoa nhập buổi sáng hôm đó. Vì thế những mẫu hoa cưới và hoa sự
+kiện trên trang không hiện số lượng còn lại — chúng là
+**hàng làm theo đơn**, không phải hàng có sẵn trong kho.
+
+### Cây trồng chậu có số lượng thật
+
+Ngược lại, cây trồng chậu là hàng đếm được. Số bạn nhìn thấy trên trang
+sản phẩm là số cây thật đang có. Hết là hết, chúng tôi không nhận đơn
+rồi báo lại sau.
+
+### Mỗi cây đi kèm hồ sơ chăm sóc
+
+Phần lớn cây cảnh chết vì tưới sai, không phải vì thiếu nắng. Mỗi sản
+phẩm cây trên trang đều có hồ sơ chăm sóc: cần bao nhiêu nắng, tưới mấy
+ngày một lần, loại đất, chu kỳ bón phân, và độ khó với người mới. Nếu
+bạn có tài khoản, hệ thống sẽ nhắc lịch tưới và bón theo đúng chu kỳ đó.
+
+## Thông tin cửa hàng
+
+Địa chỉ:: {dia_chi}
+Hotline:: {hotline}
+Email:: {email}
+
+> ## Về phiên bản này
+>
+> Đây là **bài tập lớn môn học**, không phải cửa hàng đang
+> kinh doanh. Sản phẩm, giá và hình ảnh là dữ liệu mẫu. Bạn có thể đặt
+> thử để xem quy trình chạy, nhưng **đừng trả tiền thật** —
+> sẽ không có ai giao hàng.
+>
+> Ảnh minh hoạ lấy từ Openverse theo giấy phép cho phép dùng thương mại,
+> có ghi công đầy đủ ở trang [Nguồn ảnh](/nguon-anh).

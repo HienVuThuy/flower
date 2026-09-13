@@ -26,12 +26,17 @@ use Illuminate\View\View;
 class PageController extends Controller
 {
     /** Slug hợp lệ → tên view + tiêu đề. Danh sách đóng, không mở. */
+    /*
+     * Slug → tiêu đề. Nội dung KHÔNG còn nằm trong năm tệp Blade: bản viết
+     * sẵn ở resources/content/trang/{slug}.txt, bản cửa hàng sửa ở bảng
+     * settings — cùng một định dạng, xem App\Services\Content\TrangNoiDung.
+     */
     private const PAGES = [
-        'gioi-thieu' => ['about', 'Giới thiệu'],
-        'lien-he' => ['contact', 'Liên hệ'],
-        'chinh-sach-doi-tra' => ['returns', 'Chính sách đổi trả'],
-        'dieu-khoan-su-dung' => ['terms', 'Điều khoản sử dụng'],
-        'chinh-sach-bao-mat' => ['privacy', 'Chính sách bảo mật'],
+        'gioi-thieu' => 'Giới thiệu',
+        'lien-he' => 'Liên hệ',
+        'chinh-sach-doi-tra' => 'Chính sách đổi trả',
+        'dieu-khoan-su-dung' => 'Điều khoản sử dụng',
+        'chinh-sach-bao-mat' => 'Chính sách bảo mật',
     ];
 
     /**
@@ -45,37 +50,24 @@ class PageController extends Controller
     {
         abort_unless(isset(self::PAGES[$slug]), 404);
 
-        [$view, $title] = self::PAGES[$slug];
+        $dichVu = app(\App\Services\Content\TrangNoiDung::class);
 
         /*
-         * NỘI DUNG CỬA HÀNG ĐÃ SỬA thì dùng nó; để trống thì dùng bản viết
-         * sẵn. Xem Admin\PageContentController.
+         * BẢN CỬA HÀNG ĐÃ SỬA thì dùng nó; chưa sửa thì dùng bản viết sẵn.
+         * Xem Admin\PageContentController.
          */
-        $noiDung = trim((string) \App\Models\Setting::get(\App\Http\Controllers\Admin\PageContentController::KHOA . $slug, ''));
+        $daSua = $dichVu->chuanHoa((string) \App\Models\Setting::get(\App\Http\Controllers\Admin\PageContentController::KHOA . $slug, ''));
 
-        if ($noiDung !== '') {
-            return view('shop.pages.custom', [
-                'title' => $title,
-                'slug' => $slug,
-                'noiDung' => $noiDung,
-            ]);
-        }
-
-        return view('shop.pages.'.$view, [
-            'title' => $title,
+        return view('shop.pages.custom', [
+            'title' => self::PAGES[$slug],
             'slug' => $slug,
+            'noiDung' => $daSua !== '' ? $daSua : $dichVu->banVietSan($slug),
         ]);
     }
 
     /** Danh sách trang cho chân trang dựng menu — một nguồn duy nhất. */
     public static function all(): array
     {
-        $out = [];
-
-        foreach (self::PAGES as $slug => [$view, $title]) {
-            $out[$slug] = $title;
-        }
-
-        return $out;
+        return self::PAGES;
     }
 }

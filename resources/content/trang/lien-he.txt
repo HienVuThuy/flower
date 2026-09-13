@@ -1,0 +1,28 @@
+Có ba việc khách hay cần, và mỗi việc có một đường đi nhanh nhất.
+Chọn đúng đường thì không phải chờ.
+
+## Bạn đang cần gì?
+
+Xem đơn hàng đã đặt:: [Tra cứu đơn hàng](/don-hang/tra-cuu) bằng mã đơn và số điện thoại — không cần đăng nhập.
+Đặt hoa số lượng lớn, hoa sự kiện:: [Gửi yêu cầu báo giá](/dat-so-luong-lon). Cửa hàng trả lời trong ngày làm việc.
+Không biết chọn cây nào:: [Chọn cây theo nhu cầu](/chon-cay) — lọc theo chỗ đặt, mức nắng và kinh nghiệm chăm cây của bạn.
+
+## Liên hệ trực tiếp
+
+Hotline:: {hotline}
+Email:: [{email}](mailto:{email})
+Địa chỉ:: {dia_chi}
+Giờ mở cửa:: 8:00 – 20:00, tất cả các ngày trong tuần.
+
+## Giao hàng
+
+Cửa hàng đặt tại Hà Nội và giao đi cả nước. Phí giao tính theo khoảng
+cách từ đây, chốt lại khi bạn nhập địa chỉ ở bước thanh toán:
+
+{bang_phi_giao_hang}
+
+Đơn từ **{mien_phi_giao_tu}** tiền hàng được miễn phí giao, áp dụng cho mọi khu vực.
+
+> Đây là bài tập lớn môn học, không phải cửa hàng đang kinh doanh.
+> Hotline và địa chỉ ở trên dùng để chấm bài và thử nghiệm.
+> Xem thêm ở trang [Giới thiệu](/trang/gioi-thieu).

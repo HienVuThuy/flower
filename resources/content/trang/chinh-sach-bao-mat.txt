@@ -1,0 +1,60 @@
+Trang này nói đúng những gì hệ thống thực sự lưu, lưu ở đâu, và bạn xoá
+được cái gì. Không có mục nào ở đây là điều khoản chung chung.
+
+## Dữ liệu được lưu
+
+| Loại | Gồm những gì | Vì sao cần |
+|---|---|---|
+| Tài khoản | Tên, email, mật khẩu đã băm | Đăng nhập, gửi thư về đơn hàng |
+| Đơn hàng | Tên người nhận, số điện thoại, địa chỉ giao, danh sách hàng | Giao hàng và đối soát khi có khiếu nại |
+| Sổ địa chỉ | Địa chỉ bạn tự lưu | Không phải nhập lại mỗi lần mua |
+| Giỏ hàng | Sản phẩm và số lượng | Giữ giỏ khi bạn quay lại |
+| Hành vi | Sản phẩm đã xem, đã thêm vào giỏ, đã mua | Gợi ý sản phẩm và thống kê của cửa hàng |
+
+## Mật khẩu
+
+Mật khẩu được **băm một chiều** trước khi lưu.
+Cửa hàng **không đọc được** mật khẩu của bạn, kể cả người
+quản trị. Quên mật khẩu thì đặt lại bằng liên kết gửi qua email, không
+ai gửi lại mật khẩu cũ cho bạn được.
+
+Mã xác thực email 6 chữ số cũng được lưu dạng băm, chỉ sống 15 phút, và
+bị xoá ngay khi dùng xong.
+
+## Cookie
+
+Trang này chỉ dùng cookie cần thiết cho việc vận hành:
+
+- **Phiên làm việc** — giữ đăng nhập và giỏ hàng của khách chưa đăng nhập.
+- **Chống giả mạo biểu mẫu (CSRF)** — chặn trang khác gửi lệnh thay bạn.
+
+**Không có cookie quảng cáo, không có mã theo dõi của bên thứ ba.**
+Cửa hàng không bán, không chia sẻ dữ liệu của bạn cho ai.
+
+## Bạn kiểm soát được gì
+
+- **Sửa hồ sơ** — tên, email, mật khẩu, tuỳ chọn nhận thư.
+- **Tắt thư** — thư báo trạng thái đơn và thư nhắc chăm cây tắt riêng được.
+- **Xoá địa chỉ** trong sổ địa chỉ bất cứ lúc nào.
+- **Gỡ đánh giá** của chính mình.
+- **Xoá tài khoản** — tự làm trong [Hồ sơ tài khoản](/tai-khoan). Cửa hàng gửi một thư xác nhận về đúng email của bạn; phải mở thư và xác nhận thêm một lần nữa thì tài khoản mới bị xoá.
+
+## Dữ liệu không xoá theo tài khoản
+
+**Đơn hàng đã hoàn tất được giữ lại** kể cả khi bạn xoá tài
+khoản. Đó là chứng từ mua bán, cửa hàng phải giữ để đối soát và làm sổ
+sách. Đơn giữ lại sẽ không còn gắn với tài khoản nào.
+
+## Thư điện tử
+
+Cửa hàng gửi thư trong đúng những trường hợp sau:
+
+- Mã xác thực email khi bạn đăng ký
+- Xác nhận đơn hàng và khi đơn đổi trạng thái
+- Đặt lại mật khẩu, và báo khi mật khẩu vừa được đổi
+- Nhắc lịch chăm cây — chỉ khi bạn bật
+
+**Không có thư quảng cáo.**
+
+> Đây là bài tập lớn môn học chạy trên máy cá nhân. Đừng nhập dữ liệu
+> cá nhân thật mà bạn không muốn để lại trên một hệ thống thử nghiệm.

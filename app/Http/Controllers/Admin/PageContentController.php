@@ -5,28 +5,23 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\Shop\PageController;
 use App\Models\Setting;
+use App\Services\Content\TrangNoiDung;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Sửa nội dung các trang chính sách (giới thiệu, đổi trả, bảo mật…).
+ * Sửa nội dung các trang giới thiệu / chính sách.
  * ============================================================
- * VÌ SAO CẦN: năm trang này viết cứng trong Blade — muốn sửa một câu
- * trong chính sách đổi trả là phải sửa mã nguồn.
+ * Ô SOẠN ĐIỀN SẴN NỘI DUNG ĐANG HIỆN — bản đã sửa, hoặc bản viết sẵn nếu
+ * chưa sửa. Sửa một câu thì sửa đúng câu đó, không phải chép lại cả trang.
  *
- * ============================================================
- * VĂN BẢN THUẦN, KHÔNG PHẢI HTML.
+ * LƯU Y NGUYÊN BẢN VIẾT SẴN = KHÔNG LƯU GÌ. Bấm Lưu mà không đổi chữ nào
+ * thì trang vẫn đi theo bản viết sẵn; nếu ghi chép đè vào cài đặt, lần sau
+ * bản viết sẵn được cập nhật thì trang này đứng yên ở bản cũ mà không ai
+ * biết vì sao. Xoá trắng ô cũng quay về bản viết sẵn.
  *
- * Cho gõ HTML là mở một lỗ XSS ngay trên trang công khai, chỉ cần một
- * tài khoản quản trị bị lộ. Văn bản thuần được escape khi hiện ra; dòng
- * bắt đầu bằng "## " thành tiêu đề, dòng trống tách đoạn — đủ cho một
- * trang chính sách.
- *
- * ĐỂ TRỐNG = DÙNG BẢN VIẾT SẴN. Không bắt cửa hàng chép lại năm trang chỉ
- * để sửa một trang.
- *
- * Lưu ở bảng `settings` đã có: năm đoạn văn bản, không cần một bảng mới.
+ * Định dạng và cách chống XSS: xem App\Services\Content\TrangNoiDung.
  */
 class PageContentController extends Controller
 {
@@ -34,14 +29,22 @@ class PageContentController extends Controller
 
     public const DAI_TOI_DA = 20000;
 
+    public function __construct(
+        private readonly TrangNoiDung $noiDung,
+    ) {
+    }
+
     public function edit(): View
     {
         $trang = [];
 
         foreach (PageController::all() as $slug => $tieuDe) {
+            $daSua = $this->noiDung->chuanHoa((string) Setting::get(self::KHOA . $slug, ''));
+
             $trang[$slug] = [
                 'tieu_de' => $tieuDe,
-                'noi_dung' => (string) Setting::get(self::KHOA . $slug, ''),
+                'noi_dung' => $daSua !== '' ? $daSua : $this->noiDung->banVietSan($slug),
+                'da_sua' => $daSua !== '',
             ];
         }
 
@@ -59,11 +62,13 @@ class PageContentController extends Controller
 
         $data = $request->validate($quyTac);
 
-        // Chỉ ghi đúng năm khoá đã biết: không để một ô gửi lên tuỳ tiện
-        // tạo ra khoá cài đặt lạ trong bảng `settings`.
+        // Chỉ ghi đúng những khoá đã biết: ô gửi lên tuỳ tiện không tạo được
+        // khoá cài đặt lạ trong bảng `settings`.
         foreach ($slugs as $slug) {
-            $giaTri = trim((string) ($data['noi_dung'][$slug] ?? ''));
-            Setting::set(self::KHOA . $slug, $giaTri === '' ? null : $giaTri);
+            $giaTri = $this->noiDung->chuanHoa((string) ($data['noi_dung'][$slug] ?? ''));
+            $giongBanGoc = $giaTri === $this->noiDung->banVietSan($slug);
+
+            Setting::set(self::KHOA . $slug, ($giaTri === '' || $giongBanGoc) ? null : $giaTri);
         }
 
         return redirect()
