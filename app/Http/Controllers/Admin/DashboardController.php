@@ -59,9 +59,9 @@ class DashboardController extends Controller
          * nhãn là kỳ này — sai mà nhìn hoàn toàn bình thường.
          */
         $orderStats = $this->analytics->orderStats();
-        $revenueDaily = $this->analytics->revenueByDay();
-        $statusMix = $this->analytics->statusBreakdown();
-        $bestSellers = $this->analytics->bestSellers(5);
+
+        // Biểu đồ doanh thu, trạng thái đơn, bán chạy nay chỉ ở trang Phân
+        // tích — không chạy ba truy vấn đó cho một trang không vẽ chúng.
 
         /*
          * Kỳ 'Toàn bộ' KHÔNG có kỳ trước — không có gì nằm trước "toàn
@@ -85,9 +85,6 @@ class DashboardController extends Controller
 
             'orderStats' => $orderStats,
             'previous' => $previous,
-            'revenueDaily' => $revenueDaily,
-            'statusMix' => $statusMix,
-            'bestSellers' => $bestSellers,
 
             'recentOrders' => $this->recentOrders(),
         ]);

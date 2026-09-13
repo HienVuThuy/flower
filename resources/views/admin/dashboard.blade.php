@@ -141,60 +141,15 @@
 
 <div class="row g-3 mb-4">
 
-    <div class="col-lg-7">
-        <div class="admin-panel p-4 h-100">
-            {{--
-                MỘT ĐƯỜNG, MỘT ĐƠN VỊ.
+    {{--
+        BIỂU ĐỒ ĐÃ CHUYỂN HẲN SANG TRANG PHÂN TÍCH.
 
-                Doanh thu và số đơn khác đơn vị nên KHÔNG chồng lên một
-                khung với hai trục dọc: kéo giãn một trục là hai đường
-                cắt nhau ở bất cứ đâu người vẽ muốn, và người đọc không
-                có cách nào biết. Trang này chỉ vẽ tiền; ai cần cả hai
-                thì sang trang Phân tích, nơi hai đường xếp chồng dọc và
-                dùng chung trục ngày.
-            --}}
-            <x-admin.chart.line
-                :points="$revenueDaily->map(fn ($d) => ['label' => $d['label'], 'value' => $d['revenue']])"
-                title="Doanh thu theo ngày"
-                note="Chỉ tính đơn đã giao. Ngày không có đơn là số 0 nhìn thấy được, không phải khoảng trống."
-                format="tien"
-                :slot="1" />
-        </div>
-    </div>
-
-    <div class="col-lg-5">
-        <div class="admin-panel p-4 h-100">
-            <x-admin.chart.donut
-                title="Đơn trong kỳ đang ở đâu"
-                note="Đếm mọi đơn đặt trong kỳ, kể cả đơn đã huỷ."
-                unit="đơn"
-                :slices="$statusMix->map(fn ($r) => [
-                    'label' => $r['status']->label(),
-                    'value' => $r['total'],
-                    'color' => $r['status']->vizColor(),
-                ])" />
-        </div>
-    </div>
-
-</div>
-
-<div class="row g-3 mb-4">
-
-    <div class="col-lg-7">
-        <div class="admin-panel p-4 h-100">
-            <x-admin.chart.bars
-                title="Bán chạy trong kỳ"
-                note="Theo số lượng đã bán của đơn đã giao. Gom theo mã sản phẩm, không theo tên."
-                :rows="$bestSellers->map(fn ($r) => [
-                    'label' => $r['name'],
-                    'value' => $r['quantity'],
-                    'meta' => \App\Services\Shop\Money::format((string) round($r['revenue'])),
-                ])"
-                empty="Chưa có đơn nào giao xong trong kỳ này." />
-        </div>
-    </div>
-
-    <div class="col-lg-5">
+        Trước đây trang này vẽ lại đúng ba biểu đồ của Phân tích › Tổng hợp
+        (doanh thu theo ngày, cơ cấu trạng thái đơn, bán chạy) với cùng bộ
+        chọn kỳ — hai màn hình cùng làm một việc. Tổng quan giữ việc cần
+        làm, bốn con số và đơn gần đây: thứ đọc được trong một phút.
+    --}}
+    <div class="col-lg-8 col-xl-6">
         <div class="admin-panel p-4 h-100">
 
             <div class="d-flex justify-content-between align-items-baseline mb-3">
@@ -255,8 +210,8 @@
 --}}
 <div class="admin-panel p-4 d-flex flex-wrap justify-content-between align-items-center gap-3">
     <p class="admin-page-subtitle mb-0">
-        Phễu chuyển đổi, từ khoá khách tìm, khách mua nhiều nhất, hiệu quả mã giảm giá
-        và xuất dữ liệu nằm ở trang Phân tích.
+        Biểu đồ doanh thu theo ngày, cơ cấu trạng thái đơn, bán chạy, phễu chuyển đổi,
+        từ khoá khách tìm, hiệu quả mã giảm giá và xuất dữ liệu nằm ở trang Phân tích.
     </p>
 
     <a data-admin-link href="{{ route('admin.analytics.index', ['ky' => $period]) }}"
