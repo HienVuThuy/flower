@@ -7839,3 +7839,111 @@ mọi múi giờ.
 với giờ Việt Nam. Thử phá code (thay `apDungNgay` bằng `apDung`) cho thấy
 bài kiểm thử viết theo giờ Việt Nam **vẫn qua** — tức câu đó sai. Bài kiểm
 thử nay đặt `app.display_timezone = America/New_York` để phân biệt được.
+
+
+---
+
+## QĐ-264. Cửa hàng nhận thư khi có đơn mới và yêu cầu báo giá
+
+Trước đây thư duy nhất gửi cửa hàng là khi khách **tự huỷ**. Đơn mới chỉ
+lộ ra khi có người mở trang quản trị — với hoa tươi là lỡ giờ giao.
+
+- Gửi **sau khi** transaction tạo đơn đã chốt, và **chỉ** cho đơn vừa tạo:
+  nhánh "trùng khoá chống đặt lại" trả về đơn đã có, gửi ở đó là báo hai lần.
+- Đơn MoMo chưa trả có dòng dặn **chưa chuẩn bị hàng**.
+- Chưa khai email cửa hàng thì không gửi — không đoán một địa chỉ.
+- Gửi hỏng thì ghi log; đơn của khách vẫn thành. Bài kiểm thử kiểm **phản
+  hồi khách nhận được**, không chỉ đếm đơn: đơn được lưu trước khi gửi thư,
+  nên để lỗi thư lọt ra thì vẫn có đúng 1 đơn — chỉ là khách thấy trang 500.
+
+## QĐ-265. Lô hoa CÒN MỞ sửa và xoá được; lô đã đóng hoặc đã ghi trả hàng thì không
+
+Gõ nhầm tổng tiền lô mà không sửa được thì con số đó đi thẳng vào giá vốn.
+
+- Chặn **sau khi khoá dòng**: lô đã đóng (tiền đã vào một kỳ) và lô đã ghi
+  trả hàng (tiền trả lại tính theo đơn giá cũ — đổi lô là lệch).
+- Cùng **một bộ quy tắc** cho ghi và sửa: sửa lỏng hơn ghi là cửa sau.
+- Nhật ký ghi từng trường đổi dạng "cũ → mới"; xoá ghi kèm số tiền.
+- Loại hoa / vựa đã ngừng mà đang gắn với lô vẫn nằm trong ô chọn, nếu
+  không ô chọn tự nhảy sang mục đầu và bấm Lưu là lặng lẽ đổi nguồn.
+
+## QĐ-266. "Việc cần làm" có lô hoa quên đóng và đổi hàng dở dang
+
+- Lô quên đóng đếm bằng **chính** `FlowerLotService::loQuenDong()` — hai
+  định nghĩa "quên đóng" thì hai trang báo hai con số.
+- Đổi hàng tách **hai mục** vì là hai việc của hai người: "đã nhận hàng trả
+  mà chưa hoàn tất" (cửa hàng phải làm) và "chờ khách gửi hàng về" (theo dõi).
+
+## QĐ-267. Gán loài cây cho sản phẩm: Họ / Chi / Loài, để trống được
+
+Biểu mẫu sản phẩm trước đây không có ô này; sản phẩm mới không bao giờ tới
+được trang `/loai-cay`.
+
+- Bỏ Giới, Ngành, Lớp, Bộ: gắn vào đó đúng mà vô ích.
+- Cho chọn Chi hoặc Họ, không ép tới Loài — "sen đá mix" là nhiều loài.
+- Ô "Vì sao chỉ tới chi / họ" (cột `taxon_note` đã có, hiện cho khách).
+
+## QĐ-268. Phiếu in: soạn hàng KHÔNG có giá; giao hàng thu tiền theo ĐÃ TRẢ hay chưa
+
+- Tờ soạn hàng nằm trên bàn làm việc, ai đi qua cũng đọc — không có ký hiệu
+  tiền nào.
+- Số tiền thu trên phiếu giao theo **trạng thái thanh toán**, không theo
+  hình thức: đơn COD mà cửa hàng đã đánh dấu nhận tiền thì không thu nữa.
+
+## QĐ-269. Hồ sơ khách hàng: "đã chi" cùng định nghĩa với danh sách
+
+Chỉ tính đơn đã giao. Hai trang hai định nghĩa thì khách gọi tới, nhân
+viên đọc hai con số khác nhau. Cùng quyền hệ thống với danh sách người dùng.
+
+## QĐ-270. Tổng quan thôi vẽ lại ba biểu đồ của trang Phân tích
+
+Doanh thu theo ngày, cơ cấu trạng thái đơn, bán chạy nay chỉ ở Phân tích;
+Tổng quan giữ việc cần làm, bốn chỉ số và đơn gần đây. Bỏ luôn ba truy vấn
+tương ứng trong `DashboardController`.
+
+## QĐ-271. Danh sách hoàn tiền: "đã hoàn" chỉ cộng khoản ĐÃ XONG
+
+Khoản chưa rõ kết quả chưa phải tiền đã rời cửa hàng; khoản thất bại thì
+không bao giờ rời. Cộng chung là lệch với sao kê. Khoản chưa rõ đếm riêng.
+Quyền tài chính, cùng quyền với nút xác nhận tiền đã đi.
+
+## QĐ-272. Chuyên mục Cẩm nang: không xoá chuyên mục còn bài, kể cả bài đã xoá mềm
+
+Khôi phục bài về sau sẽ trỏ vào chuyên mục không còn. Đường dẫn riêng
+`chuyen-muc-cam-nang`, không lồng dưới `cam-nang/{post}` — một bài tên
+"chuyen-muc" là đủ để hai đường dẫn giành nhau.
+
+## QĐ-273. Trang chính sách sửa được — văn bản thuần, không phải HTML
+
+Cho gõ HTML là mở XSS trên trang công khai chỉ cần một tài khoản quản trị
+bị lộ. Văn bản thuần được escape; "## " là tiêu đề, dòng trống tách đoạn.
+Để trống thì dùng bản viết sẵn. Lưu 5 khoá trong bảng `settings`, không
+thêm bảng; chỉ ghi đúng 5 khoá đã biết.
+
+## QĐ-274. BÀI HỌC KIỂM THỬ của đợt này: khẳng định phải trỏ đúng một chỗ
+
+Thử phá code trong đợt này bắt được **bảy** bài kiểm thử xanh vì lý do sai.
+Sáu bài cùng một kiểu lỗi — tìm một chuỗi trên CẢ TRANG trong khi chuỗi đó
+có mặt ở chỗ khác:
+
+| Bài | Chuỗi tìm | Chỗ khác cũng có |
+|---|---|---|
+| Ô chọn loài chỉ có Họ/Chi/Loài | `value="1"` | ô danh mục |
+| Ô chọn loài đánh dấu đúng | `value="1" selected` | ô danh mục cùng id 1 |
+| Liên kết tới hồ sơ khách | `/admin/users/5` | form `/admin/users/5/vai-tro` |
+| Đếm đơn huỷ | chữ "2" sau nhãn | ngày tháng, số trang |
+| Tờ soạn không có giá | hai con số cụ thể | thành tiền của dòng |
+| Nút xoá chuyên mục | `action=".../co-bai"` | form SỬA cùng địa chỉ |
+
+Cách sửa chung: cắt đúng khối cần kiểm (ô chọn, tờ in, ô chỉ số) rồi mới
+so, hoặc so kèm phần đuôi phân biệt (`href="…"` có nháy đóng, `class` của
+form xoá). **Một bài chỉ đáng tin khi đã thấy nó đỏ lúc code sai.**
+
+Bài thứ bảy là biến thể của NULL ≠ 0: "không ghi khoá lạ vào bảng cài đặt"
+được kiểm bằng `Setting::get(khoá) === null` — nhưng một dòng có giá trị
+NULL đọc ra cũng là null. Code ghi dòng rác vẫn qua. Phải kiểm **không có
+dòng** (`assertDatabaseMissing`), không phải "đọc ra rỗng".
+
+Đợt này cũng thêm một chốt vào chuỗi lệnh: **còn đột biến lọt thì không
+commit** — trước đó chuỗi chỉ chặn khi có bài đỏ, và hồ sơ khách hàng đã
+được commit trong khi còn hai đột biến lọt (sửa ở commit liền sau).
