@@ -976,6 +976,29 @@ Route::prefix('admin')
          * trong dự án làm vậy), nên route ghi PHẢI nằm trong nhóm
          * `role:admin`. Xem chú thích đầu BlogPostController.
          */
+        /*
+         * CHUYÊN MỤC CẨM NANG — đường dẫn riêng, KHÔNG lồng dưới `cam-nang/`.
+         *
+         * Lồng vào thì `cam-nang/chuyen-muc` đứng cạnh `cam-nang/{post}` của
+         * resource bên dưới, và một bài viết tên "chuyen-muc" là đủ để hai
+         * đường dẫn giành nhau.
+         */
+        Route::get('chuyen-muc-cam-nang', [\App\Http\Controllers\Admin\BlogCategoryController::class, 'index'])
+            ->middleware('quyen:san-pham')
+            ->name('blog-categories.index');
+
+        Route::post('chuyen-muc-cam-nang', [\App\Http\Controllers\Admin\BlogCategoryController::class, 'store'])
+            ->middleware(['quyen:san-pham', 'throttle:30,1'])
+            ->name('blog-categories.store');
+
+        Route::put('chuyen-muc-cam-nang/{blogCategory}', [\App\Http\Controllers\Admin\BlogCategoryController::class, 'update'])
+            ->middleware(['quyen:san-pham', 'throttle:30,1'])
+            ->name('blog-categories.update');
+
+        Route::delete('chuyen-muc-cam-nang/{blogCategory}', [\App\Http\Controllers\Admin\BlogCategoryController::class, 'destroy'])
+            ->middleware(['quyen:san-pham', 'throttle:30,1'])
+            ->name('blog-categories.destroy');
+
         Route::resource('cam-nang', BlogPostController::class)
             ->parameters(['cam-nang' => 'post'])
             ->except(['show'])

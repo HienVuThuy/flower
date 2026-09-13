@@ -209,6 +209,11 @@
                 <span>Cẩm nang</span>
             </a>
 
+            <a data-admin-link href="{{ route('admin.blog-categories.index') }}" class="admin-nav-link {{ request()->routeIs('admin.blog-categories.*') ? 'is-active' : '' }}">
+                <x-site.icon name="tags" />
+                <span>Chuyên mục cẩm nang</span>
+            </a>
+
             @endcan
 
             @can('danh-gia')
