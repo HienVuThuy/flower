@@ -7,6 +7,7 @@ use App\Services\Analytics\AbandonedCarts;
 use App\Services\Analytics\AnalyticsService;
 use App\Services\Analytics\ChonKy;
 use App\Services\Analytics\ProfitReport;
+use App\Services\Analytics\PurchasingReport;
 use App\Services\Analytics\ReviewReport;
 use App\Services\Analytics\SalesBreakdown;
 use Illuminate\Http\Request;
@@ -84,6 +85,32 @@ class AnalyticsPagesController extends Controller
              * phần lớn doanh thu một cửa hàng hoa.
              */
             'hoa' => app(\App\Services\Analytics\FlowerCostReport::class)->trong($khoang)->baoCao(),
+        ]);
+    }
+
+    /**
+     * Thu mua: lấy hàng ở đâu thì đáng tiền nhất.
+     *
+     * ============================================================
+     * TRANG NÀY THUỘC QUYỀN `kho`, KHÔNG PHẢI `bao-cao`.
+     *
+     * Người trả lời câu "kỳ sau lấy hoa ở đâu" là người đi lấy hàng, và
+     * người đó đã thấy giá nhập ở biểu mẫu nhập kho rồi — giấu bảng so
+     * giá với chính họ thì bảng này không tới được tay ai dùng nó.
+     *
+     * Trang cũng KHÔNG có giá bán và không có lãi: nó chỉ nói về tiền
+     * bỏ ra, nên không mở thêm gì mà `kho` chưa thấy.
+     */
+    public function purchasing(Request $request, PurchasingReport $bao): View
+    {
+        [$ky, $khoang] = $this->ky($request);
+
+        $bao->trong($khoang);
+
+        return view('admin.analytics.purchasing', $this->chung($ky) + [
+            'hoa' => $bao->hoa(),
+            'hang' => $bao->hang(),
+            'thieuNguon' => $bao->thieuNguon(),
         ]);
     }
 

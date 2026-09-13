@@ -92,6 +92,10 @@ class SupplierReturnService
 
             $tien = $this->tienTraLai($cach, $data['settlement_amount'] ?? null, $dongTra);
 
+            // Đơn giá trên dòng trả phải là TIỀN LẤY LẠI ĐƯỢC, không phải
+            // giá đã mua — xem chú thích ở chiaTienVeCacDong().
+            $dongTra = $this->chiaTienVeCacDong($dongTra, $tien);
+
             $phieuTra = StockReceipt::create([
                 'code' => $this->phieu->sinhMa(),
                 'supplier_id' => $khoa->supplier_id,
@@ -225,13 +229,96 @@ class SupplierReturnService
                 // phục vụ cả hai chiều.
                 'quantity' => -$sl,
 
-                // ĐÚNG ĐƠN GIÁ ĐÃ MUA. Lấy giá khác là làm lệch giá vốn
-                // bình quân của phần hàng còn giữ lại.
+                // GIÁ ĐÃ MUA — mới chỉ là nền để chia tiền. Giá thật sự
+                // ghi lên dòng do chiaTienVeCacDong() đặt.
                 'unit_cost' => $item->unit_cost,
             ];
         }
 
         return $ket;
+    }
+
+    /**
+     * Đặt đơn giá cho các dòng phiếu trả = TIỀN THẬT SỰ LẤY LẠI ĐƯỢC.
+     * ============================================================
+     * VÌ SAO KHÔNG PHẢI GIÁ ĐÃ MUA — dù nghe rất thuận tai.
+     *
+     * Nền giá vốn là trung bình động: cộng dồn `tiền` và `số lượng` qua
+     * mọi dòng phiếu, rồi chia. Một dòng âm ở ĐÚNG giá đã mua rút cả
+     * tiền lẫn hàng theo đúng tỉ lệ, nên giá mỗi cái còn lại KHÔNG ĐỔI.
+     *
+     * Đúng khi vựa đền đủ. Sai hẳn khi vựa không đền:
+     *
+     *   Mua 10 @100.000 = 1.000.000. Hỏng 3, vựa không đền gì.
+     *   - Ghi dòng trả @100.000 -> nền 700.000 / 7 = 100.000/cái.
+     *   - Sự thật: đã tiêu 1.000.000, còn 7 cái = 142.857/cái.
+     *
+     * Ba cái hỏng bốc hơi khỏi sổ sách. Lỗ 300.000 biến mất, lãi gộp cao
+     * hơn sự thật, và không có gì báo — đúng hướng sai mà không ai tự đi
+     * kiểm. (Bài kiểm thử tra_ma_KHONG_duoc_gi... giữ chỗ này.)
+     *
+     * Đặt đơn giá theo tiền lấy lại được thì cả bốn cách xử lý ra đúng
+     * bằng một quy tắc, không cần trường hợp riêng:
+     *
+     *   - Hoàn đủ      -> đúng bằng giá mua -> giá mỗi cái giữ nguyên.
+     *   - Hoàn thiếu   -> thấp hơn giá mua  -> phần hụt ở lại giá vốn.
+     *   - Đổi hàng     -> 0đ                -> tiền ở lại, chờ phiếu nhập
+     *                                         0đ khi hàng đổi về.
+     *   - Không được gì-> 0đ                -> cửa hàng chịu, và sổ nói ra.
+     *
+     * ============================================================
+     * CHIA KHÔNG HẾT THÌ LÀM TRÒN XUỐNG.
+     *
+     * `bcdiv` cắt phần lẻ, nên đơn giá trả lại luôn nhỏ hơn hoặc bằng
+     * phần đáng được chia: 200.000 cho 3 cái ra 66.666,66 chứ không phải
+     * 66.666,67. Phần lẻ ở lại trong giá vốn — tức nghiêng về phía giá
+     * vốn CAO hơn một chút chứ không thấp hơn. Sai số vài xu, và nghiêng
+     * về phía thận trọng là có chủ đích: làm tròn kiểu kia thì lãi đẹp
+     * lên, và đó là hướng không ai tự đi kiểm.
+     *
+     * @param  list<array<string, mixed>>  $dongTra
+     * @return list<array<string, mixed>>
+     */
+    private function chiaTienVeCacDong(array $dongTra, ?string $tien): array
+    {
+        $nen = '0.00';
+
+        foreach ($dongTra as $d) {
+            if ($d['unit_cost'] === null) {
+                continue;
+            }
+
+            $nen = bcadd($nen, bcmul((string) $d['unit_cost'], (string) abs((int) $d['quantity']), 2), 2);
+        }
+
+        foreach ($dongTra as $i => $d) {
+            /*
+             * DÒNG CHƯA ĐIỀN GIÁ VẪN ĐỂ TRỐNG, không hạ thành 0.
+             *
+             * NULL là "không biết mua bao nhiêu"; 0 là "lấy lại được 0
+             * đồng". Bảng giá vốn bỏ qua NULL và đếm 0 — đổi cái này
+             * thành cái kia là tự bịa ra một con số chưa ai nhập.
+             */
+            if ($d['unit_cost'] === null) {
+                continue;
+            }
+
+            if ($tien === null || bccomp($nen, '0', 2) <= 0) {
+                $dongTra[$i]['unit_cost'] = '0.00';
+
+                continue;
+            }
+
+            $sl = (string) abs((int) $d['quantity']);
+
+            // Chia theo GIÁ TRỊ của dòng, không theo số lượng: trả 1 cái
+            // đắt và 1 cái rẻ thì tiền đền không chia đôi.
+            $phan = bcdiv(bcmul($tien, bcmul((string) $d['unit_cost'], $sl, 2), 4), $nen, 4);
+
+            $dongTra[$i]['unit_cost'] = bcdiv($phan, $sl, 2);
+        }
+
+        return $dongTra;
     }
 
     /** Đã trả bao nhiêu cái của một dòng phiếu nhập (đếm trên các phiếu trả). */

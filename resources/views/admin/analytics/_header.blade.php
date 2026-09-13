@@ -13,13 +13,24 @@
     nhau cạnh nhau trong đầu người đọc.
 --}}
 @php
-    $cacTab = [
-        'admin.analytics.index' => 'Tổng hợp',
-        'admin.analytics.sales' => 'Doanh thu',
-        'admin.analytics.customers' => 'Khách hàng',
-        'admin.analytics.reviews' => 'Đánh giá',
-        'admin.analytics.profit' => 'Lợi nhuận',
-    ];
+    /*
+     * MỖI TAB MANG QUYỀN CỦA ĐƯỜNG DẪN NÓ TRỎ TỚI.
+     *
+     * Lỗi đã sửa: thanh tab từng in cả năm tab cho mọi người, nên nhân
+     * viên không có quyền tài chính vẫn thấy "Lợi nhuận", bấm vào và nhận
+     * trang 403. Nay tab nào không mở được thì không in — cùng nguyên tắc
+     * với thanh điều hướng bên trái. Khoá thật vẫn là middleware `quyen:`.
+     */
+    $cacTab = collect([
+        'admin.analytics.index' => ['Tổng hợp', 'bao-cao'],
+        'admin.analytics.sales' => ['Doanh thu', 'bao-cao'],
+        'admin.analytics.customers' => ['Khách hàng', 'bao-cao'],
+        'admin.analytics.reviews' => ['Đánh giá', 'bao-cao'],
+        'admin.analytics.profit' => ['Lợi nhuận', 'tai-chinh'],
+        'admin.analytics.purchasing' => ['Thu mua', 'kho'],
+    ])
+        ->filter(fn ($tab) => auth()->user()?->can($tab[1]))
+        ->map(fn ($tab) => $tab[0]);
 
     $trangNay = request()->route()?->getName();
 @endphp
@@ -46,11 +57,15 @@
 
         <x-admin.chon-ky :ky="$ky" :periods="$periods" :route="$trangNay" />
 
-        {{-- Xuất theo ĐÚNG kỳ đang xem: tệp tải về phải khớp màn hình. --}}
+        {{-- Xuất theo ĐÚNG kỳ đang xem: tệp tải về phải khớp màn hình.
+             Nút cần quyền báo cáo — trang Thu mua mở được bằng quyền kho,
+             và in nút cho người không bấm được là dựng một trang 403. --}}
+        @can('bao-cao')
         <a data-admin-link href="{{ route('admin.analytics.export-form', $ky->thamSo()) }}"
            class="btn btn-sm btn-outline-admin">
             Xuất dữ liệu…
         </a>
+        @endcan
     </div>
 </div>
 

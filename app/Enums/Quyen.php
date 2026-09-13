@@ -51,7 +51,17 @@ enum Quyen: string
         return match ($this) {
             self::DonHang => 'Xem và xử lý đơn, tạo vận đơn, trả lời yêu cầu số lượng lớn.',
             self::SanPham => 'Thêm, sửa, ẩn sản phẩm và danh mục — gồm cả GIÁ BÁN.',
-            self::Kho => 'Nhập kho, kiểm kê, xem tồn. Không thấy giá vốn.',
+            /*
+             * SỬA LẠI CHO ĐÚNG: khu kho CÓ thấy giá nhập.
+             *
+             * Câu cũ ghi "không thấy giá vốn" — sai, vì chính biểu mẫu
+             * nhập kho có ô đơn giá, và người đi lấy hàng là người gõ con
+             * số đó. Mô tả sai ở bảng quyền còn tệ hơn không mô tả: chủ
+             * cửa hàng đọc nó rồi tin là đã che, trong khi chưa che.
+             *
+             * Thứ khu kho KHÔNG thấy là lãi gộp — giá bán trừ giá vốn.
+             */
+            self::Kho => 'Nhập kho, kiểm kê, xem tồn, lô hoa và GIÁ NHẬP. Không thấy lãi gộp.',
             self::KhuyenMai => 'Đặt và dừng chương trình giảm giá.',
             self::DanhGia => 'Duyệt, ẩn, trả lời đánh giá và bài đăng.',
             self::BaoCao => 'Tổng quan, doanh thu, khách hàng — không gồm lãi gộp.',

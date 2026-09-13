@@ -362,3 +362,22 @@ html:not(.has-js) .export-pick-all {
     font-weight: 600;
     border-bottom-color: var(--admin-accent);
 }
+
+/* ---------- Thu mua ---------- */
+
+/*
+ * Câu "rẻ nhất khác đáng tiền nhất" — chỉ hiện khi hai câu trả lời khác
+ * nhau, nên nó phải đủ nổi để không lẫn vào phần chữ mô tả. Viền trái
+ * thay cho màu nền đậm: vẫn đọc được ở cả giao diện sáng lẫn tối.
+ */
+.purchasing-callout {
+    padding: var(--space-xs) var(--space-sm);
+    border-left: 3px solid var(--admin-accent);
+    background: color-mix(in srgb, var(--admin-border) 18%, transparent);
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+}
+
+.purchasing-months {
+    max-width: 32rem;
+}

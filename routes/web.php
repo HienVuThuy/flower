@@ -948,6 +948,17 @@ Route::prefix('admin')
             ->name('analytics.profit');
 
         /*
+         * THU MUA thuộc quyền `kho`, không phải `bao-cao`.
+         *
+         * Người quyết định "kỳ sau lấy hoa ở đâu" là người đi lấy hàng.
+         * Trang chỉ nói về tiền bỏ ra — không có giá bán, không có lãi —
+         * nên không mở thêm gì mà khu kho chưa thấy.
+         */
+        Route::get('phan-tich/thu-mua', [AnalyticsPagesController::class, 'purchasing'])
+            ->middleware('quyen:kho')
+            ->name('analytics.purchasing');
+
+        /*
          * ĐỀ XUẤT GIÁ & ƯU ĐÃI.
          *
          * Chỉ ĐỌC — không có route ghi nào. Công cụ nhắc admin, còn việc

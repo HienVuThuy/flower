@@ -94,4 +94,46 @@ final class KhoangThoiGian
 
         return $query;
     }
+
+    /**
+     * Áp khoảng lên một cột KIỂU NGÀY (DATE), không phải mốc thời gian.
+     * ============================================================
+     * VÌ SAO PHẢI CÓ HÀM RIÊNG.
+     *
+     * `$tu` và `$den` là mốc GIỜ LƯU (UTC). So một cột DATE với chúng thì
+     * cơ sở dữ liệu nâng ngày thành `00:00:00` rồi so.
+     *
+     * Với giờ Việt Nam (+7) việc đó TÌNH CỜ ra đúng: nửa đêm 13/09 Hà Nội
+     * là `12/09 17:00` UTC, và `12/09 00:00` < 17:00 < `13/09 00:00` — ngày
+     * 12 bị loại, ngày 13 được lấy, đúng ý. Nhưng nó đúng NHỜ múi giờ
+     * dương, không nhờ logic. Với múi giờ âm (ví dụ New York, −4) nửa đêm
+     * 13/09 là `13/09 04:00` UTC, và `13/09 00:00` < 04:00 — NGÀY ĐẦU KỲ
+     * BỊ LOẠI mà không có lỗi nào hiện ra.
+     *
+     * (Ghi chú trung thực: bản đầu của chú thích này nói apDung() "sai 7
+     * tiếng" với giờ Việt Nam. Thử phá code cho thấy câu đó sai — bài kiểm
+     * thử viết theo giờ Việt Nam không phân biệt được hai hàm. Bài kiểm
+     * thử hiện tại dùng múi giờ âm.)
+     *
+     * Cột DATE không mang giờ và cũng không cần: `purchased_at` là "ngày
+     * đi lấy hàng", một con số người ta viết trên tờ giấy. Nên đổi mốc về
+     * NGÀY ĐỊA PHƯƠNG rồi so chuỗi ngày với chuỗi ngày.
+     *
+     * Mốc kết thúc vẫn MỞ: `$den` là nửa đêm của ngày SAU ngày cuối, nên
+     * `< ngày($den)` lấy đúng tới hết ngày cuối, không lố sang kỳ sau.
+     *
+     * @param  string  $cot  tên cột ngày, có tiền tố bảng khi cần join
+     */
+    public function apDungNgay(mixed $query, string $cot): mixed
+    {
+        if ($this->tu) {
+            $query->where($cot, '>=', self::diaPhuong($this->tu)->toDateString());
+        }
+
+        if ($this->den) {
+            $query->where($cot, '<', self::diaPhuong($this->den)->toDateString());
+        }
+
+        return $query;
+    }
 }

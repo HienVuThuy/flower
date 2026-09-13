@@ -129,6 +129,14 @@
                 <span>Nhà cung cấp</span>
             </a>
 
+            {{-- So giá giữa các nguồn: đứng ở nhóm Kho chứ không ở Phân
+                 tích, vì người dùng nó là người đi lấy hàng — và người đó
+                 có thể không có quyền xem báo cáo bán hàng. --}}
+            <a data-admin-link href="{{ route('admin.analytics.purchasing') }}" class="admin-nav-link {{ request()->routeIs('admin.analytics.purchasing') ? 'is-active' : '' }}">
+                <x-site.icon name="bar-chart" />
+                <span>Phân tích thu mua</span>
+            </a>
+
             <a data-admin-link href="{{ route('admin.opening-stock.create') }}" class="admin-nav-link {{ request()->routeIs('admin.opening-stock.*') ? 'is-active' : '' }}">
                 <x-site.icon name="journal" />
                 <span>Tồn đầu kỳ</span>

@@ -160,6 +160,64 @@ class TraHangNccTest extends TestCase
     }
 
     #[Test]
+    public function tra_ma_KHONG_duoc_gi_thi_gia_von_moi_cai_con_lai_TANG(): void
+    {
+        /*
+         * ĐÂY LÀ LỖ HỔNG ĐÃ TỪNG CÓ, và nó sai theo hướng làm lãi đẹp lên.
+         *
+         * Mua 10 @100.000 = 1.000.000. Hỏng 3, vựa không đền gì. Cửa hàng
+         * đã tiêu đủ 1.000.000 và chỉ còn 7 cái bán được, nên giá vốn thật
+         * là 1.000.000 / 7 = 142.857 mỗi cái.
+         *
+         * Bản cũ ghi dòng trả ở ĐÚNG GIÁ ĐÃ MUA, nên nền giá vốn thành
+         * 700.000 / 7 = 100.000 — đúng bằng lúc chưa hỏng gì. Ba cái hỏng
+         * bốc hơi khỏi sổ sách: lỗ 300.000 biến mất, lãi gộp cao hơn sự
+         * thật, và không có gì báo.
+         */
+        [$goc, $sp] = $this->phieuDaGhiSo(sl: 10, gia: '100000');
+
+        $tra = $this->traHang($goc, 3, ReturnSettlement::KhongDuocGi);
+        app(StockReceiptService::class)->ghiSo($tra);
+
+        $cuoi = end($this->bangGiaVon()[$sp->id . ':']);
+
+        $this->assertSame(7, $cuoi['sl'], 'Hàng đã trả thì không còn trên kệ');
+        $this->assertSame(
+            '1000000.00',
+            $cuoi['tien'],
+            'Tiền đã tiêu vẫn nằm nguyên trong nền giá vốn — vựa có đền đâu mà trừ',
+        );
+    }
+
+    #[Test]
+    public function vua_hoan_THIEU_thi_phan_hut_o_lai_trong_gia_von(): void
+    {
+        /*
+         * Mua 10 @100.000. Trả 3, vựa chỉ chịu đền 200.000 thay vì 300.000.
+         * Cửa hàng thật sự tốn 800.000 cho 7 cái còn lại.
+         *
+         * Ghi dòng trả ở giá đã mua thì nền thành 700.000 — hụt 100.000 mà
+         * không ai thấy. Con số phải theo TIỀN THẬT SỰ LẤY LẠI ĐƯỢC.
+         */
+        [$goc, $sp] = $this->phieuDaGhiSo(sl: 10, gia: '100000');
+
+        $tra = $this->traHang($goc, 3, ReturnSettlement::HoanTien, tien: 200000);
+        app(StockReceiptService::class)->ghiSo($tra);
+
+        $cuoi = end($this->bangGiaVon()[$sp->id . ':']);
+
+        $this->assertSame(7, $cuoi['sl']);
+
+        /*
+         * 800.000,02 chứ không tròn 800.000: 200.000 chia cho 3 cái không
+         * hết, và đơn giá trả lại được làm tròn XUỐNG (66.666,66). Phần lẻ
+         * ở lại trong giá vốn — nghiêng về phía giá vốn cao hơn một chút,
+         * là hướng thận trọng. Làm tròn kiểu kia thì lãi đẹp lên.
+         */
+        $this->assertSame('800000.02', $cuoi['tien']);
+    }
+
+    #[Test]
     public function khong_tra_qua_so_da_nhap(): void
     {
         [$goc] = $this->phieuDaGhiSo(sl: 10);

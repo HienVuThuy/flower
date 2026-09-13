@@ -7722,8 +7722,9 @@ riêng cho từng ô.
 - **Chỉ trả được hàng của phiếu ĐÃ GHI SỔ.** Phiếu nháp thì hàng chưa vào
   kho và chưa vào nền giá vốn; "trả lại" thứ chưa từng được ghi nhận sẽ
   đẩy tồn xuống âm và kéo giá vốn đi lệch. Nháp thì sửa phiếu gốc.
-- **Đơn giá của dòng trả phải đúng bằng giá đã mua.** Lấy giá khác là làm
-  lệch giá vốn bình quân của phần hàng còn giữ lại.
+- **Đơn giá của dòng trả = tiền thật sự lấy lại được**, không phải giá đã
+  mua. *(Sửa lại ở QĐ-260 — bản đầu ghi "đúng bằng giá đã mua", và đó là lỗ
+  hổng.)*
 - **Tiền lấy lại để NULL khi không có, không ghi 0.** 0 là "được trả 0
   đồng" — một khẳng định khác hẳn, và nó sẽ vào bảng so sánh nhà cung cấp
   như một lần vựa từ chối trả tiền.
@@ -7749,3 +7750,92 @@ ghi vào cùng một phạm vi của view. Đặt tên trùng là đè, không c
 Bài kiểm thử đi qua giao diện bắt được ngay lần chạy đầu — đó là lý do
 mỗi tính năng đều có ít nhất một bài mở trang thật, không chỉ gọi dịch
 vụ.
+
+---
+
+## QĐ-260. SỬA LỖ HỔNG: trả hàng mà vựa không đền thì lỗ phải ở lại giá vốn
+
+Bản đầu của chặng 4 ghi dòng phiếu trả (hàng đếm được) ở **đúng giá đã
+mua**. Nền giá vốn là trung bình động — cộng dồn tiền và số lượng rồi chia
+— nên một dòng âm ở đúng giá mua rút cả tiền lẫn hàng theo cùng tỉ lệ, và
+giá mỗi cái còn lại **không đổi**. Đúng khi vựa đền đủ; sai hẳn khi không:
+
+| | Tiền | Số lượng | Giá mỗi cái |
+|---|---|---|---|
+| Mua 10 @100.000 | 1.000.000 | 10 | 100.000 |
+| Hỏng 3, vựa không đền — **bản cũ** | 700.000 | 7 | 100.000 |
+| Hỏng 3, vựa không đền — **sự thật** | 1.000.000 | 7 | **142.857** |
+
+Lỗ 300.000 bốc hơi khỏi sổ, lãi gộp cao hơn sự thật. Lỗi này nằm im vì mọi
+bài kiểm thử cũ đều dùng "hoàn tiền đủ" — đúng trường hợp duy nhất bản cũ
+ra đúng. Phát hiện khi dựng báo cáo thu mua: bảng so giá đọc cùng nền đó.
+
+**Quy tắc mới, một dòng cho cả bốn cách xử lý:** đơn giá dòng trả = phần
+tiền vựa đền cho dòng đó (chia theo giá trị dòng) / số lượng trả.
+
+- Hoàn đủ → bằng giá mua → giá mỗi cái giữ nguyên.
+- Hoàn thiếu → thấp hơn giá mua → phần hụt ở lại giá vốn.
+- Đổi hàng → 0đ → tiền ở lại; khi hàng đổi về, lập **phiếu nhập 0đ**.
+- Không được gì → 0đ → cửa hàng chịu, và sổ nói ra.
+
+**Chia không hết thì làm tròn XUỐNG** (`bcdiv` cắt phần lẻ): 200.000 cho 3
+cái ra 66.666,66, nền giá vốn thành 800.000,02 thay vì 800.000. Phần lẻ
+nghiêng về phía giá vốn cao hơn — hướng thận trọng.
+
+Dòng gốc chưa điền giá (NULL) vẫn để NULL, không hạ thành 0.
+
+## QĐ-261. Phân tích thu mua xếp theo GIÁ DÙNG ĐƯỢC, không theo đơn giá
+
+    Giá dùng được = tiền thật sự tốn / (số lấy về − hao hụt − đã trả)
+
+Vựa 50.000/bó hỏng 20% tốn 62.500 mỗi bó bán được; vựa 55.000/bó hỏng 5%
+tốn 57.895. Vựa "rẻ hơn" thật ra đắt hơn. Trang in **cả hai** cột, xếp theo
+cột thứ hai, và **chỉ khi** rẻ nhất khác đáng tiền nhất thì in một câu nói
+thẳng ra — in câu đó lúc hai câu trả lời trùng nhau là dạy người đọc bỏ qua
+nó.
+
+- **Không trộn đơn vị**: nhóm là (loại hoa + đơn vị); bó và cân là hai bảng.
+- **Bình quân gia quyền**, không trung bình các lần mua.
+- **Hoà thì không có quán quân.** Tô đậm một trong hai vựa cùng giá là dựng
+  ra khác biệt không có thật.
+- **Không đủ số thì NULL**: hỏng sạch thì "giá mỗi bó dùng được" không có.
+- **Dưới 3 lần mua** đánh dấu *ít dữ liệu* — số vẫn đúng, chưa đủ kết luận.
+- **Lần mua không ghi nguồn** được đếm và báo, không lặng lẽ bỏ.
+- Tên gõ tay chuẩn hoá khoảng trắng + chữ hoa/thường: "Vựa  Bình" và
+  "vựa bình " là một nguồn.
+- Chỉ tính phiếu **đã ghi sổ**, loại **nhập mới** và **trả NCC**. Tồn đầu kỳ
+  không phải một lần mua; phiếu trả không đếm là một lần mua.
+- Giá theo tháng so với **tháng liền trước có số liệu**, không phải tháng
+  đầu kỳ; tháng không mua gì thì bỏ qua.
+
+## QĐ-262. Trang thu mua thuộc quyền `kho`, không phải `bao-cao`
+
+Người quyết định "kỳ sau lấy hoa ở đâu" là người đi lấy hàng, và người đó
+đã thấy giá nhập ở biểu mẫu nhập kho. Trang chỉ nói về tiền bỏ ra — không
+giá bán, không lãi — nên không mở thêm gì. Liên kết nằm ở nhóm Kho của
+thanh bên, cạnh Nhà cung cấp.
+
+Cùng lúc sửa mô tả quyền `kho` trong `Quyen::moTa()`: câu cũ ghi "không thấy
+giá vốn" là sai (biểu mẫu nhập kho có ô đơn giá). Mô tả sai ở bảng phân
+quyền còn tệ hơn không mô tả: chủ cửa hàng đọc rồi tin là đã che.
+
+**Thanh tab Phân tích nay lọc theo quyền.** Trước đây nhân viên (không có
+`tai-chinh`) vẫn thấy tab "Lợi nhuận", bấm vào nhận 403. Nút "Xuất dữ liệu"
+cũng chỉ hiện với `bao-cao`.
+
+## QĐ-263. Cột kiểu DATE lọc theo NGÀY ĐỊA PHƯƠNG — `KhoangThoiGian::apDungNgay()`
+
+`apDung()` so cột với mốc giờ lưu (UTC), và cột DATE được nâng thành
+`00:00:00` trước khi so. Với giờ Việt Nam (+7) việc đó **tình cờ ra đúng**:
+nửa đêm 13/09 Hà Nội là `12/09 17:00` UTC, nằm giữa hai nửa đêm UTC. Nhưng
+đúng nhờ múi giờ dương chứ không nhờ logic — với múi âm (New York, −4) nửa
+đêm 13/09 là `13/09 04:00` UTC và **ngày đầu kỳ bị loại** không báo lỗi.
+
+`purchased_at` và `received_at` là ngày viết trên tờ giấy, không mang giờ —
+nên `apDungNgay()` đổi mốc về ngày địa phương rồi so chuỗi ngày, đúng với
+mọi múi giờ.
+
+**Ghi chú trung thực:** bản đầu của mục này nói `apDung()` "sai 7 tiếng"
+với giờ Việt Nam. Thử phá code (thay `apDungNgay` bằng `apDung`) cho thấy
+bài kiểm thử viết theo giờ Việt Nam **vẫn qua** — tức câu đó sai. Bài kiểm
+thử nay đặt `app.display_timezone = America/New_York` để phân biệt được.
