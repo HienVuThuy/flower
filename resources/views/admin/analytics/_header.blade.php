@@ -52,20 +52,34 @@
         <p class="admin-page-subtitle mb-0">{{ $moTa }}</p>
     </div>
 
+    {{--
+        HAI HÀNG CỐ ĐỊNH, không phải một hàng tự xuống dòng.
+
+        Lỗi đã sửa: tất cả nằm chung một hàng flex-wrap, nên "Xuất dữ liệu…"
+        đứng cuối hàng và là thứ rớt xuống đầu tiên khi hàng hết chỗ. Mà
+        hàng tự dài ra theo thời gian: sau 60 giây chữ "· cách đây 2 phút"
+        hiện thêm, và nút Xuất "tự nhảy xuống" trong lúc người ta đang xem.
+        Ô ngày cũng rộng hẹp khác nhau theo ngôn ngữ trình duyệt.
+
+        Hàng trên: giờ số liệu và nút Xuất (đẩy sang phải). Hàng dưới: chọn
+        kỳ. Chữ thời gian có dài ra thì chỉ ăn vào khoảng trống giữa hàng trên.
+    --}}
     <div class="analytics-header__loc">
-        <x-admin.tuoi-so-lieu />
+        <div class="analytics-header__hang">
+            <x-admin.tuoi-so-lieu />
+
+            {{-- Xuất theo ĐÚNG kỳ đang xem: tệp tải về phải khớp màn hình.
+                 Nút cần quyền báo cáo — trang Thu mua mở được bằng quyền kho,
+                 và in nút cho người không bấm được là dựng một trang 403. --}}
+            @can('bao-cao')
+            <a data-admin-link href="{{ route('admin.analytics.export-form', $ky->thamSo()) }}"
+               class="btn btn-sm btn-outline-admin analytics-header__xuat">
+                Xuất dữ liệu…
+            </a>
+            @endcan
+        </div>
 
         <x-admin.chon-ky :ky="$ky" :periods="$periods" :route="$trangNay" />
-
-        {{-- Xuất theo ĐÚNG kỳ đang xem: tệp tải về phải khớp màn hình.
-             Nút cần quyền báo cáo — trang Thu mua mở được bằng quyền kho,
-             và in nút cho người không bấm được là dựng một trang 403. --}}
-        @can('bao-cao')
-        <a data-admin-link href="{{ route('admin.analytics.export-form', $ky->thamSo()) }}"
-           class="btn btn-sm btn-outline-admin">
-            Xuất dữ liệu…
-        </a>
-        @endcan
     </div>
 </div>
 

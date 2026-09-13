@@ -1390,35 +1390,34 @@ html.has-js .tuoi-so-lieu__tu-dong {
 
 .analytics-header__loc {
     display: flex;
-    flex-wrap: wrap;
-
-    /*
-     * CĂN THEO CHÂN CHỮ, không căn giữa.
-     *
-     * Lỗi đã sửa: khối chọn kỳ có thêm dòng "15/08/2026 – 13/09/2026" bên
-     * dưới hàng nút nên cao 68px, trong khi "Làm mới" và "Xuất dữ liệu…"
-     * chỉ cao 35px. Căn giữa thì hai nút đó rơi vào giữa 68px — đo được
-     * chúng thấp hơn các nút chọn kỳ 13px.
-     *
-     * `baseline` căn theo dòng chữ ĐẦU TIÊN của mỗi khối, nên dòng phụ
-     * bên dưới không kéo lệch gì cả, và vẫn đúng khi hàng bị xuống dòng.
-     */
-    align-items: baseline;
+    flex-direction: column;
     gap: .5rem;
 
     /* Không co: đây chính là thứ đã gây lỗi. */
     flex: 0 0 auto;
 
     /*
-     * NHƯNG KHÔNG ĐƯỢC RỘNG HƠN KHUNG CHỨA.
-     *
-     * Lỗi đã sửa: `flex: 0 0 auto` giữ khối ở đúng bề rộng nội dung
-     * (1118px), nên ở màn 1024px nó không xuống dòng bên trong được — đo
-     * được trang tràn ngang 1406px, nút "Xuất dữ liệu…" nằm ngoài màn
-     * hình. Giới hạn 100% chỉ có tác dụng khi khối đã phải sang dòng
-     * riêng; ở màn rộng bề rộng vẫn cố định như cũ, bộ lọc không "nhảy".
+     * NHƯNG KHÔNG ĐƯỢC RỘNG HƠN KHUNG CHỨA — ở màn 1024px, thiếu dòng này
+     * là trang tràn ngang 1406px.
      */
     max-width: 100%;
+}
+
+/*
+ * Hàng trên của khối lọc: giờ số liệu bên trái, nút Xuất bên phải.
+ * Chữ "· cách đây N phút" dài ra chỉ ăn vào khoảng trống ở giữa — xem
+ * chú thích trong _header.blade.php.
+ */
+.analytics-header__hang {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+}
+
+.analytics-header__xuat {
+    margin-left: auto;
 }
 
 /* Khoảng ngày thật của kỳ — một dòng block dưới hàng nút.
