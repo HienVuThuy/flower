@@ -37,14 +37,33 @@
                     <div class="fw-semibold">{{ $bulkInquiry->contact_name }}</div>
                 </div>
 
+                {{--
+                    BẤM ĐƯỢC, không chỉ đọc được.
+
+                    Việc tiếp theo sau khi đọc phiếu này luôn là gọi hoặc gửi
+                    báo giá. Chép tay số điện thoại sang máy khác là chỗ gõ
+                    nhầm một chữ số và gọi nhầm người.
+
+                    `tel:` chỉ giữ chữ số và dấu +: khách gõ "0912 345 678" hay
+                    "(091) 234-5678" đều phải thành một số gọi được.
+                --}}
                 <div class="col-md-6">
                     <span class="text-muted small">Điện thoại</span>
-                    <div class="fw-semibold">{{ $bulkInquiry->contact_phone }}</div>
+                    <div class="fw-semibold">
+                        <a href="tel:{{ preg_replace('/[^0-9+]/', '', (string) $bulkInquiry->contact_phone) }}">{{ $bulkInquiry->contact_phone }}</a>
+                    </div>
                 </div>
 
                 <div class="col-md-6">
                     <span class="text-muted small">Email</span>
-                    <div class="fw-semibold">{{ $bulkInquiry->contact_email ?? '—' }}</div>
+                    <div class="fw-semibold">
+                        @if($bulkInquiry->contact_email)
+                            {{-- Tiêu đề điền sẵn: khách tìm lại thư báo giá trong hộp thư theo đúng dịp họ đã hỏi. --}}
+                            <a href="mailto:{{ $bulkInquiry->contact_email }}?subject={{ rawurlencode('Báo giá ' . ($bulkInquiry->occasion ?: 'đặt hoa số lượng lớn') . ' — ' . \App\Services\Shop\StoreProfile::name()) }}">{{ $bulkInquiry->contact_email }}</a>
+                        @else
+                            —
+                        @endif
+                    </div>
                 </div>
 
                 <div class="col-md-6">
