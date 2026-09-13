@@ -57,7 +57,7 @@
 
                 <tr class="{{ $user->isLocked() ? 'admin-row--locked' : '' }}">
                     <td class="fw-semibold">
-                        {{ $user->name }}
+                        <a data-admin-link href="{{ route('admin.users.show', $user) }}">{{ $user->name }}</a>
 
                         {{--
                             NGƯỜI ĐANG ĐĂNG NHẬP phải nhận ra ngay dòng

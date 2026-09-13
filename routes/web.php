@@ -1337,6 +1337,11 @@ Route::prefix('admin')
             ->middleware('quyen:he-thong')
             ->name('users.index');
 
+        // Hồ sơ một khách: đơn, địa chỉ, tiền đã chi. Chỉ ĐỌC.
+        Route::get('users/{user}', [UserController::class, 'show'])
+            ->middleware('quyen:he-thong')
+            ->name('users.show');
+
         /*
          * KHÔNG dùng Route::resource cho người dùng.
          *

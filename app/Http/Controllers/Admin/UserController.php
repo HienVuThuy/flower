@@ -114,6 +114,39 @@ class UserController extends Controller
     }
 
     /**
+     * Hồ sơ một khách hàng: đơn đã đặt, địa chỉ, tiền đã chi.
+     * ============================================================
+     * VÌ SAO CẦN: khách gọi hỏi "đơn của tôi đâu" thì trước đây phải sang
+     * trang Đơn hàng tự lọc, vì danh sách người dùng chỉ có con số.
+     *
+     * CÙNG ĐỊNH NGHĨA với danh sách: "đã chi" chỉ tính đơn ĐÃ GIAO. Đơn
+     * đang chờ hay đã huỷ không phải tiền cửa hàng đã nhận — hai trang mà
+     * hai định nghĩa thì khách gọi tới, nhân viên đọc hai con số khác nhau.
+     */
+    public function show(Request $request, User $user): View
+    {
+        $daGiao = fn ($q) => $q->where('status', \App\Enums\OrderStatus::Completed->value);
+
+        $user->loadCount([
+            'orders',
+            'orders as completed_orders_count' => $daGiao,
+            'orders as cancelled_orders_count' => fn ($q) => $q->where('status', \App\Enums\OrderStatus::Cancelled->value),
+            'reviews',
+        ])->loadSum(['orders as spent_total' => $daGiao], 'grand_total');
+
+        return view('admin.users.show', [
+            'user' => $user,
+            'donGanNhat' => $user->orders()->latest('created_at')->value('created_at'),
+            'diaChi' => $user->addresses()->orderByDesc('is_default')->orderBy('id')->get(),
+            'don' => $user->orders()
+                ->withCount('items')
+                ->latest('created_at')
+                ->paginate(15)
+                ->withQueryString(),
+        ]);
+    }
+
+    /**
      * Đổi vai trò của một tài khoản.
      *
      * BA CHỐT CHẶN, và cả ba đều bảo vệ trước cùng một tai nạn: cửa hàng
