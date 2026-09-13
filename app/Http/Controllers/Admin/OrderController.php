@@ -133,6 +133,19 @@ class OrderController extends Controller
         ]);
     }
 
+    /**
+     * Phiếu in cho một đơn: soạn hàng (không giá) + giao hàng (có số tiền thu).
+     *
+     * Trang riêng, không kế thừa khung quản trị — xem chú thích đầu
+     * resources/views/admin/orders/print.blade.php.
+     */
+    public function printSlip(Order $order): View
+    {
+        return view('admin.orders.print', [
+            'order' => $order->load('items'),
+        ]);
+    }
+
     public function show(Order $order, RefundService $refunds, \App\Services\Exchange\ExchangeService $doiHang): View
     {
         $order->load('items.product', 'user', 'statusEvents.changedBy', 'invoice', 'transactions', 'refunds.items.orderItem', 'refunds.createdBy', 'exchanges.items');

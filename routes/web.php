@@ -1242,6 +1242,10 @@ Route::prefix('admin')
                 Route::patch('/{order}/ghi-chu', [AdminOrderController::class, 'updateNote'])
                     ->name('note');
 
+                // Phiếu soạn hàng + phiếu giao hàng. Chỉ ĐỌC, nên không throttle.
+                Route::get('/{order}/in', [AdminOrderController::class, 'printSlip'])
+                    ->name('print');
+
                 /*
                  * VẬN ĐƠN GIAO HÀNG NHANH.
                  *

@@ -17,7 +17,13 @@
             </p>
         </div>
 
-        <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-admin">Về danh sách</a>
+        <div class="d-flex gap-2">
+            {{-- Mở tab mới: trang in không có khung quản trị, và người dùng
+                 in xong vẫn cần trang đơn còn nguyên để làm tiếp. --}}
+            <a href="{{ route('admin.orders.print', $order) }}" target="_blank" rel="noopener"
+               class="btn btn-outline-admin">In phiếu</a>
+            <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-admin">Về danh sách</a>
+        </div>
     </div>
 
     <div class="row g-3">

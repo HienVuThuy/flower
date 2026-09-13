@@ -97,6 +97,8 @@ class RouteSmokeTest extends TestCase
         'admin/kiem-ke/{stockCount}',
         'admin/nhap-kho/{stockReceipt}',
         'admin/orders/{order}',
+        // Phiếu in của đơn — cùng lý do với trang chi tiết đơn; xem InPhieuDonTest.
+        'admin/orders/{order}/in',
         'dat-lai-mat-khau/{token}',
         'dia-chi/{address}/sua',
         'dia-gioi/phuong-xa/{districtId}',
