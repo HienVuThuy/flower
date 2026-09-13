@@ -5,6 +5,9 @@ namespace App\Services\Order;
 use App\Enums\OrderStatus;
 use App\Mail\OrderConfirmationMail;
 use App\Mail\OrderCancelledByCustomerMail;
+use App\Mail\NewBulkInquiryForShopMail;
+use App\Mail\NewOrderForShopMail;
+use App\Models\BulkOrderInquiry;
 use App\Mail\OrderStatusMail;
 use App\Mail\RefundMail;
 use App\Enums\RefundStatus;
@@ -191,6 +194,70 @@ class OrderMailer
                 'refund' => $refund->code,
                 'exception' => $e->getMessage(),
             ]);
+
+            return false;
+        }
+    }
+
+    /**
+     * Báo cho CỬA HÀNG biết vừa có đơn mới.
+     *
+     * VÌ SAO CẦN: trước đây cửa hàng chỉ nhận thư khi khách HUỶ đơn. Đơn
+     * mới chỉ lộ ra khi có người mở trang quản trị — với hoa tươi, chậm
+     * vài tiếng là lỡ giờ giao.
+     *
+     * @return bool đã bàn giao cho tầng mail hay chưa
+     */
+    public function notifyShopOfNewOrder(Order $order): bool
+    {
+        return $this->guiChoCuaHang(
+            fn () => new NewOrderForShopMail($order->loadMissing('items')),
+            'Không gửi được thông báo đơn mới cho cửa hàng.',
+            ['order_number' => $order->order_number],
+        );
+    }
+
+    /**
+     * Báo cho CỬA HÀNG biết vừa có yêu cầu báo giá số lượng lớn.
+     *
+     * Loại yêu cầu này có NGÀY SỰ KIỆN cố định (cưới, khai trương); nằm
+     * chờ trong trang quản trị là mất khách.
+     *
+     * @return bool đã bàn giao cho tầng mail hay chưa
+     */
+    public function notifyShopOfBulkInquiry(BulkOrderInquiry $inquiry): bool
+    {
+        return $this->guiChoCuaHang(
+            fn () => new NewBulkInquiryForShopMail($inquiry->loadMissing('product')),
+            'Không gửi được thông báo yêu cầu báo giá cho cửa hàng.',
+            ['inquiry_id' => $inquiry->id],
+        );
+    }
+
+    /**
+     * Một chỗ cho mọi thư gửi CỬA HÀNG: tìm địa chỉ, gửi, nuốt lỗi.
+     *
+     * Chưa khai email cửa hàng thì không gửi — không đoán một địa chỉ.
+     * Gửi hỏng thì ghi log và trả false: thư báo nội bộ hỏng KHÔNG được
+     * làm hỏng việc khách vừa làm xong (đặt đơn, gửi yêu cầu).
+     *
+     * @param  \Closure(): \Illuminate\Mail\Mailable  $taoThu
+     * @param  array<string, mixed>  $nguCanh
+     */
+    private function guiChoCuaHang(\Closure $taoThu, string $loiLog, array $nguCanh): bool
+    {
+        $shopEmail = Setting::get('site_email');
+
+        if (! $shopEmail) {
+            return false;
+        }
+
+        try {
+            $this->transport->deliver($taoThu(), $shopEmail);
+
+            return true;
+        } catch (\Throwable $e) {
+            Log::error($loiLog, $nguCanh + ['exception' => $e->getMessage()]);
 
             return false;
         }

@@ -66,7 +66,19 @@ class OrderService
         }
 
         try {
-            return DB::transaction(fn () => $this->createOrder($basket, $checkout, $idempotencyKey));
+            $order = DB::transaction(fn () => $this->createOrder($basket, $checkout, $idempotencyKey));
+
+            /*
+             * BÁO CỬA HÀNG — SAU khi transaction đã chốt, và CHỈ cho đơn
+             * vừa tạo.
+             *
+             * Nhánh "trùng khoá chống đặt lại" bên dưới trả về một đơn ĐÃ
+             * CÓ; gửi thư ở đó là báo hai lần cho cùng một đơn. Gửi hỏng
+             * thì OrderMailer tự nuốt lỗi: đơn đã thành, không được hỏng.
+             */
+            $this->mailer->notifyShopOfNewOrder($order);
+
+            return $order;
         } catch (QueryException $e) {
             /*
              * TRÙNG KHOÁ CHỐNG ĐẶT LẠI — KHÔNG PHẢI LỖI.

@@ -30,7 +30,10 @@ class BulkInquiryController extends Controller
         $data = $request->validated();
         $data['user_id'] = $request->user()?->id;
 
-        BulkOrderInquiry::create($data);
+        $inquiry = BulkOrderInquiry::create($data);
+
+        // Báo ngay cho cửa hàng: yêu cầu kiểu này có ngày sự kiện cố định.
+        app(\App\Services\Order\OrderMailer::class)->notifyShopOfBulkInquiry($inquiry);
 
         return redirect()
             ->route('welcome')
