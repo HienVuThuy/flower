@@ -39,7 +39,7 @@
                     <th scope="col">Tên</th>
                     <th scope="col">Loại nguồn</th>
                     <th scope="col">Liên hệ</th>
-                    <th scope="col">Số lần nhập</th>
+                    <th scope="col">Số lần lấy hàng</th>
                     <th scope="col">Tình trạng</th>
                     <th scope="col"></th>
                 </tr>
@@ -70,7 +70,14 @@
                                 <span class="admin-page-subtitle">chưa có</span>
                             @endunless
                         </td>
-                        <td>{{ $ncc->receipts_count }}</td>
+                        <td>
+                            {{ $ncc->receipts_count + $ncc->flower_lots_count }}
+                            @if($ncc->receipts_count + $ncc->flower_lots_count > 0)
+                                <span class="d-block admin-page-subtitle small">
+                                    {{ $ncc->receipts_count }} phiếu nhập · {{ $ncc->flower_lots_count }} lô hoa
+                                </span>
+                            @endif
+                        </td>
                         <td>
                             <span class="badge text-bg-{{ $ncc->is_active ? 'success' : 'secondary' }}">
                                 {{ $ncc->is_active ? 'Đang lấy hàng' : 'Đã ngừng' }}

@@ -25,7 +25,17 @@ class SupplierController extends Controller
     public function index(Request $request): View
     {
         $q = Supplier::query()
-            ->withCount('receipts')
+            /*
+             * "SỐ LẦN LẤY HÀNG" = phiếu nhập MỚI + lô hoa.
+             *
+             * Lỗi đã sửa: trước chỉ đếm phiếu nhập, nên vựa hoa cấp mười lô
+             * vẫn hiện "0 lần" — trông như nguồn không dùng tới. Và đếm mọi
+             * phiếu thì phiếu TRẢ HÀNG thành một "lần nhập", ngược nghĩa.
+             */
+            ->withCount([
+                'receipts' => fn ($q) => $q->where('kind', \App\Enums\StockReceiptKind::NhapMoi->value),
+                'flowerLots',
+            ])
             ->orderByDesc('is_active')
             ->orderBy('name');
 

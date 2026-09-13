@@ -33,7 +33,7 @@
         <x-admin.kpi label="Doanh thu hàng (đã trừ VAT nếu có số liệu)"
                      :note="$loi['dong_chua_tach_vat'] > 0
                         ? $loi['dong_chua_tach_vat'] . ' dòng thuộc đơn chưa có số liệu thuế — phần đó vẫn gồm VAT.'
-                        : 'Sau khuyến mại và mã giảm giá, chưa gồm phí ship.'">
+                        : 'Sau khuyến mại và mã giảm giá, chưa gồm phí ship. Không gồm hoa tươi — lãi hoa tính theo lô ở phần cuối trang.'">
             {{ $tien($loi['doanh_thu']) }}
         </x-admin.kpi>
     </div>

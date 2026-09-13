@@ -73,7 +73,23 @@ class ProfitReport
             OrderItem::query()
                 ->join('orders', 'orders.id', '=', 'order_items.order_id')
                 ->where('orders.status', OrderStatus::Completed->value)
-                ->whereNull('orders.deleted_at'),
+                ->whereNull('orders.deleted_at')
+
+                /*
+                 * HOA TƯƠI KHÔNG THUỘC BẢNG NÀY.
+                 *
+                 * Hoa không nhập kho theo phiếu (giá vốn hoa tính theo LÔ, ở
+                 * FlowerCostReport). Để dòng hoa lọt vào đây thì chúng luôn
+                 * "không có giá vốn": đo được trên dữ liệu thật, tỉ lệ phủ
+                 * tụt còn 36% và mục "bán chạy mà chưa có giá vốn" giục đi
+                 * lập phiếu nhập cho chính thứ không được nhập kho.
+                 *
+                 * leftJoin + NULL: dòng của sản phẩm đã xoá vẫn được tính.
+                 */
+                ->leftJoin('products', 'products.id', '=', 'order_items.product_id')
+                ->where(fn ($q) => $q
+                    ->whereNull('products.product_type')
+                    ->orWhere('products.product_type', '!=', \App\Enums\ProductType::Flower->value)),
             'orders.created_at',
         )->get([
             'order_items.order_id',
@@ -124,7 +140,19 @@ class ProfitReport
             $ten = $d->product_name . ($d->variant_name ? ' — ' . $d->variant_name : '');
             $ngay = KhoangThoiGian::diaPhuong(\Illuminate\Support\Carbon::parse($d->ngay_dat, config('app.timezone')))->toDateString();
 
-            $donGia = $this->giaVonTaiNgay($bangGia[$khoa] ?? [], $ngay);
+            /*
+             * DÒNG BÁN KHÔNG GHI QUY CÁCH của một sản phẩm có quy cách.
+             *
+             * Đơn cũ (lập trước khi sản phẩm có quy cách) chỉ ghi sản phẩm.
+             * Giá vốn thì lưu theo từng quy cách, nên khoá "sp:" không khớp
+             * gì và dòng đó rơi vào "chưa có giá vốn" dù hàng đã có phiếu
+             * nhập đủ. Không đoán quy cách nào đã bán — dùng BÌNH QUÂN của
+             * mọi quy cách tới ngày bán.
+             */
+            $luyKe = $bangGia[$khoa]
+                ?? ($d->product_variant_id === null ? ($bangGia[$d->product_id . ':*'] ?? []) : []);
+
+            $donGia = $this->giaVonTaiNgay($luyKe, $ngay);
 
             if ($donGia === null) {
                 $soDongKhongGia++;
@@ -216,6 +244,18 @@ class ProfitReport
                     'sl' => $truoc['sl'] + (int) $d->quantity,
                     'tien' => bcadd($truoc['tien'], bcmul((string) $d->unit_cost, (string) $d->quantity, 2), 2),
                 ];
+
+                // Lũy kế GỘP mọi quy cách của sản phẩm — cho dòng bán không ghi quy cách.
+                if ($d->product_variant_id !== null) {
+                    $gop = $d->product_id . ':*';
+                    $truocGop = isset($bang[$gop]) ? end($bang[$gop]) : ['sl' => 0, 'tien' => '0.00'];
+
+                    $bang[$gop][] = [
+                        'ngay' => substr((string) $d->received_at, 0, 10),
+                        'sl' => $truocGop['sl'] + (int) $d->quantity,
+                        'tien' => bcadd($truocGop['tien'], bcmul((string) $d->unit_cost, (string) $d->quantity, 2), 2),
+                    ];
+                }
             });
 
         return $bang;

@@ -44,6 +44,12 @@ class Supplier extends Model
         return $this->hasMany(StockReceipt::class);
     }
 
+    /** @return HasMany<FlowerLot, $this> */
+    public function flowerLots(): HasMany
+    {
+        return $this->hasMany(FlowerLot::class);
+    }
+
     /**
      * Chỉ nhà cung cấp còn làm ăn — dùng cho ô chọn trên biểu mẫu.
      *

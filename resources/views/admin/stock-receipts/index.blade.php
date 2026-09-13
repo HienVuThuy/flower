@@ -54,7 +54,15 @@
                 <tbody>
                     @foreach($receipts as $r)
                         <tr>
-                            <td class="fw-bold">{{ $r->code }}</td>
+                            <td>
+                                <span class="fw-bold">{{ $r->code }}</span>
+                                {{-- NÓI RÕ LOẠI PHIẾU. Phiếu trả hàng (số âm) và phiếu tồn
+                                     đầu kỳ nằm chung danh sách; không có nhãn thì một dòng
+                                     "−2 cái, 0đ" trông như phiếu nhập hỏng. --}}
+                                @if($r->kind !== \App\Enums\StockReceiptKind::NhapMoi)
+                                    <span class="d-block admin-page-subtitle small">{{ $r->kind->label() }}</span>
+                                @endif
+                            </td>
                             <td>{{ $r->received_at->format('d/m/Y') }}</td>
                             <td>{{ $r->supplier ?: '—' }}</td>
                             <td>{{ $r->items->count() }}</td>
