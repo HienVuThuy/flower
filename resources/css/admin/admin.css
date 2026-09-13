@@ -1305,10 +1305,13 @@ a.admin-kpi:focus-visible {
     color: var(--admin-ink-muted);
 }
 
-/* Ô ngày mặc định rộng quá mức cần thiết trên desktop. */
+/* Ô ngày mặc định rộng quá mức cần thiết trên desktop.
+   8.5rem — bằng ô ngày ở trang Xuất dữ liệu. 9.5rem làm cả hàng lọc rộng
+   1118px, lố khung chứa 5px ở màn 1440px, và nút "Xuất dữ liệu…" rớt
+   xuống một dòng riêng. */
 .chon-ky__khoang input[type="date"] {
     width: auto;
-    min-width: 9.5rem;
+    min-width: 8.5rem;
 }
 
 /* Có JavaScript thì đổi ngày là tự gửi, nút Xem thành thừa.
@@ -1388,11 +1391,34 @@ html.has-js .tuoi-so-lieu__tu-dong {
 .analytics-header__loc {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
+
+    /*
+     * CĂN THEO CHÂN CHỮ, không căn giữa.
+     *
+     * Lỗi đã sửa: khối chọn kỳ có thêm dòng "15/08/2026 – 13/09/2026" bên
+     * dưới hàng nút nên cao 68px, trong khi "Làm mới" và "Xuất dữ liệu…"
+     * chỉ cao 35px. Căn giữa thì hai nút đó rơi vào giữa 68px — đo được
+     * chúng thấp hơn các nút chọn kỳ 13px.
+     *
+     * `baseline` căn theo dòng chữ ĐẦU TIÊN của mỗi khối, nên dòng phụ
+     * bên dưới không kéo lệch gì cả, và vẫn đúng khi hàng bị xuống dòng.
+     */
+    align-items: baseline;
     gap: .5rem;
 
     /* Không co: đây chính là thứ đã gây lỗi. */
     flex: 0 0 auto;
+
+    /*
+     * NHƯNG KHÔNG ĐƯỢC RỘNG HƠN KHUNG CHỨA.
+     *
+     * Lỗi đã sửa: `flex: 0 0 auto` giữ khối ở đúng bề rộng nội dung
+     * (1118px), nên ở màn 1024px nó không xuống dòng bên trong được — đo
+     * được trang tràn ngang 1406px, nút "Xuất dữ liệu…" nằm ngoài màn
+     * hình. Giới hạn 100% chỉ có tác dụng khi khối đã phải sang dòng
+     * riêng; ở màn rộng bề rộng vẫn cố định như cũ, bộ lọc không "nhảy".
+     */
+    max-width: 100%;
 }
 
 /* Khoảng ngày thật của kỳ — một dòng block dưới hàng nút.

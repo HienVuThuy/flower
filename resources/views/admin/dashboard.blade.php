@@ -20,7 +20,9 @@
         `href` trần, nên đây là màn hình quản trị DUY NHẤT còn nạp lại
         toàn trang mỗi lần bấm.
     --}}
-    <div class="d-flex flex-wrap align-items-center gap-2">
+    {{-- Căn theo CHÂN CHỮ: khối chọn kỳ có dòng khoảng ngày bên dưới nên
+         cao hơn nút "Làm mới"; căn giữa thì nút đó lệch xuống 13px. --}}
+    <div class="d-flex flex-wrap align-items-baseline gap-2">
         <x-admin.tuoi-so-lieu />
 
         <x-admin.chon-ky :ky="$ky" :periods="$periods" route="admin.dashboard" />
