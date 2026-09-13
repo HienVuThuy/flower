@@ -111,8 +111,20 @@ class HoSoKhachHangTest extends TestCase
         $khach = $this->nguoi(UserRole::Customer, 'Chị Hoa');
         $this->don($khach, OrderStatus::Cancelled, '100000.00');
         $this->don($khach, OrderStatus::Cancelled, '100000.00');
+        $this->don($khach, OrderStatus::Pending, '100000.00');
 
-        $this->hoSo($khach)->assertOk()->assertSeeInOrder(['Đơn huỷ', '2']);
+        $html = $this->hoSo($khach)->assertOk()->getContent();
+
+        /*
+         * ĐỌC ĐÚNG Ô "ĐƠN HUỶ", không tìm chữ "2" ở đâu đó sau nhãn.
+         *
+         * Thử phá code đã chứng minh: đếm nhầm trạng thái mà bài vẫn xanh,
+         * vì chữ "2" nào phía sau (ngày tháng, số trang) cũng khớp.
+         */
+        $this->assertMatchesRegularExpression(
+            '#Đơn huỷ</span>\s*<span class="admin-kpi__value">\s*<span[^>]*>2</span>#u',
+            $html,
+        );
     }
 
     #[Test]
@@ -145,10 +157,15 @@ class HoSoKhachHangTest extends TestCase
     {
         $khach = $this->nguoi(UserRole::Customer, 'Chị Hoa');
 
+        /*
+         * CÓ DẤU NHÁY ĐÓNG. Thử phá code đã chứng minh: bỏ hẳn liên kết mà
+         * bài vẫn xanh, vì địa chỉ hồ sơ `/admin/users/5` là một phần của
+         * địa chỉ form đổi vai trò `/admin/users/5/vai-tro` ngay cùng dòng.
+         */
         $this->actingAs($this->nguoi(UserRole::Admin, 'Quản trị'))
             ->get(route('admin.users.index'))
             ->assertOk()
-            ->assertSee(route('admin.users.show', $khach), false);
+            ->assertSee('href="' . route('admin.users.show', $khach) . '"', false);
     }
 
     #[Test]
