@@ -126,7 +126,16 @@
                 <ul class="list-unstyled small mb-0">
                     @foreach($loi['can_nhap_gia_von'] as $d)
                         <li class="d-flex justify-content-between gap-2 py-1 border-bottom">
-                            <span>{{ $d['ten'] }} <span class="text-muted">× {{ $d['so_luong'] }}</span></span>
+                            <span>
+                                {{ $d['ten'] }} <span class="text-muted">× {{ $d['so_luong'] }}</span>
+                                @if($d['khong_theo_doi'] ?? false)
+                                    {{-- Không có đường nhập kho cho món này — chỉ đúng chỗ phải sửa. --}}
+                                    <span class="d-block text-muted" data-khong-theo-doi>
+                                        Đang tắt theo dõi tồn kho nên chưa lập phiếu nhập được —
+                                        <a data-admin-link href="{{ route('admin.products.edit', $d['product_id']) }}">bật ở trang sản phẩm</a>.
+                                    </span>
+                                @endif
+                            </span>
                             <span class="text-nowrap">{{ $tien($d['doanh_thu']) }}</span>
                         </li>
                     @endforeach

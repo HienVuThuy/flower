@@ -96,6 +96,7 @@ class ProfitReport
             'order_items.product_id',
             'order_items.product_variant_id',
             'order_items.product_name',
+            'products.track_inventory as sp_theo_doi_ton',
             'order_items.variant_name',
             'order_items.quantity',
             'order_items.line_total',
@@ -158,7 +159,21 @@ class ProfitReport
                 $soDongKhongGia++;
                 $khongGia = bcadd($khongGia, $tien, 2);
 
-                $canNhap[$khoa] ??= ['ten' => $ten, 'doanh_thu' => '0.00', 'so_luong' => 0];
+                /*
+                 * MÓN TẮT THEO DÕI TỒN KHO không lập phiếu nhập được — biểu mẫu
+                 * nhập kho không liệt kê nó. Giục "nhập giá vốn" cho món đó là
+                 * dựng một ngõ cụt; đánh dấu để giao diện chỉ đúng việc cần làm.
+                 */
+                $canNhap[$khoa] ??= [
+                    'ten' => $ten,
+                    'doanh_thu' => '0.00',
+                    'so_luong' => 0,
+                    'product_id' => $d->product_id,
+                    'khong_theo_doi' => $d->product_id !== null
+                        && $d->product_variant_id === null
+                        && $d->sp_theo_doi_ton !== null
+                        && ! (bool) $d->sp_theo_doi_ton,
+                ];
                 $canNhap[$khoa]['doanh_thu'] = bcadd($canNhap[$khoa]['doanh_thu'], $tien, 2);
                 $canNhap[$khoa]['so_luong'] += (int) $d->quantity;
 

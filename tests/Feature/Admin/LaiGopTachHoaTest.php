@@ -98,6 +98,34 @@ class LaiGopTachHoaTest extends TestCase
     }
 
     #[Test]
+    public function mon_TAT_theo_doi_ton_duoc_danh_dau_va_trang_chi_cho_bat(): void
+    {
+        /*
+         * Biểu mẫu nhập kho không liệt kê món tắt theo dõi tồn. Giục "nhập
+         * giá vốn" cho nó là ngõ cụt — gặp thật trên dữ liệu: Monstera.
+         */
+        $this->donGiao(ProductType::Plant, 'Monstera thử', '850000.00');
+        $this->donGiao(ProductType::Plant, 'Kim tiền có theo dõi', '300000.00');
+
+        Product::where('name', 'Monstera thử')->update(['track_inventory' => false]);
+        Product::where('name', 'Kim tiền có theo dõi')->update(['track_inventory' => true]);
+
+        $canNhap = app(ProfitReport::class)->trong(new KhoangThoiGian())->baoCao()['can_nhap_gia_von']->keyBy('ten');
+
+        $this->assertTrue($canNhap['Monstera thử']['khong_theo_doi']);
+        $this->assertFalse($canNhap['Kim tiền có theo dõi']['khong_theo_doi']);
+
+        $admin = \App\Models\User::factory()->create();
+        $admin->role = \App\Enums\UserRole::Admin;
+        $admin->save();
+
+        $html = $this->actingAs($admin)->get(route('admin.analytics.profit', ['ky' => 'all']))->assertOk()->getContent();
+
+        $this->assertSame(1, substr_count($html, 'data-khong-theo-doi'), 'Chỉ món tắt theo dõi mới có lời nhắc');
+        $this->assertStringContainsString(route('admin.products.edit', $canNhap['Monstera thử']['product_id']), $html);
+    }
+
+    #[Test]
     public function dong_CO_quy_cach_van_dung_dung_gia_quy_cach_do(): void
     {
         // Bình quân gộp chỉ là đường lùi cho dòng thiếu quy cách — không được đè lên dòng có quy cách.
