@@ -87,7 +87,66 @@ class DashboardController extends Controller
             'previous' => $previous,
 
             'recentOrders' => $this->recentOrders(),
-        ]);
+        ] + $this->soLieuNghiepVu($request));
+    }
+
+    /**
+     * Số liệu từ các nghiệp vụ sau bán hàng: kho, thu mua, hoa, đổi trả, lãi.
+     * ============================================================
+     * KHÔNG TÍNH LẠI Ở ĐÂY. Mỗi con số đọc từ đúng báo cáo đang phục vụ
+     * trang riêng của nó (PurchasingReport, InventoryReport,
+     * FlowerCostReport, ProfitReport) — Tổng quan và trang chi tiết không
+     * được nói hai con số khác nhau cho cùng một câu hỏi.
+     *
+     * CHỈ CHẠY PHẦN NGƯỜI XEM CÓ QUYỀN. Nhân viên không có quyền tài chính
+     * thì không thấy lãi — và cũng không tốn truy vấn tính lãi cho họ.
+     */
+    private function soLieuNghiepVu(Request $request): array
+    {
+        $nguoi = $request->user();
+        $khoang = $this->analytics->khoang();
+        $ra = [];
+
+        // Báo cáo hoa dùng cho cả nhóm Kho lẫn ô Lãi gộp hoa — tính MỘT lần.
+        $hoa = ($nguoi?->can('kho') || $nguoi?->can('tai-chinh'))
+            ? app(\App\Services\Analytics\FlowerCostReport::class)->trong($khoang)->baoCao()
+            : null;
+
+        if ($nguoi?->can('kho')) {
+
+            $traNcc = \App\Models\StockReceipt::query()
+                ->where('kind', \App\Enums\StockReceiptKind::TraNcc->value)
+                ->where('status', \App\Enums\StockReceiptStatus::Posted->value);
+            $khoang->apDungNgay($traNcc, 'received_at');
+
+            $loTra = \App\Models\FlowerLot::query()->whereNotNull('tra_lai_at');
+            $khoang->apDung($loTra, 'tra_lai_at');
+
+            $ra['kho'] = [
+                'thu_mua' => app(\App\Services\Analytics\PurchasingReport::class)->trong($khoang)->tongQuan(),
+                'ton' => app(\App\Services\Analytics\InventoryReport::class)->trongVong(30)->tongQuan(),
+                'lo_mo' => $hoa['so_lo_con_mo'],
+                'tien_lo_mo' => $hoa['tien_lo_con_mo'],
+                'lo_qua_han' => $hoa['lo_qua_han'],
+                'tra_ncc' => $traNcc->count() + $loTra->count(),
+            ];
+        }
+
+        if ($nguoi?->can('don-hang')) {
+            $doi = \App\Models\Exchange::query()->where('status', '!=', \App\Enums\ExchangeStatus::Huy->value);
+            $khoang->apDung($doi, 'created_at');
+
+            $ra['doi_hang'] = $doi->count();
+        }
+
+        if ($nguoi?->can('tai-chinh')) {
+            $ra['lai'] = [
+                'hang' => app(\App\Services\Analytics\ProfitReport::class)->trong($khoang)->baoCao(),
+                'hoa' => $hoa['lai_gop'],
+            ];
+        }
+
+        return ['nghiepVu' => $ra];
     }
 
     /**

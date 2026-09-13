@@ -65,3 +65,36 @@ lời gọi AJAX, cache recommendation, hay tối ưu truy vấn. Với TTFB đ�
 ms, chia một trang 132 ms thành 5 lời gọi chỉ làm nó chậm đi.
 
 Xem QĐ-94 trong `DOMAIN-DECISIONS.md` để biết chi tiết từng mục.
+
+---
+
+## Sau mỗi lần cập nhật giao diện: chạy `php artisan quan-tri:lam-nong`
+
+**Triệu chứng người dùng báo:** "bấm các mục trong trang quản trị mở chậm hơn
+trước khi cập nhật".
+
+**Đo được, không đoán** — cùng cơ sở dữ liệu, mã trước và sau đợt cập nhật,
+gọi thẳng HTTP kernel:
+
+| Trang | Lần mở đầu tiên sau khi sửa view | Từ lần thứ hai |
+|---|---|---|
+| Tổng quan | 8.524ms | 64–73ms |
+| Đơn hàng | 1.183ms | 23–31ms |
+| Phân tích | 1.131ms | 85–103ms |
+| Sản phẩm | 838ms | 22–28ms |
+
+Lúc đã "nóng", mã mới **không chậm hơn** mã cũ (Tổng quan 64ms so với 73ms).
+Cái chậm là **Blade biên dịch lại view ở lần mở đầu tiên** sau mỗi lần sửa
+layout, thanh bên hay bộ icon — mọi trang dùng chúng đều phải biên dịch lại.
+
+**Cách xử lý:** chạy một lần sau khi cập nhật
+
+    php artisan quan-tri:lam-nong
+
+Lệnh mở mọi trang GET không tham số trong khu quản trị bằng đúng đường của một
+request thật, nên mọi view và component được biên dịch sẵn. Không thay được
+bằng `view:cache` trên Windows (xem mục trên về lệch dấu phân cách đường dẫn).
+
+Cùng đợt đo tìm ra một N+1 thật: trang Trả hàng nhà cung cấp gọi `soDaTra()`
+cho từng dòng — **130 truy vấn**. Nay tính sẵn bằng một truy vấn gom nhóm:
+15 truy vấn, 29ms.

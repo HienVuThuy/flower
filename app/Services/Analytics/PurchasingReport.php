@@ -222,6 +222,52 @@ class PurchasingReport
     }
 
     /**
+     * Tiền lấy hàng trong kỳ — cho trang Tổng quan.
+     *
+     * CÙNG BỘ LỌC với hoa() và hang(): phiếu nhập MỚI đã ghi sổ, lô hoa theo
+     * ngày lấy. Hai nơi hai định nghĩa thì con số ở Tổng quan và ở trang
+     * Thu mua lệch nhau. Dòng chưa điền giá không cộng — nó không phải 0đ.
+     *
+     * @return array{tien_hang: string, so_phieu: int, tien_hoa: string, so_lo: int, tong: string}
+     */
+    public function tongQuan(): array
+    {
+        $dong = StockReceiptItem::query()
+            ->join('stock_receipts', 'stock_receipts.id', '=', 'stock_receipt_items.stock_receipt_id')
+            ->where('stock_receipts.status', StockReceiptStatus::Posted->value)
+            ->where('stock_receipts.kind', StockReceiptKind::NhapMoi->value)
+            ->whereNotNull('stock_receipt_items.unit_cost');
+        $this->khoang->apDungNgay($dong, 'stock_receipts.received_at');
+
+        $tienHang = '0.00';
+        $phieu = [];
+
+        foreach ($dong->get(['stock_receipt_items.unit_cost', 'stock_receipt_items.quantity', 'stock_receipts.id as phieu_id']) as $d) {
+            $tienHang = bcadd($tienHang, bcmul((string) $d->unit_cost, (string) $d->quantity, 2), 2);
+            $phieu[$d->phieu_id] = true;
+        }
+
+        $lo = FlowerLot::query();
+        $this->khoang->apDungNgay($lo, 'purchased_at');
+
+        $tienHoa = '0.00';
+        $soLo = 0;
+
+        foreach ($lo->get(['total_cost']) as $l) {
+            $tienHoa = bcadd($tienHoa, (string) $l->total_cost, 2);
+            $soLo++;
+        }
+
+        return [
+            'tien_hang' => $tienHang,
+            'so_phieu' => count($phieu),
+            'tien_hoa' => $tienHoa,
+            'so_lo' => $soLo,
+            'tong' => bcadd($tienHang, $tienHoa, 2),
+        ];
+    }
+
+    /**
      * Những lần mua KHÔNG GHI NGUỒN — không so sánh được với gì cả.
      *
      * Hiện ra chứ không lặng lẽ bỏ: một báo cáo so giá mà một phần ba số

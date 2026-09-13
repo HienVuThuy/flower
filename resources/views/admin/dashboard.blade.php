@@ -139,6 +139,109 @@
 
 </div>
 
+{{--
+    SAU BÁN HÀNG: đổi trả và lãi — mỗi ô chỉ hiện với người có quyền xem nó.
+
+    Số đọc từ đúng báo cáo của trang chi tiết (xem DashboardController::
+    soLieuNghiepVu), và mỗi ô dẫn thẳng tới trang đó.
+--}}
+@if(isset($nghiepVu['doi_hang']) || isset($nghiepVu['lai']))
+    <div class="row g-3 mb-4">
+        @isset($nghiepVu['lai'])
+            @php $laiHang = $nghiepVu['lai']['hang']; @endphp
+            <div class="col-12 col-sm-6 col-lg-3">
+                <x-admin.kpi label="Lãi gộp hàng (có giá vốn)"
+                             :href="route('admin.analytics.profit', $ky->thamSo())"
+                             :note="$laiHang['ti_le_phu'] === null
+                                ? 'Chưa có doanh thu hàng trong kỳ.'
+                                : 'Trên ' . number_format($laiHang['ti_le_phu'], 1, ',', '.') . '% doanh thu hàng có giá vốn; không gồm hoa.'">
+                    @if(bccomp($laiHang['doanh_thu_co_gia_von'], '0', 2) === 0)
+                        <span class="admin-page-subtitle">chưa tính được</span>
+                    @else
+                        <x-site.money :amount="(float) $laiHang['lai_gop']" />
+                    @endif
+                </x-admin.kpi>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <x-admin.kpi label="Lãi gộp hoa (theo lô)"
+                             :href="route('admin.analytics.profit', $ky->thamSo())"
+                             note="Doanh thu hoa trừ tiền các lô đã đóng trong kỳ.">
+                    @if($nghiepVu['lai']['hoa'] === null)
+                        {{-- Chưa đóng lô nào thì không có lãi để nói — không phải lãi bằng doanh thu. --}}
+                        <span class="admin-page-subtitle">chưa có lô đóng</span>
+                    @else
+                        <x-site.money :amount="(float) $nghiepVu['lai']['hoa']" />
+                    @endif
+                </x-admin.kpi>
+            </div>
+
+            <div class="col-12 col-sm-6 col-lg-3">
+                <x-admin.kpi label="Đã hoàn tiền cho khách"
+                             :href="route('admin.refunds.index')"
+                             note="Khoản hoàn đã xong trong kỳ — đã trừ ở doanh thu thuần.">
+                    <x-site.money :amount="$orderStats['refunded']" />
+                </x-admin.kpi>
+            </div>
+        @endisset
+
+        @isset($nghiepVu['doi_hang'])
+            <div class="col-12 col-sm-6 col-lg-3">
+                <x-admin.kpi label="Phiếu đổi hàng"
+                             :href="route('admin.exchanges.index')"
+                             :note="$orderStats['bu_doi_hang'] > 0
+                                ? 'Khách bù thêm ' . \App\Services\Shop\Money::format($orderStats['bu_doi_hang']) . ' khi đổi.'
+                                : 'Lập trong kỳ, không tính phiếu đã huỷ.'">
+                    {{ number_format($nghiepVu['doi_hang'], 0, ',', '.') }}
+                </x-admin.kpi>
+            </div>
+        @endisset
+    </div>
+@endif
+
+{{--
+    KHO VÀ THU MUA — tiền đi ra, hàng đang nằm ở đâu.
+--}}
+@isset($nghiepVu['kho'])
+    @php $kho = $nghiepVu['kho']; @endphp
+    <h2 class="admin-section-title">3. Kho và thu mua</h2>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <x-admin.kpi label="Tiền lấy hàng trong kỳ"
+                         :href="route('admin.analytics.purchasing', $ky->thamSo())"
+                         :note="$kho['thu_mua']['so_phieu'] . ' phiếu nhập · ' . $kho['thu_mua']['so_lo'] . ' lô hoa'">
+                <x-site.money :amount="(float) $kho['thu_mua']['tong']" />
+            </x-admin.kpi>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <x-admin.kpi label="Giá trị tồn kho"
+                         :href="route('admin.inventory.index')"
+                         :note="number_format($kho['ton']['skus'], 0, ',', '.') . ' mặt hàng — tính theo giá bán, không phải vốn.'">
+                <x-site.money :amount="$kho['ton']['value']" />
+            </x-admin.kpi>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <x-admin.kpi label="Lô hoa đang dùng"
+                         :href="route('admin.flower-lots.index', ['trang_thai' => 'dang_dung'])"
+                         :note="\App\Services\Shop\Money::format($kho['tien_lo_mo']) . ' chưa vào giá vốn'
+                            . ($kho['lo_qua_han'] > 0 ? ' · ' . $kho['lo_qua_han'] . ' lô mở quá lâu' : '')">
+                {{ $kho['lo_mo'] }}
+            </x-admin.kpi>
+        </div>
+
+        <div class="col-12 col-sm-6 col-lg-3">
+            <x-admin.kpi label="Lần trả nhà cung cấp"
+                         :href="route('admin.supplier-returns.index')"
+                         note="Phiếu trả đã ghi sổ và lô hoa trả lại, trong kỳ.">
+                {{ $kho['tra_ncc'] }}
+            </x-admin.kpi>
+        </div>
+    </div>
+@endisset
+
 <div class="row g-3 mb-4">
 
     {{--

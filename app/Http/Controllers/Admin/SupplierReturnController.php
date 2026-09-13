@@ -36,19 +36,21 @@ class SupplierReturnController extends Controller
 
     public function index(): View
     {
+        $phieuNhap = StockReceipt::query()
+            ->where('kind', StockReceiptKind::NhapMoi->value)
+            ->where('status', StockReceiptStatus::Posted->value)
+            ->with(['items', 'supplier'])
+            ->latest('received_at')
+            ->limit(30)
+            ->get();
+
         return view('admin.supplier-returns.index', [
             /*
              * NGUỒN ĐỂ TRẢ: phiếu nhập ĐÃ GHI SỔ và lô hoa CHƯA trả lần
              * nào. Phiếu còn nháp không hiện — hàng chưa vào kho thì
              * không có gì để trả, sửa phiếu nháp đó thay vì lập phiếu trả.
              */
-            'phieuNhap' => StockReceipt::query()
-                ->where('kind', StockReceiptKind::NhapMoi->value)
-                ->where('status', StockReceiptStatus::Posted->value)
-                ->with(['items', 'supplier'])
-                ->latest('received_at')
-                ->limit(30)
-                ->get(),
+            'phieuNhap' => $phieuNhap,
 
             'loHoa' => FlowerLot::query()
                 ->whereNull('tra_lai_qty')
@@ -73,8 +75,39 @@ class SupplierReturnController extends Controller
 
             'lyDo' => ReturnReason::cases(),
             'cachXuLy' => ReturnSettlement::cases(),
-            'daTraTheoDong' => fn (int $id) => $this->service->soDaTra($id),
-        ]);
+        ] + $this->daTraTheoDong($phieuNhap));
+    }
+
+    /**
+     * Số đã trả của MỌI dòng phiếu trên trang, trong MỘT truy vấn.
+     *
+     * Lỗi đã sửa: trước đây view gọi soDaTra() cho từng dòng — hai truy vấn
+     * mỗi dòng. Đo trên dữ liệu mẫu: 130 truy vấn cho một trang. Cùng định
+     * nghĩa với SupplierReturnService::soDaTra(): cộng số lượng trên các
+     * phiếu trả trỏ về phiếu gốc, theo mặt hàng và quy cách.
+     *
+     * @return array{daTraTheoDong: \Closure(int): int}
+     */
+    private function daTraTheoDong(\Illuminate\Support\Collection $phieuNhap): array
+    {
+        $tong = \App\Models\StockReceiptItem::query()
+            ->join('stock_receipts', 'stock_receipts.id', '=', 'stock_receipt_items.stock_receipt_id')
+            ->where('stock_receipts.kind', StockReceiptKind::TraNcc->value)
+            ->whereIn('stock_receipts.return_of_id', $phieuNhap->pluck('id'))
+            ->selectRaw('stock_receipts.return_of_id as goc, stock_receipt_items.product_id as sp, stock_receipt_items.product_variant_id as qc, sum(stock_receipt_items.quantity) as sl')
+            ->groupBy('goc', 'sp', 'qc')
+            ->get()
+            ->mapWithKeys(fn ($r) => [$r->goc . '|' . $r->sp . '|' . ($r->qc ?? '') => (int) abs((float) $r->sl)]);
+
+        $theoDong = [];
+
+        foreach ($phieuNhap as $p) {
+            foreach ($p->items as $dong) {
+                $theoDong[$dong->id] = $tong[$p->id . '|' . $dong->product_id . '|' . ($dong->product_variant_id ?? '')] ?? 0;
+            }
+        }
+
+        return ['daTraTheoDong' => fn (int $id) => $theoDong[$id] ?? 0];
     }
 
     public function storeGoods(Request $request, StockReceipt $stockReceipt): RedirectResponse
