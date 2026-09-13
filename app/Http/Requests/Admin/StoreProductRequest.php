@@ -137,6 +137,25 @@ class StoreProductRequest extends FormRequest
                 Rule::in(ProductType::values()),
             ],
 
+            /*
+             * PHÂN LOẠI THỰC VẬT — ĐỂ TRỐNG ĐƯỢC.
+             *
+             * Hoa cắt cành, phụ kiện, vật tư không có loài cây. Bắt buộc
+             * điền là bắt người nhập liệu bịa ra dữ liệu (xem migration
+             * create_plant_taxa_table).
+             */
+            'taxon_id' => [
+                'nullable',
+                'integer',
+                Rule::exists('plant_taxa', 'id'),
+            ],
+
+            'taxon_note' => [
+                'nullable',
+                'string',
+                'max:300',
+            ],
+
             'selling_form' => [
                 'required',
 

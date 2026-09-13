@@ -1051,6 +1051,65 @@
 
             </div>
 
+            {{--
+                LOÀI CÂY — trước đây biểu mẫu không có ô này, nên sản phẩm
+                thêm mới không bao giờ xuất hiện ở trang /loai-cay.
+
+                Để trống được: hoa cắt cành, phụ kiện, vật tư không có loài.
+                Chỉ biết tới Chi hoặc Họ ("sen đá mix") thì chọn bậc đó — đúng
+                hơn là bịa một cái tên loài.
+            --}}
+            <div class="mt-3">
+
+                <label class="form-label" for="taxon_id">Loài cây</label>
+
+                <select id="taxon_id" name="taxon_id"
+                        class="form-select @error('taxon_id') is-invalid @enderror">
+                    <option value="">— không có / chưa rõ —</option>
+
+                    @foreach($taxa ?? [] as $nhom)
+                        <optgroup label="{{ $nhom['nhan'] }}">
+                            @foreach($nhom['nut'] as $t)
+                                <option value="{{ $t->id }}"
+                                        @selected((string) old('taxon_id', $product->taxon_id ?? '') === (string) $t->id)>
+                                    {{ $t->name }}@if($t->scientific_name) ({{ $t->scientific_name }})@endif
+                                </option>
+                            @endforeach
+                        </optgroup>
+                    @endforeach
+                </select>
+
+                <x-form-error name="taxon_id"/>
+
+                <div class="form-text">
+                    Biết tới loài thì chọn loài; chỉ biết tới chi hoặc họ thì chọn bậc đó.
+                    Hoa cắt cành, phụ kiện: để trống.
+                </div>
+
+            </div>
+
+            {{--
+                Lời giải thích HIỆN CHO KHÁCH khi phân loại dừng ở Chi / Họ.
+                Thiếu nó thì dữ liệu đúng trông y hệt dữ liệu thiếu — xem
+                migration add_taxon_note_to_products_table.
+            --}}
+            <div class="mt-3">
+
+                <label class="form-label" for="taxon_note">Vì sao chỉ tới chi / họ</label>
+
+                <input type="text" id="taxon_note" name="taxon_note" maxlength="300"
+                       class="form-control @error('taxon_note') is-invalid @enderror"
+                       value="{{ old('taxon_note', $product->taxon_note ?? '') }}"
+                       placeholder="Chậu ghép nhiều loài sen đá khác nhau">
+
+                <x-form-error name="taxon_note"/>
+
+                <div class="form-text">
+                    Hiện cho khách ở trang sản phẩm. Để trống nếu đã chọn tới loài.
+                </div>
+
+            </div>
+
         </div>
 
         <div class="admin-panel p-4 mb-4">

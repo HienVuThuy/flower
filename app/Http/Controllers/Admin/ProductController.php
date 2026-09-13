@@ -156,7 +156,7 @@ class ProductController extends Controller
 
         return view(
             'admin.products.create',
-            compact('categories', 'taxClasses')
+            compact('categories', 'taxClasses') + ['taxa' => $this->phanLoaiChoBieuMau()]
         );
     }
 
@@ -523,8 +523,45 @@ class ProductController extends Controller
                 'product',
                 'categories',
                 'taxClasses'
-            )
+            ) + ['taxa' => $this->phanLoaiChoBieuMau()]
         );
+    }
+
+
+    /**
+     * Các nút phân loại để gắn cho sản phẩm, nhóm theo bậc: Họ, Chi, Loài.
+     * ============================================================
+     * BỎ CÁC BẬC TRÊN HỌ (Giới, Ngành, Lớp, Bộ): gắn một chậu cây vào "Giới
+     * Thực vật" đúng mà vô ích — trang /loai-cay không lọc được gì từ đó.
+     *
+     * Vẫn cho chọn Chi và Họ, không chỉ Loài: "sen đá mix" là nhiều loài
+     * trong một chậu; ép chọn tới loài là ép bịa (xem migration
+     * create_plant_taxa_table).
+     *
+     * Một hàm cho cả trang tạo lẫn trang sửa — hai bản thì sớm muộn một
+     * trang thiếu bậc.
+     *
+     * @return list<array{nhan: string, nut: \Illuminate\Support\Collection<int, \App\Models\PlantTaxon>}>
+     */
+    private function phanLoaiChoBieuMau(): array
+    {
+        $bac = [\App\Enums\TaxonRank::Family, \App\Enums\TaxonRank::Genus, \App\Enums\TaxonRank::Species];
+
+        $nut = \App\Models\PlantTaxon::query()
+            ->whereIn('rank', array_map(fn ($b) => $b->value, $bac))
+            ->orderBy('name')
+            ->get()
+            ->groupBy(fn ($t) => $t->rank->value);
+
+        $ket = [];
+
+        foreach ($bac as $b) {
+            if ($nut->has($b->value)) {
+                $ket[] = ['nhan' => $b->label(), 'nut' => $nut[$b->value]];
+            }
+        }
+
+        return $ket;
     }
 
 
