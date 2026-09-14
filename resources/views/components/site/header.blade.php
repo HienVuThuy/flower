@@ -312,6 +312,11 @@
                                 <x-site.icon name="gear" /> Hồ sơ tài khoản
                             </a>
 
+                            {{-- Điểm hiện ngay trong menu tài khoản: thấy số tăng mới là thứ kéo người ta quay lại. --}}
+                            <a class="dropdown-item" href="{{ route('shop.profile.edit', ['muc' => 'diem-thuong']) }}" data-diem-header>
+                                <x-site.icon name="star" /> Điểm thưởng: <strong>{{ number_format(app(\App\Services\Points\PointLedger::class)->soDu(Auth::user()), 0, ',', '.') }}</strong>
+                            </a>
+
                             @if(config('features.cart'))
                                 <a class="dropdown-item" href="{{ route('shop.orders.index') }}">
                                     <x-site.icon name="bag" /> Đơn hàng của tôi

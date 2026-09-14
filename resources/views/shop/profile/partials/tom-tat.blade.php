@@ -19,6 +19,10 @@
                 <dt>Đánh giá đã viết</dt>
                 <dd>{{ $reviewCount }}</dd>
             </div>
+            <div class="profile-summary__row">
+                <dt>Điểm thưởng</dt>
+                <dd><a href="{{ route('shop.profile.edit', ['muc' => 'diem-thuong']) }}">{{ number_format($diemSoDu, 0, ',', '.') }}</a></dd>
+            </div>
         </dl>
 
         {{--

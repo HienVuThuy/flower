@@ -50,6 +50,27 @@
         @endforeach
     </div>
 
+    @if($diem['so_du'] < 0)
+        {{-- Nói vì sao âm, không để khách tưởng hệ thống lỗi. --}}
+        <p class="text-caption mb-4" data-so-du-am>
+            Số dư đang âm vì một đơn được hoàn tiền sau khi điểm của đơn đó đã được dùng. Tích thêm điểm để đổi được ưu đãi.
+        </p>
+    @endif
+
+    {{-- CÁCH KIẾM ĐIỂM — đọc từ đúng các hằng số đang tính, không ghi tay. --}}
+    @php
+        $kiem = \App\Services\Points\PointEarning::class;
+        $baiViet = \App\Services\Points\CommunityReward::class;
+    @endphp
+    <h3 class="text-h5 mb-2">Cách kiếm điểm</h3>
+    <ul class="points-history list-unstyled mb-4" data-cach-kiem-diem>
+        <li class="points-history__row"><span>Mua hàng (tính khi đơn đã giao, không gồm phí vận chuyển)</span><strong>1 điểm / {{ number_format($kiem::DONG_MOI_DIEM, 0, ',', '.') }}đ</strong></li>
+        <li class="points-history__row"><span>Đánh giá sản phẩm đã mua, có nhận xét từ {{ $kiem::NHAN_XET_TOI_THIEU }} ký tự</span><strong>+{{ $kiem::DANH_GIA_NHAN_XET }}</strong></li>
+        <li class="points-history__row"><span>Đánh giá chỉ chấm sao</span><strong>+{{ $kiem::DANH_GIA_CHI_SAO }}</strong></li>
+        <li class="points-history__row"><span>Bài Góc cây được duyệt (có ảnh +{{ $baiViet::CO_ANH }}, nổi bật +{{ $baiViet::NOI_BAT }})</span><strong>+{{ $baiViet::CO_BAN }}</strong></li>
+        <li class="points-history__row"><span>Chuỗi ngày ghé thăm: ngày thứ 3 / mỗi 7 ngày</span><strong>+{{ \App\Services\Points\VisitStreak::moc(3) }} / +{{ \App\Services\Points\VisitStreak::moc(7) }}</strong></li>
+    </ul>
+
     <h3 class="text-h5 mb-2">Lịch sử</h3>
     @if($diem['lich_su']->isEmpty())
         <p class="text-caption mb-0">Chưa có điểm nào. Đăng một bài ở <a href="{{ route('shop.community.index') }}">Góc cây của bạn</a> để bắt đầu.</p>

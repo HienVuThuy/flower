@@ -1,0 +1,132 @@
+<?php
+
+namespace App\Services\Points;
+
+use App\Enums\OrderStatus;
+use App\Enums\PointReason;
+use App\Models\Order;
+use App\Models\PointTransaction;
+use App\Models\Refund;
+use App\Models\Review;
+use App\Models\User;
+
+/**
+ * Luật kiếm điểm từ mua hàng và đánh giá — một chỗ khai, một chỗ tính.
+ * ============================================================
+ * MUA HÀNG: 1 điểm cho mỗi 10.000đ TIỀN HÀNG KHÁCH THẬT TRẢ — tổng đơn trừ
+ * phí vận chuyển và phần đã hoàn. Cộng khi đơn ĐÃ GIAO, không lúc đặt: đơn
+ * huỷ, đơn bom hàng không có điểm để thu hồi.
+ *
+ * HOÀN TIỀN SAU KHI ĐÃ CỘNG: trừ lại theo số tiền hoàn, không quá số điểm
+ * đơn đó đã nhận. Không trừ thì "mua, nhận điểm, hoàn tiền" là cách in điểm.
+ *
+ * ĐÁNH GIÁ: chỉ sản phẩm đã mua (luật sẵn có của đánh giá). Có nhận xét từ
+ * 30 ký tự được nhiều hơn chấm sao suông — nhận xét là thứ người mua sau
+ * đọc. Khoá theo ĐƠN + SẢN PHẨM, không theo id đánh giá: gỡ rồi viết lại
+ * không được cộng lần hai.
+ */
+class PointEarning
+{
+    public const DONG_MOI_DIEM = 10000;
+
+    public const DANH_GIA_NHAN_XET = 10;
+
+    public const DANH_GIA_CHI_SAO = 3;
+
+    public const NHAN_XET_TOI_THIEU = 30;
+
+    public function __construct(
+        private readonly PointLedger $so,
+    ) {
+    }
+
+    public static function diemChoTien(string $tien): int
+    {
+        return max(0, (int) bcdiv($tien, (string) self::DONG_MOI_DIEM, 0));
+    }
+
+    /** @return int số điểm vừa cộng (0 nếu không cộng) */
+    public function donHoanTat(Order $order): int
+    {
+        if ($order->user_id === null || $order->status !== OrderStatus::Completed) {
+            return 0;
+        }
+
+        $user = User::find($order->user_id);
+
+        if ($user === null) {
+            return 0;
+        }
+
+        $tienHang = bcsub(
+            bcsub((string) $order->grand_total, (string) ($order->shipping_fee ?? '0'), 2),
+            (string) $order->refundedAmount(),
+            2,
+        );
+
+        $diem = self::diemChoTien($tienHang);
+
+        if ($diem === 0) {
+            return 0;
+        }
+
+        return $this->so->cong($user, $diem, PointReason::MuaHang, 'don:' . $order->id, 'Đơn ' . $order->order_number)
+            ? $diem
+            : 0;
+    }
+
+    /** @return int số điểm vừa trừ (0 nếu không trừ) */
+    public function hoanTien(Refund $refund): int
+    {
+        $order = $refund->order;
+
+        if ($order?->user_id === null || ($user = User::find($order->user_id)) === null) {
+            return 0;
+        }
+
+        // Đơn chưa từng được cộng (huỷ trước khi giao, khách vãng lai) thì không có gì để trừ.
+        $daCong = (int) PointTransaction::where('user_id', $user->id)
+            ->where('source_key', 'don:' . $order->id)
+            ->value('amount');
+
+        $daTru = -(int) PointTransaction::where('user_id', $user->id)
+            ->where('source_key', 'like', 'hoan:' . $order->id . ':%')
+            ->sum('amount');
+
+        $tru = min(self::diemChoTien((string) $refund->amount), $daCong - $daTru);
+
+        if ($tru <= 0) {
+            return 0;
+        }
+
+        return $this->so->tru(
+            $user,
+            $tru,
+            PointReason::HoanTien,
+            'hoan:' . $order->id . ':' . $refund->id,
+            'Hoàn tiền ' . $refund->code . ' — đơn ' . $order->order_number,
+        ) ? $tru : 0;
+    }
+
+    /** @return int số điểm vừa cộng (0 nếu không cộng) */
+    public function danhGia(Review $review): int
+    {
+        $user = User::find($review->user_id);
+
+        if ($user === null || $review->order_id === null) {
+            return 0;
+        }
+
+        $diem = mb_strlen(trim((string) $review->comment)) >= self::NHAN_XET_TOI_THIEU
+            ? self::DANH_GIA_NHAN_XET
+            : self::DANH_GIA_CHI_SAO;
+
+        return $this->so->cong(
+            $user,
+            $diem,
+            PointReason::DanhGia,
+            'danh-gia:' . $review->order_id . ':' . $review->product_id,
+            'Đánh giá sản phẩm',
+        ) ? $diem : 0;
+    }
+}

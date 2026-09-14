@@ -95,6 +95,7 @@ class ProfileController extends Controller
             'orderCount' => Order::where('user_id', $user->id)->count(),
             'wishlistCount' => $user->wishlists()->count(),
             'reviewCount' => $user->reviews()->count(),
+            'diemSoDu' => app(\App\Services\Points\PointLedger::class)->soDu($user),
 
             // Sổ điểm chỉ đọc khi mở đúng mục đó.
             'diem' => $muc === 'diem-thuong' ? [

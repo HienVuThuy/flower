@@ -81,13 +81,35 @@ class PointLedger
     public function cong(User $user, int $diem, PointReason $lyDo, string $khoa, ?string $ghiChu = null): bool
     {
         if ($diem <= 0) {
-            throw new \InvalidArgumentException('Chỉ cộng số điểm dương; trừ điểm đi qua doiVoucher().');
+            throw new \InvalidArgumentException('Chỉ cộng số điểm dương; trừ điểm đi qua tru() hoặc doiVoucher().');
         }
 
+        return $this->ghi($user, $diem, $lyDo, $khoa, $ghiChu);
+    }
+
+    /**
+     * Trừ điểm vì một việc (hoàn tiền cho đơn đã cộng điểm). Một việc một lần.
+     *
+     * ĐƯỢC PHÉP LÀM SỐ DƯ ÂM, khác với đổi voucher: điểm của đơn có thể đã
+     * tiêu trước khi đơn được hoàn tiền. Chặn ở 0 là cho phép "mua, tích
+     * điểm, đổi voucher, hoàn tiền" để lấy voucher miễn phí. Số dư âm thì
+     * không đổi được gì cho tới khi tích lại.
+     */
+    public function tru(User $user, int $diem, PointReason $lyDo, string $khoa, ?string $ghiChu = null): bool
+    {
+        if ($diem <= 0) {
+            throw new \InvalidArgumentException('Truyền số điểm cần trừ là số dương.');
+        }
+
+        return $this->ghi($user, -$diem, $lyDo, $khoa, $ghiChu);
+    }
+
+    private function ghi(User $user, int $soDiem, PointReason $lyDo, string $khoa, ?string $ghiChu): bool
+    {
         try {
             (new PointTransaction())->forceFill([
                 'user_id' => $user->id,
-                'amount' => $diem,
+                'amount' => $soDiem,
                 'reason' => $lyDo,
                 'source_key' => $khoa,
                 'note' => $ghiChu !== null ? Str::limit($ghiChu, 190) : null,

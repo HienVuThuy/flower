@@ -37,7 +37,7 @@ class ReviewController extends Controller
                 . 'Mỗi đơn hàng viết được một đánh giá.');
         }
 
-        Review::create([
+        $review = Review::create([
             'product_id' => $product->id,
             'user_id' => $userId,
             // Lưu đơn làm bằng chứng mua hàng — xem chú thích ở migration.
@@ -46,7 +46,10 @@ class ReviewController extends Controller
             'comment' => $request->validated('comment'),
         ]);
 
-        return back()->with('success', 'Cảm ơn bạn đã đánh giá sản phẩm.');
+        $diem = app(\App\Services\Points\PointEarning::class)->danhGia($review);
+
+        return back()->with('success', 'Cảm ơn bạn đã đánh giá sản phẩm.'
+            . ($diem > 0 ? ' Bạn được cộng ' . $diem . ' điểm thưởng.' : ''));
     }
 
     /**

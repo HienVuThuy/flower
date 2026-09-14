@@ -676,6 +676,16 @@ class OrderService
                     'exception' => $e->getMessage(),
                 ]);
             }
+
+            // Điểm mua hàng — dịch vụ phụ như lịch nhắc: sau transaction, không làm hỏng việc chính.
+            try {
+                app(\App\Services\Points\PointEarning::class)->donHoanTat($order);
+            } catch (\Throwable $e) {
+                Log::error('Không cộng được điểm mua hàng.', [
+                    'order_number' => $order->order_number,
+                    'exception' => $e->getMessage(),
+                ]);
+            }
         }
 
         /*

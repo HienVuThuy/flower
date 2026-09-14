@@ -375,6 +375,12 @@ class RefundService
             $khoa->payment_status = PaymentStatus::Refunded;
             $khoa->save();
         }
+
+        /*
+         * TRỪ ĐIỂM của đơn đã được cộng — TRONG transaction: tiền đã hoàn
+         * xong thì điểm phải trừ cùng lúc, không để một nửa. Xem PointEarning.
+         */
+        app(\App\Services\Points\PointEarning::class)->hoanTien($refund);
     }
 
     /**
