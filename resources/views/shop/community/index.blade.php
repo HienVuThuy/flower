@@ -83,6 +83,14 @@
                             Bài sẽ được cửa hàng duyệt trước khi hiện — thường trong ngày.
                         </p>
 
+                        {{-- Luật thưởng nói trước, đọc từ đúng hằng số đang tính — không ghi tay con số. --}}
+                        @php $thuong = \App\Services\Points\CommunityReward::class; @endphp
+                        <p class="text-body-sm" data-luat-thuong>
+                            Bài được duyệt: <strong>+{{ $thuong::CO_BAN }} điểm</strong>, có ảnh thêm {{ $thuong::CO_ANH }},
+                            bài nổi bật thêm {{ $thuong::NOI_BAT }}. Tối đa {{ $thuong::TOI_DA_MOI_TUAN }} bài được thưởng mỗi tuần.
+                            <a href="{{ route('shop.profile.edit', ['muc' => 'diem-thuong']) }}">Đổi điểm lấy voucher</a>.
+                        </p>
+
                         {{--
                             NÓI THẲNG VỀ VIỆC TƯỚC METADATA.
 
@@ -159,6 +167,10 @@
                                 </span>
 
                                 <p class="my-post__text">{{ \Illuminate\Support\Str::limit($bai->body, 90) }}</p>
+
+                                @isset($diemBai[$bai->id])
+                                    <p class="my-post__reason" data-diem-bai="{{ $bai->id }}">+{{ $diemBai[$bai->id] }} điểm</p>
+                                @endisset
 
                                 @if($bai->isRejected() && $bai->reject_reason)
                                     {{-- Lý do từ chối hiện lại cho chính người đăng:

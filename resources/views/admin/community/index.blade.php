@@ -67,12 +67,23 @@
                             <p class="admin-page-subtitle mb-2">Lý do từ chối: {{ $post->reject_reason }}</p>
                         @endif
 
+                        @isset($diemBai[$post->id])
+                            <p class="admin-page-subtitle mb-2" data-diem-bai="{{ $post->id }}">
+                                Đã thưởng {{ $diemBai[$post->id] }} điểm
+                            </p>
+                        @endisset
+
                         <div class="d-flex flex-wrap gap-2 align-items-start">
                             @if(! $post->isApproved())
-                                <form method="POST" action="{{ route('admin.community.approve', $post) }}">
+                                {{-- Hai nút một biểu mẫu: người duyệt vừa đọc bài, nên cũng là người chấm "nổi bật". --}}
+                                <form method="POST" action="{{ route('admin.community.approve', $post) }}" class="d-flex gap-2">
                                     @csrf
                                     @method('PATCH')
                                     <button type="submit" class="btn btn-primary-brand btn-sm">Duyệt</button>
+                                    <button type="submit" name="noi_bat" value="1" class="btn btn-outline-admin btn-sm"
+                                            title="Cộng thêm {{ \App\Services\Points\CommunityReward::NOI_BAT }} điểm cho bài có nội dung đáng xem">
+                                        Duyệt · bài nổi bật
+                                    </button>
                                 </form>
                             @endif
 

@@ -39,23 +39,25 @@ class CommunityController extends Controller
             ->latest('approved_at')
             ->paginate(self::MOI_TRANG);
 
+        /*
+         * Bài của chính mình — KỂ CẢ bài chưa duyệt.
+         *
+         * Người vừa gửi bài phải thấy nó ở đâu đó, kèm trạng thái.
+         * Gửi xong mà màn hình không đổi gì thì họ tưởng hỏng và gửi
+         * lại — rồi admin có ba bài giống hệt để duyệt.
+         */
+        $cuaToi = Auth::check()
+            ? CommunityPost::where('user_id', Auth::id())
+                ->with('product:id,name,slug')
+                ->latest()
+                ->limit(5)
+                ->get()
+            : collect();
+
         return view('shop.community.index', [
             'posts' => $posts,
-
-            /*
-             * Bài của chính mình — KỂ CẢ bài chưa duyệt.
-             *
-             * Người vừa gửi bài phải thấy nó ở đâu đó, kèm trạng thái.
-             * Gửi xong mà màn hình không đổi gì thì họ tưởng hỏng và gửi
-             * lại — rồi admin có ba bài giống hệt để duyệt.
-             */
-            'cuaToi' => Auth::check()
-                ? CommunityPost::where('user_id', Auth::id())
-                    ->with('product:id,name,slug')
-                    ->latest()
-                    ->limit(5)
-                    ->get()
-                : collect(),
+            'cuaToi' => $cuaToi,
+            'diemBai' => app(\App\Services\Points\CommunityReward::class)->daThuong($cuaToi),
 
             'cayDaMua' => Auth::check() ? $this->cayDaMua() : collect(),
         ]);

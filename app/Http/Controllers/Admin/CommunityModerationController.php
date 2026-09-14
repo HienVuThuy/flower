@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CommunityPost;
 use App\Services\Media\ImageStore;
+use App\Services\Points\CommunityReward;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,10 +23,13 @@ use Illuminate\View\View;
  * Với một cửa hàng nhỏ, số bài mỗi ngày đếm trên đầu ngón tay nên duyệt
  * tay không phải gánh nặng. Khi nào nhiều tới mức không duyệt xuể thì đó
  * là lúc bàn tới tự động — không phải bây giờ.
+ *
+ * DUYỆT LÀ LÚC THƯỞNG ĐIỂM — xem CommunityReward. Người duyệt vừa đọc bài,
+ * nên cũng là người chấm "bài nổi bật".
  */
 class CommunityModerationController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, CommunityReward $thuong): View
     {
         /*
          * MẶC ĐỊNH MỞ Ở TAB "CHỜ DUYỆT".
@@ -43,16 +47,19 @@ class CommunityModerationController extends Controller
             default => $query->pending()->oldest('created_at'),
         };
 
+        $posts = $query->paginate(20)->withQueryString();
+
         return view('admin.community.index', [
-            'posts' => $query->paginate(20)->withQueryString(),
+            'posts' => $posts,
             'loc' => $loc,
             // Đếm để tab "Chờ duyệt" mang luôn con số — admin biết còn
             // việc mà không phải bấm vào xem.
             'soChoDuyet' => CommunityPost::pending()->count(),
+            'diemBai' => $thuong->daThuong($posts->getCollection()),
         ]);
     }
 
-    public function approve(CommunityPost $post): RedirectResponse
+    public function approve(Request $request, CommunityPost $post, CommunityReward $thuong): RedirectResponse
     {
         /*
          * Duyệt thì XOÁ dấu từ chối.
@@ -66,7 +73,18 @@ class CommunityModerationController extends Controller
         $post->reject_reason = null;
         $post->save();
 
-        return back()->with('success', 'Đã duyệt bài của ' . $post->user?->name . '.');
+        $diem = $thuong->thuong($post, $request->boolean('noi_bat'));
+
+        $thongBao = 'Đã duyệt bài của ' . $post->user?->name . '.';
+
+        if ($diem > 0) {
+            $thongBao .= ' Cộng ' . $diem . ' điểm cho khách.';
+        } elseif ($diem === 0) {
+            // Nói ra để người duyệt không tưởng nút "nổi bật" bị hỏng.
+            $thongBao .= ' Không cộng điểm: khách đã được thưởng đủ ' . CommunityReward::TOI_DA_MOI_TUAN . ' bài trong tuần này.';
+        }
+
+        return back()->with('success', $thongBao);
     }
 
     public function reject(Request $request, CommunityPost $post): RedirectResponse
