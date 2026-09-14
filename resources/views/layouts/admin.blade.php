@@ -245,13 +245,21 @@
         </nav>
         @endcanany
 
-        @canany(['bao-cao', 'he-thong'])
+        @canany(['bao-cao', 'tai-chinh', 'he-thong'])
         <div class="admin-nav-heading">Hệ thống</div>
         <nav class="d-flex flex-column gap-1">
             @can('bao-cao')
             <a data-admin-link href="{{ route('admin.analytics.index') }}" class="admin-nav-link {{ request()->routeIs('admin.analytics.*') ? 'is-active' : '' }}">
                 <x-site.icon name="bar-chart" />
                 <span>Phân tích</span>
+            </a>
+            @endcan
+
+            {{-- Sổ thu chi đứng cạnh Phân tích: phần "thu" của nó đọc từ đúng các báo cáo đó. --}}
+            @can('tai-chinh')
+            <a data-admin-link href="{{ route('admin.expenses.index') }}" class="admin-nav-link {{ request()->routeIs('admin.expenses.*') ? 'is-active' : '' }}">
+                <x-site.icon name="journal" />
+                <span>Sổ thu chi</span>
             </a>
             @endcan
 

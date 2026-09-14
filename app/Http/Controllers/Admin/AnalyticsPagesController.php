@@ -74,6 +74,7 @@ class AnalyticsPagesController extends Controller
         return view('admin.analytics.profit', $this->chung($ky) + [
             'loi' => $bao->trong($khoang)->baoCao(),
             'buShip' => $this->analytics->shippingCost(),
+            'chiPhi' => \App\Services\Analytics\CashFlowReport::chiPhi($khoang),
 
             /*
              * HOA TƯƠI CÓ BÁO CÁO RIÊNG, ở mức KỲ.

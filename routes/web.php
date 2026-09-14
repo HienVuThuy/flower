@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\PricingAdvisorController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
 use App\Http\Controllers\Admin\SupplierController;
+use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\SupplierReturnController;
 use App\Http\Controllers\Admin\FlowerKindController;
 use App\Http\Controllers\Admin\FlowerLotController;
@@ -1388,6 +1389,23 @@ Route::prefix('admin')
         Route::get('hoan-tien', [RefundController::class, 'index'])
             ->middleware('quyen:tai-chinh')
             ->name('refunds.index');
+
+        /*
+         * SỔ THU CHI — chi phí vận hành và lãi ròng ước tính theo tháng.
+         * Quyền tài chính: lương từng người và lãi ròng. Xem ExpenseController.
+         */
+        Route::prefix('thu-chi')
+            ->name('expenses.')
+            ->middleware('quyen:tai-chinh')
+            ->group(function () {
+                Route::get('/', [ExpenseController::class, 'index'])->name('index');
+                Route::get('/them', [ExpenseController::class, 'create'])->name('create');
+                Route::post('/', [ExpenseController::class, 'store'])->middleware('throttle:30,1')->name('store');
+                Route::post('/chep-co-dinh', [ExpenseController::class, 'copyFixed'])->middleware('throttle:10,1')->name('copy-fixed');
+                Route::get('/{expense}/sua', [ExpenseController::class, 'edit'])->name('edit');
+                Route::put('/{expense}', [ExpenseController::class, 'update'])->middleware('throttle:30,1')->name('update');
+                Route::delete('/{expense}', [ExpenseController::class, 'destroy'])->middleware('throttle:30,1')->name('destroy');
+            });
 
         Route::prefix('bulk-inquiries')
             ->name('bulk-inquiries.')

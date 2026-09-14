@@ -169,7 +169,23 @@
                         @endif
                     </dd>
                 </div>
+                {{-- Lương, mặt bằng, server… — chỉ có số khi đã ghi ở Sổ thu chi. Chưa ghi khoản
+                     nào thì nói "chưa ghi", không in 0đ: 0đ nghĩa là cửa hàng không tốn gì. --}}
+                <div>
+                    <dt>Chi phí vận hành đã ghi</dt>
+                    <dd>
+                        @if($chiPhi['so_khoan'] === 0)
+                            <span class="admin-page-subtitle">chưa ghi</span>
+                        @else
+                            {{ $tien($chiPhi['tong']) }}
+                        @endif
+                    </dd>
+                </div>
             </dl>
+            <p class="admin-page-subtitle small mt-2 mb-0">
+                Lãi ròng ước tính theo tháng ở
+                <a data-admin-link href="{{ route('admin.expenses.index') }}">Sổ thu chi</a>.
+            </p>
         </div>
     </div>
 </div>

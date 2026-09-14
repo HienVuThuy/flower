@@ -78,6 +78,7 @@ class RouteSmokeTest extends TestCase
         'journal' => \App\Models\Journal::class,
         'supplier' => \App\Models\Supplier::class,
         'flowerLot' => \App\Models\FlowerLot::class,
+        'expense' => \App\Models\Expense::class,
     ];
 
     /**
@@ -231,6 +232,13 @@ class RouteSmokeTest extends TestCase
             'total_cost' => '500000.00',
             'status' => 'dang_dung',
         ])->save();
+
+        \App\Models\Expense::create([
+            'spent_on' => now()->toDateString(),
+            'category' => 'luong',
+            'description' => 'Khoản chi quét thử',
+            'amount' => '1000000.00',
+        ]);
 
         \App\Models\Promotion::create([
             'name' => 'Chương trình quét thử',
