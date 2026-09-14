@@ -635,6 +635,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::delete('voucher/{coupon}/luu', [VoucherController::class, 'discard'])
         ->name('shop.vouchers.discard');
+
+    // Đổi điểm thưởng lấy voucher — cùng lý do cần email đã xác thực như lưu voucher.
+    Route::post('diem-thuong/doi', [\App\Http\Controllers\Shop\PointController::class, 'redeem'])
+        ->middleware('throttle:10,1')
+        ->name('shop.points.redeem');
 });
 
 

@@ -1,0 +1,61 @@
+{{-- ---------- Điểm thưởng ---------- --}}
+<div class="surface-card p-4">
+
+    <h2 class="text-h4 mb-1">Điểm thưởng</h2>
+    <p class="text-caption mb-3">
+        Tích điểm khi bài Góc cây của bạn được duyệt và khi ghé cửa hàng nhiều ngày liền. Đổi điểm lấy voucher dùng cho đơn sau.
+    </p>
+
+    <p class="points-balance mb-4" data-so-du="{{ $diem['so_du'] }}">
+        <span class="points-balance__so">{{ number_format($diem['so_du'], 0, ',', '.') }}</span>
+        <span class="text-caption">điểm</span>
+    </p>
+
+    <h3 class="text-h5 mb-2">Đổi voucher</h3>
+    <div class="row g-3 mb-4">
+        @foreach($diem['goi'] as $ma => $goi)
+            @php $du = $diem['so_du'] >= $goi['diem']; @endphp
+            <div class="col-sm-6">
+                <div class="points-offer {{ $du ? '' : 'is-locked' }}" data-goi="{{ $ma }}">
+                    <p class="points-offer__giam mb-1">Giảm {{ \App\Services\Shop\Money::format($goi['giam']) }}</p>
+                    <p class="text-caption mb-2">
+                        Đơn từ {{ \App\Services\Shop\Money::format($goi['don_toi_thieu']) }} · dùng trong {{ $goi['ngay'] }} ngày
+                    </p>
+                    <form method="POST" action="{{ route('shop.points.redeem') }}">
+                        @csrf
+                        <input type="hidden" name="goi" value="{{ $ma }}">
+                        <button type="submit" class="btn btn-primary-brand w-100" @disabled(! $du)>
+                            Đổi {{ number_format($goi['diem'], 0, ',', '.') }} điểm
+                        </button>
+                    </form>
+                    @unless($du)
+                        <p class="text-caption mt-2 mb-0">Còn thiếu {{ number_format($goi['diem'] - $diem['so_du'], 0, ',', '.') }} điểm</p>
+                    @endunless
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <h3 class="text-h5 mb-2">Lịch sử</h3>
+    @if($diem['lich_su']->isEmpty())
+        <p class="text-caption mb-0">Chưa có điểm nào. Đăng một bài ở <a href="{{ route('shop.community.index') }}">Góc cây của bạn</a> để bắt đầu.</p>
+    @else
+        <ul class="points-history list-unstyled mb-0">
+            @foreach($diem['lich_su'] as $dong)
+                <li class="points-history__row">
+                    <span>
+                        {{ $dong->reason->label() }}
+                        @if($dong->note)
+                            <span class="d-block text-caption">{{ $dong->note }}</span>
+                        @endif
+                        <span class="d-block text-caption"><x-site.time :at="$dong->created_at" format="d/m/Y" /></span>
+                    </span>
+                    <strong class="{{ $dong->amount < 0 ? 'points-history__tru' : 'points-history__cong' }}">
+                        {{ $dong->amount > 0 ? '+' : '−' }}{{ number_format(abs($dong->amount), 0, ',', '.') }}
+                    </strong>
+                </li>
+            @endforeach
+        </ul>
+    @endif
+
+</div>

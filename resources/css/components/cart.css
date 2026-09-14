@@ -819,6 +819,65 @@
     border-top: 1px solid var(--border-soft);
 }
 
+/* ============ ĐIỂM THƯỞNG ============ */
+
+.points-balance {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2xs);
+}
+
+.points-balance__so {
+    font-size: 2.25rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--ink-900);
+    font-variant-numeric: tabular-nums;
+}
+
+.points-offer {
+    height: 100%;
+    padding: var(--space-sm);
+    border: 1px solid var(--border-soft);
+    border-radius: 12px;
+}
+
+.points-offer.is-locked {
+    opacity: 0.7;
+}
+
+.points-offer__giam {
+    font-weight: 700;
+    color: var(--ink-900);
+}
+
+.points-history__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: var(--space-sm);
+    padding: var(--space-2xs) 0;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.points-history__row:last-child {
+    border-bottom: 0;
+}
+
+.points-history__cong,
+.points-history__tru {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.points-history__cong {
+    color: var(--ink-900);
+}
+
+.points-history__tru {
+    color: var(--ink-500);
+}
+
 /* ============ BẢNG GHI CÔNG ẢNH ============ */
 
 .credits-table {

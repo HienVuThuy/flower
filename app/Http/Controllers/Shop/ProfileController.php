@@ -50,6 +50,7 @@ class ProfileController extends Controller
      */
     private const MUC = [
         'thong-tin' => 'Thông tin',
+        'diem-thuong' => 'Điểm thưởng',
         'bao-mat' => 'Bảo mật',
         'tuy-chon' => 'Tuỳ chọn',
     ];
@@ -94,6 +95,13 @@ class ProfileController extends Controller
             'orderCount' => Order::where('user_id', $user->id)->count(),
             'wishlistCount' => $user->wishlists()->count(),
             'reviewCount' => $user->reviews()->count(),
+
+            // Sổ điểm chỉ đọc khi mở đúng mục đó.
+            'diem' => $muc === 'diem-thuong' ? [
+                'so_du' => app(\App\Services\Points\PointLedger::class)->soDu($user),
+                'lich_su' => app(\App\Services\Points\PointLedger::class)->lichSu($user),
+                'goi' => \App\Services\Points\PointLedger::GOI,
+            ] : null,
         ]);
     }
 

@@ -76,6 +76,17 @@ class CouponService
         }
 
         /*
+         * MÃ CÓ CHỦ — voucher đổi từ điểm thưởng.
+         *
+         * Người khác (kể cả khách vãng lai) biết mã cũng không dùng được.
+         * Báo "không tồn tại" y như mã gõ bừa: câu "mã này của người khác"
+         * xác nhận cho người dò mã rằng họ vừa đoán trúng.
+         */
+        if ($coupon->owner_user_id !== null && (int) $coupon->owner_user_id !== Auth::id()) {
+            throw new CouponException('Mã giảm giá không tồn tại.');
+        }
+
+        /*
          * Giới hạn RIÊNG của từng tài khoản (coupons.per_user_limit).
          *
          * Khác hẳn isExhausted() ở trên: cái kia hỏi "chương trình còn
