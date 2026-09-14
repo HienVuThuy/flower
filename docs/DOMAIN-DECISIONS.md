@@ -8003,3 +8003,62 @@ Dòng có quy cách vẫn dùng đúng giá của quy cách đó.
 - Nhà cung cấp: "Số lần lấy hàng" = phiếu nhập mới + lô hoa (vựa hoa từng
   hiện 0 lần), không đếm phiếu trả hàng.
 - Danh sách phiếu kho ghi rõ loại phiếu trả NCC / tồn đầu kỳ.
+
+---
+
+## QĐ-281. Thanh toán và hoàn tiền cần quyền tài chính, không chỉ quyền đơn hàng
+
+Nguồn: bản rà soát bên ngoài, đã kiểm lại trên mã. Hai đường
+`orders/{order}/thanh-toan` và `orders/{order}/hoan-tien` nằm dưới quyền
+`don-hang` của cả nhóm, nên nhân viên đánh dấu được "đã thanh toán" và ghi
+hoàn tiền mặt / chuyển khoản — hai cách hoàn **hoàn tất ngay**. `Quyen::TaiChinh`
+tồn tại đúng để tách việc đó. Middleware cộng dồn: cần cả hai quyền. Giao
+diện nói "thuộc quyền tài chính" thay vì bày nút bấm vào ra 403. Đồng bộ GHN
+tự đánh dấu COD đã thu vẫn chạy (đó là hệ thống, không phải nhân viên).
+
+## QĐ-282. Không huỷ đơn khi vận đơn GHN còn hiệu lực; chỉ tạo vận đơn cho đơn đang chờ giao
+
+- Huỷ đơn chỉ đổi trạng thái, hoàn kho, trả lượt mã — không gọi GHN. Đơn
+  đã bàn giao mà huỷ thì hệ thống ghi "đã huỷ" trong khi shipper đang cầm
+  hàng. Nay phải huỷ vận đơn trước. Đơn tự giao vẫn huỷ được. Đồng bộ GHN
+  không tự huỷ đơn (luật 2 của GhnStatusSync) nên không bị chốt này chặn.
+- `GHNOrderService::create()` chỉ kiểm "đã có mã" và "có mã địa giới". Nay
+  chỉ nhận đơn Đã xác nhận / Đang chuẩn bị — kiểm ở máy chủ, vì giao diện
+  không hiện nút không phải một lớp bảo vệ.
+
+## QĐ-283. Giới hạn lượt dùng mã của từng tài khoản là MỘT câu UPDATE có điều kiện
+
+Cùng lỗi mà giới hạn chung đã sửa từ trước, nhưng sót ở bộ đếm riêng: kiểm
+`userLimitReached()` rồi mới +1 ở bước khác — hai đơn cùng lúc cùng qua.
+Nay `markUsed()` bảo đảm có dòng (`insertOrIgnore`, không đè bộ đếm), rồi
+`UPDATE ... WHERE used_count < per_user_limit`; đổi 0 dòng thì ném
+`CouponException`, cuộn lại cả transaction tạo đơn — kể cả lượt dùng chung.
+
+## QĐ-284. Nhóm thuế bị tắt giữ thuế suất cho sản phẩm đang gắn; tiền tệ khoá VND
+
+- **ĐẢO NGƯỢC** quyết định cũ (bài kiểm thử cũ khẳng định nhóm tắt thì về
+  mức cửa hàng). Hệ quả cũ: tắt nhóm "Không chịu VAT" là hàng thành 8% trên
+  hoá đơn mà không ai sửa sản phẩm. Nay tắt = không gán cho sản phẩm mới.
+- Tiền tệ: bốn ô cài đặt chỉ đổi cách in — 500.000đ thành "$500,000.00" —
+  trong khi giá, MoMo, GHN đều là đồng và không có tỉ giá. Khoá VND; giá trị
+  cũ trong bảng `settings` bị bỏ qua. Đa tiền tệ thật cần tỉ giá, bản chụp
+  tiền tệ trên đơn và cổng theo tiền tệ — ngoài phạm vi.
+- Sửa sản phẩm thuộc danh mục ẩn / nhóm thuế tắt: ô chọn giữ dòng đang gắn
+  (có ghi chú), để bấm Lưu không lặng lẽ đổi; sản phẩm mới không chọn được.
+
+## QĐ-285. Catalog: nhóm danh mục, thùng rác, dọn ảnh qua ImageStore, sửa địa chỉ giao
+
+- Nhóm danh mục chọn được trong quản trị; không đổi nhóm khi còn sản phẩm
+  không hợp. Mặc định 'plant' nằm ở migration, không chép sang controller.
+- Thùng rác: khôi phục về **nháp** (kiểm lại trước khi mở bán); xoá vĩnh
+  viễn chỉ hàng đã trong thùng rác và phải gõ đúng tên.
+- Mọi đường xoá file đi qua `ImageStore::xoa()` — xoá trần để lại bản WebP,
+  các cỡ ảnh và dòng manifest.
+- Yêu thích chỉ cần đăng nhập (QĐ-07), cả nút lẫn trang danh sách.
+- Sửa thông tin giao hàng: chỉ đơn Chờ xác nhận / Đã xác nhận chưa có vận
+  đơn; không sửa tỉnh / quận / phường (phí ship và mã GHN tính từ đó).
+
+**Không làm, có lý do:** CRUD nhóm thuế riêng (danh sách cấu hình cố định là
+đủ), phát hành hoá đơn điện tử thật (cần nhà cung cấp HĐĐT — hiện chỉ ghi yêu
+cầu xuất hoá đơn, đúng như trạng thái Nháp đang nói), VNPay / QR ngân hàng
+(người dùng không yêu cầu).
