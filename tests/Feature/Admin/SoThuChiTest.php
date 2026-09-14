@@ -210,6 +210,11 @@ class SoThuChiTest extends TestCase
                 ->assertOk()->assertSee('Sổ thu chi tháng 09/2026');
         }
 
+        // Tháng chưa ghi gì: nói đúng là chưa ghi, không phải "không khớp bộ lọc".
+        $this->actingAs($chu)->get(route('admin.expenses.index', ['thang' => '2026-08']))
+            ->assertSee('Tháng này chưa ghi khoản chi nào')
+            ->assertDontSee('khớp với bộ lọc');
+
         // Đang ở tháng hiện tại thì không có nút "Tháng sau".
         $this->actingAs($chu)->get(route('admin.expenses.index'))->assertDontSee('Tháng sau');
         $this->actingAs($chu)->get(route('admin.expenses.index', ['thang' => '2026-08']))->assertSee('Tháng sau');

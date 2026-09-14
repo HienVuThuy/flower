@@ -181,9 +181,11 @@
                                 </td>
                             </tr>
                         @empty
-                            <x-admin.empty-row :colspan="5">
-                                Tháng này chưa ghi khoản chi nào.
-                            </x-admin.empty-row>
+                            {{-- Không dùng x-admin.empty-row: nó coi `?thang=` là đang lọc và báo
+                                 "không khớp bộ lọc" — trong khi tháng đó thật sự chưa ghi gì. --}}
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">Tháng này chưa ghi khoản chi nào.</td>
+                            </tr>
                         @endforelse
                     </tbody>
                 </table>
