@@ -72,7 +72,8 @@ class UpdateProductRequest extends FormRequest
             'category_id' => [
                 'required',
                 'integer',
-                'exists:categories,id',
+                // Danh mục đang ẩn không nhận sản phẩm mới; khi sửa thì giữ được danh mục đang gắn.
+                Rule::exists('categories', 'id')->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $this->route('product')?->category_id)),
             ],
 
             /*
@@ -87,7 +88,8 @@ class UpdateProductRequest extends FormRequest
             'tax_class_id' => [
                 'nullable',
                 'integer',
-                'exists:tax_classes,id',
+                // Nhóm đã tắt không gán cho sản phẩm mới; khi sửa thì giữ được nhóm đang gắn.
+                Rule::exists('tax_classes', 'id')->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $this->route('product')?->tax_class_id)),
             ],
 
             'name' => [

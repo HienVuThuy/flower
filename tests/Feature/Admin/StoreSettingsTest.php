@@ -200,12 +200,12 @@ class StoreSettingsTest extends TestCase
     }
 
     #[Test]
-    public function doi_don_vi_tien_te_lam_doi_moi_so_tien_tren_trang(): void
+    public function don_vi_tien_KHOA_O_VND_du_bieu_mau_gui_len_USD(): void
     {
         /*
-         * Nếu bài này đỏ thì đâu đó vẫn còn một chỗ tự gọi
-         * number_format() và tự nối ký hiệu — tức là ô cấu hình tiền tệ
-         * chỉ là một ô nhập không làm gì, đúng loại "chức năng giả".
+         * Trước đây ô tiền tệ đổi được sang USD — nhưng chỉ đổi cách in:
+         * 500.000đ thành "$500,000.00", trong khi MoMo và GHN vẫn nhận đồng
+         * và không có tỉ giá nào. Nay khoá VND.
          */
         $this->actingAs($this->admin())
             ->put('/admin/settings', $this->duLieu([
@@ -216,16 +216,19 @@ class StoreSettingsTest extends TestCase
             ]))
             ->assertRedirect();
 
-        $this->assertSame('$1,234.50', Money::format(1234.5));
+        $this->assertSame('1.234₫', Money::format(1234));
+        $this->assertSame('VND', Money::code());
     }
 
     #[Test]
-    public function o_ky_hieu_bi_xoa_trang_khong_lam_mat_ky_hieu_toan_trang(): void
+    public function gia_tri_tien_te_cu_con_trong_bang_bi_bo_qua(): void
     {
-        // Ô bỏ trắng là "chưa điền", không phải "không có ký hiệu tiền".
-        Setting::set('currency_symbol', '');
+        // Cửa hàng từng lưu USD trước khi khoá: không được in theo giá trị cũ đó.
+        Setting::set('currency_code', 'USD');
+        Setting::set('currency_symbol', '$');
+        Setting::set('currency_decimals', '2');
 
-        $this->assertSame('₫', Money::symbol());
+        $this->assertSame('500.000₫', Money::format(500000));
     }
 
     #[Test]

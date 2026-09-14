@@ -341,49 +341,15 @@
                     Đang hiển thị: <strong>{{ \App\Services\Shop\Money::format(260000) }}</strong>
                 </p>
 
-                <div class="row g-3">
-
-                    <div class="col-md-3">
-                        <label class="form-label">Mã tiền tệ</label>
-                        <input type="text" name="currency_code"
-                               class="form-control text-uppercase @error('currency_code') is-invalid @enderror"
-                               value="{{ old('currency_code', $currency['currency_code']) }}"
-                               maxlength="3" required>
-                        <x-form-error name="currency_code"/>
-                        <p class="form-text">Ba chữ in hoa, ví dụ VND.</p>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Ký hiệu</label>
-                        <input type="text" name="currency_symbol"
-                               class="form-control @error('currency_symbol') is-invalid @enderror"
-                               value="{{ old('currency_symbol', $currency['currency_symbol']) }}"
-                               maxlength="5" required>
-                        <x-form-error name="currency_symbol"/>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Vị trí ký hiệu</label>
-                        <select name="currency_position" class="form-select">
-                            <option value="after" @selected(old('currency_position', $currency['currency_position']) === 'after')>
-                                Sau số — 260.000₫
-                            </option>
-                            <option value="before" @selected(old('currency_position', $currency['currency_position']) === 'before')>
-                                Trước số — ₫260.000
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Số chữ số thập phân</label>
-                        <input type="number" name="currency_decimals" min="0" max="4"
-                               class="form-control @error('currency_decimals') is-invalid @enderror"
-                               value="{{ old('currency_decimals', $currency['currency_decimals']) }}" required>
-                        <x-form-error name="currency_decimals"/>
-                        <p class="form-text">VND để 0 (không có xu).</p>
-                    </div>
-
-                </div>
+                {{--
+                    KHOÁ Ở VND. Bốn ô nhập cũ chỉ đổi CÁCH IN chứ không đổi đơn vị
+                    tiền: giá lưu là đồng, MoMo và GHN nhận đồng, không có tỉ giá.
+                    Xem Money::get().
+                --}}
+                <p class="mb-0">
+                    <strong>Đồng Việt Nam (VND)</strong> — cố định. Giá sản phẩm, MoMo và GHN đều tính bằng đồng;
+                    đổi ký hiệu sang đơn vị khác mà không quy đổi sẽ in sai mọi số tiền.
+                </p>
 
             </div>
 

@@ -942,7 +942,7 @@
                                 ) == $category->id
                             )
                         >
-                            {{ $category->name }}
+                            {{ $category->name }}@unless($category->is_active) (đang ẩn)@endunless
                         </option>
 
                     @endforeach
@@ -1177,7 +1177,7 @@
                     @foreach($taxClasses as $nhom)
                         <option value="{{ $nhom->id }}"
                                 @selected((string) old('tax_class_id', $product->tax_class_id ?? '') === (string) $nhom->id)>
-                            {{ $nhom->name }}
+                            {{ $nhom->name }}@unless($nhom->is_active) (đã tắt — chỉ giữ cho sản phẩm này)@endunless
                         </option>
                     @endforeach
                 </select>

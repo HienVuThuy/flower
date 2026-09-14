@@ -195,11 +195,7 @@ class SettingsController extends Controller
                 'max:' . HeroImages::MAX_KB,
             ],
 
-            /* ---------- TIỀN TỆ ---------- */
-            'currency_code' => ['required', 'string', 'size:3', 'regex:/^[A-Z]{3}$/'],
-            'currency_symbol' => ['required', 'string', 'max:5'],
-            'currency_position' => ['required', Rule::in(['before', 'after'])],
-            'currency_decimals' => ['required', 'integer', 'min:0', 'max:4'],
+            /* ---------- TIỀN TỆ: khoá VND, không nhận từ biểu mẫu — xem Money::get() ---------- */
 
             /* ---------- THUẾ ---------- */
             /*
@@ -233,7 +229,6 @@ class SettingsController extends Controller
             'site_name.required' => 'Tên cửa hàng không được để trống.',
             'site_logo.mimes' => 'Logo phải là ảnh PNG, JPG hoặc WebP (không nhận SVG).',
             'site_logo.max' => 'Logo tối đa 512KB.',
-            'currency_code.regex' => 'Mã tiền tệ gồm đúng 3 chữ cái in hoa, ví dụ VND.',
             'tax_rate_percent.max' => 'Thuế suất phải nhỏ hơn 100%.',
             'tax_classes.*.rate_percent.max' => 'Thuế suất của nhóm phải nhỏ hơn 100%.',
             'tax_classes.*.rate_percent.numeric' => 'Thuế suất của nhóm phải là số.',
@@ -259,7 +254,6 @@ class SettingsController extends Controller
         }
 
         $this->saveLogo($request, $data);
-        $this->saveCurrency($data);
         $this->saveTaxRate($data);
         $this->saveTaxClasses($data);
 
@@ -313,16 +307,6 @@ class SettingsController extends Controller
         $anh->xoa($cu);
 
         Setting::set('site_logo', $moi);
-    }
-
-    /** Bốn tham số tiền tệ — mặc định nằm ở Money::FIELDS. */
-    private function saveCurrency(array $data): void
-    {
-        foreach (array_keys(Money::FIELDS) as $key) {
-            if (array_key_exists($key, $data)) {
-                Setting::set($key, (string) $data[$key]);
-            }
-        }
     }
 
     /**

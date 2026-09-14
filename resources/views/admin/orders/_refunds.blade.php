@@ -97,6 +97,7 @@
                         <div class="alert alert-warning py-2 px-2 mt-2 mb-0">
                             Không nhận được trả lời từ MoMo. Tìm mã <strong>{{ $r->code }}</strong> trên cổng MoMo:
 
+                            @can('tai-chinh')
                             <form method="POST" action="{{ route('admin.refunds.confirm', $r) }}" class="d-flex flex-wrap gap-2 mt-2">
                                 @csrf
                                 @method('PATCH')
@@ -111,6 +112,7 @@
                                 @method('PATCH')
                                 <button type="submit" class="btn btn-sm btn-ghost">Không có trên MoMo — không thành công</button>
                             </form>
+                            @endcan
                         </div>
                     @endif
                 </div>
@@ -120,6 +122,9 @@
 
     @if($refundBlocked !== null)
         <p class="admin-page-subtitle mb-0">{{ $refundBlocked }}</p>
+    @elseif(! auth()->user()?->can('tai-chinh'))
+        {{-- Hoàn tiền mặt / chuyển khoản hoàn tất NGAY — đó là việc tiền, thuộc quyền tài chính. --}}
+        <p class="admin-page-subtitle mb-0">Ghi hoàn tiền thuộc quyền tài chính.</p>
     @else
         <form method="POST" action="{{ route('admin.orders.refunds.store', $order) }}"
               onsubmit="return confirm('Ghi hoàn tiền cho đơn {{ $order->order_number }}? Khoản hoàn đã ghi không xoá được.');">

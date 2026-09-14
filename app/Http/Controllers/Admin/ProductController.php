@@ -488,8 +488,16 @@ class ProductController extends Controller
         Product $product
     ): View {
 
+        /*
+         * GIỮ DANH MỤC VÀ NHÓM THUẾ ĐANG GẮN, dù đã ẩn / đã tắt.
+         *
+         * Lỗi đã sửa: trang sửa chỉ nạp danh mục đang hoạt động và nhóm thuế
+         * đang bật. Sản phẩm thuộc danh mục vừa ẩn thì ô chọn không có dòng
+         * của nó — bấm Lưu để sửa giá là lặng lẽ đổi danh mục hoặc nhóm thuế.
+         * Chỉ dòng ĐANG GẮN được giữ; sản phẩm mới vẫn không chọn được chúng.
+         */
         $categories = Category::query()
-            ->where('is_active', true)
+            ->where(fn ($q) => $q->where('is_active', true)->orWhere('id', $product->category_id))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -515,7 +523,10 @@ class ProductController extends Controller
          * Chỉ lấy dòng còn hoạt động: nhóm đã tắt vẫn phải giữ lại vì
          * đơn cũ trỏ tới nó, nhưng không được mời admin chọn tiếp.
          */
-        $taxClasses = TaxClass::active()->orderBy('id')->get();
+        $taxClasses = TaxClass::query()
+            ->where(fn ($q) => $q->where('is_active', true)->when($product->tax_class_id, fn ($q) => $q->orWhere('id', $product->tax_class_id)))
+            ->orderBy('id')
+            ->get();
 
         return view(
             'admin.products.edit',

@@ -147,19 +147,33 @@ class VatPerProductTest extends TestCase
     }
 
     #[Test]
-    public function nhom_thue_da_tat_thi_cung_lui_ve_muc_cua_hang(): void
+    public function nhom_thue_da_tat_VAN_GIU_thue_suat_cho_san_pham_dang_gan(): void
     {
         /*
-         * Nhóm tắt vẫn phải giữ lại vì đơn cũ trỏ tới nó, nhưng không
-         * được dùng cho đơn mới. Nếu vẫn dùng, admin tắt một nhóm mà
-         * không có gì đổi — và họ sẽ tắt tiếp cái khác, tưởng nút hỏng.
+         * QUYẾT ĐỊNH ĐÃ ĐỔI (bài cũ khẳng định điều ngược lại).
+         *
+         * Bản cũ: nhóm tắt thì lùi về mức cửa hàng. Hệ quả: tắt nhóm "Không
+         * chịu VAT" là mọi sản phẩm trong nhóm lặng lẽ thành 8% trên hoá đơn
+         * mà không ai sửa sản phẩm. Tắt nhóm nay chỉ nghĩa là "không mời gán
+         * cho sản phẩm mới"; muốn đổi thuế thì sửa thuế suất hoặc gán nhóm khác.
          */
         $nhom = $this->nhom('vat_10', '0.10000');
         $nhom->update(['is_active' => false]);
 
         $order = $this->datHang([[$this->hang('Chậu sứ', '110000.00', $nhom)]]);
 
-        $this->assertSame('0.08000', $order->items->first()->tax_rate);
+        $this->assertSame('0.10000', $order->items->first()->tax_rate);
+    }
+
+    #[Test]
+    public function tat_nhom_khong_chiu_VAT_KHONG_bien_hang_thanh_hang_chiu_thue(): void
+    {
+        $nhom = $this->nhom('vat_exempt', null);
+        $nhom->update(['is_active' => false]);
+
+        $order = $this->datHang([[$this->hang('Bó hoa', '300000.00', $nhom)]]);
+
+        $this->assertNull($order->items->first()->tax_rate);
     }
 
     /* ================= 2. "KHÔNG CHỊU VAT" KHÁC "CHỊU 0%" ================= */

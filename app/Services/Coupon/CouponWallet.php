@@ -316,21 +316,46 @@ class CouponWallet
             return;
         }
 
-        DB::table('coupon_user')->upsert(
-            [[
-                'user_id' => $user->id,
-                'coupon_id' => $coupon->id,
-                'claimed_at' => now(),
-                'used_count' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]],
-            ['user_id', 'coupon_id'],
-            // Hàng đã có thì CỘNG THÊM, không ghi đè bằng 1 — ghi đè sẽ
-            // reset bộ đếm mỗi lần dùng và per_user_limit không bao giờ
-            // chặn được ai.
-            ['used_count' => DB::raw('used_count + 1'), 'updated_at' => now()],
-        );
+        /*
+         * TĂNG BỘ ĐẾM KÈM ĐIỀU KIỆN, rồi kiểm SỐ DÒNG BỊ ẢNH HƯỞNG — cùng
+         * cách với giới hạn chung ở CouponService::redeem().
+         *
+         * Lỗi đã sửa (race condition): bản cũ kiểm userLimitReached() ở một
+         * bước, rồi upsert "+1" ở bước khác. Giới hạn 1 lần, hai đơn gửi
+         * cùng lúc: cả hai đọc used_count = 0, cả hai qua, bộ đếm lên 2 —
+         * một người dùng mã hai lần. Gộp kiểm và ghi vào MỘT câu UPDATE có
+         * điều kiện thì cơ sở dữ liệu tự phân xử.
+         *
+         * Bước 1 chỉ bảo đảm có dòng để cập nhật (khách nhập tay một mã
+         * chưa từng lưu vào ví). insertOrIgnore không đè dòng đã có, nên
+         * không reset bộ đếm của ai.
+         */
+        DB::table('coupon_user')->insertOrIgnore([
+            'user_id' => $user->id,
+            'coupon_id' => $coupon->id,
+            'claimed_at' => now(),
+            'used_count' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Đọc giới hạn TỪ CƠ SỞ DỮ LIỆU, không tin đối tượng trong bộ nhớ có
+        // thể đã cũ từ lúc khách mở trang thanh toán.
+        $gioiHan = \App\Models\Coupon::whereKey($coupon->id)->value('per_user_limit');
+
+        $ghiNhan = DB::table('coupon_user')
+            ->where('user_id', $user->id)
+            ->where('coupon_id', $coupon->id)
+            ->when($gioiHan !== null, fn ($q) => $q->where('used_count', '<', $gioiHan))
+            ->update(['used_count' => DB::raw('used_count + 1'), 'updated_at' => now()]);
+
+        if ($ghiNhan === 0) {
+            // Ném để transaction tạo đơn cuộn lại — kể cả lượt dùng chung đã tăng.
+            throw new CouponException(sprintf(
+                'Tài khoản của bạn đã dùng hết số lần cho mã %s.',
+                $coupon->code,
+            ));
+        }
     }
 
     /** Trả lại một lượt khi đơn bị huỷ. */

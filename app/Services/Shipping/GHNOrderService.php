@@ -49,6 +49,25 @@ class GHNOrderService
             ];
         }
 
+        /*
+         * CHỈ TẠO VẬN ĐƠN CHO ĐƠN ĐANG CHỜ GIAO — kiểm ở phía máy chủ.
+         *
+         * Lỗ hổng đã sửa: dịch vụ chỉ kiểm "đã có mã chưa" và "có mã địa
+         * giới chưa". Gọi thẳng đường dẫn (không qua nút) là tạo được vận đơn
+         * cho đơn chờ xác nhận, đã huỷ hay đã giao — GHN cử người tới lấy một
+         * kiện không tồn tại và tính tiền cửa hàng. Giao diện không hiện nút
+         * không phải là một lớp bảo vệ.
+         */
+        if (! in_array($order->status, [\App\Enums\OrderStatus::Confirmed, \App\Enums\OrderStatus::Preparing], true)) {
+            return [
+                'code' => -1,
+                'message' => sprintf(
+                    'Chỉ tạo vận đơn cho đơn "Đã xác nhận" hoặc "Đang chuẩn bị". Đơn này đang "%s".',
+                    $order->status->label(),
+                ),
+            ];
+        }
+
         if (! $order->to_district_id || ! $order->to_ward_code) {
             return [
                 'code' => -1,

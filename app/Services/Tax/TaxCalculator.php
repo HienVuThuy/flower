@@ -97,7 +97,18 @@ class TaxCalculator
 
         $nhom = $product?->taxClass;
 
-        if (! $nhom || ! $nhom->is_active) {
+        /*
+         * NHÓM ĐÃ TẮT VẪN GIỮ THUẾ SUẤT CHO SẢN PHẨM ĐANG GẮN NÓ.
+         *
+         * Lỗi đã sửa: bản cũ coi nhóm bị tắt như không có nhóm, rơi về mức
+         * mặc định. Tắt nhóm "Không chịu VAT" là mọi sản phẩm trong nhóm
+         * lặng lẽ thành 8% — thuế trên hoá đơn đổi mà không ai sửa sản phẩm.
+         *
+         * `is_active = false` nghĩa là "không mời gán nhóm này cho sản phẩm
+         * MỚI" (xem biểu mẫu sản phẩm), không phải "đổi thuế của hàng cũ".
+         * Muốn đổi thuế thì sửa thuế suất của nhóm, hoặc gán nhóm khác.
+         */
+        if (! $nhom) {
             return $this->rate();
         }
 

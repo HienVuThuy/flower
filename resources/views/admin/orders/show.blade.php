@@ -278,7 +278,10 @@
                     không có cách nào ghi nhận đã hoàn tiền, nên trạng thái
                     "Đã hoàn tiền" là mã chết suốt từ lúc khai enum.
                 --}}
-                @if($paymentTargets)
+                @if($paymentTargets && ! auth()->user()?->can('tai-chinh'))
+                    {{-- Không bày nút bấm vào ra 403: nói rõ việc này thuộc quyền tài chính. --}}
+                    <p class="admin-page-subtitle mb-0">Ghi nhận thanh toán thuộc quyền tài chính.</p>
+                @elseif($paymentTargets)
                     <div class="d-flex flex-wrap gap-2">
                         @foreach($paymentTargets as $target)
                             <form method="POST" action="{{ route('admin.orders.payment', $order) }}">
@@ -399,6 +402,12 @@
                         Huỷ đơn sẽ tự động hoàn lại tồn kho cho các sản phẩm có quản lý kho.
                     </p>
 
+                    @if($order->ghn_order_code && $order->shipping_status !== 'cancel')
+                        <p class="text-danger small mt-2 mb-0">
+                            Đơn đã bàn giao cho GHN — muốn huỷ đơn thì huỷ vận đơn bên dưới trước.
+                        </p>
+                    @endif
+
                 @endif
 
                 {{--
@@ -500,6 +509,12 @@
 
                 @else
 
+                    @if(! in_array($order->status, [\App\Enums\OrderStatus::Confirmed, \App\Enums\OrderStatus::Preparing], true))
+                        {{-- Cùng luật với GHNOrderService::create(): không bày nút sẽ bị từ chối. --}}
+                        <p class="admin-page-subtitle mb-0">
+                            Chỉ bàn giao cho GHN khi đơn "Đã xác nhận" hoặc "Đang chuẩn bị".
+                        </p>
+                    @else
                     <form action="{{ route('admin.orders.shipment.create', $order) }}" method="POST">
                         @csrf
                         <button type="submit" class="btn btn-secondary-brand btn-sm w-100">
@@ -510,6 +525,7 @@
                     <p class="admin-page-subtitle mt-2 mb-0">
                         Chỉ bấm khi hàng đã gói xong. GHN sẽ cử người tới lấy và tính cước cho cửa hàng.
                     </p>
+                    @endif
 
                 @endif
 

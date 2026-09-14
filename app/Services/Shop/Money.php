@@ -112,6 +112,20 @@ class Money
      */
     private static function get(string $key): string
     {
+        /*
+         * ĐƠN VỊ TIỀN KHOÁ Ở VND.
+         *
+         * Lỗi đã sửa: trang Cài đặt từng cho đổi sang USD, $, 2 chữ số lẻ —
+         * nhưng đó chỉ đổi CÁCH IN, không đổi đơn vị tiền. Giá lưu là đồng,
+         * MoMo và GHN nhận đồng, không có tỉ giá. Đổi ô đó là 500.000đ in
+         * thành "$500,000.00". Đa tiền tệ thật cần tỉ giá, bản chụp tiền tệ
+         * trên đơn và cổng thanh toán theo tiền tệ — không phải bốn ô nhập.
+         * Giá trị cũ còn nằm trong bảng settings bị bỏ qua.
+         */
+        if (array_key_exists($key, self::FIELDS)) {
+            return self::FIELDS[$key];
+        }
+
         $value = Setting::get($key, self::FIELDS[$key] ?? '');
 
         return is_string($value) && trim($value) !== ''

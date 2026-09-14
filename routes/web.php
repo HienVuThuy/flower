@@ -1258,7 +1258,17 @@ Route::prefix('admin')
                  * chuyển trạng thái nằm trong PaymentStatus — thêm route
                  * riêng cho từng thao tác là thêm chỗ để quên phép kiểm.
                  */
+                /*
+                 * THANH TOÁN VÀ HOÀN TIỀN LÀ VIỆC TIỀN — thêm quyền tài chính.
+                 *
+                 * Lỗ hổng đã sửa: hai đường này nằm dưới quyền `don-hang` của cả
+                 * nhóm, nên nhân viên đánh dấu được "đã thanh toán" và ghi hoàn
+                 * tiền mặt / chuyển khoản (hoàn tất ngay) — trong khi Quyen::
+                 * TaiChinh tồn tại đúng để tách việc đó ra. Middleware cộng dồn:
+                 * phải có CẢ đơn hàng lẫn tài chính.
+                 */
                 Route::patch('/{order}/thanh-toan', [AdminOrderController::class, 'updatePayment'])
+                    ->middleware('quyen:tai-chinh')
                     ->name('payment');
 
                 // Ghi chú nội bộ — chỉ cửa hàng đọc, khách không thấy.
@@ -1293,7 +1303,7 @@ Route::prefix('admin')
                  * lần mỗi phút.
                  */
                 Route::post('/{order}/hoan-tien', [RefundController::class, 'store'])
-                    ->middleware('throttle:20,1')
+                    ->middleware(['quyen:tai-chinh', 'throttle:20,1'])
                     ->name('refunds.store');
             });
 

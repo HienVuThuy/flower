@@ -562,6 +562,25 @@ class OrderService
                 ));
             }
 
+            /*
+             * KHÔNG HUỶ ĐƠN KHI VẬN ĐƠN GHN CÒN HIỆU LỰC.
+             *
+             * Lỗi đã sửa: huỷ đơn chỉ đổi trạng thái, hoàn kho và trả lượt mã
+             * — không đụng tới GHN. Đơn đã bàn giao mà bấm huỷ thì hệ thống
+             * ghi "đã huỷ", kho cộng lại, trong khi shipper vẫn đang cầm hàng
+             * đi giao. Huỷ vận đơn trước (nút riêng, gọi GHN thật) rồi mới
+             * huỷ đơn — hai việc có hai kết quả có thể khác nhau.
+             */
+            if ($target === OrderStatus::Cancelled
+                && $locked->ghn_order_code
+                && $locked->shipping_status !== 'cancel') {
+                throw new OrderException(sprintf(
+                    'Đơn đã bàn giao cho GHN (mã %s). Huỷ vận đơn GHN trước, rồi mới huỷ đơn — '
+                    .'nếu không, hệ thống ghi "đã huỷ" trong khi shipper vẫn đang giao.',
+                    $locked->ghn_order_code,
+                ));
+            }
+
             // Đối tượng gọi vào có thể đã cũ — dùng bản vừa khoá.
             $order->setRawAttributes($locked->getAttributes(), sync: true);
 

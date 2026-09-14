@@ -70,7 +70,8 @@ class StoreProductRequest extends FormRequest
             'category_id' => [
                 'required',
                 'integer',
-                'exists:categories,id',
+                // Danh mục đang ẩn không nhận sản phẩm mới; khi sửa thì giữ được danh mục đang gắn.
+                Rule::exists('categories', 'id')->where('is_active', true),
             ],
 
             /*
@@ -85,7 +86,8 @@ class StoreProductRequest extends FormRequest
             'tax_class_id' => [
                 'nullable',
                 'integer',
-                'exists:tax_classes,id',
+                // Nhóm đã tắt không gán cho sản phẩm mới; khi sửa thì giữ được nhóm đang gắn.
+                Rule::exists('tax_classes', 'id')->where('is_active', true),
             ],
 
             'name' => [
