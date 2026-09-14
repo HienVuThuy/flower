@@ -128,7 +128,7 @@ async function diToi(url, ghiLichSu) {
         khung.innerHTML = moi.innerHTML;
         document.title = doc.title;
 
-        danhDauDangXem(url);
+        danhDauTheoMayChu(doc, url);
 
         if (ghiLichSu) {
             window.history.pushState({}, '', url);
@@ -151,7 +151,39 @@ async function diToi(url, ghiLichSu) {
 }
 
 /**
- * Tô sáng mục đang xem.
+ * Tô sáng mục thanh bên THEO ĐÚNG TRANG MÁY CHỦ VỪA TRẢ VỀ.
+ *
+ * Lỗi đã sửa: trước đây JS tự đoán mục sáng bằng cách so đường dẫn. Sau
+ * khi gộp Tồn đầu kỳ và Trả hàng nhà cung cấp thành tab của trang Nhập kho,
+ * `/admin/ton-dau-ky` không nằm dưới `/admin/nhap-kho` — không mục nào sáng,
+ * trong khi máy chủ (routeIs trong layout) đã đánh dấu đúng "Nhập kho".
+ * Hai nơi giữ một luật thì lệch nhau; nay chỉ còn máy chủ quyết định.
+ *
+ * Trang trả về không có thanh bên (hiếm) thì mới lùi về cách so đường dẫn.
+ */
+function danhDauTheoMayChu(doc, url) {
+    const sangTrenMayChu = doc.querySelectorAll('.admin-sidebar [data-admin-link].is-active');
+
+    if (sangTrenMayChu.length === 0 && !doc.querySelector('.admin-sidebar')) {
+        danhDauDangXem(url);
+
+        return;
+    }
+
+    const duongSang = new Set(
+        [...sangTrenMayChu].map((a) => new URL(a.href, window.location.origin).pathname),
+    );
+
+    document.querySelectorAll('.admin-sidebar [data-admin-link]').forEach((link) => {
+        const dangXem = duongSang.has(new URL(link.href, window.location.origin).pathname);
+
+        link.classList.toggle('is-active', dangXem);
+        link.toggleAttribute('aria-current', dangXem);
+    });
+}
+
+/**
+ * Tô sáng mục đang xem — cách DỰ PHÒNG, chỉ khi trang trả về không có thanh bên.
  *
  * So theo ĐƯỜNG DẪN, không so cả URL: `/admin/orders?trang=2` vẫn là
  * mục "Đơn hàng". So nguyên chuỗi thì mọi trang có tham số đều mất
