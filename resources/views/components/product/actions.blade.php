@@ -5,6 +5,8 @@
     // NGAY TRONG form mua hàng. Thẻ sản phẩm ở danh sách thì không.
     'withQuantity' => false,
     'variants' => null,
+    // Id quy cách bán chạy THẬT (SocialProof::quyCachBanChay) — null khi chưa đủ căn cứ.
+    'phoBien' => null,
 ])
 
 @php
@@ -128,11 +130,26 @@
             <div class="mb-4" id="chon-quy-cach">
                 <span class="text-label d-block mb-2">Chọn quy cách</span>
 
+                @php
+                    /*
+                     * QUY CÁCH CHỌN SẴN (hiệu ứng mặc định).
+                     *
+                     * Ưu tiên quy cách bán chạy THẬT nếu còn mua được; không thì
+                     * quy cách đầu tiên còn hàng. Lỗi đã sửa kèm: bản cũ luôn chọn
+                     * ô đầu tiên, kể cả khi ô đó hết hàng và bị khoá — form gửi
+                     * lên không có quy cách nào hợp lệ.
+                     */
+                    $conMua = fn ($v) => ! ($v->track_inventory && ! $v->inStock());
+                    $macDinh = $activeVariants->first(fn ($v) => $phoBien !== null && $v->id === (int) $phoBien && $conMua($v))
+                        ?? $activeVariants->first($conMua);
+                    $idMacDinh = $macDinh?->id;
+                @endphp
+
                 <div class="variant-picker" data-variant-picker>
                     @foreach($activeVariants as $i => $variant)
                         @php($variantOut = $variant->track_inventory && ! $variant->inStock())
 
-                        <label class="variant-option {{ $i === 0 ? 'is-selected' : '' }}">
+                        <label class="variant-option {{ $variant->id === $idMacDinh ? 'is-selected' : '' }}">
                             <input
                                 type="radio"
                                 name="variant_id"
@@ -140,10 +157,15 @@
                                 class="visually-hidden"
                                 data-variant
                                 data-price="{{ $variant->price }}"
-                                @checked($i === 0)
+                                @checked($variant->id === $idMacDinh)
                                 @disabled($variantOut)
                             >
                             <span class="variant-option__name">{{ $variant->name }}</span>
+
+                            {{-- Nhãn chỉ khi số liệu bán thật đủ và không hoà — xem SocialProof. --}}
+                            @if($phoBien !== null && $variant->id === (int) $phoBien)
+                                <span class="variant-option__tag">Phổ biến nhất</span>
+                            @endif
 
                             @if($variant->price !== null)
                                 <span class="variant-option__price">

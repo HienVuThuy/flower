@@ -410,3 +410,11 @@
     font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
     letter-spacing: 0.03em;
 }
+
+/* "Hết hạn sau … — dùng trước khi mất mã": chỉ mã đã lưu, hạn thật < 72 giờ. */
+.voucher-card__expiring {
+    margin: 4px 0 0;
+    font-size: .8rem;
+    font-weight: 600;
+    color: var(--semantic-danger);
+}

@@ -220,6 +220,14 @@ class CouponWallet
             // Mã bị xoá hẳn khỏi hệ thống: khoá ngoại đã cascade nên
             // trường hợp này gần như không xảy ra, nhưng lọc cho chắc.
             ->filter()
+            /*
+             * MÃ SẮP HẾT HẠN LÊN ĐẦU, mã không có hạn xuống cuối.
+             *
+             * Trước đây xếp theo ngày lưu: mã sắp hết hạn trong ngày mai
+             * nằm lẫn dưới mã lưu hôm qua còn hạn cả tháng — khách để mất
+             * mã mà không biết. Cùng hạn thì giữ thứ tự ngày lưu (sortBy ổn định).
+             */
+            ->sortBy(fn (array $row) => $row['coupon']->ends_at?->getTimestamp() ?? PHP_INT_MAX)
             ->values();
     }
 

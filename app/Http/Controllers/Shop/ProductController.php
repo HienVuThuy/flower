@@ -388,6 +388,16 @@ class ProductController extends Controller
         $product->loadAvg(['reviews as rating_avg' => fn ($q) => $q->visible()], 'rating');
         $product->loadCount(['reviews as rating_count' => fn ($q) => $q->visible()]);
 
+        /*
+         * SỐ LIỆU THẬT CHO KHÁCH TỰ TIN MUA — đã bán, còn ít, quy cách phổ
+         * biến. Đọc từ đơn đã giao và kho; không đủ căn cứ thì null và trang
+         * không in gì. Xem App\Services\Catalog\SocialProof.
+         */
+        $bangChung = app(\App\Services\Catalog\SocialProof::class);
+        $daBan = $bangChung->banGanDay($product);
+        $chiCon = $bangChung->chiCon($product, $product->variants->isNotEmpty());
+        $quyCachPhoBien = $product->variants->isNotEmpty() ? $bangChung->quyCachBanChay($product) : null;
+
         $product->increment('view_count');
 
         /*
@@ -489,6 +499,9 @@ class ProductController extends Controller
             'reviewableOrder',
             'recommendations',
             'accessories',
+            'daBan',
+            'chiCon',
+            'quyCachPhoBien',
         ));
     }
 }

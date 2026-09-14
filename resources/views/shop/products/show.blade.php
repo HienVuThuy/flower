@@ -49,12 +49,25 @@
                 </div>
 
                 {{-- Điểm đánh giá: bấm vào nhảy xuống khối đánh giá bên dưới. --}}
-                @if($product->ratingCount() > 0)
-                    <a href="#danh-gia" class="product-info__rating">
-                        <x-product.rating-stars
-                            :value="$product->ratingAverage()"
-                            :count="$product->ratingCount()" />
-                    </a>
+                @if($product->ratingCount() > 0 || ($daBan ?? 0) > 0)
+                    <div class="product-info__proof">
+                        @if($product->ratingCount() > 0)
+                            <a href="#danh-gia" class="product-info__rating">
+                                <x-product.rating-stars
+                                    :value="$product->ratingAverage()"
+                                    :count="$product->ratingCount()" />
+                            </a>
+                        @endif
+
+                        {{--
+                            ĐÃ BÁN — đếm THẬT từ đơn đã giao trong 30 ngày.
+                            0 thì không in: "Đã bán 0" chỉ làm khách e ngại, còn
+                            in số bịa là nói dối. Xem SocialProof::banGanDay().
+                        --}}
+                        @if(($daBan ?? 0) > 0)
+                            <span class="product-info__sold">Đã bán {{ number_format($daBan, 0, ',', '.') }} trong 30 ngày qua</span>
+                        @endif
+                    </div>
                 @endif
 
                 <div class="product-info__price" data-price-display>
@@ -79,7 +92,16 @@
 
                 @if($product->track_inventory)
                     <div class="mb-3">
-                        @if($product->inStock())
+                        @if($product->inStock() && ($chiCon ?? null) !== null)
+                            {{--
+                                KHAN HIẾM THẬT — tồn kho còn từ 1 tới 5, không có quy cách.
+                                Không có đồng hồ đếm ngược hay "N người đang xem": không
+                                có dữ liệu nào đứng sau những thứ đó.
+                            --}}
+                            <span class="status-chip status-chip--warning">
+                                <x-site.icon name="info-circle" /> Chỉ còn {{ $chiCon }} sản phẩm
+                            </span>
+                        @elseif($product->inStock())
                             <span class="status-chip status-chip--success">
                                 <x-site.icon name="check-circle" /> Còn hàng
                             </span>
@@ -96,7 +118,7 @@
                 @endif
 
                 {{-- ============ CTA (kèm chọn quy cách + số lượng) ============ --}}
-                <x-product.actions :product="$product" :with-quantity="true" :variants="$activeVariants" />
+                <x-product.actions :product="$product" :with-quantity="true" :variants="$activeVariants" :pho-bien="$quyCachPhoBien ?? null" />
 
                 {{--
                     Nút yêu thích đặt DƯỚI "Thêm vào giỏ"/"Mua ngay", không

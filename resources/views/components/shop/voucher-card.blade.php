@@ -42,6 +42,21 @@
      * xám và khoá nút.
      */
     $dead = $exhaustedForUser || ! $coupon->isRunning() || $coupon->isExhausted();
+
+    /*
+     * SẮP MẤT MÃ — chỉ với mã ĐÃ LƯU, còn dùng được, và hết hạn trong 72 giờ.
+     *
+     * "Mất một mã giảm 50.000đ" thúc khách hơn "được giảm 50.000đ" — nhưng
+     * chỉ nói khi hạn thật sự sắp tới, tính từ ends_at thật. Mã không có
+     * ngày hết hạn thì không bao giờ có dòng này.
+     */
+    $sapMat = null;
+    if ($saved && ! $dead && $coupon->ends_at && $coupon->ends_at->isFuture()) {
+        $conGio = (int) floor(now()->diffInMinutes($coupon->ends_at) / 60);
+        if ($conGio < 72) {
+            $sapMat = $conGio < 1 ? 'dưới 1 giờ' : ($conGio < 24 ? $conGio . ' giờ' : intdiv($conGio, 24) . ' ngày');
+        }
+    }
 @endphp
 
 {{--
@@ -67,6 +82,9 @@
 
         @if($coupon->perUserText())
             <p class="voucher-card__terms">{{ $coupon->perUserText() }}</p>
+        @endif
+        @if($sapMat)
+            <p class="voucher-card__expiring">Hết hạn sau {{ $sapMat }} — dùng trước khi mất mã</p>
         @endif
 
         <p class="voucher-card__meta">

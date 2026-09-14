@@ -503,3 +503,30 @@
     font-size: var(--text-body-sm);
     color: var(--ink-500);
 }
+
+/* ---------- Bằng chứng mua hàng: đánh giá + đã bán (số liệu thật) ---------- */
+.product-info__proof {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2xs) var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.product-info__sold {
+    font-size: .875rem;
+    color: var(--ink-500);
+}
+
+/* Nhãn "Phổ biến nhất" trên quy cách bán chạy thật. */
+.variant-option__tag {
+    display: inline-block;
+    margin-top: 2px;
+    padding: 1px 8px;
+    border-radius: var(--radius-pill);
+    background: color-mix(in srgb, var(--semantic-success) 14%, transparent);
+    color: var(--semantic-success);
+    font-size: .72rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
