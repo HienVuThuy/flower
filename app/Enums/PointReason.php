@@ -29,9 +29,13 @@ enum PointReason: string
     /** Viết đánh giá cho sản phẩm đã mua. */
     case DanhGia = 'danh_gia';
 
+    /** Người khác thích bài Góc cây. */
+    case DuocThich = 'duoc_thich';
+
     public function label(): string
     {
         return match ($this) {
+            self::DuocThich => 'Bài Góc cây được thích',
             self::DangBai => 'Bài Góc cây được duyệt',
             self::ChuoiNgay => 'Chuỗi ngày ghé thăm',
             self::DoiVoucher => 'Đổi voucher',

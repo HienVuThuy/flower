@@ -3,12 +3,17 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Models\CommunityComment;
 use App\Models\CommunityPost;
 use App\Models\Product;
+use App\Services\Community\CommunityException;
+use App\Services\Community\CommunityInteraction;
 use App\Services\Media\ImageStore;
+use App\Services\Points\CommunityReward;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
@@ -20,7 +25,8 @@ use Illuminate\View\View;
  *   1. CHỈ BÀI ĐÃ DUYỆT MỚI HIỆN RA NGOÀI. Đây là nội dung người lạ đăng
  *      lên trang bán hàng; hiện ngay rồi gỡ sau nghĩa là trong khoảng
  *      giữa hai việc đó, cửa hàng đang hiển thị bất kỳ thứ gì vừa được
- *      gửi lên.
+ *      gửi lên. Thích, bình luận, trang chi tiết — mọi đường đều lấy bài
+ *      qua `approved()`.
  *
  *   2. ẢNH PHẢI ĐI QUA `ImageStore::luu()`. Ảnh chụp bằng điện thoại
  *      mang theo toạ độ GPS chính xác tới vài mét — địa chỉ nhà người
@@ -33,11 +39,18 @@ class CommunityController extends Controller
 
     public function index(Request $request): View
     {
-        $posts = CommunityPost::query()
+        $sapXep = $request->query('sap-xep') === 'thich-nhieu' ? 'thich-nhieu' : 'moi-nhat';
+
+        $query = CommunityPost::query()
             ->approved()
             ->with(['user:id,name', 'product:id,name,slug,main_image'])
-            ->latest('approved_at')
-            ->paginate(self::MOI_TRANG);
+            ->withCount(['likers', 'comments' => fn ($q) => $q->visible()]);
+
+        if ($sapXep === 'thich-nhieu') {
+            $query->orderByDesc('likers_count');
+        }
+
+        $posts = $query->latest('approved_at')->paginate(self::MOI_TRANG)->withQueryString();
 
         /*
          * Bài của chính mình — KỂ CẢ bài chưa duyệt.
@@ -56,11 +69,62 @@ class CommunityController extends Controller
 
         return view('shop.community.index', [
             'posts' => $posts,
+            'sapXep' => $sapXep,
+            'daThich' => $this->daThich($posts->pluck('id')->all()),
             'cuaToi' => $cuaToi,
-            'diemBai' => app(\App\Services\Points\CommunityReward::class)->daThuong($cuaToi),
-
+            'diemBai' => app(CommunityReward::class)->daThuong($cuaToi),
             'cayDaMua' => Auth::check() ? $this->cayDaMua() : collect(),
         ]);
+    }
+
+    public function show(int $post, CommunityInteraction $tuongTac): View
+    {
+        $bai = CommunityPost::query()
+            ->approved()
+            ->with(['user:id,name', 'product:id,name,slug,main_image'])
+            ->withCount('likers')
+            ->findOrFail($post);
+
+        return view('shop.community.show', [
+            'post' => $bai,
+            'comments' => $bai->comments()->visible()->with('user:id,name')->oldest()->get(),
+            'daThich' => in_array($bai->id, $this->daThich([$bai->id]), true),
+            'coTheBinhLuan' => $tuongTac->coTheBinhLuan(Auth::user()),
+        ]);
+    }
+
+    public function like(int $post, CommunityInteraction $tuongTac): RedirectResponse
+    {
+        $bai = CommunityPost::approved()->findOrFail($post);
+
+        $tuongTac->doiThich(Auth::user(), $bai);
+
+        return back();
+    }
+
+    public function comment(Request $request, int $post, CommunityInteraction $tuongTac): RedirectResponse
+    {
+        $bai = CommunityPost::approved()->findOrFail($post);
+
+        $data = $request->validate([
+            'body' => ['required', 'string', 'min:2', 'max:500'],
+        ], [], ['body' => 'bình luận']);
+
+        try {
+            $tuongTac->binhLuan(Auth::user(), $bai, $data['body']);
+        } catch (CommunityException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return redirect()->to(route('shop.community.show', $bai->id) . '#binh-luan');
+    }
+
+    public function destroyComment(int $comment): RedirectResponse
+    {
+        // Lọc chủ sở hữu trong truy vấn — 404 chứ không 403, cùng cách xoá bài.
+        CommunityComment::where('user_id', Auth::id())->findOrFail($comment)->delete();
+
+        return back()->with('success', 'Đã gỡ bình luận của bạn.');
     }
 
     public function store(Request $request): RedirectResponse
@@ -119,6 +183,26 @@ class CommunityController extends Controller
         $bai->delete();
 
         return back()->with('success', 'Đã xoá bài của bạn.');
+    }
+
+    /**
+     * Id những bài trong danh sách mà người đang xem đã thích.
+     *
+     * @param  list<int>  $ids
+     * @return list<int>
+     */
+    private function daThich(array $ids): array
+    {
+        if (! Auth::check() || $ids === []) {
+            return [];
+        }
+
+        return DB::table('community_post_likes')
+            ->where('user_id', Auth::id())
+            ->whereIn('community_post_id', $ids)
+            ->pluck('community_post_id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
     }
 
     /**

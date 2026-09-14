@@ -30,14 +30,25 @@
                         title="Chưa có bài nào"
                         text="Chưa ai đăng gì ở đây. Bạn có thể là người đầu tiên." />
                 @else
+                    <nav class="community-sort mb-3" aria-label="Sắp xếp bài">
+                        <a href="{{ route('shop.community.index') }}"
+                           class="community-sort__item {{ $sapXep === 'moi-nhat' ? 'is-active' : '' }}"
+                           @if($sapXep === 'moi-nhat') aria-current="page" @endif>Mới nhất</a>
+                        <a href="{{ route('shop.community.index', ['sap-xep' => 'thich-nhieu']) }}"
+                           class="community-sort__item {{ $sapXep === 'thich-nhieu' ? 'is-active' : '' }}"
+                           @if($sapXep === 'thich-nhieu') aria-current="page" @endif>Được thích nhiều</a>
+                    </nav>
+
                     <div class="row g-3">
                         @foreach($posts as $post)
                             <div class="col-sm-6">
-                                <article class="community-card">
+                                <article class="community-card" data-bai="{{ $post->id }}">
                                     @if($post->photo)
-                                        <x-site.image :path="$post->photo"
-                                                      :alt="'Ảnh do ' . $post->user?->name . ' chia sẻ'"
-                                                      class="community-card__img" />
+                                        <a href="{{ route('shop.community.show', $post->id) }}">
+                                            <x-site.image :path="$post->photo"
+                                                          :alt="'Ảnh do ' . $post->user?->name . ' chia sẻ'"
+                                                          class="community-card__img" />
+                                        </a>
                                     @endif
 
                                     <div class="community-card__body">
@@ -63,6 +74,14 @@
                                             {{ $post->user?->name ?? 'Khách' }}
                                             &middot; <x-site.time :at="$post->approved_at" relative />
                                         </p>
+
+                                        <div class="community-card__actions">
+                                            <x-community.like-button :post="$post"
+                                                                     :liked="in_array($post->id, $daThich, true)"
+                                                                     :count="$post->likers_count" />
+                                            <a href="{{ route('shop.community.show', $post->id) }}#binh-luan"
+                                               class="community-card__comments" data-so-binh-luan="{{ $post->id }}">{{ $post->comments_count }} bình luận</a>
+                                        </div>
                                     </div>
                                 </article>
                             </div>

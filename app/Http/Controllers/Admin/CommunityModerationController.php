@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CommunityComment;
 use App\Models\CommunityPost;
 use App\Services\Media\ImageStore;
 use App\Services\Points\CommunityReward;
@@ -26,6 +27,9 @@ use Illuminate\View\View;
  *
  * DUYỆT LÀ LÚC THƯỞNG ĐIỂM — xem CommunityReward. Người duyệt vừa đọc bài,
  * nên cũng là người chấm "bài nổi bật".
+ *
+ * BÌNH LUẬN hiện ngay (xem CommunityInteraction) nên cửa hàng xử lý SAU:
+ * tab "Bình luận" liệt kê mới nhất trước, ẩn / bỏ ẩn một chạm.
  */
 class CommunityModerationController extends Controller
 {
@@ -39,7 +43,28 @@ class CommunityModerationController extends Controller
          */
         $loc = $request->query('loc', 'cho-duyet');
 
-        $query = CommunityPost::query()->with(['user:id,name,email', 'product:id,name,slug']);
+        $chung = [
+            'loc' => $loc,
+            // Đếm để tab "Chờ duyệt" mang luôn con số — admin biết còn
+            // việc mà không phải bấm vào xem.
+            'soChoDuyet' => CommunityPost::pending()->count(),
+        ];
+
+        if ($loc === 'binh-luan') {
+            return view('admin.community.index', $chung + [
+                'posts' => null,
+                'diemBai' => [],
+                'binhLuan' => CommunityComment::query()
+                    ->with(['user:id,name,email', 'post:id,body'])
+                    ->latest()
+                    ->paginate(30)
+                    ->withQueryString(),
+            ]);
+        }
+
+        $query = CommunityPost::query()
+            ->with(['user:id,name,email', 'product:id,name,slug'])
+            ->withCount('likers');
 
         match ($loc) {
             'da-duyet' => $query->whereNotNull('approved_at')->latest('approved_at'),
@@ -49,13 +74,10 @@ class CommunityModerationController extends Controller
 
         $posts = $query->paginate(20)->withQueryString();
 
-        return view('admin.community.index', [
+        return view('admin.community.index', $chung + [
             'posts' => $posts,
-            'loc' => $loc,
-            // Đếm để tab "Chờ duyệt" mang luôn con số — admin biết còn
-            // việc mà không phải bấm vào xem.
-            'soChoDuyet' => CommunityPost::pending()->count(),
             'diemBai' => $thuong->daThuong($posts->getCollection()),
+            'binhLuan' => null,
         ]);
     }
 
@@ -107,6 +129,15 @@ class CommunityModerationController extends Controller
         $post->save();
 
         return back()->with('success', 'Đã từ chối bài.');
+    }
+
+    /** Ẩn / bỏ ẩn một bình luận. Ẩn chứ không xoá: còn dấu vết đã xử lý. */
+    public function toggleComment(CommunityComment $comment): RedirectResponse
+    {
+        $comment->hidden_at = $comment->hidden_at === null ? now() : null;
+        $comment->save();
+
+        return back()->with('success', $comment->hidden_at ? 'Đã ẩn bình luận.' : 'Đã hiện lại bình luận.');
     }
 
     public function destroy(CommunityPost $post): RedirectResponse

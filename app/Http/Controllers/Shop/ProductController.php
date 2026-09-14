@@ -492,7 +492,20 @@ class ProductController extends Controller
          */
         $accessories = $this->advisor->accessoriesFor($product);
 
+        /*
+         * KHÁCH KHOE CÂY NÀY — bài Góc cây ĐÃ DUYỆT gắn với sản phẩm. Ảnh cây
+         * thật ở nhà người mua là bằng chứng xã hội thật nhất trang có; và
+         * bài chỉ gắn được với cây ĐÃ MUA (QĐ-129), nên không dựng giả được.
+         */
+        $baiKhoe = \App\Models\CommunityPost::approved()
+            ->where('product_id', $product->id)
+            ->with('user:id,name')
+            ->latest('approved_at')
+            ->limit(4)
+            ->get(['id', 'user_id', 'body', 'photo', 'approved_at']);
+
         return view('shop.products.show', compact(
+            'baiKhoe',
             'product',
             'related',
             'reviews',

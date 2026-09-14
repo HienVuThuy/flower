@@ -555,6 +555,8 @@ Route::get('cam-nang/{post}', [BlogController::class, 'show'])->name('shop.blog.
  * mình vừa mở.
  */
 Route::get('goc-cay', [CommunityController::class, 'index'])->name('shop.community.index');
+// Trang một bài — chỉ bài đã duyệt (404 với bài chưa duyệt, kể cả với chính người đăng).
+Route::get('goc-cay/{post}', [CommunityController::class, 'show'])->whereNumber('post')->name('shop.community.show');
 
 Route::get('voucher', [VoucherController::class, 'index'])->name('shop.vouchers.index');
 
@@ -626,6 +628,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::delete('goc-cay/{post}', [CommunityController::class, 'destroy'])
         ->name('shop.community.destroy');
+
+    // Thích / bình luận — cần email đã xác thực (xem CommunityInteraction cho điều kiện bình luận).
+    Route::post('goc-cay/{post}/thich', [CommunityController::class, 'like'])
+        ->middleware('throttle:60,1')
+        ->name('shop.community.like');
+
+    Route::post('goc-cay/{post}/binh-luan', [CommunityController::class, 'comment'])
+        ->middleware('throttle:10,1')
+        ->name('shop.community.comment');
+
+    Route::delete('goc-cay/binh-luan/{comment}', [CommunityController::class, 'destroyComment'])
+        ->name('shop.community.comment.destroy');
 
     Route::post('voucher/{coupon}/luu', [VoucherController::class, 'claim'])
         ->name('shop.vouchers.claim');
@@ -1047,6 +1061,9 @@ Route::prefix('admin')
         Route::delete('goc-cay/{post}', [CommunityModerationController::class, 'destroy'])
             ->middleware('quyen:danh-gia')
             ->name('community.destroy');
+        Route::patch('goc-cay/binh-luan/{comment}/an', [CommunityModerationController::class, 'toggleComment'])
+            ->middleware('quyen:danh-gia')
+            ->name('community.comments.toggle');
 
         /*
          * XUẤT DỮ LIỆU — hai bước: chọn rồi mới tải.

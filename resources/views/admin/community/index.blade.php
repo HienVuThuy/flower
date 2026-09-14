@@ -18,13 +18,62 @@
         'cho-duyet' => 'Chờ duyệt' . ($soChoDuyet > 0 ? ' (' . $soChoDuyet . ')' : ''),
         'da-duyet' => 'Đã duyệt',
         'tu-choi' => 'Đã từ chối',
+        'binh-luan' => 'Bình luận',
     ] as $key => $nhan)
         <a href="{{ route('admin.community.index', ['loc' => $key]) }}"
            class="filter-chip {{ $loc === $key ? 'is-active' : '' }}">{{ $nhan }}</a>
     @endforeach
 </div>
 
-@if($posts->isEmpty())
+@if($loc === 'binh-luan')
+    {{-- Bình luận hiện ngay nên xử lý sau: mới nhất trước, ẩn / bỏ ẩn một chạm. --}}
+    <div class="admin-panel">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Người viết</th>
+                        <th scope="col">Bình luận</th>
+                        <th scope="col">Dưới bài</th>
+                        <th scope="col"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($binhLuan as $bl)
+                        <tr data-binh-luan-admin="{{ $bl->id }}">
+                            <td>
+                                {{ $bl->user?->name ?? 'Người dùng đã xoá' }}
+                                <span class="d-block admin-page-subtitle small"><x-site.time :at="$bl->created_at" format="d/m/Y H:i" /></span>
+                            </td>
+                            <td>
+                                {{ $bl->body }}
+                                @if($bl->hidden_at)
+                                    <span class="badge text-bg-secondary">đã ẩn</span>
+                                @endif
+                            </td>
+                            <td class="admin-page-subtitle small">
+                                @if($bl->post)
+                                    <a href="{{ route('shop.community.show', $bl->post->id) }}" target="_blank" rel="noopener">{{ \Illuminate\Support\Str::limit($bl->post->body, 50) }}</a>
+                                @endif
+                            </td>
+                            <td class="text-end">
+                                <form method="POST" action="{{ route('admin.community.comments.toggle', $bl) }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="btn btn-sm btn-outline-admin">{{ $bl->hidden_at ? 'Hiện lại' : 'Ẩn' }}</button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" class="text-center py-5 text-muted">Chưa có bình luận nào.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-3">{{ $binhLuan->links() }}</div>
+@elseif($posts->isEmpty())
     <div class="admin-panel p-4">
         <x-site.empty-state
             title="Không có bài nào ở mục này"

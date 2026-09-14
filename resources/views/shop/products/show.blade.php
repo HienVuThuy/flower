@@ -247,6 +247,31 @@
         --}}
         <x-product.classification :product="$product" />
 
+        {{-- ============ KHÁCH KHOE CÂY NÀY (Góc cây, đã duyệt) ============ --}}
+        @if(($baiKhoe ?? collect())->isNotEmpty())
+            <div class="mt-5" data-khach-khoe>
+                <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-3">
+                    <h2 class="text-h3 mb-0">Khách khoe cây này</h2>
+                    <a href="{{ route('shop.community.index') }}">Xem Góc cây</a>
+                </div>
+                <div class="row g-3">
+                    @foreach($baiKhoe as $bai)
+                        <div class="col-6 col-md-3">
+                            <a href="{{ route('shop.community.show', $bai->id) }}" class="community-card d-block text-reset text-decoration-none">
+                                @if($bai->photo)
+                                    <x-site.image :path="$bai->photo" :alt="'Ảnh do ' . $bai->user?->name . ' chia sẻ'" class="community-card__img" />
+                                @endif
+                                <div class="community-card__body">
+                                    <p class="community-card__text mb-1">{{ \Illuminate\Support\Str::limit($bai->body, 80) }}</p>
+                                    <p class="community-card__meta">{{ $bai->user?->name ?? 'Khách' }}</p>
+                                </div>
+                            </a>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+        @endif
+
         {{-- ============ ĐÁNH GIÁ ============ --}}
         <div class="mt-5">
             <x-product.reviews

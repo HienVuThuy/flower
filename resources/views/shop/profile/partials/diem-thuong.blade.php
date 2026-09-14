@@ -68,6 +68,7 @@
         <li class="points-history__row"><span>Đánh giá sản phẩm đã mua, có nhận xét từ {{ $kiem::NHAN_XET_TOI_THIEU }} ký tự</span><strong>+{{ $kiem::DANH_GIA_NHAN_XET }}</strong></li>
         <li class="points-history__row"><span>Đánh giá chỉ chấm sao</span><strong>+{{ $kiem::DANH_GIA_CHI_SAO }}</strong></li>
         <li class="points-history__row"><span>Bài Góc cây được duyệt (có ảnh +{{ $baiViet::CO_ANH }}, nổi bật +{{ $baiViet::NOI_BAT }})</span><strong>+{{ $baiViet::CO_BAN }}</strong></li>
+        <li class="points-history__row"><span>Người khác thích bài Góc cây của bạn (tối đa {{ $baiViet::THICH_TOI_DA_MOI_TUAN }} điểm mỗi tuần)</span><strong>+{{ $baiViet::LUOT_THICH }}</strong></li>
         <li class="points-history__row"><span>Chuỗi ngày ghé thăm: ngày thứ 3 / mỗi 7 ngày</span><strong>+{{ \App\Services\Points\VisitStreak::moc(3) }} / +{{ \App\Services\Points\VisitStreak::moc(7) }}</strong></li>
     </ul>
 

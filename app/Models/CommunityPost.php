@@ -44,6 +44,17 @@ class CommunityPost extends Model
         return $this->belongsTo(Product::class);
     }
 
+    /** Những người đã thích bài. Đếm bằng withCount('likers'). */
+    public function likers(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'community_post_likes');
+    }
+
+    public function comments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CommunityComment::class);
+    }
+
     /** CỬA DUY NHẤT để lấy bài hiện ra ngoài. */
     public function scopeApproved(Builder $query): Builder
     {
