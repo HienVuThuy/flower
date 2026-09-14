@@ -101,6 +101,7 @@ class ProfileController extends Controller
                 'so_du' => app(\App\Services\Points\PointLedger::class)->soDu($user),
                 'lich_su' => app(\App\Services\Points\PointLedger::class)->lichSu($user),
                 'goi' => \App\Services\Points\PointLedger::GOI,
+                'chuoi' => app(\App\Services\Points\VisitStreak::class)->hienTai($user),
             ] : null,
         ]);
     }

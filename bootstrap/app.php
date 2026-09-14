@@ -35,6 +35,9 @@ return Application::configure(basePath: dirname(__DIR__))
          */
         $middleware->appendToGroup('web', EnsureUserIsNotLocked::class);
 
+        // SAU phép kiểm khoá: tài khoản bị khoá không được tính là đã ghé.
+        $middleware->appendToGroup('web', \App\Http\Middleware\GhiNhanNgayGhe::class);
+
         // Người chưa đăng nhập bị chặn bởi middleware "auth"
         // sẽ được đưa về trang login thay vì nhận lỗi 401.
         $middleware->redirectGuestsTo('/login');

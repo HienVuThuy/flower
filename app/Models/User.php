@@ -48,6 +48,8 @@ class User extends Authenticatable implements MustVerifyEmail
             'notify_order_updates' => 'boolean',
             'notify_care_reminders' => 'boolean',
             'locked_at' => 'datetime',
+            'visit_streak' => 'integer',
+            'last_visit_on' => 'date',
         ];
     }
 

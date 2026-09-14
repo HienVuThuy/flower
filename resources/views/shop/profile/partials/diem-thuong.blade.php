@@ -11,6 +11,20 @@
         <span class="text-caption">điểm</span>
     </p>
 
+    {{-- CHUỖI NGÀY GHÉ THĂM — nói mốc kế tiếp, không nói "sắp mất" khi chưa có gì để mất. --}}
+    @php $mocTiep = \App\Services\Points\VisitStreak::mocTiepTheo($diem['chuoi']); @endphp
+    <div class="points-offer mb-4" data-chuoi="{{ $diem['chuoi'] }}">
+        @if($diem['chuoi'] > 0)
+            <p class="points-offer__giam mb-1">Chuỗi {{ $diem['chuoi'] }} ngày ghé thăm</p>
+            <p class="text-caption mb-0">
+                Ghé lại ngày mai để giữ chuỗi. Còn {{ $mocTiep['ngay'] - $diem['chuoi'] }} ngày nữa tới mốc {{ $mocTiep['ngay'] }} ngày: +{{ $mocTiep['diem'] }} điểm.
+            </p>
+        @else
+            <p class="points-offer__giam mb-1">Chuỗi ngày ghé thăm</p>
+            <p class="text-caption mb-0">Ghé cửa hàng {{ $mocTiep['ngay'] }} ngày liền để nhận +{{ $mocTiep['diem'] }} điểm.</p>
+        @endif
+    </div>
+
     <h3 class="text-h5 mb-2">Đổi voucher</h3>
     <div class="row g-3 mb-4">
         @foreach($diem['goi'] as $ma => $goi)
