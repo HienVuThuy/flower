@@ -8062,3 +8062,68 @@ Nay `markUsed()` bảo đảm có dòng (`insertOrIgnore`, không đè bộ đ�
 đủ), phát hành hoá đơn điện tử thật (cần nhà cung cấp HĐĐT — hiện chỉ ghi yêu
 cầu xuất hoá đơn, đúng như trạng thái Nháp đang nói), VNPay / QR ngân hàng
 (người dùng không yêu cầu).
+
+---
+
+## QĐ-286. Thanh bên quản trị lấy mục đang sáng từ trang máy chủ trả về
+
+Điều hướng không tải lại trang (`nav.js`) tự đoán mục sáng theo đường dẫn,
+nên "Tồn đầu kỳ" và "Trả hàng NCC" (không bắt đầu bằng `/admin/nhap-kho`)
+làm tắt mục "Nhập kho". Nay chép đúng các mục `.is-active` từ trang vừa tải
+về — Blade (`routeIs`) là nơi duy nhất quyết định; chỉ đoán khi trang không
+có thanh bên.
+
+## QĐ-287. Khung giờ và thứ trong tuần của khuyến mại tính theo giờ Việt Nam; banner chỉ quảng cáo chương trình đang chạy
+
+- `Promotion::isRunning()` và sắp xếp theo giá hiệu lực so khung giờ hằng
+  ngày / thứ trong tuần theo giờ lưu (UTC): "giờ vàng 11–13h" chạy lúc
+  18–20h. Nay đổi sang `Gio::mui()` trước khi so.
+- Banner trang chủ lấy chương trình "đang hoạt động" theo trạng thái, kể
+  cả khi đang ngoài khung giờ — quảng cáo một mức giá khách không mua được.
+  Nay lọc `isRunning()` và có sản phẩm; tối đa 3 chương trình. Nâng cấp
+  banner có sẵn, không dựng khối banner thứ hai.
+
+## QĐ-288. Tâm lý mua hàng chỉ từ dữ liệu thật
+
+- "Đã bán N trong 30 ngày": chỉ đơn ĐÃ GIAO; 0 thì không in.
+- "Chỉ còn N": tồn thật 1–5, hàng có quản lý kho và KHÔNG có quy cách (tồn
+  nằm ở từng quy cách).
+- Chọn sẵn quy cách bán chạy thật trong 90 ngày ("Phổ biến nhất") khi bán
+  từ 3 cái và không hoà; không thì ô đầu tiên CÒN MUA ĐƯỢC.
+- Ví voucher xếp mã sắp hết hạn lên đầu; dưới 72 giờ có dòng nhắc.
+- **Không làm:** đồng hồ đếm ngược giả, "N người đang xem", giá gốc bịa.
+
+## QĐ-289. Sổ thu chi làm trong web; dòng tiền và lãi ròng là hai bảng
+
+- Phần "thu" đã ở trong hệ thống, nên chi phí ghi ở đây thay vì Excel.
+  Loại chi phí là danh sách đóng; gợi ý tại chỗ những loại dễ ghi trùng
+  (hàng để bán đã ở phiếu nhập / lô hoa, cước GHN đã ở đơn).
+- Dòng tiền = tiền vào từ đơn đã giao − tiền nhập hàng − chi phí. Lãi ròng
+  ước tính = lãi gộp hàng + lãi hoa − chi phí − bù ship − hoàn tiền. Mọi số
+  "thu" đọc từ báo cáo sẵn có; nói ra khi chưa đủ giá vốn / còn lô mở /
+  chưa ghi chi phí.
+- Khoản cố định chép bằng nút (không lập lịch tự sinh), không nhân đôi.
+  Không ghi cho tháng chưa bắt đầu. Quyền tài chính; mọi thay đổi vào nhật ký.
+- Trang Lợi nhuận: "chưa ghi" thay vì 0đ khi chưa có khoản nào — QĐ cũ
+  "không trừ vào lãi gộp" giữ nguyên, lãi ròng nằm ở sổ thu chi.
+
+## QĐ-290. Điểm thưởng là một cuốn sổ; voucher đổi từ điểm có chủ
+
+- Không có cột số dư: số dư là tổng các dòng. Một việc một dòng — UNIQUE
+  (user_id, source_key). Đổi điểm khoá dòng người dùng, không xuống âm.
+- Voucher đổi được là mã riêng, một lượt, vào thẳng ví, `owner_user_id`.
+  `CouponService::check()` báo "không tồn tại" với người khác và khách vãng
+  lai. Xoá tài khoản thì mã đi theo (cascade), không thành mã chung.
+- Gói đổi (200 → 20.000đ, 450 → 50.000đ, đơn tối thiểu, 30 ngày) là chính
+  sách cửa hàng, khai một chỗ ở `PointLedger::GOI`.
+
+## QĐ-291. Thưởng bài Góc cây theo chất lượng và tần suất; chuỗi ngày đếm lần ghé, không đếm đăng nhập
+
+- Bài Góc cây: người duyệt chấm "nổi bật" (+30) — không đo bằng độ dài
+  chữ; cơ bản +20, có ảnh +10; tối đa 3 bài được thưởng mỗi tuần (thứ Hai
+  giờ Việt Nam). Duyệt lại không cộng lần hai; gỡ bài không thu hồi điểm.
+  **Tương tác: chưa làm** — chưa có lượt thích / bình luận để đo.
+- Chuỗi ngày: trang GET đầu tiên mỗi ngày (lịch Việt Nam) của khách hàng;
+  đếm đăng nhập sẽ phạt người dùng "ghi nhớ đăng nhập". Thưởng ở mốc ngày 3
+  (+10) và mỗi 7 ngày (+30). Hai cột trên `users`, không giữ nhật ký ghé
+  thăm từng ngày.
