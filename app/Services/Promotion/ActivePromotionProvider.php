@@ -25,6 +25,9 @@ class ActivePromotionProvider
      * Chương trình nổi bật đang chạy: ưu tiên cao nhất trước, hoà
      * thì lấy chương trình tạo sau.
      */
+    /** @var \Illuminate\Support\Collection<int, Promotion>|null */
+    private ?\Illuminate\Support\Collection $dangChay = null;
+
     public function featured(): ?Promotion
     {
         if ($this->resolved) {
@@ -33,19 +36,39 @@ class ActivePromotionProvider
 
         $this->resolved = true;
 
-        $this->promotion = Promotion::query()
+        $this->promotion = $this->dangChay()->first();
+
+        return $this->promotion;
+    }
+
+    /**
+     * Mọi chương trình ĐANG CHẠY THẬT, ưu tiên cao trước — cho băng chuyền banner.
+     * ============================================================
+     * Lỗi đã sửa: bản cũ chỉ lọc activeNow() — trạng thái và khoảng ngày.
+     * Chương trình "Giờ vàng 19:00–21:00" hiện trên thanh thông báo của MỌI
+     * trang lúc 3 giờ chiều, trong khi giá lúc đó chưa giảm (PricingService
+     * lọc bằng isRunning()). Banner hứa một mức giá giỏ hàng không cho.
+     *
+     * Chương trình không gắn sản phẩm nào thì không có gì để khách bấm vào
+     * xem — coi như không có chiến dịch.
+     *
+     * Tính MỘT lần mỗi request: thanh thông báo, banner và băng chuyền cùng
+     * đọc, không truy vấn ba lần.
+     *
+     * @return \Illuminate\Support\Collection<int, Promotion>
+     */
+    public function dangChay(int $toiDa = 3): \Illuminate\Support\Collection
+    {
+        $this->dangChay ??= Promotion::query()
             ->activeNow()
             ->withCount('products')
             ->orderByDesc('priority')
             ->orderByDesc('id')
-            ->first();
+            ->limit(10)
+            ->get()
+            ->filter(fn (Promotion $km) => $km->products_count > 0 && $km->isRunning())
+            ->values();
 
-        // Chương trình không gắn sản phẩm nào thì không có gì để
-        // khách bấm vào xem — coi như không có chiến dịch.
-        if ($this->promotion && $this->promotion->products_count === 0) {
-            $this->promotion = null;
-        }
-
-        return $this->promotion;
+        return $this->dangChay->take($toiDa)->values();
     }
 }

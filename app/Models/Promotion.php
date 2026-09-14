@@ -101,11 +101,25 @@ class Promotion extends Model
          * một chương trình đã kết thúc vẫn "đang chạy" vào đúng khung giờ
          * của nó.
          */
-        if (! $this->isOnActiveWeekday($now)) {
+        /*
+         * THỨ VÀ GIỜ TRONG NGÀY ĐỌC THEO GIỜ VIỆT NAM, không theo giờ lưu.
+         *
+         * Lỗi đã sửa: ứng dụng chạy UTC, và hai phép kiểm này nhận `now()`
+         * UTC. Admin nhập "Giờ vàng 19:00–21:00" theo đồng hồ ở cửa hàng,
+         * nên giá giảm thật sự chạy lúc 02:00–04:00 sáng; từ 0h tới 7h sáng
+         * "thứ trong tuần" còn là ngày hôm trước. PricingService lọc bằng
+         * chính hàm này — tức là sai GIÁ, không chỉ sai banner.
+         *
+         * starts_at / ends_at ở trên vẫn so theo mốc tuyệt đối: chúng là
+         * thời điểm, không phải "giờ trên đồng hồ".
+         */
+        $diaPhuong = $now->copy()->setTimezone(\App\Services\Time\Gio::mui());
+
+        if (! $this->isOnActiveWeekday($diaPhuong)) {
             return false;
         }
 
-        return $this->isWithinDailyWindow($now);
+        return $this->isWithinDailyWindow($diaPhuong);
     }
 
     /**

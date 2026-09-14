@@ -426,8 +426,17 @@ class Product extends Model
     {
         $now = now();
         $moc = $now->toDateTimeString();
-        $thu = $now->isoWeekday();          // 1 = Thứ Hai ... 7 = Chủ Nhật
-        $gio = $now->format('H:i:s');
+
+        /*
+         * THỨ VÀ GIỜ THEO GIỜ VIỆT NAM — cùng lỗi, cùng cách sửa với
+         * Promotion::isRunning(). `$moc` so với starts_at / ends_at (mốc lưu
+         * UTC) nên giữ nguyên; còn weekdays và daily_*_time là "đồng hồ ở cửa
+         * hàng". So bằng giờ UTC thì danh sách sắp theo giá lệch 7 tiếng so
+         * với chính giá hiện trên thẻ sản phẩm.
+         */
+        $diaPhuong = $now->copy()->setTimezone(\App\Services\Time\Gio::mui());
+        $thu = $diaPhuong->isoWeekday();    // 1 = Thứ Hai ... 7 = Chủ Nhật
+        $gio = $diaPhuong->format('H:i:s');
 
         /*
          * Dựng bằng query builder chứ KHÔNG viết một chuỗi SQL thô.
