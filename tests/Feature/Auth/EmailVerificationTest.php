@@ -346,7 +346,16 @@ class EmailVerificationTest extends TestCase
     {
         $this->unverified();
 
-        foreach (['/tai-khoan', '/dia-chi', '/don-hang', '/yeu-thich', '/lich-cham-cay'] as $path) {
+        /*
+         * `/yeu-thich` ĐÃ RÚT KHỎI DANH SÁCH NÀY — có chủ đích.
+         *
+         * Nút thả tim chỉ cần đăng nhập (QĐ-07), nhưng trang danh sách từng
+         * bắt xác thực: khách chưa xác thực thả tim được mà mở trang ra thì
+         * bị đuổi đi xác thực — một ngõ cụt. Yêu thích không đụng tới tiền
+         * hay dữ liệu người khác, nên theo QĐ-07: chỉ cần đăng nhập. Xem
+         * CatalogNhatQuanTest::tai_khoan_chua_xac_thuc_van_mo_duoc_trang_yeu_thich.
+         */
+        foreach (['/tai-khoan', '/dia-chi', '/don-hang', '/lich-cham-cay'] as $path) {
             $this->get($path)->assertRedirect(route('verification.notice'));
         }
     }

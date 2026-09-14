@@ -105,14 +105,14 @@ class PromotionController extends Controller
         } catch (\Throwable $e) {
             // Update hỏng thì dọn ảnh vừa upload, tránh rác trong storage.
             if ($newBanner) {
-                Storage::disk('public')->delete($newBanner);
+                $this->anh->xoa($newBanner);
             }
 
             throw $e;
         }
 
         if ($newBanner && $oldBanner) {
-            Storage::disk('public')->delete($oldBanner);
+            $this->anh->xoa($oldBanner);
         }
 
         return redirect()
@@ -168,7 +168,7 @@ class PromotionController extends Controller
     public function destroy(Promotion $promotion): RedirectResponse
     {
         if ($promotion->banner) {
-            Storage::disk('public')->delete($promotion->banner);
+            $this->anh->xoa($promotion->banner);
         }
 
         // promotion_product có onDelete cascade nên các liên kết

@@ -711,8 +711,14 @@ Route::prefix('nhat-ky')
         Route::delete('{journal}/moc/{milestone}', [JournalController::class, 'destroyMilestone'])->name('milestones.destroy');
     });
 
+/*
+ * YÊU THÍCH CHỈ CẦN ĐĂNG NHẬP, không cần xác thực email.
+ *
+ * Lỗi đã sửa: nút thả tim chỉ cần đăng nhập, nhưng trang danh sách lại
+ * bắt xác thực — khách chưa xác thực bấm tim được, mở trang ra thì bị
+ * đuổi đi xác thực. Wishlist không đụng tới tiền hay dữ liệu người khác.
+ */
 Route::get('yeu-thich', [WishlistController::class, 'index'])
-        ->middleware('verified')
         ->name('shop.wishlist.index');
 
     Route::post('yeu-thich/{product:slug}', [WishlistController::class, 'toggle'])
@@ -892,6 +898,23 @@ Route::prefix('admin')
         Route::post('products/hang-loat', [ProductController::class, 'bulk'])
             ->middleware('quyen:san-pham')
             ->name('products.bulk');
+
+        /*
+         * THÙNG RÁC: khôi phục và xoá vĩnh viễn sản phẩm đã xoá mềm.
+         *
+         * Tham số là {id} số, không phải {product}: route model binding bỏ
+         * qua bản ghi đã xoá mềm, nên {product} không bao giờ tìm thấy thứ
+         * nằm trong thùng rác. Controller tìm bằng onlyTrashed().
+         */
+        Route::patch('products/{id}/khoi-phuc', [ProductController::class, 'restore'])
+            ->whereNumber('id')
+            ->middleware(['quyen:san-pham', 'throttle:30,1'])
+            ->name('products.restore');
+
+        Route::delete('products/{id}/xoa-vinh-vien', [ProductController::class, 'forceDestroy'])
+            ->whereNumber('id')
+            ->middleware(['quyen:san-pham', 'throttle:10,1'])
+            ->name('products.force-destroy');
 
         Route::resource(
             'products',

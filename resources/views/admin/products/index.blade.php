@@ -18,12 +18,23 @@
 
     </div>
 
-    <a
-        href="{{ route('admin.products.create') }}"
-        class="btn btn-primary-brand px-4"
-    >
-        + Thêm sản phẩm
-    </a>
+    <div class="d-flex gap-2">
+        {{-- Xoá mềm mà không có chỗ khôi phục thì thành xoá một chiều với người dùng. --}}
+        @if($thungRac)
+            <a href="{{ route('admin.products.index') }}" class="btn btn-outline-admin">Về danh sách đang dùng</a>
+        @else
+            <a href="{{ route('admin.products.index', ['thung_rac' => 1]) }}" class="btn btn-outline-admin">
+                Thùng rác ({{ $soDaXoa }})
+            </a>
+        @endif
+
+        <a
+            href="{{ route('admin.products.create') }}"
+            class="btn btn-primary-brand px-4"
+        >
+            + Thêm sản phẩm
+        </a>
+    </div>
 
 </div>
 
@@ -261,6 +272,25 @@
 
                     <td class="text-end">
 
+                        @if($product->trashed())
+                        {{-- Sản phẩm trong thùng rác: không Xem/Sửa được (route bỏ qua bản ghi đã xoá). --}}
+                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                            <form action="{{ route('admin.products.restore', $product->id) }}" method="POST">
+                                @csrf
+                                @method('PATCH')
+                                <button type="submit" class="btn btn-sm btn-outline-admin">Khôi phục</button>
+                            </form>
+
+                            <form action="{{ route('admin.products.force-destroy', $product->id) }}" method="POST" class="d-flex gap-1">
+                                @csrf
+                                @method('DELETE')
+                                <label class="visually-hidden" for="xn-{{ $product->id }}">Gõ tên sản phẩm để xoá vĩnh viễn</label>
+                                <input id="xn-{{ $product->id }}" name="xac_nhan" class="form-control form-control-sm"
+                                       style="max-width:11rem" placeholder="Gõ đúng tên để xoá hẳn" required>
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Xoá vĩnh viễn</button>
+                            </form>
+                        </div>
+                        @else
                         <div class="d-inline-flex gap-2">
 
                             <a
@@ -280,7 +310,7 @@
                             <form
                                 action="{{ route('admin.products.destroy', $product) }}"
                                 method="POST"
-                                onsubmit="return confirm('Bạn có chắc muốn xóa sản phẩm này?');"
+                                onsubmit="return confirm('Chuyển sản phẩm này vào thùng rác? Khôi phục được ở mục Thùng rác.');"
                             >
 
                                 @csrf
@@ -296,6 +326,7 @@
                             </form>
 
                         </div>
+                        @endif
 
                     </td>
 

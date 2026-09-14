@@ -87,6 +87,20 @@
                 Trạng thái &amp; thứ tự
             </h2>
 
+            {{-- Nhóm quyết định danh mục hiện ở trang cây & hoa hay ở trang /phu-kien. --}}
+            <div class="mb-3">
+                <label class="form-label" for="kind">Nhóm danh mục</label>
+                @php $kindOld = old('kind', isset($category) ? ($category->kind?->value ?? 'plant') : 'plant'); @endphp
+                <select id="kind" name="kind" class="form-select @error('kind') is-invalid @enderror">
+                    @foreach(\App\Enums\CategoryKind::cases() as $nhom)
+                        <option value="{{ $nhom->value }}" @selected($kindOld === $nhom->value)>
+                            {{ $nhom->label() }} — {{ $nhom->hint() }}
+                        </option>
+                    @endforeach
+                </select>
+                <x-form-error name="kind"/>
+            </div>
+
             <div class="mb-3">
 
                 <label class="form-label">

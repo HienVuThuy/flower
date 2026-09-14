@@ -535,14 +535,24 @@ class Product extends Model
     protected static function booted(): void
     {
         static::forceDeleting(function (self $product) {
-            $disk = Storage::disk('public');
+            /*
+             * QUA ImageStore, không xoá file trần.
+             *
+             * Lỗi đã sửa: xoá thẳng ảnh gốc để lại mọi bản WebP và các cỡ
+             * ảnh đã sinh, cùng dòng trong manifest. media() chứ không
+             * images(): video tải lên cũng là một tệp trên đĩa. Và ảnh trong
+             * khối mô tả trước đây không được dọn gì cả.
+             */
+            $anh = app(\App\Services\Media\ImageStore::class);
 
-            if ($product->main_image) {
-                $disk->delete($product->main_image);
+            $anh->xoa($product->main_image);
+
+            foreach ($product->media as $tep) {
+                $anh->xoa($tep->path);
             }
 
-            foreach ($product->images as $image) {
-                $disk->delete($image->path);
+            foreach ($product->blocks as $khoi) {
+                $anh->xoa($khoi->getAttribute('image'));
             }
         });
     }

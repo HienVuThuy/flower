@@ -52,6 +52,8 @@ class ProductController extends Controller
     public function index(Request $request): View
     {
         $products = Product::query()
+            // Thùng rác: chỉ sản phẩm đã xoá mềm. Mặc định xoá mềm đã bị loại.
+            ->when($request->query('thung_rac') === '1', fn ($q) => $q->onlyTrashed())
             ->with(['category', 'promotions'])
 
             /*
@@ -129,6 +131,8 @@ class ProductController extends Controller
             'products' => $products,
             'categories' => Category::orderBy('name')->get(['id', 'name']),
             'lowStock' => self::LOW_STOCK,
+            'soDaXoa' => Product::onlyTrashed()->count(),
+            'thungRac' => $request->query('thung_rac') === '1',
         ]);
     }
 
@@ -367,10 +371,7 @@ class ProductController extends Controller
              */
             if ($storedImage) {
 
-                Storage::disk('public')
-                    ->delete(
-                        $storedImage
-                    );
+                app(\App\Services\Media\ImageStore::class)->xoa($storedImage);
             }
 
             $this->images->rollback($storedGallery);
@@ -987,10 +988,7 @@ class ProductController extends Controller
              */
             if ($newImage) {
 
-                Storage::disk('public')
-                    ->delete(
-                        $newImage
-                    );
+                app(\App\Services\Media\ImageStore::class)->xoa($newImage);
             }
 
             $this->images->rollback($storedGallery);
@@ -1008,10 +1006,8 @@ class ProductController extends Controller
             $oldImage
         ) {
 
-            Storage::disk('public')
-                ->delete(
-                    $oldImage
-                );
+            // xoa() dọn cả bản WebP và các cỡ ảnh, không chỉ ảnh gốc.
+            app(\App\Services\Media\ImageStore::class)->xoa($oldImage);
         }
 
 
@@ -1090,6 +1086,58 @@ class ProductController extends Controller
                 'success',
                 'Xóa sản phẩm thành công.'
             );
+    }
+
+    /**
+     * Khôi phục sản phẩm từ thùng rác.
+     *
+     * Khôi phục về trạng thái NHÁP, không về trạng thái cũ: sản phẩm nằm
+     * trong thùng rác có thể đã hết mùa, sai giá — hiện lại ngay lên cửa
+     * hàng là bán một thứ chưa ai kiểm lại.
+     */
+    public function restore(int $id): RedirectResponse
+    {
+        $product = Product::onlyTrashed()->findOrFail($id);
+
+        $product->restore();
+        $product->forceFill(['status' => 'draft'])->save();
+
+        $this->logCrud('product.restored', $product, 'sản phẩm', $product->name);
+
+        return redirect()
+            ->route('admin.products.index')
+            ->with('success', 'Đã khôi phục "' . $product->name . '" về trạng thái nháp — kiểm lại giá và tồn rồi hãy mở bán.');
+    }
+
+    /**
+     * Xoá VĨNH VIỄN — chỉ cho sản phẩm đã ở trong thùng rác, và phải gõ đúng tên.
+     *
+     * Gõ tên chứ không chỉ bấm "OK": hộp xác nhận của trình duyệt bị bấm
+     * qua theo phản xạ. Xoá vĩnh viễn dọn luôn file ảnh (Product::booted),
+     * không hoàn tác được.
+     *
+     * Chứng từ còn trỏ tới sản phẩm (phiếu đổi hàng, phiếu kiểm kê…) thì cơ
+     * sở dữ liệu chặn — báo ra, không để trang lỗi 500.
+     */
+    public function forceDestroy(Request $request, int $id): RedirectResponse
+    {
+        $product = Product::onlyTrashed()->findOrFail($id);
+
+        if (trim((string) $request->input('xac_nhan')) !== $product->name) {
+            return back()->with('error', 'Gõ đúng tên sản phẩm để xoá vĩnh viễn.');
+        }
+
+        $this->logCrud('product.force_deleted', $product, 'sản phẩm', $product->name);
+
+        try {
+            $product->forceDelete();
+        } catch (\Illuminate\Database\QueryException) {
+            return back()->with('error', 'Không xoá vĩnh viễn được: vẫn còn chứng từ (phiếu nhập, kiểm kê, đổi hàng…) trỏ tới sản phẩm này. Để nó trong thùng rác.');
+        }
+
+        return redirect()
+            ->route('admin.products.index', ['thung_rac' => 1])
+            ->with('success', 'Đã xoá vĩnh viễn "' . $product->name . '".');
     }
 
     /*

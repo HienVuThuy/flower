@@ -134,7 +134,7 @@ class ProductImageService
         foreach ($items as $item) {
             // Video dạng link không có tệp nào trên đĩa để xoá.
             if ($item->path) {
-                Storage::disk('public')->delete($item->path);
+                $this->anh->xoa($item->path);
             }
 
             $item->delete();
@@ -146,7 +146,7 @@ class ProductImageService
     {
         foreach ($product->media as $item) {
             if ($item->path) {
-                Storage::disk('public')->delete($item->path);
+                $this->anh->xoa($item->path);
             }
         }
     }
@@ -155,7 +155,7 @@ class ProductImageService
     public function rollback(array $paths): void
     {
         foreach ($paths as $path) {
-            Storage::disk('public')->delete($path);
+            $this->anh->xoa($path);
         }
     }
 }

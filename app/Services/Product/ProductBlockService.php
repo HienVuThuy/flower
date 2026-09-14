@@ -75,7 +75,7 @@ class ProductBlockService
     public function rollback(array $paths): void
     {
         foreach ($paths as $path) {
-            Storage::disk('public')->delete($path);
+            $this->anh->xoa($path);
         }
     }
 
