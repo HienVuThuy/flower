@@ -1298,6 +1298,11 @@ Route::prefix('admin')
                 Route::patch('/{order}/ghi-chu', [AdminOrderController::class, 'updateNote'])
                     ->name('note');
 
+                // Sửa thông tin giao hàng khi khách gọi báo nhập nhầm — xem OrderController::updateDelivery().
+                Route::patch('/{order}/giao-hang', [AdminOrderController::class, 'updateDelivery'])
+                    ->middleware('throttle:30,1')
+                    ->name('delivery');
+
                 // Phiếu soạn hàng + phiếu giao hàng. Chỉ ĐỌC, nên không throttle.
                 Route::get('/{order}/in', [AdminOrderController::class, 'printSlip'])
                     ->name('print');

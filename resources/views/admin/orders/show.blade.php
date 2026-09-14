@@ -156,6 +156,62 @@
                     @endif
                 </dl>
 
+                {{-- Sửa khi khách gọi báo nhập nhầm. Luật ở OrderController::suaDuocGiaoHang(). --}}
+                @if(\App\Http\Controllers\Admin\OrderController::suaDuocGiaoHang($order))
+                    <details class="mt-3" @if($errors->hasAny(['recipient_name', 'recipient_phone', 'shipping_address', 'delivery_date', 'delivery_note'])) open @endif>
+                        <summary class="small">Sửa thông tin giao hàng</summary>
+
+                        <form method="POST" action="{{ route('admin.orders.delivery', $order) }}" class="mt-2">
+                            @csrf
+                            @method('PATCH')
+
+                            <div class="row g-2">
+                                <div class="col-sm-6">
+                                    <label class="form-label small mb-1" for="gh-ten">Người nhận</label>
+                                    <input id="gh-ten" name="recipient_name" required maxlength="150"
+                                           class="form-control form-control-sm @error('recipient_name') is-invalid @enderror"
+                                           value="{{ old('recipient_name', $order->recipient_name) }}">
+                                    <x-form-error name="recipient_name" />
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label small mb-1" for="gh-sdt">Điện thoại</label>
+                                    <input id="gh-sdt" name="recipient_phone" required maxlength="20"
+                                           class="form-control form-control-sm @error('recipient_phone') is-invalid @enderror"
+                                           value="{{ old('recipient_phone', $order->recipient_phone) }}">
+                                    <x-form-error name="recipient_phone" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small mb-1" for="gh-dc">Số nhà, đường</label>
+                                    <input id="gh-dc" name="shipping_address" required maxlength="255"
+                                           class="form-control form-control-sm @error('shipping_address') is-invalid @enderror"
+                                           value="{{ old('shipping_address', $order->shipping_address) }}">
+                                    <x-form-error name="shipping_address" />
+                                    <div class="form-text">
+                                        Tỉnh / quận / phường không sửa ở đây: phí ship và mã GHN tính từ đó.
+                                        Đổi khu vực thì huỷ đơn để khách đặt lại.
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label small mb-1" for="gh-ngay">Ngày giao</label>
+                                    <input id="gh-ngay" name="delivery_date" type="date"
+                                           class="form-control form-control-sm @error('delivery_date') is-invalid @enderror"
+                                           value="{{ old('delivery_date', $order->delivery_date?->format('Y-m-d')) }}"
+                                           min="{{ \App\Services\Time\Gio::choONgay(now()) }}">
+                                    <x-form-error name="delivery_date" />
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label small mb-1" for="gh-gc">Ghi chú giao hàng</label>
+                                    <textarea id="gh-gc" name="delivery_note" rows="2" maxlength="1000"
+                                              class="form-control form-control-sm @error('delivery_note') is-invalid @enderror">{{ old('delivery_note', $order->delivery_note) }}</textarea>
+                                    <x-form-error name="delivery_note" />
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-sm btn-outline-admin mt-2">Lưu thông tin giao hàng</button>
+                        </form>
+                    </details>
+                @endif
+
             </div>
 
         </div>

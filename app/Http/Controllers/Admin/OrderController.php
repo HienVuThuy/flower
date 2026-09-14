@@ -252,6 +252,76 @@ class OrderController extends Controller
      * trong PaymentStatus + OrderService; thêm route là thêm chỗ để
      * quên một phép kiểm.
      */
+    /**
+     * Sửa thông tin giao hàng — khách gọi báo "em nhập nhầm số điện thoại".
+     * ============================================================
+     * CHỈ KHI ĐƠN CÒN Ở "CHỜ XÁC NHẬN" / "ĐÃ XÁC NHẬN" VÀ CHƯA CÓ VẬN ĐƠN.
+     * Đang chuẩn bị hoặc đã bàn giao GHN thì phiếu in, vận đơn đã mang
+     * thông tin cũ — sửa ở đây là hai tờ giấy nói hai địa chỉ.
+     *
+     * KHÔNG SỬA TỈNH / QUẬN / PHƯỜNG. Phí ship khách đã trả và mã địa giới
+     * GHN tính từ ba ô đó; đổi mà không tính lại là sai tiền. Chỉ sửa người
+     * nhận, số điện thoại, số nhà / đường, ngày giao và ghi chú. Đổi hẳn
+     * khu vực thì huỷ đơn để khách đặt lại.
+     *
+     * Ghi nhật ký từng ô "cũ → mới": đơn là chứng từ, sửa phải để lại dấu.
+     */
+    public function updateDelivery(Request $request, Order $order): RedirectResponse
+    {
+        if (! self::suaDuocGiaoHang($order)) {
+            return back()->with('error', 'Chỉ sửa thông tin giao hàng khi đơn chưa chuẩn bị và chưa có vận đơn GHN.');
+        }
+
+        $data = $request->validate([
+            'recipient_name' => ['required', 'string', 'max:150'],
+            'recipient_phone' => ['required', 'string', 'max:20', 'regex:/^[0-9+\-\s().]{8,20}$/'],
+            'shipping_address' => ['required', 'string', 'max:255'],
+            'delivery_date' => ['nullable', 'date', 'after_or_equal:today'],
+            'delivery_note' => ['nullable', 'string', 'max:1000'],
+        ], [], [
+            'recipient_name' => 'người nhận',
+            'recipient_phone' => 'số điện thoại',
+            'shipping_address' => 'số nhà, đường',
+            'delivery_date' => 'ngày giao',
+            'delivery_note' => 'ghi chú',
+        ]);
+
+        $truoc = [];
+        foreach (array_keys($data) as $o) {
+            $cu = $order->getAttribute($o);
+            $truoc[$o] = $cu instanceof \DateTimeInterface ? $cu->format('Y-m-d') : (string) $cu;
+        }
+
+        $order->forceFill($data)->save();
+
+        $doi = [];
+        foreach ($truoc as $o => $cu) {
+            $moi = $order->getAttribute($o);
+            $moi = $moi instanceof \DateTimeInterface ? $moi->format('Y-m-d') : (string) $moi;
+            if ($cu !== $moi) {
+                $doi[$o] = $cu . ' → ' . $moi;
+            }
+        }
+
+        if ($doi !== []) {
+            $this->audit()->log(
+                'order.delivery_updated',
+                sprintf('Sửa thông tin giao hàng của đơn %s', $order->order_number),
+                $order,
+                $doi,
+            );
+        }
+
+        return back()->with('success', $doi === [] ? 'Không có gì thay đổi.' : 'Đã sửa thông tin giao hàng.');
+    }
+
+    /** Một luật cho cả controller lẫn giao diện: không bày form sẽ bị từ chối. */
+    public static function suaDuocGiaoHang(Order $order): bool
+    {
+        return in_array($order->status, [OrderStatus::Pending, OrderStatus::Confirmed], true)
+            && ! $order->ghn_order_code;
+    }
+
     public function updatePayment(Request $request, Order $order): RedirectResponse
     {
         $data = $request->validate([
