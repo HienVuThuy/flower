@@ -256,6 +256,31 @@
 
     </dl>
 
+    {{--
+        QUÀ TẶNG KÈM — hỏi đúng GiftResolver mà OrderService hỏi lúc ghi đơn,
+        nên quà hiện ở đây là quà đơn sẽ có (trừ khi vừa hết suất giữa chừng).
+    --}}
+    @php
+        $quaKem = app(\App\Services\Gift\GiftResolver::class)->choGio($basket, auth()->user());
+    @endphp
+    @if($quaKem->isNotEmpty())
+        <div class="order-summary__gifts" data-qua-kem>
+            <p class="fw-bold mb-1">
+                <x-site.icon name="flower1" /> Quà tặng kèm
+            </p>
+            <ul class="list-unstyled mb-0">
+                @foreach($quaKem as $qua)
+                    <li data-qua="{{ $qua['campaign']->id }}">
+                        {{ $qua['campaign']->giftItem->name }} × {{ $qua['quantity'] }}
+                        <span class="order-summary__count">
+                            {{ $qua['campaign']->name }}@if($qua['campaign']->giftItem->value !== null) · trị giá {{ $money((string) $qua['campaign']->giftItem->value) }}@endif
+                        </span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
     @if($hasDiscount || $hasShippingDiscount || bccomp($basket->orderDiscountTotal(), '0', 2) > 0)
         @php
             // Mã + điểm lấy chung từ orderDiscountTotal() — cùng con số BasketTax phân bổ.

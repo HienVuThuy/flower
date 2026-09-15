@@ -819,6 +819,19 @@
     border-top: 1px solid var(--border-soft);
 }
 
+/* ============ QUÀ TẶNG KÈM ============ */
+
+.order-summary__gifts {
+    margin-top: var(--space-sm);
+    padding: var(--space-sm);
+    border: 1px dashed var(--border-soft);
+    border-radius: 12px;
+}
+
+.order-summary__gifts li + li {
+    margin-top: var(--space-2xs);
+}
+
 /* ============ ĐIỂM THƯỞNG ============ */
 
 .points-balance {

@@ -1441,6 +1441,18 @@ Route::prefix('admin')
             ->middleware(['quyen:khuyen-mai', 'throttle:20,1'])
             ->name('member-tiers.update');
 
+        // QUÀ TẶNG — chương trình và vật phẩm. Quyền khuyến mại.
+        Route::resource('qua-tang', \App\Http\Controllers\Admin\GiftCampaignController::class)
+            ->except('show')
+            ->parameters(['qua-tang' => 'giftCampaign'])
+            ->names('gift-campaigns')
+            ->middleware('quyen:khuyen-mai');
+        Route::resource('vat-pham-qua', \App\Http\Controllers\Admin\GiftItemController::class)
+            ->except('show')
+            ->parameters(['vat-pham-qua' => 'giftItem'])
+            ->names('gift-items')
+            ->middleware('quyen:khuyen-mai');
+
         Route::prefix('bulk-inquiries')
             ->name('bulk-inquiries.')
             ->middleware('quyen:don-hang')

@@ -230,6 +230,13 @@ class OrderService
         $order->items()->createMany($lines);
 
         /*
+         * QUÀ TẶNG — dòng 0đ, SAU hàng bán, trong cùng transaction: đơn cuộn
+         * lại thì suất và kho của quà cũng cuộn theo. Hết quà giữa chừng thì
+         * bỏ quà chứ không hỏng đơn — xem GiftGranter.
+         */
+        app(\App\Services\Gift\GiftGranter::class)->tangChoDon($order, $basket, Auth::user());
+
+        /*
          * DỮ LIỆU HOÁ ĐƠN — TRONG CÙNG TRANSACTION VỚI ĐƠN.
          *
          * Cùng lý do với việc ghi nhận lượt dùng mã giảm giá ngay bên
@@ -653,6 +660,9 @@ class OrderService
 
                 // Trả lại điểm khách đã dùng — cùng điều kiện, cùng transaction với trả lượt mã.
                 app(\App\Services\Points\PointLedger::class)->traDiemCuaDon($order);
+
+                // Trả suất quà (kho của dòng quà đã trả ở restoreStock, cùng đường với hàng bán).
+                app(\App\Services\Gift\GiftGranter::class)->traSuatCuaDon($order);
             }
         });
 

@@ -39,6 +39,9 @@ class OrderItem extends Model
         'discount_amount',
         'tax_rate',
         'tax_amount',
+        'is_gift',
+        'gift_campaign_id',
+        'gift_item_id',
     ];
 
     protected function casts(): array
@@ -51,6 +54,7 @@ class OrderItem extends Model
             'discount_amount' => 'decimal:2',
             'tax_rate' => 'decimal:5',
             'tax_amount' => 'decimal:2',
+            'is_gift' => 'boolean',
         ];
     }
 

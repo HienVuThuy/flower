@@ -90,6 +90,21 @@
                     </div>
                 @endif
 
+                @foreach(($quaKem ?? collect()) as $ctQua)
+                    <div class="promo-note mb-3" data-qua-san-pham="{{ $ctQua->id }}">
+                        <x-site.icon name="flower1" />
+                        <span>
+                            Tặng {{ $ctQua->giftItem->name }}
+                            @if($ctQua->gift_quantity > 1) × {{ $ctQua->gift_quantity }} @endif
+                            khi mua từ {{ $ctQua->trigger_min_quantity }} sản phẩm
+                            @if($ctQua->min_order_amount !== null) (đơn từ {{ \App\Services\Shop\Money::format((string) $ctQua->min_order_amount) }}) @endif
+                        </span>
+                        @if($ctQua->conSuat() !== null)
+                            <span class="promo-note__countdown">Còn {{ $ctQua->conSuat() }} suất</span>
+                        @endif
+                    </div>
+                @endforeach
+
                 @if($product->track_inventory)
                     <div class="mb-3">
                         @if($product->inStock() && ($chiCon ?? null) !== null)

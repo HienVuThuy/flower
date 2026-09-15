@@ -79,6 +79,8 @@ class RouteSmokeTest extends TestCase
         'supplier' => \App\Models\Supplier::class,
         'flowerLot' => \App\Models\FlowerLot::class,
         'expense' => \App\Models\Expense::class,
+        'giftItem' => \App\Models\GiftItem::class,
+        'giftCampaign' => \App\Models\GiftCampaign::class,
     ];
 
     /**
@@ -239,6 +241,9 @@ class RouteSmokeTest extends TestCase
             'description' => 'Khoản chi quét thử',
             'amount' => '1000000.00',
         ]);
+
+        $qua = \App\Models\GiftItem::create(['name' => 'Túi vải quét thử', 'kind' => 'qua_tang', 'stock_quantity' => 10, 'is_active' => true]);
+        \App\Models\GiftCampaign::create(['name' => 'Quà quét thử', 'kind' => 'chuong_trinh', 'gift_item_id' => $qua->id, 'status' => 'active']);
 
         \App\Models\Promotion::create([
             'name' => 'Chương trình quét thử',

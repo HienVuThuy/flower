@@ -93,11 +93,17 @@
                                             <div class="admin-page-subtitle">{{ $item->product_sku }}</div>
                                         @endif
 
-                                        @if($item->promotion_name)
+                                        @if($item->is_gift)
+                                            {{-- Dòng quà: nhắc người soạn hàng bỏ quà vào kiện. --}}
+                                            <div class="admin-page-subtitle" data-dong-qua-admin="{{ $item->id }}">
+                                                <span class="badge text-bg-success">Quà tặng</span> {{ $item->promotion_name }}
+                                            </div>
+                                        @elseif($item->promotion_name)
                                             <div class="admin-page-subtitle">KM: {{ $item->promotion_name }}</div>
                                         @endif
 
-                                        @if($item->product_id === null)
+                                        {{-- Quà là vật phẩm tặng riêng thì không có sản phẩm — không phải "đã bị xoá". --}}
+                                        @if($item->product_id === null && ! $item->is_gift)
                                             <div class="admin-page-subtitle">Sản phẩm đã bị xoá khỏi cửa hàng</div>
                                         @endif
                                     </td>

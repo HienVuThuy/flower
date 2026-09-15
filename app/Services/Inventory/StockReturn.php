@@ -41,6 +41,15 @@ class StockReturn
             Product::whereKey($item->product_id)
                 ->where('track_inventory', true)
                 ->increment('stock_quantity', $soLuong);
+
+            return;
+        }
+
+        // Quà là vật phẩm tặng riêng (không phải sản phẩm): trả về tồn kho của chính vật phẩm.
+        if ($item->is_gift && $item->gift_item_id) {
+            \App\Models\GiftItem::whereKey($item->gift_item_id)
+                ->whereNull('product_id')
+                ->increment('stock_quantity', $soLuong);
         }
     }
 }

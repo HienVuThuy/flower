@@ -221,6 +221,11 @@
                 <span>Hạng thành viên</span>
             </a>
 
+            <a data-admin-link href="{{ route('admin.gift-campaigns.index') }}" class="admin-nav-link {{ request()->routeIs('admin.gift-campaigns.*', 'admin.gift-items.*') ? 'is-active' : '' }}">
+                <x-site.icon name="flower1" />
+                <span>Quà tặng</span>
+            </a>
+
             @if(config('features.cart'))
                 <a data-admin-link href="{{ route('admin.coupons.index') }}"
                    class="admin-nav-link {{ request()->routeIs('admin.coupons.*') ? 'is-active' : '' }}">

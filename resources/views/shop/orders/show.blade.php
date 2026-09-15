@@ -132,16 +132,21 @@
 
                         <ul class="checkout-items">
                             @foreach($order->items as $item)
-                                <li class="checkout-items__row">
+                                <li class="checkout-items__row" @if($item->is_gift) data-dong-qua="{{ $item->id }}" @endif>
                                     <span>
                                         {{-- Đọc tên từ BẢN CHỤP trong đơn, không từ bảng products --}}
+                                        @if($item->is_gift)
+                                            <span class="order-item__promo">Quà tặng</span>
+                                        @endif
                                         {{ $item->product_name }}
                                         @if($item->variant_name)
                                             <span class="text-muted">({{ $item->variant_name }})</span>
                                         @endif
                                         <span class="text-muted">&times; {{ $item->quantity }}</span>
 
-                                        @if($item->wasDiscounted() && $item->promotion_name)
+                                        @if($item->is_gift && $item->promotion_name)
+                                            <span class="text-muted d-block small">{{ $item->promotion_name }}</span>
+                                        @elseif($item->wasDiscounted() && $item->promotion_name)
                                             <span class="order-item__promo">{{ $item->promotion_name }}</span>
                                         @endif
                                     </span>
