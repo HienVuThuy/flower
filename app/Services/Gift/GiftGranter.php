@@ -17,16 +17,16 @@ use Illuminate\Support\Facades\DB;
  * AI ĐƯỢC QUÀ do GiftResolver quyết định — ở đây chỉ GIỮ CHỖ cho đúng:
  *
  *   - suất của chương trình: một câu UPDATE có điều kiện
- *     (used_count < total_limit), cùng cách với lượt mã giảm giá — hai
- *     đơn cùng lúc tranh suất cuối thì cơ sở dữ liệu phân xử;
- *   - tồn kho của quà: khoá dòng rồi mới trừ, cùng cách với hàng bán.
+ *     (used_count < total_limit), cùng cách với lượt mã giảm giá;
+ *   - tồn kho của quà: khoá dòng rồi mới trừ, cùng cách với hàng bán —
+ *     không có cơ chế tồn kho thứ hai.
  *
- * HẾT GIỮA CHỪNG THÌ BỎ QUÀ, KHÔNG HỎNG ĐƠN. Khác mã giảm giá (thiếu lượt
- * thì cuộn cả đơn): quà là thứ cho thêm; cuộn một đơn mua cây vì túi vải
- * tặng kèm vừa hết là phạt khách vì một món họ không trả tiền. Trang đơn
- * liệt kê đúng quà đã thật sự nhận.
+ * HẾT GIỮA CHỪNG THÌ BỎ QUÀ, KHÔNG HỎNG ĐƠN: quà là thứ cho thêm, cuộn một đơn
+ * mua cây vì túi vải tặng kèm vừa hết là phạt khách vì món họ không trả tiền.
  *
- * QUÀ KÈM SẢN PHẨM nằm dưới dòng hàng đã sinh ra nó (parent_item_id).
+ * CHỤP vào dòng quà: tên, quy cách, mã SKU, trị giá — lịch sử đơn không phụ
+ * thuộc dữ liệu sản phẩm / vật phẩm hiện tại. Quà kèm sản phẩm nằm dưới
+ * đúng dòng hàng (đúng quy cách) đã sinh ra nó.
  */
 class GiftGranter
 {
@@ -60,16 +60,11 @@ class GiftGranter
                 continue;
             }
 
-            $cha = $dong['for_product_id'] === null ? null : $order->items()
-                ->where('product_id', $dong['for_product_id'])
-                ->where('is_gift', false)
-                ->orderBy('id')
-                ->value('id');
-
             $order->items()->create([
                 'product_id' => $vat->product_id,
                 'product_variant_id' => $vat->product_variant_id,
                 'product_name' => $vat->name,
+                'product_sku' => $vat->variant?->code ?? $vat->product?->product_code,
                 'variant_name' => $vat->variant?->name,
                 'promotion_name' => $ct?->name ?? 'Quà miễn phí',
                 // Trị giá tham khảo để khách biết quà đáng bao nhiêu; tiền thật của dòng là 0.
@@ -82,7 +77,7 @@ class GiftGranter
                 'gift_campaign_id' => $ct?->id,
                 'product_gift_id' => $dong['product_gift']?->id,
                 'gift_item_id' => $vat->id,
-                'parent_item_id' => $cha,
+                'parent_item_id' => $this->dongCha($order, $dong),
             ]);
 
             $daTang[] = $vat->name;
@@ -102,6 +97,25 @@ class GiftGranter
             ->whereNotNull('gift_campaign_id')
             ->pluck('gift_campaign_id')
             ->each(fn ($id) => $this->traSuatMot((int) $id));
+    }
+
+    /** Dòng hàng đã sinh ra quà — đúng sản phẩm, và đúng quy cách của dòng đầu tiên khớp. */
+    private function dongCha(Order $order, array $dong): ?int
+    {
+        if ($dong['for_product_id'] === null) {
+            return null;
+        }
+
+        return $order->items()
+            ->where('is_gift', false)
+            ->where('product_id', $dong['for_product_id'])
+            ->when(
+                $dong['for_variant_id'] !== null,
+                fn ($q) => $q->where('product_variant_id', $dong['for_variant_id']),
+                fn ($q) => $q->whereNull('product_variant_id'),
+            )
+            ->orderBy('id')
+            ->value('id');
     }
 
     private function giuSuat(GiftCampaign $ct): bool
@@ -136,6 +150,7 @@ class GiftGranter
             return true;
         }
 
+        // Không bao giờ để quà miễn phí làm âm kho.
         if ((int) $dong->stock_quantity < $soLuong) {
             return false;
         }

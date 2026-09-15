@@ -3,6 +3,7 @@
 namespace App\Services\Gift;
 
 use App\Enums\GiftCampaignKind;
+use App\Enums\GiftStockRule;
 use App\Enums\OrderStatus;
 use App\Enums\PromotionStatus;
 use App\Models\GiftCampaign;
@@ -19,23 +20,24 @@ use App\Services\Shop\Money;
 use Illuminate\Support\Collection;
 
 /**
- * Đơn này được tặng gì — NƠI DUY NHẤT trả lời, cho cả màn hình và lúc ghi đơn.
+ * Đơn / giỏ này được tặng gì — NƠI DUY NHẤT tính quà.
  * ============================================================
+ * QUÀ LÀ QUYỀN ĐƯỢC SUY RA từ hàng trong giỏ, không phải một món hàng khách
+ * tự thêm hay xoá. Không lưu vào giỏ: mỗi lần hỏi là tính lại từ số lượng
+ * hiện tại — giảm Sen đá ×3 → ×1 thì quà tự về ×1, xoá Sen đá thì quà mất.
+ * Không có trạng thái "sản phẩm ×1, quà ×3" nào tồn tại được.
+ *
  * HAI NGUỒN QUÀ:
  *
- *   - QUÀ KÈM SẢN PHẨM (product_gifts): quà mặc định của chính món hàng.
- *     Mua mỗi N món thì tặng M quà, không điều kiện gì khác. Quà còn ít hơn
- *     số được tặng thì tặng phần còn lại — khách vẫn nhận được gì đó thay
- *     vì không có gì.
+ *   - QUÀ KÈM SẢN PHẨM (product_gifts): quà mặc định của món hàng hoặc của
+ *     một quy cách. ⌊mua ÷ N⌋ × M, kẹp theo "tối đa mỗi đơn", rồi theo tồn
+ *     kho quà với luật riêng của món quà (tặng phần còn lại / không tặng).
+ *     KHÔNG liên quan mã giảm giá, chương trình, sale hay giảm theo hạng.
  *
- *   - QUÀ THEO CHƯƠNG TRÌNH (gift_campaigns, thuộc Khuyến mại): giới hạn
- *     suất, thời gian, hạng, đơn đầu tiên, đơn từ X đồng. Mỗi chương trình
- *     tặng một bộ mỗi đơn. Quà "đơn đầu tiên" / "mỗi tài khoản N lần" cần
- *     tài khoản — không kiểm được thì là quà vô hạn.
+ *   - QUÀ THEO CHƯƠNG TRÌNH (gift_campaigns, tab Khuyến mại): giới hạn suất,
+ *     thời gian, hạng, đơn đầu tiên, đơn từ X đồng. Một bộ mỗi đơn.
  *
- * Trang thanh toán hỏi để HIỆN quà; OrderService hỏi lại lúc ghi đơn (rồi
- * mới khoá kho và suất). Hai nơi hai bộ luật thì khách thấy quà trên màn
- * hình mà đơn không có — hoặc ngược lại.
+ * Giỏ hàng, trang thanh toán và OrderService cùng hỏi ở đây.
  */
 class GiftResolver
 {
@@ -45,7 +47,7 @@ class GiftResolver
     }
 
     /**
-     * @return Collection<int, array{nguon: string, campaign: ?GiftCampaign, product_gift: ?ProductGift, item: GiftItem, quantity: int, for_product_id: ?int}>
+     * @return Collection<int, array{nguon: string, campaign: ?GiftCampaign, product_gift: ?ProductGift, item: GiftItem, quantity: int, for_product_id: ?int, for_variant_id: ?int, dong_cha: ?string}>
      */
     public function choGio(CheckoutBasket $basket, ?User $user): Collection
     {
@@ -59,6 +61,28 @@ class GiftResolver
     }
 
     /**
+     * Quà kèm sản phẩm xếp theo DÒNG HÀNG đã sinh ra nó — để giỏ hàng hiện quà
+     * ngay dưới món. Khoá dòng: "product_id:variant_id" (quy cách trống = '').
+     *
+     * @return array<string, list<array{item: GiftItem, quantity: int, product_gift: ProductGift}>>
+     */
+    public function theoDong(CheckoutBasket $basket): array
+    {
+        $ket = [];
+
+        foreach ($this->quaKemSanPham($basket) as $dong) {
+            $ket[$dong['dong_cha']][] = $dong;
+        }
+
+        return $ket;
+    }
+
+    public static function khoaDong(int $productId, ?int $variantId): string
+    {
+        return $productId . ':' . ($variantId ?? '');
+    }
+
+    /**
      * Quà mặc định đang tặng của một sản phẩm — để trang sản phẩm nói trước.
      *
      * @return Collection<int, ProductGift>
@@ -68,7 +92,7 @@ class GiftResolver
         return ProductGift::query()
             ->where('product_id', $product->id)
             ->where('is_active', true)
-            ->with(['giftItem.product', 'giftItem.variant'])
+            ->with(['giftItem.product', 'giftItem.variant', 'variant'])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
@@ -146,41 +170,56 @@ class GiftResolver
 
     private function quaKemSanPham(CheckoutBasket $basket): Collection
     {
-        $soLuong = [];
-
-        foreach ($basket->lines as $l) {
-            $soLuong[$l->product->id] = ($soLuong[$l->product->id] ?? 0) + $l->quantity;
+        if ($basket->isEmpty()) {
+            return collect();
         }
 
+        $dongs = $basket->lines->values();
+
         return ProductGift::query()
-            ->whereIn('product_id', array_keys($soLuong))
+            ->whereIn('product_id', $dongs->map(fn ($l) => $l->product->id)->unique()->all())
             ->where('is_active', true)
             ->with(['giftItem.product', 'giftItem.variant'])
             ->orderBy('sort_order')
             ->orderBy('id')
             ->get()
-            ->map(function (ProductGift $pg) use ($soLuong) {
+            ->map(function (ProductGift $pg) use ($dongs) {
                 $vat = $pg->giftItem;
 
                 if ($vat === null || ! $vat->is_active) {
                     return null;
                 }
 
-                $n = $pg->soQuaCho($soLuong[$pg->product_id] ?? 0);
-                $con = $vat->tonKhoCon();
+                // Quà "mọi quy cách" cộng số lượng của mọi quy cách; quà theo quy cách chỉ đếm đúng quy cách đó.
+                $khop = $dongs->filter(fn ($l) => $pg->apDungCho((int) $l->product->id, $l->variant?->id));
 
-                if ($con !== null) {
-                    $n = min($n, $con);
+                if ($khop->isEmpty()) {
+                    return null;
                 }
 
-                return $n > 0 ? [
+                $n = $pg->soQuaCho((int) $khop->sum(fn ($l) => $l->quantity));
+                $con = $vat->tonKhoCon();
+
+                if ($con !== null && $con < $n) {
+                    $n = $pg->khi_thieu_kho === GiftStockRule::KhongTang ? 0 : $con;
+                }
+
+                if ($n <= 0) {
+                    return null;
+                }
+
+                $dau = $khop->first();
+
+                return [
                     'nguon' => 'san_pham',
                     'campaign' => null,
                     'product_gift' => $pg,
                     'item' => $vat,
                     'quantity' => $n,
                     'for_product_id' => (int) $pg->product_id,
-                ] : null;
+                    'for_variant_id' => $pg->product_variant_id !== null ? (int) $pg->product_variant_id : ($dau->variant?->id),
+                    'dong_cha' => self::khoaDong((int) $dau->product->id, $dau->variant?->id),
+                ];
             })
             ->filter()
             ->values();
@@ -211,6 +250,8 @@ class GiftResolver
                 'item' => $ct->giftItem,
                 'quantity' => (int) $ct->gift_quantity,
                 'for_product_id' => null,
+                'for_variant_id' => null,
+                'dong_cha' => null,
             ])
             ->values();
     }

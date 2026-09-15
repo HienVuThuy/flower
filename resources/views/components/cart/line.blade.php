@@ -1,4 +1,4 @@
-@props(['item'])
+@props(['item', 'qua' => []])
 
 @php
     $product = $item->product;
@@ -63,6 +63,22 @@
             <p class="cart-line__warning">
                 Chỉ còn {{ $stock }} sản phẩm — vui lòng giảm số lượng.
             </p>
+        @endif
+
+        {{--
+            QUÀ KÈM — suy ra từ số lượng của chính dòng này (GiftResolver), không
+            phải món khách tự thêm: không có nút sửa hay xoá quà. Đổi số lượng
+            món là quà tự đổi theo.
+        --}}
+        @if(! empty($qua))
+            <ul class="cart-line__gifts list-unstyled mb-0" data-qua-dong="{{ $item->id }}">
+                @foreach($qua as $q)
+                    <li>
+                        <span class="order-item__promo">Quà miễn phí</span>
+                        {{ $q['item']->name }} &times; <span data-so-qua>{{ $q['quantity'] }}</span>
+                    </li>
+                @endforeach
+            </ul>
         @endif
 
     </div>

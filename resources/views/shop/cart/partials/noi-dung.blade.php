@@ -108,7 +108,8 @@
 
             <div class="cart-lines">
                 @foreach($cart->items as $item)
-                    <x-cart.line :item="$item" />
+                    <x-cart.line :item="$item"
+                                 :qua="($quaTheoDong ?? [])[\App\Services\Gift\GiftResolver::khoaDong((int) $item->product_id, $item->product_variant_id ? (int) $item->product_variant_id : null)] ?? []" />
                 @endforeach
             </div>
 

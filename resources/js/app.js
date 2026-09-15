@@ -27,6 +27,7 @@ import { initStockLock } from './admin/stock-lock';
 import { initChonKy } from './admin/chon-ky';
 import { initTuoiSoLieu } from './admin/tuoi-so-lieu';
 import { initProductBlocks } from './admin/product-blocks';
+import { initGiftVariantPicker } from './admin/gift-variant-picker';
 import { initVideoEmbed } from './components/video-embed';
 
 /*
@@ -81,6 +82,7 @@ export function bootUi() {
     initChonKy();
     initTuoiSoLieu();
     initProductBlocks();
+    initGiftVariantPicker();
     initVideoEmbed();
 }
 

@@ -89,11 +89,20 @@ class CartController extends Controller
     private function duLieuGio(): array
     {
         $cart = $this->cart->current();
+        $basket = $this->checkout->cartBasket();
 
         return [
             'cart' => $cart,
             // Số tiền do CheckoutBasket tính, dùng chung với trang thanh toán.
-            'basket' => $this->checkout->cartBasket(),
+            'basket' => $basket,
+
+            /*
+             * QUÀ KÈM theo từng dòng — tính lại từ số lượng hiện tại mỗi lần
+             * vẽ giỏ (GiftResolver), nên đổi số lượng hay xoá món là quà tự
+             * đổi theo. Chỉ món đang được chọn mới có quà: món không mua thì
+             * không có quyền nhận quà.
+             */
+            'quaTheoDong' => app(\App\Services\Gift\GiftResolver::class)->theoDong($basket),
 
             /*
              * PHỤ KIỆN MUA KÈM cho cả giỏ.

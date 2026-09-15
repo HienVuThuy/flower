@@ -847,6 +847,25 @@
 .product-gifts__title {
     font-weight: 600;
     color: var(--ink-900);
+    cursor: pointer;
+}
+
+.product-gifts__names {
+    display: block;
+    margin-top: 2px;
+    font-weight: 400;
+    font-size: 0.85rem;
+    color: var(--ink-500);
+}
+
+/* Quà kèm dưới từng dòng giỏ hàng. */
+.cart-line__gifts {
+    margin-top: var(--space-2xs);
+    font-size: 0.85rem;
+}
+
+.cart-line__gifts li + li {
+    margin-top: 2px;
 }
 
 .product-gifts__list {

@@ -92,12 +92,14 @@
 
                 {{-- QUÀ MIỄN PHÍ KÈM SẢN PHẨM — nói trước khi khách bỏ vào giỏ. --}}
                 @if(($quaKem ?? collect())->isNotEmpty())
-                    <div class="product-gifts mb-3" data-qua-san-pham>
-                        <p class="product-gifts__title mb-2">
+                    {{-- Bấm để xem chi tiết quà. Khách không cần tự thêm quà: bỏ sản phẩm vào giỏ là quà tự tính. --}}
+                    <details class="product-gifts mb-3" data-qua-san-pham>
+                        <summary class="product-gifts__title">
                             <x-site.icon name="flower1" />
-                            Mua {{ $quaKem->min('per_quantity') }} mặt hàng – nhận quà miễn phí
-                        </p>
-                        <ul class="product-gifts__list list-unstyled mb-0">
+                            Mua {{ $quaKem->min('per_quantity') }} mặt hàng – nhận {{ $quaKem->count() > 1 ? $quaKem->count() . ' quà' : 'quà' }} miễn phí
+                            <span class="product-gifts__names">{{ $quaKem->map(fn ($pg) => $pg->giftItem->name)->implode(', ') }}</span>
+                        </summary>
+                        <ul class="product-gifts__list list-unstyled mb-0 mt-2">
                             @foreach($quaKem as $pg)
                                 <li class="product-gifts__item" data-qua-kem="{{ $pg->id }}">
                                     @if($pg->giftItem->product?->main_image)
@@ -106,10 +108,10 @@
                                         <span class="product-gifts__icon"><x-site.icon name="flower2" /></span>
                                     @endif
                                     <span>
-                                        {{ $pg->giftItem->name }} × {{ $pg->gift_quantity }}
-                                        @if($pg->per_quantity > 1)
-                                            <span class="text-caption">cho mỗi {{ $pg->per_quantity }} sản phẩm</span>
-                                        @endif
+                                        {{ $pg->giftItem->name }}
+                                        <span class="text-caption d-block">
+                                            {{ $pg->moTaLuat() }}@if($pg->variant) · khi chọn quy cách {{ $pg->variant->name }}@endif
+                                        </span>
                                         @if($pg->giftItem->value !== null)
                                             <span class="text-caption d-block">Trị giá {{ \App\Services\Shop\Money::format((string) $pg->giftItem->value) }}</span>
                                         @endif
@@ -117,7 +119,7 @@
                                 </li>
                             @endforeach
                         </ul>
-                    </div>
+                    </details>
                 @endif
 
                 @if($product->track_inventory)
