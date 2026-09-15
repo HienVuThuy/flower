@@ -317,6 +317,10 @@
                                 <x-site.icon name="star" /> Điểm thưởng: <strong>{{ number_format(app(\App\Services\Points\PointLedger::class)->soDu(Auth::user()), 0, ',', '.') }}</strong>
                             </a>
 
+                            <a class="dropdown-item" href="{{ route('shop.profile.edit', ['muc' => 'hang-thanh-vien']) }}" data-hang-header>
+                                <x-site.icon name="flower2" /> Hạng: <strong>{{ app(\App\Services\Loyalty\MemberTierResolver::class)->cua(Auth::user())['hang']?->name ?? '—' }}</strong>
+                            </a>
+
                             @if(config('features.cart'))
                                 <a class="dropdown-item" href="{{ route('shop.orders.index') }}">
                                     <x-site.icon name="bag" /> Đơn hàng của tôi

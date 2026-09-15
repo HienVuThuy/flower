@@ -58,20 +58,25 @@ class PointEarning
             return 0;
         }
 
-        $tienHang = bcsub(
-            bcsub((string) $order->grand_total, (string) ($order->shipping_fee ?? '0'), 2),
-            (string) $order->refundedAmount(),
-            2,
-        );
-
-        $diem = self::diemChoTien($tienHang);
+        // Cùng định nghĩa "tiền hàng thật trả" với hạng thành viên — xem QualifiedSpending.
+        $diem = self::diemChoTien(\App\Services\Loyalty\QualifiedSpending::tienHangCuaDon($order));
 
         if ($diem === 0) {
             return 0;
         }
 
-        return $this->so->cong($user, $diem, PointReason::MuaHang, 'don:' . $order->id, 'Đơn ' . $order->order_number)
-            ? $diem
+        /*
+         * THƯỞNG THEO HẠNG — hạng lúc đơn được giao (đã tính cả đơn này).
+         * Làm tròn xuống: 32 điểm × 5% là 1 điểm, không phải 1,6.
+         */
+        $hang = app(\App\Services\Loyalty\MemberTierResolver::class)->cua($user)['hang'];
+        $them = $hang ? intdiv($diem * (int) $hang->bonus_points_percent, 100) : 0;
+
+        $ghiChu = 'Đơn ' . $order->order_number
+            . ($them > 0 ? ' (gồm +' . $hang->bonus_points_percent . '% hạng ' . $hang->name . ')' : '');
+
+        return $this->so->cong($user, $diem + $them, PointReason::MuaHang, 'don:' . $order->id, $ghiChu)
+            ? $diem + $them
             : 0;
     }
 

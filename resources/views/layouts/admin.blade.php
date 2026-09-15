@@ -216,6 +216,11 @@
                 <span>Đề xuất giá</span>
             </a>
 
+            <a data-admin-link href="{{ route('admin.member-tiers.index') }}" class="admin-nav-link {{ request()->routeIs('admin.member-tiers.*') ? 'is-active' : '' }}">
+                <x-site.icon name="star" />
+                <span>Hạng thành viên</span>
+            </a>
+
             @if(config('features.cart'))
                 <a data-admin-link href="{{ route('admin.coupons.index') }}"
                    class="admin-nav-link {{ request()->routeIs('admin.coupons.*') ? 'is-active' : '' }}">

@@ -51,6 +51,7 @@ class ProfileController extends Controller
     private const MUC = [
         'thong-tin' => 'Thông tin',
         'diem-thuong' => 'Điểm thưởng',
+        'hang-thanh-vien' => 'Hạng thành viên',
         'bao-mat' => 'Bảo mật',
         'tuy-chon' => 'Tuỳ chọn',
     ];

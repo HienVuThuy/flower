@@ -1433,6 +1433,14 @@ Route::prefix('admin')
                 Route::delete('/{expense}', [ExpenseController::class, 'destroy'])->middleware('throttle:30,1')->name('destroy');
             });
 
+        // HẠNG THÀNH VIÊN — quyền khuyến mại: quyền lợi hạng là một dạng ưu đãi.
+        Route::get('hang-thanh-vien', [\App\Http\Controllers\Admin\MemberTierController::class, 'index'])
+            ->middleware('quyen:khuyen-mai')
+            ->name('member-tiers.index');
+        Route::put('hang-thanh-vien', [\App\Http\Controllers\Admin\MemberTierController::class, 'update'])
+            ->middleware(['quyen:khuyen-mai', 'throttle:20,1'])
+            ->name('member-tiers.update');
+
         Route::prefix('bulk-inquiries')
             ->name('bulk-inquiries.')
             ->middleware('quyen:don-hang')
