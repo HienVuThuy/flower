@@ -24,6 +24,8 @@ class MemberTierController extends Controller
 {
     use LogsAdminActivity;
 
+    private const TRUONG = ['name', 'min_spend', 'discount_percent', 'free_shipping_from', 'bonus_points_percent'];
+
     public function index(): View
     {
         return view('admin.member-tiers.index', [
@@ -40,15 +42,27 @@ class MemberTierController extends Controller
             'hang.*.id' => ['required', 'integer', 'distinct', 'in:' . $hienCo->keys()->implode(',')],
             'hang.*.name' => ['required', 'string', 'max:50'],
             'hang.*.min_spend' => ['required', 'numeric', 'min:0', 'max:999999999999'],
+
+            // Trần 50%: giảm theo hạng là ưu đãi thường trực trên MỌI đơn của khách đó.
+            'hang.*.discount_percent' => ['required', 'numeric', 'min:0', 'max:50'],
+            'hang.*.free_shipping_from' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'hang.*.bonus_points_percent' => ['required', 'integer', 'min:0', 'max:100'],
         ], [], [
             'hang.*.name' => 'tên hạng',
             'hang.*.min_spend' => 'ngưỡng chi tiêu',
+            'hang.*.discount_percent' => '% giảm tiền hàng',
+            'hang.*.free_shipping_from' => 'ngưỡng miễn phí giao',
             'hang.*.bonus_points_percent' => '% điểm thưởng thêm',
         ]);
 
         $dong = collect($data['hang'])
-            ->map(fn (array $h) => $h + ['min_spend' => bcadd(number_format((float) $h['min_spend'], 0, '.', ''), '0', 2)])
+            ->map(fn (array $h) => array_merge($h, [
+                'min_spend' => bcadd(number_format((float) $h['min_spend'], 0, '.', ''), '0', 2),
+                'discount_percent' => number_format((float) $h['discount_percent'], 2, '.', ''),
+                'free_shipping_from' => ($h['free_shipping_from'] ?? null) === null || $h['free_shipping_from'] === ''
+                    ? null
+                    : bcadd(number_format((float) $h['free_shipping_from'], 0, '.', ''), '0', 2),
+            ]))
             ->sortBy(fn (array $h) => (float) $h['min_spend'])
             ->values();
 
@@ -66,18 +80,20 @@ class MemberTierController extends Controller
 
         foreach ($dong as $h) {
             $hang = $hienCo[$h['id']];
-            $truoc = $hang->only(['name', 'min_spend', 'bonus_points_percent']);
+            $truoc = $hang->only(self::TRUONG);
 
             $hang->update([
                 'name' => trim($h['name']),
                 'min_spend' => $h['min_spend'],
+                'discount_percent' => $h['discount_percent'],
+                'free_shipping_from' => $h['free_shipping_from'],
                 'bonus_points_percent' => (int) $h['bonus_points_percent'],
             ]);
 
             if ($hang->wasChanged()) {
                 $this->audit()->log('member-tier.updated', 'Sửa hạng thành viên ' . $hang->name, $hang, [
                     'truoc' => $truoc,
-                    'sau' => $hang->only(['name', 'min_spend', 'bonus_points_percent']),
+                    'sau' => $hang->only(self::TRUONG),
                 ]);
             }
         }

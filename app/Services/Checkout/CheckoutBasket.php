@@ -3,6 +3,7 @@
 namespace App\Services\Checkout;
 
 use App\Models\Coupon;
+use App\Models\MemberTier;
 use App\Services\Coupon\CouponService;
 use App\Services\Points\PointRedemption;
 use App\Services\Shipping\ShippingQuote;
@@ -24,10 +25,16 @@ use Illuminate\Support\Collection;
  * Nay Blade và OrderService cùng đọc từ đây.
  *
  * ============================================================
- * THỨ TỰ TRỪ TIỀN:
+ * THỨ TỰ TRỪ TIỀN — mỗi bước tính trên phần CÒN LẠI của bước trước:
  *
- *     giá gốc → khuyến mại (trong lineTotal) → mã giảm giá → điểm thưởng
- *            → + phí giao (miễn phí xét trên tiền hàng TRƯỚC mã và điểm)
+ *     giá gốc → khuyến mại (trong lineTotal)
+ *            → ưu đãi hạng (nếu mã không cấm cộng dồn)
+ *            → mã giảm giá
+ *            → điểm thưởng (trần 30% phần còn lại)
+ *            → + phí giao (miễn phí xét trên tiền hàng TRƯỚC mọi khoản giảm đơn)
+ *
+ * Tính nối tiếp chứ không cộng các % trên cùng giá gốc: hạng 5% + mã 50% +
+ * điểm 30% trên cùng một giá là giảm 85% — không ai định cho điều đó.
  */
 final readonly class CheckoutBasket
 {
@@ -70,6 +77,9 @@ final readonly class CheckoutBasket
          * vào, kể cả từ chính máy chủ.
          */
         public int $points = 0,
+
+        /** Hạng thành viên của người đang thanh toán; null với khách vãng lai. */
+        public ?MemberTier $memberTier = null,
     ) {
     }
 
@@ -78,7 +88,7 @@ final readonly class CheckoutBasket
     {
         return new self(
             $this->lines, $this->source, $coupon,
-            $this->province, $this->toDistrictId, $this->toWardCode, $this->points,
+            $this->province, $this->toDistrictId, $this->toWardCode, $this->points, $this->memberTier,
         );
     }
 
@@ -87,7 +97,7 @@ final readonly class CheckoutBasket
     {
         return new self(
             $this->lines, $this->source, $this->coupon,
-            $province, $this->toDistrictId, $this->toWardCode, $this->points,
+            $province, $this->toDistrictId, $this->toWardCode, $this->points, $this->memberTier,
         );
     }
 
@@ -96,7 +106,7 @@ final readonly class CheckoutBasket
     {
         return new self(
             $this->lines, $this->source, $this->coupon,
-            $this->province, $districtId, $wardCode, $this->points,
+            $this->province, $districtId, $wardCode, $this->points, $this->memberTier,
         );
     }
 
@@ -105,7 +115,16 @@ final readonly class CheckoutBasket
     {
         return new self(
             $this->lines, $this->source, $this->coupon,
-            $this->province, $this->toDistrictId, $this->toWardCode, max(0, $points),
+            $this->province, $this->toDistrictId, $this->toWardCode, max(0, $points), $this->memberTier,
+        );
+    }
+
+    /** Bản sao có gắn hạng thành viên. */
+    public function withMemberTier(?MemberTier $tier): self
+    {
+        return new self(
+            $this->lines, $this->source, $this->coupon,
+            $this->province, $this->toDistrictId, $this->toWardCode, $this->points, $tier,
         );
     }
 
@@ -152,11 +171,48 @@ final readonly class CheckoutBasket
         return bcsub($this->baseTotal(), $this->itemsTotal(), 2);
     }
 
+    /* ============ ƯU ĐÃI HẠNG THÀNH VIÊN ============ */
+
+    private function memberDiscountPercent(): string
+    {
+        return $this->memberTier ? bcadd((string) $this->memberTier->discount_percent, '0', 2) : '0.00';
+    }
+
     /**
-     * Số tiền mã giảm giá trừ đi.
+     * Hạng có % giảm nhưng mã đang áp KHÔNG cho cộng dồn — giao diện phải
+     * nói ra, không để khách tưởng ưu đãi hạng bị hỏng.
+     */
+    public function memberDiscountBlockedByCoupon(): bool
+    {
+        return $this->coupon !== null
+            && ! $this->coupon->stack_with_member
+            && bccomp($this->memberDiscountPercent(), '0', 2) > 0;
+    }
+
+    /** Số tiền giảm theo hạng — làm tròn XUỐNG tới đồng. */
+    public function memberDiscount(): string
+    {
+        if (bccomp($this->memberDiscountPercent(), '0', 2) <= 0 || $this->memberDiscountBlockedByCoupon()) {
+            return '0.00';
+        }
+
+        return bcadd(bcdiv(bcmul($this->itemsTotal(), $this->memberDiscountPercent(), 4), '100', 0), '0', 2);
+    }
+
+    /** Tiền hàng sau ưu đãi hạng — nền để tính mã giảm giá. */
+    public function itemsAfterMember(): string
+    {
+        return bcsub($this->itemsTotal(), $this->memberDiscount(), 2);
+    }
+
+    /* ============ MÃ GIẢM GIÁ ============ */
+
+    /**
+     * Số tiền mã giảm giá trừ đi — trên tiền hàng SAU ưu đãi hạng.
      *
      * Tính lại mỗi lần từ CouponService — không lưu con số, và tuyệt
-     * đối không nhận con số nào từ trình duyệt.
+     * đối không nhận con số nào từ trình duyệt. Điều kiện "đơn tối thiểu"
+     * của mã vẫn xét trên tiền hàng trước mọi khoản giảm (CheckoutSource).
      */
     public function couponDiscount(): string
     {
@@ -164,14 +220,16 @@ final readonly class CheckoutBasket
             return '0.00';
         }
 
-        return app(CouponService::class)->discountFor($this->coupon, $this->itemsTotal());
+        return app(CouponService::class)->discountFor($this->coupon, $this->itemsAfterMember());
     }
 
-    /** Tiền hàng sau mã giảm giá, TRƯỚC điểm — nền để tính trần điểm. */
+    /** Tiền hàng sau hạng và mã, TRƯỚC điểm — nền để tính trần điểm. */
     public function itemsAfterCoupon(): string
     {
-        return bcsub($this->itemsTotal(), $this->couponDiscount(), 2);
+        return bcsub($this->itemsAfterMember(), $this->couponDiscount(), 2);
     }
+
+    /* ============ ĐIỂM THƯỞNG ============ */
 
     /** Số điểm thật sự được dùng cho đơn này (0 nếu dưới mức tối thiểu). */
     public function pointsUsed(): int
@@ -186,26 +244,28 @@ final readonly class CheckoutBasket
     }
 
     /**
-     * Mọi khoản giảm ÁP CHO CẢ ĐƠN (mã + điểm) — phần BasketTax phân bổ
-     * xuống từng dòng. Khuyến mại theo sản phẩm đã nằm trong lineTotal().
+     * Mọi khoản giảm ÁP CHO CẢ ĐƠN (hạng + mã + điểm) — phần BasketTax phân
+     * bổ xuống từng dòng. Khuyến mại theo sản phẩm đã nằm trong lineTotal().
      */
     public function orderDiscountTotal(): string
     {
-        return bcadd($this->couponDiscount(), $this->pointsDiscount(), 2);
+        return bcadd(bcadd($this->memberDiscount(), $this->couponDiscount(), 2), $this->pointsDiscount(), 2);
     }
 
-    /** Tiền hàng sau khi trừ mã giảm giá và điểm thưởng. */
+    /** Tiền hàng sau mọi khoản giảm của đơn. */
     public function payableItemsTotal(): string
     {
         return bcsub($this->itemsTotal(), $this->orderDiscountTotal(), 2);
     }
+
+    /* ============ GIAO HÀNG ============ */
 
     /**
      * Ngưỡng miễn phí giao xét trên tiền hàng TRƯỚC khi trừ mã giảm giá.
      *
      * Chọn vậy để dùng mã không đẩy khách xuống dưới ngưỡng rồi bị tính
      * thêm phí ship — vừa giảm được ít tiền vừa mất phí giao thì khách
-     * thấy như bị phạt vì dùng mã. Cùng lý do với điểm thưởng.
+     * thấy như bị phạt vì dùng mã. Cùng lý do với ưu đãi hạng và điểm.
      */
     public function isFreeShipping(): bool
     {
@@ -380,16 +440,34 @@ final readonly class CheckoutBasket
      *
      * Tóm tắt đơn phải giải thích được VÌ SAO dòng "Miễn phí giao hàng"
      * xuất hiện — "đơn từ 500.000đ" — chứ không chỉ trừ tiền rồi thôi.
-     * Con số vẫn do ShippingRates quyết định, đây chỉ là cửa đọc.
+     * Con số vẫn do ShippingRates (hoặc hạng thành viên) quyết định, đây
+     * chỉ là cửa đọc.
      */
     public function freeShippingFrom(): string
     {
         return $this->freeShippingThreshold();
     }
 
+    /** Ngưỡng miễn phí giao đang áp là của HẠNG, không phải của cửa hàng. */
+    public function freeShippingByTier(): bool
+    {
+        $hang = $this->memberTier?->free_shipping_from;
+
+        return $hang !== null && bccomp((string) $hang, app(ShippingRates::class)->freeFrom(), 2) < 0;
+    }
+
+    /**
+     * Ngưỡng của cửa hàng, hoặc của hạng nếu THẤP HƠN. Hạng không bao giờ
+     * làm ngưỡng tệ đi: sửa nhầm ngưỡng hạng cao hơn ngưỡng chung thì khách
+     * vẫn hưởng ngưỡng chung.
+     */
     private function freeShippingThreshold(): string
     {
-        return app(ShippingRates::class)->freeFrom();
+        $chung = app(ShippingRates::class)->freeFrom();
+
+        return $this->freeShippingByTier()
+            ? bcadd((string) $this->memberTier->free_shipping_from, '0', 2)
+            : $chung;
     }
 
     /** config trả về float; bcmath cần chuỗi thập phân chuẩn. */

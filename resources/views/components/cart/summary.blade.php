@@ -133,6 +133,27 @@
             </div>
         @endif
 
+        @if(bccomp($basket->memberDiscount(), '0', 2) > 0)
+            <div class="order-summary__row order-summary__row--discount" data-uu-dai-hang="{{ $basket->memberDiscount() }}">
+                <dt>
+                    Ưu đãi hạng {{ $basket->memberTier->name }}
+                    <span class="order-summary__count">{{ rtrim(rtrim((string) $basket->memberTier->discount_percent, '0'), '.') }}% tiền hàng</span>
+                </dt>
+                <dd>&minus;{{ $money($basket->memberDiscount()) }}</dd>
+            </div>
+        @elseif($basket->memberDiscountBlockedByCoupon())
+            {{-- Nói vì sao ưu đãi hạng không có mặt, không để khách tưởng nó bị hỏng. --}}
+            <div class="order-summary__row" data-uu-dai-hang-bi-chan>
+                <dt>
+                    <span class="order-summary__count">
+                        Mã {{ $basket->coupon->code }} không cộng dồn với ưu đãi hạng {{ $basket->memberTier->name }}
+                        — bỏ mã để được giảm theo hạng.
+                    </span>
+                </dt>
+                <dd></dd>
+            </div>
+        @endif
+
         @if($basket->pointsUsed() > 0)
             <div class="order-summary__row order-summary__row--discount" data-diem-giam="{{ $basket->pointsDiscount() }}">
                 <dt>
@@ -200,7 +221,13 @@
             <div class="order-summary__row order-summary__row--discount">
                 <dt>
                     Miễn phí giao hàng
-                    <span class="order-summary__count">đơn từ {{ $money($basket->freeShippingFrom()) }}</span>
+                    <span class="order-summary__count">
+                        @if($basket->freeShippingByTier())
+                            ưu đãi hạng {{ $basket->memberTier->name }}
+                        @else
+                            đơn từ {{ $money($basket->freeShippingFrom()) }}
+                        @endif
+                    </span>
                 </dt>
                 <dd>&minus;{{ $money($shippingDiscount) }}</dd>
             </div>
@@ -229,7 +256,7 @@
 
     </dl>
 
-    @if($hasDiscount || $hasShippingDiscount || $basket->coupon || $basket->pointsUsed() > 0)
+    @if($hasDiscount || $hasShippingDiscount || bccomp($basket->orderDiscountTotal(), '0', 2) > 0)
         @php
             // Mã + điểm lấy chung từ orderDiscountTotal() — cùng con số BasketTax phân bổ.
             $saved = bcadd(

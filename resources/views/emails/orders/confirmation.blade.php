@@ -114,6 +114,13 @@
                     </tr>
                 @endif
 
+                @if((float) $order->member_discount > 0)
+                    <tr>
+                        <td style="padding:4px 0; color:#5d6660;">Ưu đãi hạng thành viên</td>
+                        <td align="right" style="padding:4px 0;">&minus;{{ $money($order->member_discount) }}</td>
+                    </tr>
+                @endif
+
                 @if($order->points_used > 0)
                     <tr>
                         <td style="padding:4px 0; color:#5d6660;">Điểm thưởng ({{ number_format($order->points_used, 0, ',', '.') }} điểm)</td>

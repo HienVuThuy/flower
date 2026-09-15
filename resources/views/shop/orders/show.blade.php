@@ -235,6 +235,13 @@
                             </div>
                         @endif
 
+                        @if((float) $order->member_discount > 0)
+                            <div class="order-summary__row" data-uu-dai-hang-don>
+                                <dt>Ưu đãi hạng thành viên</dt>
+                                <dd>&minus;<x-site.money :amount="(float) $order->member_discount" /></dd>
+                            </div>
+                        @endif
+
                         @if($order->points_used > 0)
                             <div class="order-summary__row" data-diem-don>
                                 <dt>Điểm thưởng ({{ number_format($order->points_used, 0, ',', '.') }} điểm)</dt>

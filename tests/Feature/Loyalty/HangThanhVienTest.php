@@ -109,6 +109,8 @@ class HangThanhVienTest extends TestCase
         $hang = MemberTier::orderBy('min_spend')->get();
         $bo = fn (array $doi = []) => ['hang' => $hang->values()->map(fn ($h, $i) => array_merge([
             'id' => $h->id, 'name' => $h->name, 'min_spend' => (int) $h->min_spend, 'bonus_points_percent' => $h->bonus_points_percent,
+            'discount_percent' => (float) $h->discount_percent,
+            'free_shipping_from' => $h->free_shipping_from === null ? '' : (int) $h->free_shipping_from,
         ], $doi[$i] ?? []))->all()];
 
         $this->actingAs($admin)->put(route('admin.member-tiers.update'), $bo([1 => ['min_spend' => 3000000, 'name' => 'Lá xanh']]))

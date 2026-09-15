@@ -172,6 +172,9 @@ class OrderService
             'coupon_discount' => $basket->couponDiscount(),
             // Chụp điểm đã dùng: huỷ đơn phải trả lại đúng số này, đổi tỉ giá sau này không làm đơn cũ đổi.
             'points_used' => $basket->pointsUsed(),
+            // Chụp hạng và tiền giảm theo hạng lúc đặt — sửa ngưỡng sau này không đổi đơn cũ.
+            'member_tier_code' => $basket->memberTier?->code,
+            'member_discount' => $basket->memberDiscount(),
             'points_discount' => $basket->pointsDiscount(),
             'shipping_fee' => $shippingFee,
 

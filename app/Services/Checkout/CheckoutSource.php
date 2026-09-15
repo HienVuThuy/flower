@@ -209,6 +209,22 @@ class CheckoutSource
         $best = app(\App\Services\Coupon\BestCouponFinder::class)
             ->find(\Illuminate\Support\Facades\Auth::user(), $basket->itemsTotal());
 
+        /*
+         * MÃ KHÔNG CỘNG DỒN MÀ GIẢM ÍT HƠN ƯU ĐÃI HẠNG: không tự áp.
+         *
+         * Áp mã đó là tắt ưu đãi hạng — "chọn giúp" mà làm khách thiệt thì
+         * ngược hẳn mục đích. Khách vẫn tự áp tay được nếu muốn.
+         */
+        $hang = $this->hangHienTai();
+
+        if ($best !== null && $hang !== null && ! $best->stack_with_member) {
+            $voiHang = $basket->withMemberTier($hang);
+
+            if (bccomp($voiHang->withCoupon($best)->orderDiscountTotal(), $voiHang->orderDiscountTotal(), 2) <= 0) {
+                $best = null;
+            }
+        }
+
         $current = session(self::COUPON_KEY);
 
         if ($best === null) {
@@ -282,10 +298,20 @@ class CheckoutSource
                 isset($form['to_district_id']) ? (int) $form['to_district_id'] : null,
                 isset($form['to_ward_code']) ? (string) $form['to_ward_code'] : null,
             )
+            // Hạng gắn TRƯỚC mã: mã tính trên tiền hàng đã trừ ưu đãi hạng.
+            ->withMemberTier($this->hangHienTai())
             ->withCoupon($this->resolveCoupon($basket));
 
         // Điểm gắn SAU mã: trần điểm tính trên tiền hàng đã trừ mã.
         return $coMa->withPoints($this->resolvePoints($coMa));
+    }
+
+    /** Hạng thành viên của người đang thanh toán; khách vãng lai không có hạng. */
+    private function hangHienTai(): ?\App\Models\MemberTier
+    {
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        return $user ? app(\App\Services\Loyalty\MemberTierResolver::class)->cua($user)['hang'] : null;
     }
 
     /** Khoá session giữ số điểm khách muốn dùng cho lần thanh toán này. */

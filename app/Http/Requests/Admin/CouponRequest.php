@@ -21,6 +21,9 @@ class CouponRequest extends FormRequest
         // đó, và cột giữ nguyên giá trị cũ — bỏ tích mà không tắt được.
         $this->merge(['is_public' => $this->boolean('is_public')]);
 
+        // Cùng lý do: bỏ tích "cộng dồn với ưu đãi hạng" phải thật sự tắt được.
+        $this->merge(['stack_with_member' => $this->boolean('stack_with_member')]);
+
         /*
          * Ô `datetime-local` gửi lên GIỜ TRÊN ĐỒNG HỒ NGƯỜI GÕ, không kèm
          * múi giờ. Cất thẳng vào cột là cất giờ Hà Nội dưới nhãn UTC: mã
@@ -73,6 +76,12 @@ class CouponRequest extends FormRequest
              * Bỏ trống = mã chung, hiện ở trang Voucher.
              */
             'promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
+
+            // Cộng dồn với ưu đãi hạng — ô đánh dấu, đặt lại ở prepareForValidation.
+            'stack_with_member' => ['boolean'],
+
+            // Mã dành cho hạng này trở lên. Bỏ trống = mọi khách.
+            'min_member_tier_id' => ['nullable', 'integer', 'exists:member_tiers,id'],
 
             /*
              * Giới hạn hình thức thanh toán. Bỏ trống = mọi hình thức.

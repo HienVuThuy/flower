@@ -182,6 +182,38 @@
                             <x-form-error name="payment_methods" :array="true"/>
                         </div>
 
+                        {{-- QUYỀN LỢI HẠNG THÀNH VIÊN: mã dành cho hạng nào, và có cộng dồn với giảm theo hạng không. --}}
+                        <div class="col-md-6">
+                            <label class="form-label" for="min_member_tier_id">Dành cho hạng thành viên</label>
+                            @php
+                                $cacHangMa = \App\Models\MemberTier::orderBy('min_spend')->get(['id', 'name']);
+                                $hangDaChon = (string) old('min_member_tier_id', $coupon->min_member_tier_id);
+                            @endphp
+                            <select id="min_member_tier_id" name="min_member_tier_id" class="form-select">
+                                <option value="">— Mọi khách —</option>
+                                @foreach($cacHangMa as $hangMa)
+                                    <option value="{{ $hangMa->id }}" @selected($hangDaChon === (string) $hangMa->id)>Từ hạng {{ $hangMa->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="form-text">Khách dưới hạng này không áp được mã — kể cả khi nhập tay.</div>
+                            <x-form-error name="min_member_tier_id" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-check pt-md-4">
+                                <input class="form-check-input" type="checkbox"
+                                       id="stack_with_member" name="stack_with_member" value="1"
+                                       @checked(old('stack_with_member', $coupon->stack_with_member))>
+                                <label class="form-check-label" for="stack_with_member">
+                                    Cộng dồn với ưu đãi hạng thành viên
+                                </label>
+                            </div>
+                            <div class="form-text">
+                                Tắt (mặc định): khách dùng mã này thì không được giảm theo hạng nữa.
+                                Bật: giảm theo hạng trước, mã tính trên phần còn lại.
+                            </div>
+                        </div>
+
                         <div class="col-12">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox"

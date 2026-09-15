@@ -103,6 +103,23 @@ class CouponService
         }
 
         /*
+         * MÃ DÀNH CHO HẠNG THÀNH VIÊN ("ưu tiên voucher" theo hạng).
+         *
+         * So theo NGƯỠNG của hạng, không theo id: cửa hàng sửa ngưỡng thì
+         * thứ bậc vẫn đúng. Khách vãng lai không có hạng — không dùng được.
+         * Kiểm ở đây nên nhập tay, chọn trong ví, tự chọn mã đều đi qua.
+         */
+        if ($coupon->min_member_tier_id !== null) {
+            $can = \App\Models\MemberTier::find($coupon->min_member_tier_id);
+            $user = Auth::user();
+            $hang = $user ? app(\App\Services\Loyalty\MemberTierResolver::class)->cua($user)['hang'] : null;
+
+            if ($can !== null && ($hang === null || bccomp((string) $hang->min_spend, (string) $can->min_spend, 2) < 0)) {
+                throw new CouponException('Mã này dành cho thành viên hạng ' . $can->name . ' trở lên.');
+            }
+        }
+
+        /*
          * GIỚI HẠN HÌNH THỨC THANH TOÁN.
          *
          * Chỉ kiểm khi NƠI GỌI BIẾT hình thức thanh toán. Lúc khách bấm

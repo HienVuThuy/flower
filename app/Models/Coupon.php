@@ -37,6 +37,8 @@ class Coupon extends Model
         'per_user_limit',
         'promotion_id',
         'payment_methods',
+        'stack_with_member',
+        'min_member_tier_id',
     ];
 
     /*
@@ -56,6 +58,8 @@ class Coupon extends Model
             'ends_at' => 'datetime',
             'is_public' => 'boolean',
             'per_user_limit' => 'integer',
+            'stack_with_member' => 'boolean',
+            'min_member_tier_id' => 'integer',
             'payment_methods' => 'array',
         ];
     }
@@ -178,6 +182,11 @@ class Coupon extends Model
 
         if ($this->type === CouponType::Percent && $this->max_discount_amount) {
             $parts[] = 'Giảm tối đa ' . number_format((float) $this->max_discount_amount, 0, ',', '.') . 'đ';
+        }
+
+        // Nói điều kiện hạng ngay trên thẻ mã — khách không phải bấm áp mới biết mình không đủ hạng.
+        if ($this->min_member_tier_id !== null && ($hang = MemberTier::find($this->min_member_tier_id)) !== null) {
+            $parts[] = 'Dành cho hạng ' . $hang->name . ' trở lên';
         }
 
         return $parts ? implode(' · ', $parts) : 'Không kèm điều kiện';

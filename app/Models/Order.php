@@ -55,6 +55,8 @@ class Order extends Model
         'coupon_discount',
         'points_used',
         'points_discount',
+        'member_tier_code',
+        'member_discount',
         'grand_total',
         'tax_rate',
         'tax_amount',
@@ -98,6 +100,7 @@ class Order extends Model
             'coupon_discount' => 'decimal:2',
             'points_used' => 'integer',
             'points_discount' => 'decimal:2',
+            'member_discount' => 'decimal:2',
             'shipping_fee' => 'decimal:2',
             'grand_total' => 'decimal:2',
 
