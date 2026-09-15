@@ -52,6 +52,8 @@ final class GeminiProvider implements AiProvider
                         // Thấp: tư vấn bán hàng cần bám dữ liệu, không cần sáng tạo.
                         'temperature' => 0.3,
                         'maxOutputTokens' => $this->toiDaToken,
+                        // Suy nghĩ ăn chung hạn mức token với câu trả lời — xem config/ai.php.
+                        'thinkingConfig' => ['thinkingBudget' => (int) ($this->cauHinh['thinking_budget'] ?? 0)],
                     ],
                 ]);
         } catch (ConnectionException $e) {
@@ -81,6 +83,11 @@ final class GeminiProvider implements AiProvider
 
         if (trim($traLoi) === '') {
             throw new AiException('Trợ lý AI chưa trả lời được câu này. Bạn thử hỏi cách khác nhé.');
+        }
+
+        // Hết hạn mức token giữa câu: nói ra, không để khách đọc một câu cụt tưởng là hết.
+        if (data_get($phanHoi->json(), 'candidates.0.finishReason') === 'MAX_TOKENS') {
+            return rtrim($traLoi) . '… (câu trả lời dài nên bị cắt — bạn hỏi cụ thể hơn để nhận phần còn lại nhé)';
         }
 
         return trim($traLoi);

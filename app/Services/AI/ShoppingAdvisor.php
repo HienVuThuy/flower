@@ -60,7 +60,7 @@ class ShoppingAdvisor
 
         $chiDan = $this->chiDan($this->nguCanh->xayDung($cauHoi, $user, $cauTruoc));
 
-        $traLoi = $this->ai->provider()->reply($chiDan, [...$lichSu, ['role' => 'user', 'text' => $cauHoi]]);
+        $traLoi = self::vanBanThuong($this->ai->provider()->reply($chiDan, [...$lichSu, ['role' => 'user', 'text' => $cauHoi]]));
 
         session([self::SESSION_KEY => array_slice([
             ...$lichSu,
@@ -69,6 +69,22 @@ class ShoppingAdvisor
         ], -$giuLai)]);
 
         return $traLoi;
+    }
+
+    /**
+     * Bỏ dấu markdown khỏi câu trả lời.
+     *
+     * Khung chat chèn chữ bằng textContent (không bao giờ dạng HTML), nên
+     * "**Kim tiền**" hiện nguyên hai cặp dấu sao. Chỉ dẫn đã bảo AI viết văn
+     * bản thường, nhưng model vẫn hay dùng markdown — gỡ ở đây cho chắc.
+     */
+    public static function vanBanThuong(string $chu): string
+    {
+        $chu = (string) preg_replace('/\*\*(.+?)\*\*|__(.+?)__/su', '$1$2', $chu);
+        $chu = (string) preg_replace('/^[ \t]{0,3}#{1,6}[ \t]+/mu', '', $chu);
+        $chu = (string) preg_replace('/^([ \t]*)[*•][ \t]+/mu', '$1- ', $chu);
+
+        return trim($chu);
     }
 
     private function chiDan(string $duLieu): string

@@ -34,6 +34,16 @@ return [
 
         // false CHỈ cho máy phát triển (XAMPP trên Windows thiếu chứng chỉ gốc) — cùng lý do với GHN.
         'verify_ssl' => env('GEMINI_VERIFY_SSL', true),
+
+        /*
+         * SỐ TOKEN CHO "SUY NGHĨ" — mặc định 0 (tắt).
+         *
+         * Đo được với gemini-3.6-flash: để mặc định, model dùng 767/800 token
+         * để suy nghĩ, câu trả lời bị cắt sau khoảng 30 token ("Giá bán:" rồi
+         * dừng). Tắt suy nghĩ thì trả lời trọn vẹn (finishReason=STOP). Tư vấn
+         * ở đây bám khối dữ liệu máy chủ đưa sẵn, không cần suy luận nhiều bước.
+         */
+        'thinking_budget' => (int) env('GEMINI_THINKING_BUDGET', 0),
     ],
 
     // Số lượt hỏi–đáp gần nhất gửi kèm để AI hiểu ngữ cảnh. Nhiều hơn là tốn và chậm.
@@ -42,7 +52,7 @@ return [
     // Độ dài tối đa một câu hỏi của khách.
     'max_message_length' => 500,
 
-    'max_output_tokens' => 800,
+    'max_output_tokens' => 1024,
 
     // Số sản phẩm tối đa đưa vào ngữ cảnh cho một câu hỏi.
     'max_products' => 8,

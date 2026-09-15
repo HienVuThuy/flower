@@ -142,6 +142,26 @@ class TroLyAiTest extends TestCase
     }
 
     #[Test]
+    public function tat_suy_nghi_bo_markdown_va_noi_ro_khi_bi_cat(): void
+    {
+        $this->batAi();
+        Http::fake([
+            'generativelanguage.googleapis.com/*' => Http::response(['candidates' => [[
+                'content' => ['parts' => [['text' => "**Kim tiền chậu sứ** giá 250.000₫\n* Dễ chăm\n## Lưu ý"]]],
+                'finishReason' => 'MAX_TOKENS',
+            ]]]),
+        ]);
+
+        $traLoi = $this->postJson(route('shop.ai.ask'), ['cau_hoi' => 'kim tiền'])->assertOk()->json('tra_loi');
+
+        $this->assertStringNotContainsString('**', $traLoi, 'Khung chat chèn textContent: dấu markdown sẽ hiện nguyên');
+        $this->assertStringContainsString("Kim tiền chậu sứ giá 250.000₫\n- Dễ chăm\nLưu ý", $traLoi);
+        $this->assertStringContainsString('bị cắt', $traLoi, 'Hết hạn mức token thì nói ra, không dừng giữa câu');
+
+        Http::assertSent(fn (Request $r) => data_get($r->data(), 'generationConfig.thinkingConfig.thinkingBudget') === 0);
+    }
+
+    #[Test]
     public function dich_vu_loi_thi_bao_ro_va_khong_luu_lich_su(): void
     {
         $this->batAi();
