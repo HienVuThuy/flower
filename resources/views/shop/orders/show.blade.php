@@ -131,27 +131,34 @@
                         <h2 class="text-h4 mb-3">Sản phẩm</h2>
 
                         <ul class="checkout-items">
-                            @foreach($order->items as $item)
-                                <li class="checkout-items__row" @if($item->is_gift) data-dong-qua="{{ $item->id }}" @endif>
+                            {{--
+                                HÀNG BÁN trước, QUÀ KÈM nằm ngay dưới món đã sinh ra nó
+                                (parent_item_id), quà theo chương trình xuống cuối.
+                            --}}
+                            @foreach($order->items->where('is_gift', false) as $item)
+                                <li class="checkout-items__row">
                                     <span>
                                         {{-- Đọc tên từ BẢN CHỤP trong đơn, không từ bảng products --}}
-                                        @if($item->is_gift)
-                                            <span class="order-item__promo">Quà tặng</span>
-                                        @endif
                                         {{ $item->product_name }}
                                         @if($item->variant_name)
                                             <span class="text-muted">({{ $item->variant_name }})</span>
                                         @endif
                                         <span class="text-muted">&times; {{ $item->quantity }}</span>
 
-                                        @if($item->is_gift && $item->promotion_name)
-                                            <span class="text-muted d-block small">{{ $item->promotion_name }}</span>
-                                        @elseif($item->wasDiscounted() && $item->promotion_name)
+                                        @if($item->wasDiscounted() && $item->promotion_name)
                                             <span class="order-item__promo">{{ $item->promotion_name }}</span>
                                         @endif
                                     </span>
                                     <span><x-site.money :amount="(float) $item->line_total" /></span>
                                 </li>
+
+                                @foreach($order->items->where('is_gift', true)->where('parent_item_id', $item->id) as $qua)
+                                    @include('shop.orders.partials.dong-qua', ['qua' => $qua])
+                                @endforeach
+                            @endforeach
+
+                            @foreach($order->items->where('is_gift', true)->whereNull('parent_item_id') as $qua)
+                                @include('shop.orders.partials.dong-qua', ['qua' => $qua])
                             @endforeach
                         </ul>
                     </div>

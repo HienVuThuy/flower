@@ -113,7 +113,8 @@
                 <tr>
                     <td><span class="o-tick"></span></td>
                     <td>
-                        {{ $item->product_name }}
+                        {{-- Người soạn hàng phải thấy đây là QUÀ cần bỏ vào kiện, không phải hàng bán thiếu giá. --}}
+                        @if($item->is_gift)<strong>[Quà miễn phí]</strong> @endif{{ $item->product_name }}
                         @if($item->variant_name)
                             <div class="phu">{{ $item->variant_name }}</div>
                         @endif

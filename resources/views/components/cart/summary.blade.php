@@ -270,10 +270,10 @@
             </p>
             <ul class="list-unstyled mb-0">
                 @foreach($quaKem as $qua)
-                    <li data-qua="{{ $qua['campaign']->id }}">
-                        {{ $qua['campaign']->giftItem->name }} × {{ $qua['quantity'] }}
+                    <li data-qua="{{ $qua['nguon'] }}-{{ $qua['campaign']?->id ?? $qua['product_gift']?->id }}">
+                        {{ $qua['item']->name }} × {{ $qua['quantity'] }}
                         <span class="order-summary__count">
-                            {{ $qua['campaign']->name }}@if($qua['campaign']->giftItem->value !== null) · trị giá {{ $money((string) $qua['campaign']->giftItem->value) }}@endif
+                            {{ $qua['campaign']?->name ?? 'Quà miễn phí kèm sản phẩm' }}@if($qua['item']->value !== null) · trị giá {{ $money((string) $qua['item']->value) }}@endif
                         </span>
                     </li>
                 @endforeach

@@ -81,6 +81,7 @@ class RouteSmokeTest extends TestCase
         'expense' => \App\Models\Expense::class,
         'giftItem' => \App\Models\GiftItem::class,
         'giftCampaign' => \App\Models\GiftCampaign::class,
+        'productGift' => \App\Models\ProductGift::class,
     ];
 
     /**
@@ -244,6 +245,12 @@ class RouteSmokeTest extends TestCase
 
         $qua = \App\Models\GiftItem::create(['name' => 'Túi vải quét thử', 'kind' => 'qua_tang', 'stock_quantity' => 10, 'is_active' => true]);
         \App\Models\GiftCampaign::create(['name' => 'Quà quét thử', 'kind' => 'chuong_trinh', 'gift_item_id' => $qua->id, 'status' => 'active']);
+
+        // Quà kèm gắn vào ĐÚNG sản phẩm đầu tiên — sản phẩm mà {product} trong đường dẫn sẽ trỏ tới.
+        $quaKem = new \App\Models\ProductGift(['per_quantity' => 1, 'gift_quantity' => 1, 'is_active' => true]);
+        $quaKem->product_id = \App\Models\Product::query()->value('id');
+        $quaKem->gift_item_id = $qua->id;
+        $quaKem->save();
 
         \App\Models\Promotion::create([
             'name' => 'Chương trình quét thử',

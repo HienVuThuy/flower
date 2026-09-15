@@ -4,6 +4,8 @@
 
 @section('content')
 
+<x-admin.promo-tabs />
+
 <div class="mb-4">
     <h1 class="admin-page-title">Hạng thành viên</h1>
     <p class="admin-page-subtitle mb-0">

@@ -90,20 +90,35 @@
                     </div>
                 @endif
 
-                @foreach(($quaKem ?? collect()) as $ctQua)
-                    <div class="promo-note mb-3" data-qua-san-pham="{{ $ctQua->id }}">
-                        <x-site.icon name="flower1" />
-                        <span>
-                            Tặng {{ $ctQua->giftItem->name }}
-                            @if($ctQua->gift_quantity > 1) × {{ $ctQua->gift_quantity }} @endif
-                            khi mua từ {{ $ctQua->trigger_min_quantity }} sản phẩm
-                            @if($ctQua->min_order_amount !== null) (đơn từ {{ \App\Services\Shop\Money::format((string) $ctQua->min_order_amount) }}) @endif
-                        </span>
-                        @if($ctQua->conSuat() !== null)
-                            <span class="promo-note__countdown">Còn {{ $ctQua->conSuat() }} suất</span>
-                        @endif
+                {{-- QUÀ MIỄN PHÍ KÈM SẢN PHẨM — nói trước khi khách bỏ vào giỏ. --}}
+                @if(($quaKem ?? collect())->isNotEmpty())
+                    <div class="product-gifts mb-3" data-qua-san-pham>
+                        <p class="product-gifts__title mb-2">
+                            <x-site.icon name="flower1" />
+                            Mua {{ $quaKem->min('per_quantity') }} mặt hàng – nhận quà miễn phí
+                        </p>
+                        <ul class="product-gifts__list list-unstyled mb-0">
+                            @foreach($quaKem as $pg)
+                                <li class="product-gifts__item" data-qua-kem="{{ $pg->id }}">
+                                    @if($pg->giftItem->product?->main_image)
+                                        <x-site.image :path="$pg->giftItem->product->main_image" :alt="$pg->giftItem->name" class="product-gifts__img" />
+                                    @else
+                                        <span class="product-gifts__icon"><x-site.icon name="flower2" /></span>
+                                    @endif
+                                    <span>
+                                        {{ $pg->giftItem->name }} × {{ $pg->gift_quantity }}
+                                        @if($pg->per_quantity > 1)
+                                            <span class="text-caption">cho mỗi {{ $pg->per_quantity }} sản phẩm</span>
+                                        @endif
+                                        @if($pg->giftItem->value !== null)
+                                            <span class="text-caption d-block">Trị giá {{ \App\Services\Shop\Money::format((string) $pg->giftItem->value) }}</span>
+                                        @endif
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
                     </div>
-                @endforeach
+                @endif
 
                 @if($product->track_inventory)
                     <div class="mb-3">

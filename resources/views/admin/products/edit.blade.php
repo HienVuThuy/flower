@@ -12,6 +12,10 @@
 
     <p class="admin-page-subtitle">
         Cập nhật "{{ $product->name }}".
+        @can('khuyen-mai')
+            {{-- Quà mặc định của sản phẩm cấu hình ở trang riêng, mở thẳng từ đây. --}}
+            <a data-admin-link href="{{ route('admin.product-gifts.edit', $product) }}" data-lien-ket-qua>Quà tặng kèm của sản phẩm này</a>
+        @endcan
     </p>
 
 </div>

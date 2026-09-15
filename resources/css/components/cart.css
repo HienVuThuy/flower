@@ -832,6 +832,51 @@
     margin-top: var(--space-2xs);
 }
 
+.checkout-items__row--gift {
+    padding-left: 1.25rem;
+    font-size: 0.9rem;
+}
+
+/* Quà kèm trên trang sản phẩm — "Mua 1 mặt hàng – nhận quà miễn phí". */
+.product-gifts {
+    padding: var(--space-sm);
+    border: 1px dashed var(--border-soft);
+    border-radius: 12px;
+}
+
+.product-gifts__title {
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+.product-gifts__list {
+    display: grid;
+    gap: var(--space-2xs);
+}
+
+.product-gifts__item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2xs);
+}
+
+.product-gifts__img,
+.product-gifts__icon {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.product-gifts__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-alt);
+    color: var(--ink-500);
+}
+
 /* ============ ĐIỂM THƯỞNG ============ */
 
 .points-balance {

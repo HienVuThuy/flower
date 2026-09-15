@@ -1441,10 +1441,27 @@ Route::prefix('admin')
             ->middleware(['quyen:khuyen-mai', 'throttle:20,1'])
             ->name('member-tiers.update');
 
-        // QUÀ TẶNG — chương trình và vật phẩm. Quyền khuyến mại.
-        Route::resource('qua-tang', \App\Http\Controllers\Admin\GiftCampaignController::class)
+        /*
+         * QUÀ TẶNG KÈM SẢN PHẨM — chọn sản phẩm, gắn quà mặc định. Quyền khuyến mại.
+         * `qua-tang/chon` khai TRƯỚC `qua-tang/san-pham/{product}` cho dễ đọc; hai đường không đè nhau.
+         */
+        Route::get('qua-tang', [\App\Http\Controllers\Admin\ProductGiftController::class, 'index'])
+            ->middleware('quyen:khuyen-mai')->name('product-gifts.index');
+        Route::get('qua-tang/chon', [\App\Http\Controllers\Admin\ProductGiftController::class, 'open'])
+            ->middleware('quyen:khuyen-mai')->name('product-gifts.open');
+        Route::get('qua-tang/san-pham/{product}', [\App\Http\Controllers\Admin\ProductGiftController::class, 'edit'])
+            ->middleware('quyen:khuyen-mai')->name('product-gifts.edit');
+        Route::post('qua-tang/san-pham/{product}', [\App\Http\Controllers\Admin\ProductGiftController::class, 'store'])
+            ->middleware(['quyen:khuyen-mai', 'throttle:30,1'])->name('product-gifts.store');
+        Route::put('qua-tang/san-pham/{product}/{productGift}', [\App\Http\Controllers\Admin\ProductGiftController::class, 'update'])
+            ->middleware(['quyen:khuyen-mai', 'throttle:30,1'])->name('product-gifts.update');
+        Route::delete('qua-tang/san-pham/{product}/{productGift}', [\App\Http\Controllers\Admin\ProductGiftController::class, 'destroy'])
+            ->middleware(['quyen:khuyen-mai', 'throttle:30,1'])->name('product-gifts.destroy');
+
+        // QUÀ THEO CHƯƠNG TRÌNH — một tab của trang Khuyến mại.
+        Route::resource('khuyen-mai-qua', \App\Http\Controllers\Admin\GiftCampaignController::class)
             ->except('show')
-            ->parameters(['qua-tang' => 'giftCampaign'])
+            ->parameters(['khuyen-mai-qua' => 'giftCampaign'])
             ->names('gift-campaigns')
             ->middleware('quyen:khuyen-mai');
         Route::resource('vat-pham-qua', \App\Http\Controllers\Admin\GiftItemController::class)

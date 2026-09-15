@@ -198,7 +198,11 @@
 
             @can('khuyen-mai')
 
-            <a data-admin-link href="{{ route('admin.promotions.index') }}" class="admin-nav-link {{ request()->routeIs('admin.promotions.*') ? 'is-active' : '' }}">
+            {{--
+                KHUYẾN MẠI là trang tổng hợp: giảm giá sản phẩm, mã giảm giá, quà
+                theo chương trình và hạng thành viên là các tab (x-admin.promo-tabs).
+            --}}
+            <a data-admin-link href="{{ route('admin.promotions.index') }}" class="admin-nav-link {{ request()->routeIs('admin.promotions.*', 'admin.coupons.*', 'admin.gift-campaigns.*', 'admin.member-tiers.*') ? 'is-active' : '' }}">
                 <x-site.icon name="megaphone" />
                 <span>Khuyến mại</span>
             </a>
@@ -216,23 +220,14 @@
                 <span>Đề xuất giá</span>
             </a>
 
-            <a data-admin-link href="{{ route('admin.member-tiers.index') }}" class="admin-nav-link {{ request()->routeIs('admin.member-tiers.*') ? 'is-active' : '' }}">
-                <x-site.icon name="star" />
-                <span>Hạng thành viên</span>
-            </a>
-
-            <a data-admin-link href="{{ route('admin.gift-campaigns.index') }}" class="admin-nav-link {{ request()->routeIs('admin.gift-campaigns.*', 'admin.gift-items.*') ? 'is-active' : '' }}">
+            {{--
+                QUÀ TẶNG = quà mặc định kèm từng sản phẩm ("mua 1 mặt hàng – nhận quà").
+                Quà theo chương trình, mã giảm giá, hạng thành viên là tab trong Khuyến mại.
+            --}}
+            <a data-admin-link href="{{ route('admin.product-gifts.index') }}" class="admin-nav-link {{ request()->routeIs('admin.product-gifts.*', 'admin.gift-items.*') ? 'is-active' : '' }}">
                 <x-site.icon name="flower1" />
                 <span>Quà tặng</span>
             </a>
-
-            @if(config('features.cart'))
-                <a data-admin-link href="{{ route('admin.coupons.index') }}"
-                   class="admin-nav-link {{ request()->routeIs('admin.coupons.*') ? 'is-active' : '' }}">
-                    <x-site.icon name="tags" />
-                    <span>Mã giảm giá</span>
-                </a>
-            @endif
             @endcan
         </nav>
         @endcanany

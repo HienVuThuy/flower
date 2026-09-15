@@ -6,10 +6,12 @@ use App\Enums\GiftCampaignKind;
 use App\Enums\OrderStatus;
 use App\Enums\PromotionStatus;
 use App\Models\GiftCampaign;
+use App\Models\GiftItem;
 use App\Models\MemberTier;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\ProductGift;
 use App\Models\User;
 use App\Services\Checkout\CheckoutBasket;
 use App\Services\Loyalty\MemberTierResolver;
@@ -19,16 +21,21 @@ use Illuminate\Support\Collection;
 /**
  * Đơn này được tặng gì — NƠI DUY NHẤT trả lời, cho cả màn hình và lúc ghi đơn.
  * ============================================================
+ * HAI NGUỒN QUÀ:
+ *
+ *   - QUÀ KÈM SẢN PHẨM (product_gifts): quà mặc định của chính món hàng.
+ *     Mua mỗi N món thì tặng M quà, không điều kiện gì khác. Quà còn ít hơn
+ *     số được tặng thì tặng phần còn lại — khách vẫn nhận được gì đó thay
+ *     vì không có gì.
+ *
+ *   - QUÀ THEO CHƯƠNG TRÌNH (gift_campaigns, thuộc Khuyến mại): giới hạn
+ *     suất, thời gian, hạng, đơn đầu tiên, đơn từ X đồng. Mỗi chương trình
+ *     tặng một bộ mỗi đơn. Quà "đơn đầu tiên" / "mỗi tài khoản N lần" cần
+ *     tài khoản — không kiểm được thì là quà vô hạn.
+ *
  * Trang thanh toán hỏi để HIỆN quà; OrderService hỏi lại lúc ghi đơn (rồi
  * mới khoá kho và suất). Hai nơi hai bộ luật thì khách thấy quà trên màn
  * hình mà đơn không có — hoặc ngược lại.
- *
- * MỖI CHƯƠNG TRÌNH TẶNG MỘT BỘ MỖI ĐƠN. Mua 10 cây không thành 10 phần quà:
- * quà kéo người mua, không phải hàng bán kèm miễn phí theo số lượng.
- *
- * KHÁCH VÃNG LAI: nhận được quà không giới hạn theo người. Quà "đơn đầu
- * tiên" hay "mỗi tài khoản N lần" thì cần tài khoản — không có tài khoản
- * thì không kiểm được, và quà giới hạn không kiểm được là quà vô hạn.
  */
 class GiftResolver
 {
@@ -38,7 +45,7 @@ class GiftResolver
     }
 
     /**
-     * @return Collection<int, array{campaign: GiftCampaign, quantity: int}>
+     * @return Collection<int, array{nguon: string, campaign: ?GiftCampaign, product_gift: ?ProductGift, item: GiftItem, quantity: int, for_product_id: ?int}>
      */
     public function choGio(CheckoutBasket $basket, ?User $user): Collection
     {
@@ -46,22 +53,32 @@ class GiftResolver
             return collect();
         }
 
-        $cacChuongTrinh = $this->dangChay();
-
-        if ($cacChuongTrinh->isEmpty()) {
-            return collect();
-        }
-
-        $hangKhach = $user ? $this->hang->cua($user)['hang'] : null;
-
-        return $cacChuongTrinh
-            ->filter(fn (GiftCampaign $ct) => $this->lyDoKhong($ct, $basket, $user, $hangKhach) === null)
-            ->map(fn (GiftCampaign $ct) => ['campaign' => $ct, 'quantity' => (int) $ct->gift_quantity])
+        return $this->quaKemSanPham($basket)
+            ->concat($this->quaChuongTrinh($basket, $user))
             ->values();
     }
 
     /**
-     * Vì sao đơn này không nhận được quà của chương trình; null = nhận được.
+     * Quà mặc định đang tặng của một sản phẩm — để trang sản phẩm nói trước.
+     *
+     * @return Collection<int, ProductGift>
+     */
+    public function choSanPham(Product $product): Collection
+    {
+        return ProductGift::query()
+            ->where('product_id', $product->id)
+            ->where('is_active', true)
+            ->with(['giftItem.product', 'giftItem.variant'])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->filter(fn (ProductGift $pg) => $pg->giftItem?->is_active
+                && ($pg->giftItem->tonKhoCon() === null || $pg->giftItem->tonKhoCon() > 0))
+            ->values();
+    }
+
+    /**
+     * Vì sao đơn này không nhận được quà của CHƯƠNG TRÌNH; null = nhận được.
      */
     public function lyDoKhong(GiftCampaign $ct, CheckoutBasket $basket, ?User $user, ?MemberTier $hangKhach = null): ?string
     {
@@ -79,16 +96,6 @@ class GiftResolver
 
         if ($con !== null && $con < (int) $ct->gift_quantity) {
             return 'Quà đã được tặng hết.';
-        }
-
-        if ($ct->kind === GiftCampaignKind::KemSanPham) {
-            $soLuong = (int) $basket->lines
-                ->filter(fn ($l) => (int) $l->product->id === (int) $ct->trigger_product_id)
-                ->sum(fn ($l) => $l->quantity);
-
-            if ($soLuong < max(1, (int) $ct->trigger_min_quantity)) {
-                return 'Cần mua từ ' . max(1, (int) $ct->trigger_min_quantity) . ' sản phẩm kèm quà.';
-            }
         }
 
         if ($ct->min_order_amount !== null && bccomp($basket->itemsTotal(), (string) $ct->min_order_amount, 2) < 0) {
@@ -137,30 +144,74 @@ class GiftResolver
             ->count('order_items.order_id');
     }
 
-    /**
-     * Quà kèm đang chạy của một sản phẩm — để trang sản phẩm nói trước.
-     *
-     * @return Collection<int, GiftCampaign>
-     */
-    public function choSanPham(Product $product): Collection
+    private function quaKemSanPham(CheckoutBasket $basket): Collection
     {
-        return $this->dangChay()
-            ->filter(fn (GiftCampaign $ct) => $ct->kind === GiftCampaignKind::KemSanPham
-                && (int) $ct->trigger_product_id === (int) $product->id
-                && $ct->giftItem?->is_active
-                && ($ct->giftItem->tonKhoCon() === null || $ct->giftItem->tonKhoCon() >= (int) $ct->gift_quantity))
+        $soLuong = [];
+
+        foreach ($basket->lines as $l) {
+            $soLuong[$l->product->id] = ($soLuong[$l->product->id] ?? 0) + $l->quantity;
+        }
+
+        return ProductGift::query()
+            ->whereIn('product_id', array_keys($soLuong))
+            ->where('is_active', true)
+            ->with(['giftItem.product', 'giftItem.variant'])
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get()
+            ->map(function (ProductGift $pg) use ($soLuong) {
+                $vat = $pg->giftItem;
+
+                if ($vat === null || ! $vat->is_active) {
+                    return null;
+                }
+
+                $n = $pg->soQuaCho($soLuong[$pg->product_id] ?? 0);
+                $con = $vat->tonKhoCon();
+
+                if ($con !== null) {
+                    $n = min($n, $con);
+                }
+
+                return $n > 0 ? [
+                    'nguon' => 'san_pham',
+                    'campaign' => null,
+                    'product_gift' => $pg,
+                    'item' => $vat,
+                    'quantity' => $n,
+                    'for_product_id' => (int) $pg->product_id,
+                ] : null;
+            })
+            ->filter()
             ->values();
     }
 
-    /** @return Collection<int, GiftCampaign> */
-    private function dangChay(): Collection
+    private function quaChuongTrinh(CheckoutBasket $basket, ?User $user): Collection
     {
-        return GiftCampaign::query()
+        $cacChuongTrinh = GiftCampaign::query()
             ->where('status', PromotionStatus::Active->value)
+            ->where('kind', GiftCampaignKind::ChuongTrinh->value)
             ->with(['giftItem.product', 'giftItem.variant', 'minMemberTier'])
             ->orderBy('id')
             ->get()
-            ->filter(fn (GiftCampaign $ct) => $ct->isRunning())
+            ->filter(fn (GiftCampaign $ct) => $ct->isRunning());
+
+        if ($cacChuongTrinh->isEmpty()) {
+            return collect();
+        }
+
+        $hangKhach = $user ? $this->hang->cua($user)['hang'] : null;
+
+        return $cacChuongTrinh
+            ->filter(fn (GiftCampaign $ct) => $this->lyDoKhong($ct, $basket, $user, $hangKhach) === null)
+            ->map(fn (GiftCampaign $ct) => [
+                'nguon' => 'chuong_trinh',
+                'campaign' => $ct,
+                'product_gift' => null,
+                'item' => $ct->giftItem,
+                'quantity' => (int) $ct->gift_quantity,
+                'for_product_id' => null,
+            ])
             ->values();
     }
 }

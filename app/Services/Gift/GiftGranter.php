@@ -5,7 +5,6 @@ namespace App\Services\Gift;
 use App\Models\GiftCampaign;
 use App\Models\GiftItem;
 use App\Models\Order;
-use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\User;
@@ -26,6 +25,8 @@ use Illuminate\Support\Facades\DB;
  * thì cuộn cả đơn): quà là thứ cho thêm; cuộn một đơn mua cây vì túi vải
  * tặng kèm vừa hết là phạt khách vì một món họ không trả tiền. Trang đơn
  * liệt kê đúng quà đã thật sự nhận.
+ *
+ * QUÀ KÈM SẢN PHẨM nằm dưới dòng hàng đã sinh ra nó (parent_item_id).
  */
 class GiftGranter
 {
@@ -40,28 +41,37 @@ class GiftGranter
         $daTang = [];
 
         foreach ($this->resolver->choGio($basket, $user) as $dong) {
-            /** @var GiftCampaign $ct */
-            $ct = $dong['campaign'];
+            /** @var GiftItem $vat */
+            $vat = $dong['item'];
             $soLuong = $dong['quantity'];
-            $vat = $ct->giftItem;
+            /** @var GiftCampaign|null $ct */
+            $ct = $dong['campaign'];
 
-            if (! $this->giuSuat($ct)) {
+            if ($ct !== null && ! $this->giuSuat($ct)) {
                 continue;
             }
 
             if (! $this->truKho($vat, $soLuong)) {
                 // Trả lại suất vừa giữ — quà không đi thì suất không mất.
-                $this->traSuatMot($ct->id);
+                if ($ct !== null) {
+                    $this->traSuatMot($ct->id);
+                }
 
                 continue;
             }
+
+            $cha = $dong['for_product_id'] === null ? null : $order->items()
+                ->where('product_id', $dong['for_product_id'])
+                ->where('is_gift', false)
+                ->orderBy('id')
+                ->value('id');
 
             $order->items()->create([
                 'product_id' => $vat->product_id,
                 'product_variant_id' => $vat->product_variant_id,
                 'product_name' => $vat->name,
                 'variant_name' => $vat->variant?->name,
-                'promotion_name' => $ct->name,
+                'promotion_name' => $ct?->name ?? 'Quà miễn phí',
                 // Trị giá tham khảo để khách biết quà đáng bao nhiêu; tiền thật của dòng là 0.
                 'unit_base_price' => $vat->value ?? '0.00',
                 'unit_price' => '0.00',
@@ -69,8 +79,10 @@ class GiftGranter
                 'line_total' => '0.00',
                 'discount_amount' => '0.00',
                 'is_gift' => true,
-                'gift_campaign_id' => $ct->id,
+                'gift_campaign_id' => $ct?->id,
+                'product_gift_id' => $dong['product_gift']?->id,
                 'gift_item_id' => $vat->id,
+                'parent_item_id' => $cha,
             ]);
 
             $daTang[] = $vat->name;

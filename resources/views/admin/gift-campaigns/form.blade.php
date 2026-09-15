@@ -4,8 +4,14 @@
 
 @section('content')
 
+<x-admin.promo-tabs />
+
 <div class="mb-4">
     <h1 class="admin-page-title">{{ $ct->exists ? 'Sửa: ' . $ct->name : 'Tạo chương trình quà' }}</h1>
+    <p class="admin-page-subtitle mb-0">
+        Quà tặng một bộ mỗi đơn khi đơn đạt điều kiện. Muốn tặng mặc định khi mua một sản phẩm cụ thể thì dùng
+        <a data-admin-link href="{{ route('admin.product-gifts.index') }}">Quà tặng kèm sản phẩm</a>.
+    </p>
 </div>
 
 @if($vatPham->isEmpty())
@@ -26,22 +32,9 @@
                 <div class="mb-3">
                     <label class="form-label" for="qc-name">Tên chương trình <span aria-hidden="true">*</span></label>
                     <input type="text" id="qc-name" name="name" maxlength="150" required
-                           class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $ct->name) }}">
+                           class="form-control @error('name') is-invalid @enderror" value="{{ old('name', $ct->name) }}"
+                           placeholder="Quà Trung thu cho đơn từ 500.000đ">
                     <x-form-error name="name" />
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label" for="qc-kind">Loại</label>
-                    <select id="qc-kind" name="kind" class="form-select">
-                        @foreach(\App\Enums\GiftCampaignKind::cases() as $loai)
-                            <option value="{{ $loai->value }}" @selected(old('kind', $ct->kind?->value) === $loai->value)>{{ $loai->label() }}</option>
-                        @endforeach
-                    </select>
-                    <ul class="form-text mb-0 ps-3">
-                        @foreach(\App\Enums\GiftCampaignKind::cases() as $loai)
-                            <li><strong>{{ $loai->label() }}</strong> — {{ $loai->hint() }}</li>
-                        @endforeach
-                    </ul>
                 </div>
 
                 <div class="row g-3 mb-3">
@@ -54,6 +47,7 @@
                                 </option>
                             @endforeach
                         </select>
+                        <div class="form-text"><a data-admin-link href="{{ route('admin.gift-items.index') }}">Kho vật phẩm quà</a></div>
                         <x-form-error name="gift_item_id" />
                     </div>
                     <div class="col-md-4">
@@ -61,25 +55,6 @@
                         <input type="number" id="qc-gift-qty" name="gift_quantity" min="1" max="100" required
                                class="form-control @error('gift_quantity') is-invalid @enderror" value="{{ old('gift_quantity', $ct->gift_quantity) }}">
                         <x-form-error name="gift_quantity" />
-                    </div>
-                </div>
-
-                <h2 class="h6 fw-bold mt-4 mb-2">Tặng kèm khi mua</h2>
-                <div class="row g-3 mb-3">
-                    <div class="col-md-8">
-                        <label class="form-label" for="qc-trigger">Sản phẩm cần mua</label>
-                        <select id="qc-trigger" name="trigger_product_id" class="form-select @error('trigger_product_id') is-invalid @enderror">
-                            <option value="">— Không (chương trình quà) —</option>
-                            @foreach($sanPham as $sp)
-                                <option value="{{ $sp->id }}" @selected((string) old('trigger_product_id', $ct->trigger_product_id) === (string) $sp->id)>{{ $sp->name }}</option>
-                            @endforeach
-                        </select>
-                        <x-form-error name="trigger_product_id" />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label" for="qc-trigger-qty">Mua từ</label>
-                        <input type="number" id="qc-trigger-qty" name="trigger_min_quantity" min="1" max="1000" required
-                               class="form-control" value="{{ old('trigger_min_quantity', $ct->trigger_min_quantity) }}">
                     </div>
                 </div>
 

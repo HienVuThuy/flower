@@ -1,19 +1,21 @@
 @extends('layouts.admin')
 
-@section('title', 'Quà tặng')
+@section('title', 'Quà theo chương trình')
 
 @section('content')
 
+<x-admin.promo-tabs />
+
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
-        <h1 class="admin-page-title">Chương trình quà tặng</h1>
+        <h1 class="admin-page-title">Quà theo chương trình</h1>
         <p class="admin-page-subtitle mb-0">
-            Hai loại: <strong>tặng kèm khi mua một sản phẩm</strong>, và <strong>chương trình quà</strong> giới hạn suất, thời gian,
-            hạng thành viên, đơn đầu tiên, đơn từ một số tiền. Mỗi chương trình tặng một bộ quà mỗi đơn.
-            <a data-admin-link href="{{ route('admin.gift-items.index') }}">Vật phẩm quà</a>
+            Quà theo sự kiện: giới hạn suất, thời gian, hạng thành viên, đơn đầu tiên, đơn từ một số tiền. Mỗi chương trình tặng một bộ quà mỗi đơn.
+            Quà mặc định của từng sản phẩm cấu hình ở
+            <a data-admin-link href="{{ route('admin.product-gifts.index') }}">Quà tặng kèm sản phẩm</a>.
         </p>
     </div>
-    <a data-admin-link href="{{ route('admin.gift-campaigns.create') }}" class="btn btn-primary-brand">Tạo chương trình</a>
+    <a data-admin-link href="{{ route('admin.gift-campaigns.create') }}" class="btn btn-primary-brand">Tạo chương trình quà</a>
 </div>
 
 <div class="admin-panel">
@@ -32,15 +34,9 @@
             <tbody>
                 @forelse($chuongTrinh as $ct)
                     <tr data-chuong-trinh-qua="{{ $ct->id }}">
-                        <td>
-                            {{ $ct->name }}
-                            <span class="d-block admin-page-subtitle small">{{ $ct->kind->label() }}</span>
-                        </td>
+                        <td>{{ $ct->name }}</td>
                         <td>{{ $ct->giftItem?->name }} × {{ $ct->gift_quantity }}</td>
                         <td class="small">
-                            @if($ct->triggerProduct)
-                                Mua {{ $ct->trigger_min_quantity }} × {{ $ct->triggerProduct->name }}<br>
-                            @endif
                             @if($ct->min_order_amount !== null)
                                 Đơn từ {{ \App\Services\Shop\Money::format((string) $ct->min_order_amount) }}<br>
                             @endif

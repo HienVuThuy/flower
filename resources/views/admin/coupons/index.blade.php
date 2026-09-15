@@ -4,6 +4,8 @@
 
 @section('content')
 
+    <x-admin.promo-tabs />
+
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
             <h1 class="admin-page-title">Mã giảm giá</h1>

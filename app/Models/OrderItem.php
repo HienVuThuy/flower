@@ -42,6 +42,8 @@ class OrderItem extends Model
         'is_gift',
         'gift_campaign_id',
         'gift_item_id',
+        'parent_item_id',
+        'product_gift_id',
     ];
 
     protected function casts(): array
