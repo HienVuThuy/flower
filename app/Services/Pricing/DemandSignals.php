@@ -138,6 +138,7 @@ class DemandSignals
     private function banRa(array $ids, Carbon $tu): array
     {
         $rows = OrderItem::query()
+            ->hangBan() // quà tặng không phải nhu cầu mua — không kéo giá lên
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->whereIn('order_items.product_id', $ids)
             ->whereNull('orders.deleted_at')
@@ -174,6 +175,7 @@ class DemandSignals
     private function banGanNhat(array $ids): array
     {
         return OrderItem::query()
+            ->hangBan() // lần TẶNG gần nhất không phải lần bán gần nhất
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->whereIn('order_items.product_id', $ids)
             ->whereNull('orders.deleted_at')

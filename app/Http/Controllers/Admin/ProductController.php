@@ -453,6 +453,7 @@ class ProductController extends Controller
          * Chỉ tính ĐƠN ĐÃ GIAO — cùng định nghĩa doanh thu với trang Phân tích.
          */
         $banHang = \App\Models\OrderItem::query()
+            ->hangBan() // món đem tặng làm quà không tính là đã bán
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.product_id', $product->id)
             ->where('orders.status', \App\Enums\OrderStatus::Completed->value)

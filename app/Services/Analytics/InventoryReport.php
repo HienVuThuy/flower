@@ -171,6 +171,12 @@ class InventoryReport
     private function daBanTrongKy(): Collection
     {
         return OrderItem::query()
+            /*
+             * TỐC ĐỘ BÁN KHÔNG GỒM QUÀ. Quà vẫn trừ kho thật (tồn đã phản ánh),
+             * nhưng tính vào "bán mỗi ngày" thì món dùng làm quà trông như bán
+             * chạy và báo cáo giục nhập hàng theo nhu cầu không có thật.
+             */
+            ->hangBan()
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.status', OrderStatus::Completed->value)
             ->whereNull('orders.deleted_at')

@@ -76,6 +76,13 @@ class ProfitReport
                 ->whereNull('orders.deleted_at')
 
                 /*
+                 * QUÀ TẶNG KHÔNG THUỘC BẢNG LÃI THEO SẢN PHẨM — doanh thu 0,
+                 * giá vốn thật: để nó ở đây thì món dùng làm quà trông như bán
+                 * lỗ. Giá vốn quà đứng thành khoản riêng — xem chiPhiQua().
+                 */
+                ->where('order_items.is_gift', false)
+
+                /*
                  * HOA TƯƠI KHÔNG THUỘC BẢNG NÀY.
                  *
                  * Hoa không nhập kho theo phiếu (giá vốn hoa tính theo LÔ, ở
@@ -218,7 +225,63 @@ class ProfitReport
             'dong_chua_tach_vat' => $soDongChuaTachVat,
             'doanh_thu_chua_tach_vat' => $chuaTachVat,
             'co_phieu_nhap_co_gia' => $bangGia !== [],
+            'chi_phi_qua' => $this->chiPhiQua($bangGia),
         ];
+    }
+
+    /**
+     * GIÁ VỐN QUÀ TẶNG trong kỳ — khoản riêng, không nằm trong lãi theo sản phẩm.
+     *
+     * Quà là sản phẩm có giá nhập: tiền hàng thật đi ra kèm đơn, doanh thu 0.
+     * Tính bằng CÙNG bảng giá vốn bình quân với hàng bán, tại ngày đặt đơn.
+     * Vật phẩm tặng riêng (không phải sản phẩm) và quà chưa có phiếu nhập có
+     * giá thì không có số — đếm và nói ra, không coi là 0đ.
+     *
+     * @param  array<string, list<array{ngay: string, sl: int, tien: string}>>  $bangGia
+     * @return array{tien: string, so_dong_chua_gia: int}
+     */
+    private function chiPhiQua(array $bangGia): array
+    {
+        $dong = $this->khoang->apDung(
+            OrderItem::query()
+                ->join('orders', 'orders.id', '=', 'order_items.order_id')
+                ->where('orders.status', OrderStatus::Completed->value)
+                ->whereNull('orders.deleted_at')
+                ->where('order_items.is_gift', true),
+            'orders.created_at',
+        )->get([
+            'order_items.product_id',
+            'order_items.product_variant_id',
+            'order_items.quantity',
+            'orders.created_at as ngay_dat',
+        ]);
+
+        $tien = '0.00';
+        $chuaGia = 0;
+
+        foreach ($dong as $d) {
+            if ($d->product_id === null) {
+                $chuaGia++;
+
+                continue;
+            }
+
+            $luyKe = $bangGia[$d->product_id . ':' . ($d->product_variant_id ?? '')]
+                ?? ($d->product_variant_id === null ? ($bangGia[$d->product_id . ':*'] ?? []) : []);
+
+            $ngay = KhoangThoiGian::diaPhuong(\Illuminate\Support\Carbon::parse($d->ngay_dat, config('app.timezone')))->toDateString();
+            $donGia = $this->giaVonTaiNgay($luyKe, $ngay);
+
+            if ($donGia === null) {
+                $chuaGia++;
+
+                continue;
+            }
+
+            $tien = bcadd($tien, bcmul($donGia, (string) $d->quantity, 2), 2);
+        }
+
+        return ['tien' => $tien, 'so_dong_chua_gia' => $chuaGia];
     }
 
     /**

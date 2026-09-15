@@ -612,6 +612,7 @@ class AnalyticsService
     public function bestSellers(int $limit = 8): Collection
     {
         $query = \App\Models\OrderItem::query()
+            ->hangBan() // quà tặng kèm không phải hàng bán chạy
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.status', OrderStatus::Completed->value)
             ->whereNull('orders.deleted_at');

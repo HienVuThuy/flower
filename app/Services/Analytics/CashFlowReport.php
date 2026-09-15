@@ -75,11 +75,16 @@ class CashFlowReport
 
         $laiRong = bcsub(
             bcsub(
-                bcsub(bcadd($loi['lai_gop'], $laiHoa, 2), $chiPhi['tong'], 2),
-                $buShipTien,
+                bcsub(
+                    bcsub(bcadd($loi['lai_gop'], $laiHoa, 2), $chiPhi['tong'], 2),
+                    $buShipTien,
+                    2,
+                ),
+                (string) $loi['hoan_tien'],
                 2,
             ),
-            (string) $loi['hoan_tien'],
+            // Giá vốn quà tặng: tiền hàng thật đi ra kèm đơn, doanh thu 0.
+            $loi['chi_phi_qua']['tien'],
             2,
         );
 
@@ -100,6 +105,7 @@ class CashFlowReport
                 'chi_phi' => $chiPhi['tong'],
                 'bu_ship' => $buShipTien,
                 'hoan_tien' => bcadd((string) $loi['hoan_tien'], '0', 2),
+                'chi_phi_qua' => $loi['chi_phi_qua']['tien'],
                 'lai_rong' => $laiRong,
 
                 // % doanh thu hàng có giá vốn. < 100 thì lãi ròng cao hơn sự thật.

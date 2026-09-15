@@ -171,6 +171,18 @@
                 </div>
                 {{-- Lương, mặt bằng, server… — chỉ có số khi đã ghi ở Sổ thu chi. Chưa ghi khoản
                      nào thì nói "chưa ghi", không in 0đ: 0đ nghĩa là cửa hàng không tốn gì. --}}
+                {{-- Quà tặng là hàng thật đi ra kèm đơn, doanh thu 0 — không nằm trong bảng lãi theo sản phẩm. --}}
+                <div data-dong="chi-phi-qua">
+                    <dt>Giá vốn quà tặng</dt>
+                    <dd>
+                        {{ $tien($loi['chi_phi_qua']['tien']) }}
+                        @if($loi['chi_phi_qua']['so_dong_chua_gia'] > 0)
+                            <span class="d-block admin-page-subtitle small">
+                                {{ $loi['chi_phi_qua']['so_dong_chua_gia'] }} dòng quà chưa có giá nhập (vật phẩm tặng riêng hoặc chưa lập phiếu nhập)
+                            </span>
+                        @endif
+                    </dd>
+                </div>
                 <div>
                     <dt>Chi phí vận hành đã ghi</dt>
                     <dd>

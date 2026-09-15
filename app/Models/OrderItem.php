@@ -60,6 +60,18 @@ class OrderItem extends Model
         ];
     }
 
+    /**
+     * CHỈ HÀNG BÁN — bỏ dòng quà tặng.
+     *
+     * Mọi nơi đếm "đã bán", "bán chạy", "tốc độ bán" dùng scope này: dòng quà
+     * 0đ mà được đếm thì túi phân bón đem tặng trông như bán chạy, và Đề xuất
+     * giá / báo cáo nhập hàng đọc sai nhu cầu.
+     */
+    public function scopeHangBan(\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder
+    {
+        return $query->where('order_items.is_gift', false);
+    }
+
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);

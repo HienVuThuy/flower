@@ -74,6 +74,7 @@
                 <div><dt>Chi phí vận hành</dt><dd>− {{ $tien($lai['chi_phi']) }}</dd></div>
                 <div><dt>Cửa hàng bù ship</dt><dd>− {{ $tien($lai['bu_ship']) }}</dd></div>
                 <div><dt>Hoàn tiền cho đơn đã giao</dt><dd>− {{ $tien($lai['hoan_tien']) }}</dd></div>
+                <div data-dong="chi-phi-qua"><dt>Giá vốn quà tặng</dt><dd>− {{ $tien($lai['chi_phi_qua']) }}</dd></div>
                 <div class="fw-bold" data-dong="lai-rong">
                     <dt>Lãi ròng ước tính</dt>
                     <dd class="{{ $am($lai['lai_rong']) ? 'text-danger' : '' }}">{{ $tien($lai['lai_rong']) }}</dd>

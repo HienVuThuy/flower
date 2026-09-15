@@ -30,6 +30,7 @@ class SocialProof
     public function banGanDay(Product $product, int $soNgay = 30): int
     {
         return (int) OrderItem::query()
+            ->hangBan() // quà tặng không phải "đã bán"
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.product_id', $product->id)
             ->where('orders.status', OrderStatus::Completed->value)
@@ -66,6 +67,7 @@ class SocialProof
     public function quyCachBanChay(Product $product, int $soNgay = 90): ?int
     {
         $theoQuyCach = OrderItem::query()
+            ->hangBan()
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('order_items.product_id', $product->id)
             ->whereNotNull('order_items.product_variant_id')

@@ -57,6 +57,7 @@ class SalesBreakdown
     {
         $dong = $this->khoang->apDung(
             OrderItem::query()
+                ->hangBan() // số lượng theo danh mục không gồm quà tặng
                 ->join('orders', 'orders.id', '=', 'order_items.order_id')
                 ->leftJoin('products', 'products.id', '=', 'order_items.product_id')
                 ->where('orders.status', OrderStatus::Completed->value)
