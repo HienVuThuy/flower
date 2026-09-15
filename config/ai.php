@@ -20,8 +20,12 @@ return [
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
 
-        // Đổi được bằng GEMINI_MODEL mà không sửa mã.
-        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        /*
+         * Đổi được bằng GEMINI_MODEL mà không sửa mã. Google ngừng mở
+         * gemini-2.5-flash cho khoá mới (trả 404 kèm lời khuyên dùng bản mới),
+         * nên mặc định là gemini-3.6-flash.
+         */
+        'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
 
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com/v1beta'),
 

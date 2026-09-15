@@ -15,9 +15,10 @@
 @endphp
 
 <details class="ai-chat" data-ai-chat>
-    <summary class="ai-chat__toggle">
+    {{-- Nút TRÒN, chỉ biểu tượng: dải chữ dài cố định ở góc che mất nội dung trang. Tên đọc được qua aria-label / title. --}}
+    <summary class="ai-chat__toggle" aria-label="Tư vấn cây &amp; mua sắm" title="Tư vấn cây &amp; mua sắm">
         <x-site.icon name="flower2" />
-        <span>Tư vấn cây &amp; mua sắm</span>
+        <span class="visually-hidden">Tư vấn cây &amp; mua sắm</span>
     </summary>
 
     <div class="ai-chat__panel">

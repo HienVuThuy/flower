@@ -8,9 +8,50 @@ use Illuminate\Validation\Rule;
 
 class StoreBulkOrderInquiryRequest extends FormRequest
 {
+    /**
+     * Mục "Yêu cầu thêm" trên biểu mẫu → những ô nó mở ra.
+     *
+     * Khớp với các ô tick ở shop/bulk-inquiry/create.blade.php.
+     */
+    public const YEU_CAU_THEM = [
+        'ngay' => ['event_date'],
+        'dia_diem' => ['event_location'],
+        'so_luong' => ['quantity_estimate'],
+        'ngan_sach' => ['budget_min', 'budget_max'],
+        'mau' => ['color_preference'],
+        'loai_hoa' => ['flower_preference'],
+    ];
+
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * BỎ giá trị của yêu cầu không tick.
+     *
+     * Ô bị ẩn vẫn gửi giá trị khách đã gõ trước khi bỏ tick; lưu nó là ghi vào
+     * phiếu một yêu cầu khách đã rút lại. Chỉ áp cho biểu mẫu có ô tick
+     * (`them_form`) — nơi gửi khác không có ô tick thì giữ nguyên như trước.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (! $this->boolean('them_form')) {
+            return;
+        }
+
+        $daTick = array_map('strval', (array) $this->input('them', []));
+        $bo = [];
+
+        foreach (self::YEU_CAU_THEM as $ma => $truong) {
+            if (! in_array($ma, $daTick, true)) {
+                foreach ($truong as $t) {
+                    $bo[$t] = null;
+                }
+            }
+        }
+
+        $this->merge($bo);
     }
 
     public function rules(): array

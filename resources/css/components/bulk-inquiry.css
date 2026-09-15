@@ -1,0 +1,39 @@
+/* ============ SỐ LƯỢNG LỚN — YÊU CẦU THÊM ============
+ *
+ * Mỗi yêu cầu là một dòng tick; tick thì ô nhập của nó mới hiện ra. CSS thuần
+ * (:has) như khối hoá đơn ở bước thanh toán: trình duyệt không hiểu :has()
+ * thì hiện luôn các ô — dài hơn nhưng vẫn dùng được. Máy chủ bỏ giá trị của
+ * yêu cầu không tick.
+ */
+.bulk-them-list {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.bulk-them {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: 0.6rem var(--space-sm);
+}
+
+.bulk-them:has(.bulk-them__toggle input:checked) {
+    border-color: var(--brand-500);
+    background: var(--brand-100);
+}
+
+.bulk-them__toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 0;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.bulk-them__field {
+    margin-top: 0.6rem;
+}
+
+.bulk-them:not(:has(.bulk-them__toggle input:checked)) .bulk-them__field {
+    display: none;
+}

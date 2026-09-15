@@ -381,6 +381,22 @@
 }
 
 /*
+ * CHI TIẾT CỦA TỪNG HÌNH THỨC CHỈ HIỆN KHI ĐÃ CHỌN HÌNH THỨC ĐÓ.
+ *
+ * "Trả bằng cách nào" (QR / thẻ) là câu hỏi của MoMo; số kỳ là câu hỏi của trả
+ * góp. Bày cả hai khi khách đang chọn COD là hỏi họ những thứ không liên quan.
+ * CSS thuần như khối hoá đơn: trình duyệt không hiểu :has() thì hiện cả —
+ * dài hơn nhưng vẫn dùng được. Máy chủ chỉ đọc ô của hình thức đã chọn.
+ */
+.checkout-step__body:not(:has(input[name="payment_method"][value="momo"]:checked)) .momo-flow {
+    display: none;
+}
+
+.payment-option:not(:has(input[name="payment_method"]:checked)) .tra-gop-chi-tiet {
+    display: none;
+}
+
+/*
  * :has() cho phép tô sáng cả ô khi radio bên trong được chọn mà không
  * cần thêm một dòng JavaScript nào.
  */

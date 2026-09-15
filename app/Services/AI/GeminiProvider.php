@@ -61,7 +61,15 @@ final class GeminiProvider implements AiProvider
         }
 
         if ($phanHoi->failed()) {
-            Log::warning('Gemini trả lỗi.', ['model' => $model, 'status' => $phanHoi->status()]);
+            /*
+             * Ghi câu lỗi của Google (không chứa khoá). Chỉ ghi mã trạng thái thì
+             * 404 "model đã ngừng cho khoá mới" trông y hệt 404 "sai đường dẫn".
+             */
+            Log::warning('Gemini trả lỗi.', [
+                'model' => $model,
+                'status' => $phanHoi->status(),
+                'loi' => mb_substr((string) $phanHoi->json('error.message', ''), 0, 300),
+            ]);
 
             throw new AiException('Trợ lý AI đang bận. Vui lòng thử lại sau ít phút.');
         }

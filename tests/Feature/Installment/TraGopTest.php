@@ -275,6 +275,8 @@ class TraGopTest extends TestCase
         $this->vaoThanhToan();
         $this->get(route('shop.checkout.details'))
             ->assertSee('data-tra-gop="duoc"', false)
+            // Số kỳ nằm trong khối chỉ hiện khi đã chọn trả góp (CSS ẩn theo lớp này).
+            ->assertSee('class="tra-gop-chi-tiet d-block"', false)
             ->assertSee('trả trước 30%')
             ->assertSee('tối đa 4 kỳ');
 

@@ -4,6 +4,15 @@
 
 @section('content')
 
+@php
+    /*
+     * Yêu cầu thêm đang tick: khách vừa tick (lỗi kiểm dữ liệu quay lại),
+     * hoặc ô của nó đang có giá trị cũ.
+     */
+    $daTick = fn (string $ma, array $truong) => in_array($ma, array_map('strval', (array) old('them', [])), true)
+        || collect($truong)->contains(fn ($t) => filled(old($t)));
+@endphp
+
 <section class="section">
     <div class="container-shop">
 
@@ -45,10 +54,11 @@
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
                         @endif
 
-                        <div class="mb-3">
-                            <span class="text-label d-block mb-2">1. Dịp / sự kiện</span>
+                        <div class="mb-4">
+                            <label class="text-label d-block mb-2" for="bi-occasion">1. Dịp / sự kiện</label>
                             <input
                                 type="text"
+                                id="bi-occasion"
                                 name="occasion"
                                 value="{{ old('occasion') }}"
                                 class="form-control @error('occasion') is-invalid @enderror"
@@ -57,117 +67,131 @@
                             <x-form-error name="occasion"/>
                         </div>
 
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-6">
-                                <label class="form-label" for="bi-event-date">Ngày cần hoa</label>
-                                <input
-                                    type="date"
-                                    id="bi-event-date"
-                                    name="event_date"
-                                    value="{{ old('event_date') }}"
-                                    min="{{ now()->toDateString() }}"
-                                    class="form-control @error('event_date') is-invalid @enderror"
-                                >
-                                <div class="form-text">
-                                    {{-- Nói rõ VÌ SAO hỏi: khách điền tự nguyện hơn hẳn
-                                         khi biết thông tin đó dùng để làm gì. --}}
-                                    Hoa tươi số lượng lớn cần báo trước vài ngày để gom đủ hàng.
+                        {{--
+                            YÊU CẦU THÊM — TICK THÌ MỚI HIỆN Ô NHẬP.
+
+                            Trước đây mọi ô bày sẵn: khách hỏi "Kim tiền chậu sứ" cũng
+                            thấy "Tông màu mong muốn", "Loại hoa ưa thích" và không hiểu
+                            mình phải điền gì. Giờ khách chỉ mở những gì mình cần; điều
+                            không có trong danh sách thì ghi ở mục Yêu cầu chi tiết.
+
+                            Ẩn/hiện bằng CSS thuần (:has) — không cần JavaScript. Máy chủ
+                            BỎ giá trị của ô không tick (StoreBulkOrderInquiryRequest), nên
+                            ô đã gõ rồi bỏ tick không lọt vào phiếu.
+                        --}}
+                        <div class="mb-3">
+                            <span class="text-label d-block mb-1">2. Yêu cầu thêm</span>
+                            <p class="text-caption mb-2">
+                                Tick những gì bạn cần nêu để hiện ô nhập — không cần điền hết.
+                                Điều khác thì ghi ở mục Yêu cầu chi tiết bên dưới.
+                            </p>
+
+                            <input type="hidden" name="them_form" value="1">
+
+                            <div class="bulk-them-list" data-yeu-cau-them>
+
+                                <div class="bulk-them">
+                                    <label class="bulk-them__toggle">
+                                        <input type="checkbox" name="them[]" value="ngay" @checked($daTick('ngay', ['event_date']))>
+                                        <span>Ngày cần hoa</span>
+                                    </label>
+                                    <div class="bulk-them__field">
+                                        <input type="date" id="bi-event-date" name="event_date" aria-label="Ngày cần hoa"
+                                               value="{{ old('event_date') }}" min="{{ now()->toDateString() }}"
+                                               class="form-control @error('event_date') is-invalid @enderror">
+                                        <div class="form-text">Hoa tươi số lượng lớn cần báo trước vài ngày để gom đủ hàng.</div>
+                                        <x-form-error name="event_date"/>
+                                    </div>
                                 </div>
-                                <x-form-error name="event_date"/>
-                            </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label" for="bi-location">Nơi giao / địa điểm tổ chức</label>
-                                <input
-                                    type="text"
-                                    id="bi-location"
-                                    name="event_location"
-                                    value="{{ old('event_location') }}"
-                                    class="form-control @error('event_location') is-invalid @enderror"
-                                    placeholder="Ví dụ: Trung tâm hội nghị ABC, quận X"
-                                >
-                                <x-form-error name="event_location"/>
-                            </div>
+                                <div class="bulk-them">
+                                    <label class="bulk-them__toggle">
+                                        <input type="checkbox" name="them[]" value="dia_diem" @checked($daTick('dia_diem', ['event_location']))>
+                                        <span>Nơi giao / địa điểm tổ chức</span>
+                                    </label>
+                                    <div class="bulk-them__field">
+                                        <input type="text" id="bi-location" name="event_location" aria-label="Nơi giao / địa điểm tổ chức"
+                                               value="{{ old('event_location') }}"
+                                               class="form-control @error('event_location') is-invalid @enderror"
+                                               placeholder="Ví dụ: Trung tâm hội nghị ABC, quận X">
+                                        <x-form-error name="event_location"/>
+                                    </div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label" for="bi-qty">Số lượng dự kiến</label>
-                                <input
-                                    type="number"
-                                    id="bi-qty"
-                                    name="quantity_estimate"
-                                    min="1"
-                                    value="{{ old('quantity_estimate') }}"
-                                    class="form-control @error('quantity_estimate') is-invalid @enderror"
-                                    placeholder="Ví dụ: 50"
-                                >
-                                <x-form-error name="quantity_estimate"/>
-                            </div>
+                                <div class="bulk-them">
+                                    <label class="bulk-them__toggle">
+                                        <input type="checkbox" name="them[]" value="so_luong" @checked($daTick('so_luong', ['quantity_estimate']))>
+                                        <span>Số lượng dự kiến</span>
+                                    </label>
+                                    <div class="bulk-them__field">
+                                        <input type="number" id="bi-qty" name="quantity_estimate" min="1" aria-label="Số lượng dự kiến"
+                                               value="{{ old('quantity_estimate') }}"
+                                               class="form-control @error('quantity_estimate') is-invalid @enderror"
+                                               placeholder="Ví dụ: 50">
+                                        <x-form-error name="quantity_estimate"/>
+                                    </div>
+                                </div>
 
-                            {{--
-                                NGÂN SÁCH LÀ MỘT KHOẢNG, không phải một con số.
+                                {{--
+                                    NGÂN SÁCH LÀ MỘT KHOẢNG, không phải một con số: khách sự kiện
+                                    hiếm khi biết chính xác, nhưng gần như luôn biết "khoảng 5 đến
+                                    10 triệu".
+                                --}}
+                                <div class="bulk-them">
+                                    <label class="bulk-them__toggle">
+                                        <input type="checkbox" name="them[]" value="ngan_sach" @checked($daTick('ngan_sach', ['budget_min', 'budget_max']))>
+                                        <span>Ngân sách</span>
+                                    </label>
+                                    <div class="bulk-them__field">
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <label class="form-label" for="bi-budget-min">Từ (₫)</label>
+                                                <input type="number" id="bi-budget-min" name="budget_min" min="0" step="100000"
+                                                       value="{{ old('budget_min') }}"
+                                                       class="form-control @error('budget_min') is-invalid @enderror" placeholder="5000000">
+                                                <x-form-error name="budget_min"/>
+                                            </div>
+                                            <div class="col-6">
+                                                <label class="form-label" for="bi-budget-max">Đến (₫)</label>
+                                                <input type="number" id="bi-budget-max" name="budget_max" min="0" step="100000"
+                                                       value="{{ old('budget_max') }}"
+                                                       class="form-control @error('budget_max') is-invalid @enderror" placeholder="10000000">
+                                                <x-form-error name="budget_max"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
 
-                                Khách sự kiện hiếm khi biết chính xác, nhưng gần như
-                                luôn biết "khoảng 5 đến 10 triệu". Hỏi một con số duy
-                                nhất là hỏi thứ họ không có — và họ sẽ bỏ trống, cửa
-                                hàng mất luôn thông tin quan trọng nhất để báo giá.
-                            --}}
-                            <div class="col-md-3 col-6">
-                                <label class="form-label" for="bi-budget-min">Ngân sách từ</label>
-                                <input
-                                    type="number"
-                                    id="bi-budget-min"
-                                    name="budget_min"
-                                    min="0"
-                                    step="100000"
-                                    value="{{ old('budget_min') }}"
-                                    class="form-control @error('budget_min') is-invalid @enderror"
-                                    placeholder="5000000"
-                                >
-                                <x-form-error name="budget_min"/>
-                            </div>
+                                <div class="bulk-them">
+                                    <label class="bulk-them__toggle">
+                                        <input type="checkbox" name="them[]" value="mau" @checked($daTick('mau', ['color_preference']))>
+                                        <span>Tông màu mong muốn</span>
+                                    </label>
+                                    <div class="bulk-them__field">
+                                        <input type="text" id="bi-color" name="color_preference" aria-label="Tông màu mong muốn"
+                                               value="{{ old('color_preference') }}"
+                                               class="form-control @error('color_preference') is-invalid @enderror"
+                                               placeholder="Ví dụ: trắng – xanh pastel">
+                                        <x-form-error name="color_preference"/>
+                                    </div>
+                                </div>
 
-                            <div class="col-md-3 col-6">
-                                <label class="form-label" for="bi-budget-max">Đến</label>
-                                <input
-                                    type="number"
-                                    id="bi-budget-max"
-                                    name="budget_max"
-                                    min="0"
-                                    step="100000"
-                                    value="{{ old('budget_max') }}"
-                                    class="form-control @error('budget_max') is-invalid @enderror"
-                                    placeholder="10000000"
-                                >
-                                <x-form-error name="budget_max"/>
-                            </div>
+                                <div class="bulk-them">
+                                    <label class="bulk-them__toggle">
+                                        <input type="checkbox" name="them[]" value="loai_hoa" @checked($daTick('loai_hoa', ['flower_preference']))>
+                                        <span>Loại hoa / cây ưa thích</span>
+                                    </label>
+                                    <div class="bulk-them__field">
+                                        <input type="text" id="bi-flower" name="flower_preference" aria-label="Loại hoa / cây ưa thích"
+                                               value="{{ old('flower_preference') }}"
+                                               class="form-control @error('flower_preference') is-invalid @enderror"
+                                               placeholder="Ví dụ: hồng Ecuador, cẩm tú cầu, kim tiền">
+                                        <x-form-error name="flower_preference"/>
+                                    </div>
+                                </div>
 
-                            <div class="col-md-6">
-                                <label class="form-label" for="bi-color">Tông màu mong muốn</label>
-                                <input
-                                    type="text"
-                                    id="bi-color"
-                                    name="color_preference"
-                                    value="{{ old('color_preference') }}"
-                                    class="form-control @error('color_preference') is-invalid @enderror"
-                                    placeholder="Ví dụ: trắng – xanh pastel"
-                                >
-                                <x-form-error name="color_preference"/>
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label" for="bi-flower">Loại hoa ưa thích</label>
-                                <input
-                                    type="text"
-                                    id="bi-flower"
-                                    name="flower_preference"
-                                    value="{{ old('flower_preference') }}"
-                                    class="form-control @error('flower_preference') is-invalid @enderror"
-                                    placeholder="Ví dụ: hồng Ecuador, cẩm tú cầu"
-                                >
-                                <x-form-error name="flower_preference"/>
                             </div>
                         </div>
-
 
                         <hr class="my-4" style="border-color: var(--border-soft);">
 
@@ -175,26 +199,26 @@
 
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
-                                <label class="form-label">Họ tên <span class="text-accent">*</span></label>
-                                <input type="text" name="contact_name" value="{{ old('contact_name') }}" class="form-control @error('contact_name') is-invalid @enderror">
+                                <label class="form-label" for="bi-name">Họ tên <span class="text-accent">*</span></label>
+                                <input type="text" id="bi-name" name="contact_name" value="{{ old('contact_name') }}" class="form-control @error('contact_name') is-invalid @enderror">
                                 <x-form-error name="contact_name"/>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Số điện thoại <span class="text-accent">*</span></label>
-                                <input type="text" name="contact_phone" value="{{ old('contact_phone') }}" class="form-control @error('contact_phone') is-invalid @enderror">
+                                <label class="form-label" for="bi-phone">Số điện thoại <span class="text-accent">*</span></label>
+                                <input type="text" id="bi-phone" name="contact_phone" value="{{ old('contact_phone') }}" class="form-control @error('contact_phone') is-invalid @enderror">
                                 <x-form-error name="contact_phone"/>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Email</label>
-                                <input type="email" name="contact_email" value="{{ old('contact_email') }}" class="form-control @error('contact_email') is-invalid @enderror">
+                                <label class="form-label" for="bi-email">Email</label>
+                                <input type="email" id="bi-email" name="contact_email" value="{{ old('contact_email') }}" class="form-control @error('contact_email') is-invalid @enderror">
                                 <x-form-error name="contact_email"/>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label">Công ty / đơn vị</label>
-                                <input type="text" name="company_name" value="{{ old('company_name') }}" class="form-control @error('company_name') is-invalid @enderror" placeholder="Bỏ trống nếu đặt cá nhân">
+                                <label class="form-label" for="bi-company">Công ty / đơn vị</label>
+                                <input type="text" id="bi-company" name="company_name" value="{{ old('company_name') }}" class="form-control @error('company_name') is-invalid @enderror" placeholder="Bỏ trống nếu đặt cá nhân">
                                 <x-form-error name="company_name"/>
                             </div>
 
@@ -230,8 +254,8 @@
 
 
                         <div class="mb-4">
-                            <span class="text-label d-block mb-2">4. Yêu cầu chi tiết</span>
-                            <textarea name="message" rows="4" class="form-control @error('message') is-invalid @enderror" placeholder="Yêu cầu riêng, cách trang trí, hoặc câu hỏi của bạn...">{{ old('message') }}</textarea>
+                            <label class="text-label d-block mb-2" for="bi-message">4. Yêu cầu chi tiết</label>
+                            <textarea id="bi-message" name="message" rows="4" class="form-control @error('message') is-invalid @enderror" placeholder="Yêu cầu riêng, cách trang trí, hoặc câu hỏi của bạn...">{{ old('message') }}</textarea>
                             <x-form-error name="message"/>
                         </div>
 
