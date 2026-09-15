@@ -199,13 +199,27 @@
                                 </tr>
                             </thead>
                             <tbody>
+                                {{--
+                                    QUÀ TRẢ KÈM: bảng "trả r món chính → n quà" dựng theo luật của
+                                    từng món quà (GiftReturnCalculator). Nhập số món chính là ô quà
+                                    tự điền — CHỈ ĐIỀN SẴN, người lập phiếu sửa được.
+                                --}}
+                                @php $quaTraKem = app(\App\Services\Gift\GiftReturnCalculator::class)->bangTraKem($order); @endphp
                                 @foreach($order->items as $item)
                                     @php $con = max(0, $returnable[$item->id] ?? 0); @endphp
                                     <tr>
                                         <td>
+                                            @if($item->is_gift)
+                                                <span class="badge text-bg-success">Quà miễn phí</span>
+                                            @endif
                                             {{ $item->product_name }}
                                             @if($item->variant_name)
                                                 <span class="text-muted">— {{ $item->variant_name }}</span>
+                                            @endif
+                                            @if($item->is_gift && isset($quaTraKem[$item->id]))
+                                                <span class="d-block text-muted">
+                                                    {{ $quaTraKem[$item->id]['quy_tac'] === 'khong_thu_hoi' ? 'Quà không thu hồi' : 'Tự điền theo số món chính trả về — sửa được' }}
+                                                </span>
                                             @endif
                                         </td>
                                         <td class="text-end">{{ $con }}</td>
@@ -213,6 +227,11 @@
                                             <input type="number" name="items[{{ $item->id }}][quantity]" min="0" max="{{ $con }}" step="1"
                                                    value="{{ old('items.'.$item->id.'.quantity', 0) }}"
                                                    class="form-control form-control-sm" @disabled($con === 0)
+                                                   @if($item->is_gift && isset($quaTraKem[$item->id]))
+                                                       data-qua-tra-kem="{{ json_encode($quaTraKem[$item->id]) }}"
+                                                   @elseif(! $item->is_gift)
+                                                       data-dong-tra="{{ $item->id }}"
+                                                   @endif
                                                    aria-label="Số lượng {{ $item->product_name }} trả về">
                                         </td>
                                         <td>

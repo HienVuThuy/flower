@@ -28,6 +28,7 @@ import { initChonKy } from './admin/chon-ky';
 import { initTuoiSoLieu } from './admin/tuoi-so-lieu';
 import { initProductBlocks } from './admin/product-blocks';
 import { initGiftVariantPicker } from './admin/gift-variant-picker';
+import { initRefundGiftAutofill } from './admin/refund-gift-autofill';
 import { initVideoEmbed } from './components/video-embed';
 
 /*
@@ -83,6 +84,7 @@ export function bootUi() {
     initTuoiSoLieu();
     initProductBlocks();
     initGiftVariantPicker();
+    initRefundGiftAutofill();
     initVideoEmbed();
 }
 

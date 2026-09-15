@@ -119,6 +119,11 @@ class ExchangeService
             return 'Hoa tươi không đổi được — hàng quay về không bán lại cho ai được.';
         }
 
+        // Quà 0đ đổi lấy hàng có giá là lỗ hổng — chỉ đổi được khi món quà cho phép (cấu hình từng quà).
+        if (! app(\App\Services\Gift\GiftReturnCalculator::class)->choDoi($item)) {
+            return 'Quà tặng miễn phí không đổi được sang hàng khác.';
+        }
+
         if ($this->conDoiDuoc($item) <= 0) {
             return 'Món này đã đổi hoặc đã trả về hết.';
         }
