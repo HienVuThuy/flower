@@ -170,6 +170,9 @@ class OrderService
             'coupon_id' => $basket->coupon?->id,
             'coupon_code' => $basket->coupon?->code,
             'coupon_discount' => $basket->couponDiscount(),
+            // Chụp điểm đã dùng: huỷ đơn phải trả lại đúng số này, đổi tỉ giá sau này không làm đơn cũ đổi.
+            'points_used' => $basket->pointsUsed(),
+            'points_discount' => $basket->pointsDiscount(),
             'shipping_fee' => $shippingFee,
 
             /*
@@ -304,6 +307,15 @@ class OrderService
          */
         if ($basket->coupon) {
             $this->coupons->redeem($basket->coupon, $order);
+        }
+
+        /*
+         * TRỪ ĐIỂM ĐÃ DÙNG — cùng lý do với lượt mã ngay trên: trong
+         * transaction, nên không đủ điểm (dùng ở tab khác trong lúc đang
+         * xem lại đơn) thì cuộn cả đơn, không có đơn giảm bằng điểm ảo.
+         */
+        if ($basket->pointsUsed() > 0 && Auth::user() !== null) {
+            app(\App\Services\Points\PointLedger::class)->dungChoDon(Auth::user(), $basket->pointsUsed(), $order);
         }
 
         /*
@@ -635,6 +647,9 @@ class OrderService
              */
             if ($restoreStock) {
                 $this->coupons->release($order);
+
+                // Trả lại điểm khách đã dùng — cùng điều kiện, cùng transaction với trả lượt mã.
+                app(\App\Services\Points\PointLedger::class)->traDiemCuaDon($order);
             }
         });
 

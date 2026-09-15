@@ -381,6 +381,11 @@ class RefundService
          * xong thì điểm phải trừ cùng lúc, không để một nửa. Xem PointEarning.
          */
         app(\App\Services\Points\PointEarning::class)->hoanTien($refund);
+
+        // Hoàn ĐỦ tiền thì trả cả điểm khách đã dùng cho đơn — cùng khoá với lúc huỷ, không trả hai lần.
+        if ($khoa->payment_status === PaymentStatus::Refunded) {
+            app(\App\Services\Points\PointLedger::class)->traDiemCuaDon($khoa);
+        }
     }
 
     /**

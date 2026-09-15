@@ -114,6 +114,13 @@
                     </tr>
                 @endif
 
+                @if($order->points_used > 0)
+                    <tr>
+                        <td style="padding:4px 0; color:#5d6660;">Điểm thưởng ({{ number_format($order->points_used, 0, ',', '.') }} điểm)</td>
+                        <td align="right" style="padding:4px 0;">&minus;{{ $money($order->points_discount) }}</td>
+                    </tr>
+                @endif
+
                 <tr>
                     <td style="padding:4px 0; color:#5d6660;">Phí giao hàng</td>
                     <td align="right" style="padding:4px 0;">

@@ -104,6 +104,49 @@ class PointLedger
         return $this->ghi($user, -$diem, $lyDo, $khoa, $ghiChu);
     }
 
+    /**
+     * Trừ điểm khách dùng cho một đơn — GỌI TRONG TRANSACTION TẠO ĐƠN.
+     *
+     * Khoá dòng người dùng rồi đọc số dư: hai đơn đặt cùng lúc bằng cùng
+     * một số điểm không được cùng qua. Không đủ thì ném — cuộn cả đơn.
+     *
+     * @throws PointException
+     */
+    public function dungChoDon(User $user, int $diem, \App\Models\Order $order): void
+    {
+        User::whereKey($user->id)->lockForUpdate()->first();
+
+        if ($this->soDu($user) < $diem) {
+            throw new PointException('Số điểm của bạn không còn đủ ' . number_format($diem, 0, ',', '.')
+                . ' điểm — có thể vừa dùng ở nơi khác. Vui lòng chọn lại số điểm.');
+        }
+
+        $this->ghi($user, -$diem, PointReason::DungDiem, 'dung-diem:' . $order->id, 'Đơn ' . $order->order_number);
+    }
+
+    /**
+     * Trả lại điểm đã dùng cho đơn (huỷ đơn, hoàn đủ tiền). Một đơn trả một lần.
+     *
+     * @return int số điểm vừa trả
+     */
+    public function traDiemCuaDon(\App\Models\Order $order): int
+    {
+        $diem = (int) $order->points_used;
+
+        if ($diem <= 0 || $order->user_id === null || ($user = User::find($order->user_id)) === null) {
+            return 0;
+        }
+
+        // Chỉ trả khi đơn thật sự đã trừ điểm.
+        if (! PointTransaction::where('user_id', $user->id)->where('source_key', 'dung-diem:' . $order->id)->exists()) {
+            return 0;
+        }
+
+        return $this->ghi($user, $diem, PointReason::HoanDiem, 'tra-diem:' . $order->id, 'Trả điểm đơn ' . $order->order_number)
+            ? $diem
+            : 0;
+    }
+
     private function ghi(User $user, int $soDiem, PointReason $lyDo, string $khoa, ?string $ghiChu): bool
     {
         try {

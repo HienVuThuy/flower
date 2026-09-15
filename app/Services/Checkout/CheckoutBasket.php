@@ -4,6 +4,7 @@ namespace App\Services\Checkout;
 
 use App\Models\Coupon;
 use App\Services\Coupon\CouponService;
+use App\Services\Points\PointRedemption;
 use App\Services\Shipping\ShippingQuote;
 use App\Services\Shipping\ShippingRates;
 use App\Services\Tax\BasketTax;
@@ -21,6 +22,12 @@ use Illuminate\Support\Collection;
  * nhiệm chính" cấm.
  *
  * Nay Blade và OrderService cùng đọc từ đây.
+ *
+ * ============================================================
+ * THỨ TỰ TRỪ TIỀN:
+ *
+ *     giá gốc → khuyến mại (trong lineTotal) → mã giảm giá → điểm thưởng
+ *            → + phí giao (miễn phí xét trên tiền hàng TRƯỚC mã và điểm)
  */
 final readonly class CheckoutBasket
 {
@@ -54,6 +61,15 @@ final readonly class CheckoutBasket
          */
         public ?int $toDistrictId = null,
         public ?string $toWardCode = null,
+
+        /**
+         * Số điểm khách MUỐN dùng, đã kẹp theo số dư ở CheckoutSource.
+         *
+         * Giỏ vẫn tự kẹp lại theo trần tiền và mức tối thiểu (xem
+         * pointsUsed()): số tiền giảm không bao giờ tin một con số truyền
+         * vào, kể cả từ chính máy chủ.
+         */
+        public int $points = 0,
     ) {
     }
 
@@ -62,7 +78,7 @@ final readonly class CheckoutBasket
     {
         return new self(
             $this->lines, $this->source, $coupon,
-            $this->province, $this->toDistrictId, $this->toWardCode,
+            $this->province, $this->toDistrictId, $this->toWardCode, $this->points,
         );
     }
 
@@ -71,7 +87,7 @@ final readonly class CheckoutBasket
     {
         return new self(
             $this->lines, $this->source, $this->coupon,
-            $province, $this->toDistrictId, $this->toWardCode,
+            $province, $this->toDistrictId, $this->toWardCode, $this->points,
         );
     }
 
@@ -80,7 +96,16 @@ final readonly class CheckoutBasket
     {
         return new self(
             $this->lines, $this->source, $this->coupon,
-            $this->province, $districtId, $wardCode,
+            $this->province, $districtId, $wardCode, $this->points,
+        );
+    }
+
+    /** Bản sao có gắn số điểm muốn dùng. */
+    public function withPoints(int $points): self
+    {
+        return new self(
+            $this->lines, $this->source, $this->coupon,
+            $this->province, $this->toDistrictId, $this->toWardCode, max(0, $points),
         );
     }
 
@@ -142,10 +167,37 @@ final readonly class CheckoutBasket
         return app(CouponService::class)->discountFor($this->coupon, $this->itemsTotal());
     }
 
-    /** Tiền hàng sau khi trừ mã giảm giá. */
-    public function payableItemsTotal(): string
+    /** Tiền hàng sau mã giảm giá, TRƯỚC điểm — nền để tính trần điểm. */
+    public function itemsAfterCoupon(): string
     {
         return bcsub($this->itemsTotal(), $this->couponDiscount(), 2);
+    }
+
+    /** Số điểm thật sự được dùng cho đơn này (0 nếu dưới mức tối thiểu). */
+    public function pointsUsed(): int
+    {
+        return PointRedemption::dungDuoc($this->points, $this->itemsAfterCoupon(), $this->points);
+    }
+
+    /** Số tiền điểm thưởng trừ đi. */
+    public function pointsDiscount(): string
+    {
+        return PointRedemption::quyRaTien($this->pointsUsed());
+    }
+
+    /**
+     * Mọi khoản giảm ÁP CHO CẢ ĐƠN (mã + điểm) — phần BasketTax phân bổ
+     * xuống từng dòng. Khuyến mại theo sản phẩm đã nằm trong lineTotal().
+     */
+    public function orderDiscountTotal(): string
+    {
+        return bcadd($this->couponDiscount(), $this->pointsDiscount(), 2);
+    }
+
+    /** Tiền hàng sau khi trừ mã giảm giá và điểm thưởng. */
+    public function payableItemsTotal(): string
+    {
+        return bcsub($this->itemsTotal(), $this->orderDiscountTotal(), 2);
     }
 
     /**
@@ -153,7 +205,7 @@ final readonly class CheckoutBasket
      *
      * Chọn vậy để dùng mã không đẩy khách xuống dưới ngưỡng rồi bị tính
      * thêm phí ship — vừa giảm được ít tiền vừa mất phí giao thì khách
-     * thấy như bị phạt vì dùng mã.
+     * thấy như bị phạt vì dùng mã. Cùng lý do với điểm thưởng.
      */
     public function isFreeShipping(): bool
     {

@@ -468,6 +468,61 @@ class CheckoutController extends Controller
         return $request->except(array_merge(['_token', '_method', 'wallet_code'], $except));
     }
 
+    /**
+     * Dùng điểm thưởng cho đơn này.
+     *
+     * Chỉ nhận SỐ ĐIỂM muốn dùng. Số tiền giảm, trần 30% và mức tối thiểu
+     * do CheckoutBasket / PointRedemption tính — cùng chỗ OrderService đọc
+     * khi ghi đơn. Xin nhiều hơn mức được thì kẹp xuống và NÓI RA.
+     */
+    public function applyPoints(Request $request): RedirectResponse
+    {
+        if ($redirect = $this->requireItems()) {
+            return $redirect;
+        }
+
+        $data = $request->validate(
+            ['points' => ['required', 'integer', 'min:0', 'max:100000000']],
+            [],
+            ['points' => 'số điểm'],
+        );
+
+        $this->source->setPoints((int) $data['points']);
+        $basket = $this->source->basket();
+        $dung = $basket->pointsUsed();
+        $giu = $this->draft($request, except: ['points']);
+
+        if ($dung === 0) {
+            $this->source->clearPoints();
+
+            return back()
+                ->with('error', 'Chưa dùng được điểm cho đơn này: cần dùng từ '
+                    . \App\Services\Points\PointRedemption::TOI_THIEU . ' điểm, trong số dư và trong mức '
+                    . \App\Services\Points\PointRedemption::PHAN_TRAM_TOI_DA . '% tiền hàng.')
+                ->withInput($giu);
+        }
+
+        $this->source->setPoints($dung);
+
+        $thongBao = 'Đã dùng ' . number_format($dung, 0, ',', '.') . ' điểm, giảm '
+            . \App\Services\Shop\Money::format($basket->pointsDiscount()) . '.';
+
+        if ($dung < (int) $data['points']) {
+            $thongBao .= ' Đơn này dùng được tối đa ' . number_format($dung, 0, ',', '.') . ' điểm.';
+        }
+
+        return back()->with('success', $thongBao)->withInput($giu);
+    }
+
+    public function removePoints(Request $request): RedirectResponse
+    {
+        $this->source->clearPoints();
+
+        return back()
+            ->with('info', 'Đã bỏ dùng điểm thưởng cho đơn này.')
+            ->withInput($this->draft($request, except: ['points']));
+    }
+
     /* ================= BƯỚC 3: XÁC NHẬN ================= */
 
     public function confirm(): View|RedirectResponse
@@ -562,6 +617,16 @@ class CheckoutController extends Controller
             return redirect()
                 ->route('shop.checkout.shipping')
                 ->with('error', $e->getMessage());
+        } catch (\App\Services\Points\PointException $e) {
+            /*
+             * Điểm vừa được dùng ở nơi khác trong lúc đang xem lại đơn. Đơn
+             * đã cuộn lại; bỏ số điểm cũ và đưa về bước có ô dùng điểm.
+             */
+            $this->source->clearPoints();
+
+            return redirect()
+                ->route('shop.checkout.details')
+                ->with('error', $e->getMessage());
         } catch (OrderException $e) {
             // Hết hàng giữa chừng là chuyện có thật khi nhiều người mua
             // cùng lúc — đưa khách về giỏ để chỉnh, không để trang lỗi.
@@ -609,6 +674,9 @@ class CheckoutController extends Controller
          * chọn mã, mà khách không hề nói vậy.
          */
         $this->source->allowAutoCoupon();
+
+        // Điểm đã thành một phần của đơn; để lại trong phiên thì đơn sau tự dùng điểm khách chưa chọn.
+        $this->source->clearPoints();
 
         /*
          * KHÔNG GỬI EMAIL Ở ĐÂY.

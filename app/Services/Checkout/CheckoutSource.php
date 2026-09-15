@@ -276,13 +276,58 @@ class CheckoutSource
          */
         $form = session(self::FORM_KEY) ?? [];
 
-        return $basket
+        $coMa = $basket
             ->withProvince(is_string($province) ? $province : null)
             ->withGhnDestination(
                 isset($form['to_district_id']) ? (int) $form['to_district_id'] : null,
                 isset($form['to_ward_code']) ? (string) $form['to_ward_code'] : null,
             )
             ->withCoupon($this->resolveCoupon($basket));
+
+        // Điểm gắn SAU mã: trần điểm tính trên tiền hàng đã trừ mã.
+        return $coMa->withPoints($this->resolvePoints($coMa));
+    }
+
+    /** Khoá session giữ số điểm khách muốn dùng cho lần thanh toán này. */
+    public const POINTS_KEY = 'checkout.points';
+
+    public function setPoints(int $points): void
+    {
+        session([self::POINTS_KEY => max(0, $points)]);
+    }
+
+    public function clearPoints(): void
+    {
+        session()->forget(self::POINTS_KEY);
+    }
+
+    public function requestedPoints(): int
+    {
+        return (int) session(self::POINTS_KEY, 0);
+    }
+
+    /**
+     * Số điểm được dùng: kẹp theo SỐ DƯ THẬT lúc này.
+     *
+     * Đọc lại số dư mỗi lần dựng giỏ: khách mở hai tab, dùng điểm ở tab
+     * kia, thì tab này phải tự hạ xuống — không để tóm tắt đơn hứa một
+     * khoản giảm mà lúc đặt hàng bị từ chối. Lúc đặt hàng OrderService
+     * vẫn khoá và kiểm lại lần nữa.
+     */
+    private function resolvePoints(CheckoutBasket $basket): int
+    {
+        $muon = $this->requestedPoints();
+        $user = \Illuminate\Support\Facades\Auth::user();
+
+        if ($muon <= 0 || $user === null || $basket->isEmpty()) {
+            return 0;
+        }
+
+        return \App\Services\Points\PointRedemption::dungDuoc(
+            $muon,
+            $basket->itemsAfterCoupon(),
+            app(\App\Services\Points\PointLedger::class)->soDu($user),
+        );
     }
 
     /**

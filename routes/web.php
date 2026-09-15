@@ -231,6 +231,10 @@ if (config('features.cart')) {
             Route::delete('ma-giam-gia', [CheckoutController::class, 'removeCoupon'])->name('remove-coupon');
             Route::post('ma-giam-gia/tu-chon', [CheckoutController::class, 'autoCoupon'])->name('auto-coupon');
 
+            // Điểm thưởng — cũng nằm trong bước 1; điểm gắn với tài khoản nên cần đăng nhập.
+            Route::post('diem-thuong', [CheckoutController::class, 'applyPoints'])->middleware('auth')->name('apply-points');
+            Route::delete('diem-thuong', [CheckoutController::class, 'removePoints'])->middleware('auth')->name('remove-points');
+
             // Bước 2 — xác nhận
             Route::get('xac-nhan', [CheckoutController::class, 'confirm'])->name('confirm');
             Route::post('dat-hang', [CheckoutController::class, 'place'])->name('place');

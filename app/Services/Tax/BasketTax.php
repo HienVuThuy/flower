@@ -133,7 +133,14 @@ final readonly class BasketTax
     private static function phanBoMaGiamGia(CheckoutBasket $basket): array
     {
         $tong = $basket->itemsTotal();
-        $giamGia = $basket->couponDiscount();
+
+        /*
+         * MÃ GIẢM GIÁ + ĐIỂM THƯỞNG — cả hai áp cho cả đơn, nên cùng phân
+         * bổ. Điểm cũng làm giảm số tiền thật sự thu, tức giảm tiền chịu
+         * thuế. Đẳng thức đối soát nay là:
+         *     SUM(items.discount_amount) = coupon_discount + points_discount
+         */
+        $giamGia = $basket->orderDiscountTotal();
         $soDong = $basket->lines->count();
 
         if ($soDong === 0) {

@@ -133,6 +133,16 @@
             </div>
         @endif
 
+        @if($basket->pointsUsed() > 0)
+            <div class="order-summary__row order-summary__row--discount" data-diem-giam="{{ $basket->pointsDiscount() }}">
+                <dt>
+                    Điểm thưởng
+                    <span class="order-summary__count">{{ number_format($basket->pointsUsed(), 0, ',', '.') }} điểm</span>
+                </dt>
+                <dd>&minus;{{ $money($basket->pointsDiscount()) }}</dd>
+            </div>
+        @endif
+
         <div class="order-summary__row">
             <dt>
                 Phí giao hàng
@@ -219,11 +229,12 @@
 
     </dl>
 
-    @if($hasDiscount || $hasShippingDiscount || $basket->coupon)
+    @if($hasDiscount || $hasShippingDiscount || $basket->coupon || $basket->pointsUsed() > 0)
         @php
+            // Mã + điểm lấy chung từ orderDiscountTotal() — cùng con số BasketTax phân bổ.
             $saved = bcadd(
                 bcadd($basket->discountTotal(), $shippingDiscount, 2),
-                $basket->coupon ? $basket->couponDiscount() : '0.00',
+                $basket->orderDiscountTotal(),
                 2,
             );
         @endphp

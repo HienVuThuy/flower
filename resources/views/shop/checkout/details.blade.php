@@ -742,6 +742,69 @@
                         @endif
                     </div>
 
+                    {{--
+                        DÙNG ĐIỂM THƯỞNG — cùng kiểu nút với khối mã giảm giá: thuộc
+                        biểu mẫu bên trái, đổi đích bằng formaction, nên thứ đang gõ dở
+                        không mất. Số tiền giảm và mức tối đa do CheckoutBasket tính.
+                    --}}
+                    @auth
+                        {{--
+                            Dạng một dòng, KHÔNG dùng khối có thẻ đóng: Blade gom khối PHP
+                            TRƯỚC khi bỏ chú thích, nên thẻ đóng ở đây ghép với dạng một dòng
+                            phía trên (usableCount) thành một khối và nuốt mất cả đoạn giữa.
+                            Vì cùng lý do đó, chú thích này không được viết tên hai thẻ ấy.
+                        --}}
+                        @php($soDuDiem = app(\App\Services\Points\PointLedger::class)->soDu(auth()->user()))
+                        @php($diemToiDa = \App\Services\Points\PointRedemption::dungDuoc(PHP_INT_MAX, $basket->itemsAfterCoupon(), $soDuDiem))
+                        <div class="checkout-coupon" data-khoi-diem>
+                            <h2 class="checkout-coupon__title">
+                                <x-site.icon name="star" class="checkout-coupon__icon" />
+                                Điểm thưởng
+                            </h2>
+
+                            <p class="text-caption mb-2">
+                                Bạn có <strong>{{ number_format($soDuDiem, 0, ',', '.') }}</strong> điểm
+                                (1 điểm = {{ \App\Services\Points\PointRedemption::DONG_MOI_DIEM }}đ).
+                                @if($diemToiDa > 0)
+                                    Đơn này dùng được tối đa <strong>{{ number_format($diemToiDa, 0, ',', '.') }}</strong> điểm.
+                                @else
+                                    Cần dùng từ {{ \App\Services\Points\PointRedemption::TOI_THIEU }} điểm, tối đa {{ \App\Services\Points\PointRedemption::PHAN_TRAM_TOI_DA }}% tiền hàng.
+                                @endif
+                            </p>
+
+                            @if($basket->pointsUsed() > 0)
+                                <div class="coupon-box__applied">
+                                    <span class="coupon-box__applied-code">
+                                        <strong>{{ number_format($basket->pointsUsed(), 0, ',', '.') }} điểm</strong>
+                                        <span class="text-muted">giảm {{ \App\Services\Shop\Money::format($basket->pointsDiscount()) }}</span>
+                                    </span>
+                                    <button type="submit"
+                                            form="checkout-details-form"
+                                            formaction="{{ route('shop.checkout.remove-points') }}"
+                                            formnovalidate
+                                            name="_method" value="DELETE"
+                                            class="btn btn-ghost btn-sm">Bỏ dùng điểm</button>
+                                </div>
+                            @endif
+
+                            @if($diemToiDa > 0)
+                                <div class="coupon-box__input">
+                                    <label class="visually-hidden" for="points">Số điểm muốn dùng</label>
+                                    <input type="number" id="points" name="points" min="0" max="{{ $diemToiDa }}" step="1"
+                                           form="checkout-details-form"
+                                           class="form-control @error('points') is-invalid @enderror"
+                                           value="{{ old('points', $basket->pointsUsed() ?: $diemToiDa) }}">
+                                    <button type="submit"
+                                            form="checkout-details-form"
+                                            formaction="{{ route('shop.checkout.apply-points') }}"
+                                            formnovalidate
+                                            class="btn btn-secondary-brand">Dùng điểm</button>
+                                </div>
+                                <x-form-error name="points" />
+                            @endif
+                        </div>
+                    @endauth
+
                     <x-cart.summary :basket="$basket" :itemized="true" :coupon-is-auto="$couponIsAuto" />
 
                 </div>

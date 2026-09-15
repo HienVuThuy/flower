@@ -32,10 +32,18 @@ enum PointReason: string
     /** Người khác thích bài Góc cây. */
     case DuocThich = 'duoc_thich';
 
+    /** Dùng điểm trừ tiền khi đặt hàng — dòng ÂM. */
+    case DungDiem = 'dung_diem';
+
+    /** Trả lại điểm đã dùng khi đơn bị huỷ hoặc được hoàn đủ tiền. */
+    case HoanDiem = 'hoan_diem';
+
     public function label(): string
     {
         return match ($this) {
             self::DuocThich => 'Bài Góc cây được thích',
+            self::DungDiem => 'Dùng điểm cho đơn hàng',
+            self::HoanDiem => 'Trả lại điểm đã dùng',
             self::DangBai => 'Bài Góc cây được duyệt',
             self::ChuoiNgay => 'Chuỗi ngày ghé thăm',
             self::DoiVoucher => 'Đổi voucher',

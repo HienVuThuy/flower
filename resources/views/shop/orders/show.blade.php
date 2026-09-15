@@ -235,6 +235,13 @@
                             </div>
                         @endif
 
+                        @if($order->points_used > 0)
+                            <div class="order-summary__row" data-diem-don>
+                                <dt>Điểm thưởng ({{ number_format($order->points_used, 0, ',', '.') }} điểm)</dt>
+                                <dd>&minus;<x-site.money :amount="(float) $order->points_discount" /></dd>
+                            </div>
+                        @endif
+
                         <div class="order-summary__row">
                             <dt>Phí giao hàng</dt>
                             <dd>
