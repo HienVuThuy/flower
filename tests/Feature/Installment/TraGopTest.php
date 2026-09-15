@@ -518,7 +518,9 @@ class TraGopTest extends TestCase
 
         $this->get(route('shop.orders.show', $don))->assertOk()
             ->assertSee('data-tra-gop="dang_tra"', false)
-            ->assertSee('data-ky="2"', false);
+            ->assertSee('data-ky="2"', false)
+            // Chỉ thị Blade dính liền chữ không được biên dịch và in thô ra trang — đã gặp thật.
+            ->assertDontSee('@endif', false);
 
         $this->get(route('shop.profile.edit', ['muc' => 'tra-gop']))->assertOk()
             ->assertSee('data-diem-tin-dung="50"', false)

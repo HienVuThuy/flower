@@ -75,7 +75,7 @@
         @endif
 
         <p class="text-caption mb-0">
-            Hoặc trả tại cửa hàng@if($hotline) — gọi {{ $hotline }} để hẹn@endif.
+            Hoặc trả tại cửa hàng{{ $hotline ? ' — gọi ' . $hotline . ' để hẹn' : '' }}.
         </p>
     @endif
 </div>

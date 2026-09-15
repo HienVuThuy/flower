@@ -16,10 +16,10 @@
 
     <div class="col-xl-8">
         <nav class="analytics-tabs mb-3" aria-label="Lọc theo tình trạng">
-            <a data-admin-link href="{{ route('admin.installments.index') }}" class="analytics-tabs__item {{ $loc === null ? 'is-active' : '' }}">Tất cả</a>
+            <a data-admin-link href="{{ route('admin.installments.index') }}" class="analytics-tabs__tab {{ $loc === null ? 'is-active' : '' }}">Tất cả</a>
             @foreach(\App\Enums\InstallmentStatus::cases() as $tt)
                 <a data-admin-link href="{{ route('admin.installments.index', ['trang_thai' => $tt->value]) }}"
-                   class="analytics-tabs__item {{ $loc === $tt ? 'is-active' : '' }}">
+                   class="analytics-tabs__tab {{ $loc === $tt ? 'is-active' : '' }}">
                     {{ $tt->label() }} ({{ (int) ($dem[$tt->value] ?? 0) }})
                 </a>
             @endforeach
