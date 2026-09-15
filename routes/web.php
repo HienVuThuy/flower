@@ -559,6 +559,16 @@ Route::get('cam-nang/{post}', [BlogController::class, 'show'])->name('shop.blog.
  * mình vừa mở.
  */
 Route::get('goc-cay', [CommunityController::class, 'index'])->name('shop.community.index');
+
+/*
+ * TRỢ LÝ AI — không cần đăng nhập (khách vãng lai cũng hỏi được), nhưng có
+ * throttle: mỗi câu hỏi là một lần gọi dịch vụ ngoài tính tiền theo lượt.
+ */
+Route::post('tro-ly-ai', [\App\Http\Controllers\Shop\AiChatController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('shop.ai.ask');
+Route::delete('tro-ly-ai', [\App\Http\Controllers\Shop\AiChatController::class, 'destroy'])
+    ->name('shop.ai.reset');
 // Trang một bài — chỉ bài đã duyệt (404 với bài chưa duyệt, kể cả với chính người đăng).
 Route::get('goc-cay/{post}', [CommunityController::class, 'show'])->whereNumber('post')->name('shop.community.show');
 

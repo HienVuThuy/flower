@@ -137,6 +137,9 @@
 
 </main>
 
+{{-- Trợ lý AI — tự nói "chưa được cấu hình" khi chưa có khoá; không gọi ra ngoài. --}}
+<x-site.ai-chat />
+
 <x-site.footer />
 
 </body>

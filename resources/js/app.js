@@ -29,6 +29,7 @@ import { initTuoiSoLieu } from './admin/tuoi-so-lieu';
 import { initProductBlocks } from './admin/product-blocks';
 import { initGiftVariantPicker } from './admin/gift-variant-picker';
 import { initRefundGiftAutofill } from './admin/refund-gift-autofill';
+import { initAiChat } from './ai-chat';
 import { initVideoEmbed } from './components/video-embed';
 
 /*
@@ -85,6 +86,7 @@ export function bootUi() {
     initProductBlocks();
     initGiftVariantPicker();
     initRefundGiftAutofill();
+    initAiChat();
     initVideoEmbed();
 }
 
