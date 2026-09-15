@@ -201,10 +201,48 @@ class Order extends Model
         return $this->congTienHoan(fn (Refund $r) => $r->status->giuChoTien());
     }
 
+    /** Kế hoạch trả góp, nếu đơn chọn trả góp. */
+    public function installmentPlan(): HasOne
+    {
+        return $this->hasOne(InstallmentPlan::class);
+    }
+
+    /**
+     * Tiền cửa hàng ĐÃ THU THẬT của đơn — mốc để tính còn hoàn được bao nhiêu.
+     *
+     * Đơn thường: cả tổng khi đã trả (hoặc đã hoàn), 0 khi chưa trả. Đơn trả
+     * góp: tổng các kỳ đã trả — đơn vỡ giữa chừng thì cửa hàng chỉ nợ khách
+     * đúng số khách đã đưa, không phải cả đơn.
+     */
+    public function daThu(): string
+    {
+        $keHoach = $this->installmentPlan;
+
+        if ($keHoach !== null) {
+            return $keHoach->loadMissing('payments')->daTra();
+        }
+
+        return in_array($this->payment_status, [PaymentStatus::Paid, PaymentStatus::Refunded], true)
+            ? (string) $this->grand_total
+            : '0.00';
+    }
+
+    /**
+     * Đơn trả góp chưa trả đủ: KHÔNG được chuẩn bị, giao hay tạo vận đơn.
+     *
+     * Một luật, hai nơi hỏi (OrderService::changeStatus, GHNOrderService::create)
+     * — định nghĩa ở đây để hai nơi không tự viết hai bản.
+     */
+    public function choDoiTraGop(): bool
+    {
+        return $this->payment_method === PaymentMethod::TraGop
+            && $this->payment_status !== PaymentStatus::Paid;
+    }
+
     /** Số tiền còn hoàn được, không bao giờ âm. */
     public function refundableAmount(): string
     {
-        $con = bcsub((string) $this->grand_total, $this->reservedRefundAmount(), 2);
+        $con = bcsub($this->daThu(), $this->reservedRefundAmount(), 2);
 
         return bccomp($con, '0', 2) > 0 ? $con : '0.00';
     }

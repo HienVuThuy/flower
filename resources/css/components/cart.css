@@ -370,6 +370,16 @@
     border-color: var(--border-strong);
 }
 
+/* Lựa chọn chưa dùng được (trả góp khi chưa đủ điều kiện): vẫn đọc được lý do, không bấm được. */
+.payment-option--disabled {
+    cursor: not-allowed;
+    background: var(--surface-muted, transparent);
+}
+
+.payment-option--disabled .payment-option__name {
+    color: var(--text-muted);
+}
+
 /*
  * :has() cho phép tô sáng cả ô khi radio bên trong được chọn mà không
  * cần thêm một dòng JavaScript nào.

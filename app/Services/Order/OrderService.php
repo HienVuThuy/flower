@@ -280,6 +280,17 @@ class OrderService
         }
 
         /*
+         * KẾ HOẠCH TRẢ GÓP — trong cùng transaction. Khách không còn đủ điều
+         * kiện lúc bấm đặt (điểm vừa tụt, tab khác vừa mở một kế hoạch) thì
+         * InstallmentException cuộn cả đơn: kho không bị giữ cho một đơn trả
+         * góp không có kế hoạch.
+         */
+        if ($order->payment_method === PaymentMethod::TraGop) {
+            app(\App\Services\Installment\InstallmentService::class)
+                ->taoKeHoach($order, Auth::user(), (int) ($checkout['so_ky'] ?? 0));
+        }
+
+        /*
          * CHẤM ĐIỂM RỦI RO — sau khi đơn đã có id và đã có dòng hàng.
          *
          * Phải nằm TRONG transaction tạo đơn: điểm là một phần của bản
@@ -585,6 +596,17 @@ class OrderService
             }
 
             /*
+             * ĐƠN TRẢ GÓP CHƯA TRẢ ĐỦ KHÔNG ĐƯỢC CHUẨN BỊ HAY GIAO.
+             *
+             * "Xác nhận" vẫn được (cửa hàng nhận giữ hàng). Chặn ở đây thì mọi
+             * đường — admin bấm, đồng bộ GHN — đều bị chặn như nhau.
+             */
+            if (in_array($target, [OrderStatus::Preparing, OrderStatus::Shipping, OrderStatus::Completed], true)
+                && $locked->choDoiTraGop()) {
+                throw new OrderException('Đơn trả góp chưa trả đủ các kỳ nên chưa chuẩn bị hay giao được.');
+            }
+
+            /*
              * KHÔNG HUỶ ĐƠN KHI VẬN ĐƠN GHN CÒN HIỆU LỰC.
              *
              * Lỗi đã sửa: huỷ đơn chỉ đổi trạng thái, hoàn kho và trả lượt mã
@@ -663,6 +685,9 @@ class OrderService
 
                 // Trả suất quà (kho của dòng quà đã trả ở restoreStock, cùng đường với hàng bán).
                 app(\App\Services\Gift\GiftGranter::class)->traSuatCuaDon($order);
+
+                // Kế hoạch trả góp còn đang trả thì đóng theo đơn — cùng transaction.
+                app(\App\Services\Installment\InstallmentService::class)->dongTheoDon($order);
             }
         });
 
@@ -780,6 +805,24 @@ class OrderService
                 $current->label(),
                 $target->label(),
             ));
+        }
+
+        /*
+         * ĐƠN TRẢ GÓP: "đã thanh toán" là HỆ QUẢ của kỳ cuối (InstallmentService),
+         * không đặt tay, không gỡ tay. Mở đường tắt là có đơn "đã thanh toán"
+         * được giao trong khi còn kỳ chưa trả.
+         */
+        if ($order->payment_method === PaymentMethod::TraGop) {
+            $traDu = \App\Models\InstallmentPlan::query()
+                ->where('order_id', $order->id)
+                ->where('status', \App\Enums\InstallmentStatus::HoanTat->value)
+                ->exists();
+
+            if (! ($target === PaymentStatus::Paid && $traDu)) {
+                throw new OrderException(
+                    'Đơn trả góp tự chuyển "Đã thanh toán" khi khách trả đủ các kỳ — ghi nhận từng kỳ ở mục Trả góp của đơn.'
+                );
+            }
         }
 
         if ($target === PaymentStatus::Paid && $order->status === OrderStatus::Cancelled) {
@@ -904,8 +947,13 @@ class OrderService
          * đang chờ kết quả) thì không nhắc thêm — việc cần làm lúc đó là
          * xác nhận lần đang chờ, không phải hoàn thêm.
          */
+        /*
+         * "Còn tiền đã thu chưa trả lại" — không đòi `paid`: đơn trả góp vỡ giữa
+         * chừng vẫn "chưa thanh toán" nhưng các kỳ đã trả là tiền thật phải hoàn.
+         * Đơn thường chưa trả thì Order::daThu() = 0 nên không bị nhắc nhầm.
+         */
         return $order->status === OrderStatus::Cancelled
-            && $order->payment_status === PaymentStatus::Paid
+            && $order->payment_status !== PaymentStatus::Refunded
             && bccomp($order->refundableAmount(), '0', 2) > 0;
     }
 }

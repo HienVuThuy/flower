@@ -365,15 +365,43 @@
                         <div class="checkout-step__body">
 <div class="payment-options">
                         @foreach($paymentMethods as $method)
-                            <label class="payment-option">
+                            {{--
+                                TRẢ GÓP: không đủ điều kiện thì vẫn hiện, khoá lại và NÓI VÌ SAO
+                                (chưa đăng nhập, đơn nhỏ, điểm tín dụng) — ẩn đi thì khách không
+                                biết cửa hàng có trả góp.
+                            --}}
+                            <label class="payment-option {{ $method === \App\Enums\PaymentMethod::TraGop && ! $traGop['duoc'] ? 'payment-option--disabled' : '' }}"
+                                   @if($method === \App\Enums\PaymentMethod::TraGop) data-tra-gop="{{ $traGop['duoc'] ? 'duoc' : 'khong' }}" @endif>
                                 <input type="radio" name="payment_method" value="{{ $method->value }}"
-                                       @checked(old('payment_method', $values['payment_method'] ?? 'cod') === $method->value)>
+                                       @checked(old('payment_method', $values['payment_method'] ?? 'cod') === $method->value)
+                                       @disabled($method === \App\Enums\PaymentMethod::TraGop && ! $traGop['duoc'])>
                                 <span class="payment-option__body">
                                     <span class="payment-option__name">{{ $method->label() }}</span>
                                     <span class="payment-option__hint">{{ $method->hint() }}</span>
+
+                                    @if($method === \App\Enums\PaymentMethod::TraGop)
+                                        @if($traGop['duoc'])
+                                            <span class="payment-option__hint d-block mt-1" data-tra-gop-muc>
+                                                Điểm tín dụng {{ $traGop['diem'] }}: trả trước {{ $traGop['tra_truoc'] }}%,
+                                                tối đa {{ $traGop['ky_toi_da'] }} kỳ, mỗi kỳ {{ \App\Services\Installment\InstallmentSettings::soNguyen('tra_gop.so_ngay_moi_ky') }} ngày.
+                                            </span>
+                                            <span class="d-flex align-items-center gap-2 mt-2">
+                                                <span class="text-caption">Số kỳ</span>
+                                                <select name="so_ky" aria-label="Số kỳ trả góp"
+                                                        class="form-select form-select-sm w-auto @error('so_ky') is-invalid @enderror">
+                                                    @for($k = 1; $k <= $traGop['ky_toi_da']; $k++)
+                                                        <option value="{{ $k }}" @selected((int) old('so_ky', $values['so_ky'] ?? $traGop['ky_toi_da']) === $k)>{{ $k }} kỳ</option>
+                                                    @endfor
+                                                </select>
+                                            </span>
+                                        @else
+                                            <span class="payment-option__hint d-block mt-1" data-tra-gop-ly-do>{{ $traGop['ly_do'] }}</span>
+                                        @endif
+                                    @endif
                                 </span>
                             </label>
                         @endforeach
+                        <x-form-error name="so_ky" />
                     </div>
 
                     <x-form-error name="payment_method" />

@@ -109,6 +109,7 @@ class RouteSmokeTest extends TestCase
         'dia-gioi/quan-huyen/{provinceId}',
         'don-hang/{order}',
         'don-hang/{order}/thanh-toan-momo',
+        'don-hang/{order}/tra-gop-momo',
         'loai-cay/{taxon}',
         'nhat-ky/{journal}',
         'nhat-ky/{journal}/sua',

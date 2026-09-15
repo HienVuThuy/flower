@@ -90,3 +90,17 @@ Schedule::command('ghn:dong-bo')
 Schedule::command('khuyen-mai:cap-nhat-trang-thai')
     ->hourly()
     ->description('Bật/kết thúc khuyến mại theo ngày đã đặt');
+
+
+/*
+ * Huỷ kế hoạch trả góp quá hạn.
+ *
+ * MỖI NGÀY MỘT LẦN, sau nửa đêm giờ Việt Nam: hạn và ân hạn tính theo NGÀY,
+ * nên chạy dày hơn không đổi kết quả. Hoàn kho ngay khi vỡ để hàng giữ cho
+ * kế hoạch đó quay lại bán được.
+ */
+Schedule::command('tra-gop:qua-han')
+    ->dailyAt('00:30')
+    ->timezone('Asia/Ho_Chi_Minh')
+    ->withoutOverlapping()
+    ->description('Huỷ kế hoạch trả góp có kỳ quá hạn vượt ân hạn');

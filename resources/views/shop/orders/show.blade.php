@@ -226,6 +226,10 @@
                     --}}
                     <x-order.shipping-status :order="$order" />
 
+                    @if($order->installmentPlan)
+                        @include('shop.orders.partials.tra-gop')
+                    @endif
+
                     <dl class="order-summary__lines">
 
                         <div class="order-summary__row">

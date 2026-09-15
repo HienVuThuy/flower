@@ -178,6 +178,13 @@
                 <x-site.icon name="arrow-counterclockwise" />
                 <span>Hoàn tiền</span>
             </a>
+
+            {{-- Kế hoạch trả góp và cấu hình trả góp — việc tiền, cùng quyền tài chính. --}}
+            <a data-admin-link href="{{ route('admin.installments.index') }}"
+               class="admin-nav-link {{ request()->routeIs('admin.installments.*') ? 'is-active' : '' }}">
+                <x-site.icon name="clock-history" />
+                <span>Trả góp</span>
+            </a>
             @endcan
             @endcan
 

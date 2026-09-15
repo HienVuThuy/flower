@@ -73,6 +73,10 @@
 
                     @include('shop.profile.partials.hang-thanh-vien')
 
+                @elseif($muc === 'tra-gop')
+
+                    @include('shop.profile.partials.tra-gop')
+
                 @elseif($muc === 'bao-mat')
 
                     {{--

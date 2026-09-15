@@ -29,7 +29,12 @@
                     @foreach($transactions as $tx)
                         <tr>
                             <td><x-site.time :at="$tx->created_at" format="d/m/Y H:i" /></td>
-                            <td>{{ strtoupper($tx->gateway) }}</td>
+                            <td>
+                                {{ $tx->gateway === \App\Services\Installment\InstallmentService::TAI_CUA_HANG ? 'Tại cửa hàng' : strtoupper($tx->gateway) }}
+                                @if($tx->installmentPayment)
+                                    <span class="d-block small text-muted">{{ $tx->installmentPayment->nhan() }}</span>
+                                @endif
+                            </td>
                             <td>
                                 <span class="status-pill status-pill--{{ $tx->status->badge() }}">
                                     {{ $tx->status->label() }}

@@ -330,7 +330,7 @@
                     <div class="alert alert-warning py-2 px-3 mb-3">
                         <strong>Cần hoàn tiền cho khách.</strong>
                         Đơn đã huỷ nhưng khách đã thanh toán
-                        <x-site.money :amount="(float) $order->grand_total" />.
+                        <x-site.money :amount="$order->daThu()" />.
                         Còn phải hoàn <x-site.money :amount="$order->refundableAmount()" />.
                         <a href="#hoan-tien">Ghi hoàn tiền</a>.
                     </div>
@@ -374,6 +374,8 @@
                 @endif
 
             </div>
+
+            @include('admin.orders._tra-gop')
 
             <x-order.payment-log :transactions="$order->transactions" />
 

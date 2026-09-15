@@ -68,6 +68,14 @@ class GHNOrderService
             ];
         }
 
+        // Đơn trả góp chưa trả đủ: tạo vận đơn là giao hàng trước khi có tiền. Cùng luật với OrderService.
+        if ($order->choDoiTraGop()) {
+            return [
+                'code' => -1,
+                'message' => 'Đơn trả góp chưa trả đủ các kỳ nên chưa tạo vận đơn được.',
+            ];
+        }
+
         if (! $order->to_district_id || ! $order->to_ward_code) {
             return [
                 'code' => -1,

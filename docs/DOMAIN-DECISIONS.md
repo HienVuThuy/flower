@@ -8127,3 +8127,70 @@ có thanh bên.
   đếm đăng nhập sẽ phạt người dùng "ghi nhớ đăng nhập". Thưởng ở mốc ngày 3
   (+10) và mỗi 7 ngày (+30). Hai cột trên `users`, không giữ nhật ký ghé
   thăm từng ngày.
+
+## QĐ-292. Điểm từ mua hàng và đánh giá; tương tác Góc cây có trần
+
+- Mua hàng: điểm cộng khi đơn **đã giao**, theo tiền hàng (không tính phí
+  giao, không tính dòng quà); hoàn tiền thì trừ lại phần tương ứng. Đánh giá
+  sản phẩm đã mua được cộng một lần cho mỗi cặp đơn – sản phẩm (khoá nguồn
+  trong sổ điểm, bấm lại không cộng lần hai).
+- Góc cây đã có lượt thích và bình luận (thay cho dòng "Tương tác: chưa làm"
+  ở QĐ-291). Lượt thích mang điểm cho người đăng nhưng có trần mỗi tuần —
+  không để một nhóm bạn bấm thích qua lại thành máy in điểm. Bình luận do
+  admin ẩn được.
+
+## QĐ-293. Điểm trừ tiền là một bước trong pipeline giá, không phải mã giảm giá
+
+- 100đ / điểm, tối thiểu 100 điểm, trần 30% tiền hàng **sau** khuyến mại, ưu
+  đãi hạng và mã. Xin quá mức thì kẹp xuống và nói ra.
+- Trừ điểm trong transaction tạo đơn (không đủ điểm lúc bấm đặt thì không có
+  đơn); huỷ đơn trả điểm; hoàn đủ tiền đơn đã giao cũng trả điểm — cùng một
+  khoá nguồn nên không trả hai lần.
+
+## QĐ-294. Hạng thành viên theo chi tiêu hợp lệ, cấu hình trong bảng; ưu đãi hạng có luật cộng dồn
+
+- Hạng tính theo tiền hàng của đơn đã giao trừ phần đã hoàn — không theo
+  điểm (tiêu điểm không làm tụt hạng). Năm hạng khởi đầu Mầm / Lá / Hoa /
+  Vườn / Rừng nằm trong bảng `member_tiers`, sửa ở trang quản trị.
+- Thứ tự tính giá: khuyến mại sản phẩm → giảm theo hạng → mã giảm giá trên
+  phần còn lại → điểm → phí giao. Mã có cờ "cộng dồn với ưu đãi hạng"; mã
+  không cộng dồn thì thay ưu đãi hạng, và việc tự chọn mã bỏ qua mã thấp hơn
+  ưu đãi hạng. Mã có thể đòi hạng tối thiểu. Hạng và tiền giảm theo hạng
+  được chụp vào đơn.
+
+## QĐ-295. Quà tặng kèm theo từng sản phẩm; quà theo chương trình nằm ở Khuyến mại
+
+- Quà kèm là thuộc tính của sản phẩm / quy cách, không phải mã hay chương
+  trình: "mua mỗi N tặng M, tối đa X", luật khi thiếu kho và khi trả hàng do
+  admin đặt riêng từng món. Quà tự tính lại theo giỏ, khách không tự thêm.
+- Quà ghi thành dòng 0đ dưới dòng hàng sinh ra nó, trừ kho cùng đường với
+  hàng bán; không tính vào doanh số, bán chạy hay tồn kho bán ra; giá vốn quà
+  là khoản chi riêng trong lãi lỗ và sổ thu chi.
+
+## QĐ-296. Trợ lý AI chỉ trả lời trên dữ liệu cửa hàng máy chủ tự lấy
+
+- Nhà cung cấp sau một giao diện (`AiProvider`), khoá chỉ đọc từ `.env`, gửi
+  trong header. Chưa có khoá thì không gọi ra ngoài và nói "chưa được cấu
+  hình" — không có câu trả lời mẫu.
+- Mỗi câu hỏi, máy chủ lấy sản phẩm khớp (cùng bộ tìm kiếm), giá từ
+  PricingService, tồn kho, hướng dẫn chăm sóc, quà, khuyến mại, mã công khai;
+  với khách đăng nhập chỉ thêm tên sản phẩm yêu thích và mã / trạng thái vài
+  đơn gần nhất **của chính họ** — không địa chỉ, điện thoại, email. Lịch sử
+  chat trong phiên, không lưu cơ sở dữ liệu.
+
+## QĐ-297. Trả góp trước khi giao; điểm tín dụng đo việc trả tiền, không phải tiền
+
+- Cửa hàng không cho vay: đặt đơn là giữ hàng, khách trả trước rồi trả theo
+  kỳ, **chỉ giao khi đã trả đủ** (chặn ở OrderService và GHNOrderService
+  bằng `Order::choDoiTraGop()`). Mỗi kỳ qua MoMo hoặc thu tại cửa hàng
+  (quyền tài chính, theo thứ tự kỳ); tiền vẫn ghi ở `payment_transactions`.
+- Quá hạn một kỳ vượt ân hạn: kế hoạch vỡ, đơn huỷ theo đường huỷ thường,
+  tiền đã trả thành khoản phải hoàn. Không thu phí phạt. "Còn hoàn được"
+  tính trên `Order::daThu()` (tiền đã thu thật) thay vì tổng đơn.
+- Điểm tín dụng tính lại từ lịch sử mỗi lần (không lưu, không sửa tay):
+  đơn đã giao đã trả, kỳ đúng hạn / trễ (theo ngày Việt Nam), kế hoạch vỡ,
+  đơn COD huỷ lúc đang giao. Nó chỉ quyết định được trả góp không, mấy kỳ, trả
+  trước bao nhiêu — không đổi quà, không ảnh hưởng hạng hay điểm thưởng.
+- Mọi ngưỡng (đơn tối thiểu, số ngày mỗi kỳ, ân hạn, điểm tối thiểu / mức
+  tốt, số kỳ và % trả trước từng mức) admin sửa được; kế hoạch chụp điều
+  kiện lúc tạo.

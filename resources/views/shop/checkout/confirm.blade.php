@@ -66,6 +66,32 @@
                             @endif
                         </p>
 
+                        {{-- Lịch trả góp tính từ tổng tiền THẬT của đơn — khách thấy trước khi bấm đặt. --}}
+                        @if(! empty($lichTraGop))
+                            <div class="table-responsive mt-3" data-lich-tra-gop>
+                                <table class="table table-sm align-middle mb-1">
+                                    <thead>
+                                        <tr><th scope="col">Kỳ</th><th scope="col">Hạn trả</th><th scope="col" class="text-end">Số tiền</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($lichTraGop as $dong)
+                                            <tr>
+                                                <td>{{ $dong['sequence'] === 0 ? 'Trả trước' : 'Kỳ ' . $dong['sequence'] }}</td>
+                                                <td>{{ \Carbon\Carbon::parse($dong['due_on'])->format('d/m/Y') }}</td>
+                                                <td class="text-end"><x-site.money :amount="$dong['amount']" /></td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-caption mb-0">
+                                Cửa hàng giữ hàng và giao khi bạn trả đủ. Quá hạn một kỳ hơn
+                                {{ \App\Services\Installment\InstallmentSettings::soNguyen('tra_gop.ngay_an_han') }} ngày thì đơn tự huỷ và tiền đã trả được hoàn lại.
+                            </p>
+                        @elseif(! empty($traGopLoi))
+                            <p class="text-danger mt-2 mb-0" data-tra-gop-loi>{{ $traGopLoi }}</p>
+                        @endif
+
                     </div>
 
                     <div class="checkout-review">

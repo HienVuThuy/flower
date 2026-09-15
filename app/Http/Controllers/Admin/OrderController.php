@@ -148,7 +148,7 @@ class OrderController extends Controller
 
     public function show(Order $order, RefundService $refunds, \App\Services\Exchange\ExchangeService $doiHang): View
     {
-        $order->load('items.product', 'user', 'statusEvents.changedBy', 'invoice', 'transactions', 'refunds.items.orderItem', 'refunds.createdBy', 'exchanges.items');
+        $order->load('items.product', 'user', 'statusEvents.changedBy', 'invoice', 'transactions.installmentPayment', 'refunds.items.orderItem', 'refunds.createdBy', 'exchanges.items', 'installmentPlan.payments');
 
         return view('admin.orders.show', [
             // statusEvents.changedBy nạp sẵn: dòng thời gian hiện tên người
@@ -210,7 +210,8 @@ class OrderController extends Controller
              * chối với đơn đã giao hoặc đã có khoản hoàn; bày nút ra ở đó là
              * một nút lúc nào bấm cũng báo lỗi.
              */
-            'paymentTargets' => array_values(array_filter(
+            // Đơn trả góp: "đã thanh toán" là hệ quả của kỳ cuối, ghi từng kỳ ở khối Trả góp — không bày nút.
+            'paymentTargets' => $order->payment_method === \App\Enums\PaymentMethod::TraGop ? [] : array_values(array_filter(
                 $order->payment_status->nextStates(),
                 fn ($t) => $t !== PaymentStatus::Refunded
                     && ! ($t === PaymentStatus::Unpaid && (

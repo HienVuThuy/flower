@@ -493,6 +493,11 @@ if (config('features.cart')) {
             Route::get('/{order}/thanh-toan-momo', [MomoController::class, 'payAgain'])
                 ->middleware('throttle:10,1')
                 ->name('momo.pay');
+
+            // Trả kỳ trả góp kế tiếp qua MoMo — mỗi lần một lượt giao dịch cho đúng kỳ đó.
+            Route::get('/{order}/tra-gop-momo', [\App\Http\Controllers\Shop\InstallmentPaymentController::class, 'momo'])
+                ->middleware('throttle:10,1')
+                ->name('tra-gop.momo');
         });
 
     /*
@@ -1425,6 +1430,23 @@ Route::prefix('admin')
         Route::get('hoan-tien', [RefundController::class, 'index'])
             ->middleware('quyen:tai-chinh')
             ->name('refunds.index');
+
+        /*
+         * TRẢ GÓP — danh sách kế hoạch, cấu hình (admin sửa được), và ghi một
+         * kỳ khách trả tại cửa hàng. Việc tiền: quyền tài chính; ghi kỳ còn cần
+         * quyền đơn hàng như mọi thao tác trên đơn.
+         */
+        Route::get('tra-gop', [\App\Http\Controllers\Admin\InstallmentController::class, 'index'])
+            ->middleware('quyen:tai-chinh')
+            ->name('installments.index');
+
+        Route::put('tra-gop/cau-hinh', [\App\Http\Controllers\Admin\InstallmentController::class, 'updateSettings'])
+            ->middleware('quyen:tai-chinh')
+            ->name('installments.settings');
+
+        Route::post('orders/{order}/tra-gop/thu', [\App\Http\Controllers\Admin\InstallmentController::class, 'record'])
+            ->middleware(['quyen:don-hang', 'quyen:tai-chinh', 'throttle:20,1'])
+            ->name('orders.installments.record');
 
         /*
          * SỔ THU CHI — chi phí vận hành và lãi ròng ước tính theo tháng.

@@ -2,12 +2,18 @@
 
 namespace App\Enums;
 
+use App\Services\Installment\InstallmentSettings;
+
 /**
  * Hình thức thanh toán.
  * ============================================================
- * COD và MoMo. Enum này nói đúng những gì hệ thống LÀM ĐƯỢC, không bày
- * ra lựa chọn bấm vào không chạy: MoMo chỉ hiện khi `.env` có đủ khoá —
- * xem isConfigured().
+ * COD, MoMo và Trả góp. Enum này nói đúng những gì hệ thống LÀM ĐƯỢC,
+ * không bày ra lựa chọn bấm vào không chạy: MoMo chỉ hiện khi `.env` có
+ * đủ khoá, trả góp chỉ hiện khi cửa hàng bật — xem isConfigured().
+ *
+ * TRẢ GÓP không phải một cổng: tiền từng kỳ vẫn đi qua MoMo hoặc được thu
+ * tại cửa hàng, và ghi vào cùng sổ payment_transactions. Luật "ai được trả
+ * góp, mấy kỳ" nằm ở InstallmentPolicy, không ở đây.
  *
  * ĐÃ GỠ "Chuyển khoản ngân hàng": xác nhận một đơn chuyển khoản đòi hỏi
  * admin mở app ngân hàng, nhìn xem tiền về chưa rồi mới bấm "Đã thanh
@@ -34,12 +40,14 @@ enum PaymentMethod: string
 {
     case Cod = 'cod';
     case Momo = 'momo';
+    case TraGop = 'tra_gop';
 
     public function label(): string
     {
         return match ($this) {
             self::Cod => 'Thanh toán khi nhận hàng (COD)',
             self::Momo => 'Ví MoMo',
+            self::TraGop => 'Trả góp trước khi giao',
         };
     }
 
@@ -48,6 +56,7 @@ enum PaymentMethod: string
         return match ($this) {
             self::Cod => 'Trả tiền mặt cho nhân viên giao hàng khi nhận hoa.',
             self::Momo => 'Chuyển sang trang MoMo để trả bằng ví hoặc thẻ ATM nội địa.',
+            self::TraGop => 'Cửa hàng giữ hàng cho bạn. Trả trước một phần, trả nốt theo kỳ qua MoMo hoặc tại cửa hàng; giao hàng khi đã trả đủ.',
         };
     }
 
@@ -78,22 +87,27 @@ enum PaymentMethod: string
     public function gatewayKey(): ?string
     {
         return match ($this) {
-            self::Cod => null,
+            self::Cod, self::TraGop => null,
             self::Momo => 'momo',
         };
     }
 
     /**
-     * Cổng của hình thức này đã được cấu hình đủ để dùng thật chưa.
+     * Hình thức này đã được cấu hình đủ để dùng thật chưa.
      *
      * ĐÂY LÀ CHỖ CHẶN "CHỨC NĂNG GIẢ". Một hình thức online mà thiếu
      * khoá bí mật trong `.env` thì bấm vào sẽ lỗi ở giữa đường — sau khi
      * khách đã điền hết địa chỉ. Thà không hiện ra còn hơn hiện rồi hỏng.
      *
-     * COD không có cổng nên luôn dùng được.
+     * COD không có cổng nên luôn dùng được. Trả góp dùng được khi cửa hàng
+     * bật ở trang quản trị.
      */
     public function isConfigured(): bool
     {
+        if ($this === self::TraGop) {
+            return InstallmentSettings::bat();
+        }
+
         $key = $this->gatewayKey();
 
         if ($key === null) {

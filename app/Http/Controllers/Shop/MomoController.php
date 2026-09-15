@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Enums\MomoFlow;
-use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Concerns\AuthorizesOrderAccess;
@@ -11,10 +10,11 @@ use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\PaymentTransaction;
 use App\Services\Order\OrderException;
+use App\Services\Installment\InstallmentService;
 use App\Services\Order\OrderService;
+use App\Services\Order\PaidOrderFulfilment;
 use App\Services\Payment\MomoGateway;
 use App\Services\Payment\PaymentException;
-use App\Services\Shipping\GHNOrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,7 +53,6 @@ class MomoController extends Controller
     public function __construct(
         private readonly MomoGateway $momo,
         private readonly OrderService $orders,
-        private readonly GHNOrderService $ghn,
     ) {
     }
 
@@ -144,6 +143,7 @@ class MomoController extends Controller
                 'success',
                 'Thanh toán MoMo thành công. Đơn hàng đã được xác nhận và đang chuẩn bị giao.',
             ),
+            'ky' => $ve->with('success', 'Đã nhận tiền kỳ trả góp qua MoMo. Cửa hàng giao hàng khi bạn trả đủ các kỳ.'),
             'mismatch' => $ve->with('error', 'Số tiền MoMo báo về không khớp với đơn hàng. Cửa hàng sẽ liên hệ với bạn.'),
             'cancelled' => $ve->with('error', 'Đơn đã huỷ nên không ghi nhận thanh toán. Cửa hàng sẽ liên hệ để hoàn tiền.'),
             'invalid' => $ve->with('error', 'Không tìm thấy lượt thanh toán tương ứng.'),
@@ -231,6 +231,28 @@ class MomoController extends Controller
             // kể cả khi đơn không nhận được nữa.
             $this->momo->markPaid($transaction, $payload);
 
+            /*
+             * TIỀN CỦA MỘT KỲ TRẢ GÓP: ghi vào kỳ đó. "Đã thanh toán" của cả
+             * đơn chỉ đặt khi kỳ cuối xong — InstallmentService quyết.
+             */
+            if ($transaction->installment_payment_id !== null) {
+                $ky = app(InstallmentService::class)->ghiNhanKy((int) $transaction->installment_payment_id);
+
+                if ($ky === 'already') {
+                    // Hai lượt MoMo cùng trả một kỳ (hai tab): tiền về hai lần, người thật phải hoàn một lần.
+                    Log::warning('Kỳ trả góp đã được trả bằng lượt khác.', [
+                        'order' => $order->order_number,
+                        'giao_dich' => $transaction->gateway_order_id,
+                    ]);
+                }
+
+                return match ($ky) {
+                    'completed' => 'paid',
+                    'closed' => 'cancelled',
+                    default => 'ky',
+                };
+            }
+
             try {
                 $this->orders->setPaymentStatus($order, PaymentStatus::Paid);
             } catch (OrderException $e) {
@@ -293,54 +315,8 @@ class MomoController extends Controller
             return;
         }
 
-        // Đơn đã bị huỷ trước khi tiền về: không xác nhận, không bàn
-        // giao. Trường hợp này cần người thật xử lý hoàn tiền.
-        if ($order->status === OrderStatus::Cancelled) {
-            return;
-        }
-
-        if ($order->status === OrderStatus::Pending) {
-            try {
-                $this->orders->changeStatus(
-                    $order,
-                    OrderStatus::Confirmed,
-                    'Đã nhận thanh toán qua MoMo.',
-                    tuDong: true,
-                );
-            } catch (OrderException $e) {
-                Log::warning('Không tự xác nhận được đơn sau thanh toán.', [
-                    'order' => $order->order_number,
-                    'ly_do' => $e->getMessage(),
-                ]);
-            }
-        }
-
-        /*
-         * KHÔNG kiểm "đã có vận đơn chưa" ở đây.
-         *
-         * GHNOrderService::create() đã tự chặn: có mã rồi thì nó trả về
-         * ngay, không gọi ra GHN. Kiểm lại lần nữa ở đây là dựng bản thứ
-         * hai của cùng một luật — và bản thứ hai sẽ lệch vào đúng ngày ai
-         * đó sửa bản thứ nhất.
-         *
-         * Đã kiểm bằng cách bỏ chốt cũ đi: bài kiểm thử đếm số lời gọi
-         * GHN vẫn xanh, tức là lớp dưới thật sự đang gánh việc đó.
-         */
-        try {
-            $ketQua = $this->ghn->create($order->refresh());
-
-            if (($ketQua['code'] ?? null) !== 200) {
-                Log::error('Không tạo được vận đơn GHN sau thanh toán MoMo.', [
-                    'order' => $order->order_number,
-                    'ghn' => $ketQua['message'] ?? null,
-                ]);
-            }
-        } catch (\Throwable $e) {
-            Log::error('Lỗi khi tạo vận đơn GHN sau thanh toán MoMo.', [
-                'order' => $order->order_number,
-                'exception' => $e->getMessage(),
-            ]);
-        }
+        // Cùng một đường với kỳ cuối trả góp — xem PaidOrderFulfilment.
+        app(PaidOrderFulfilment::class)->sauKhiTraTien($order, 'Đã nhận thanh toán qua MoMo.');
     }
 
     /**

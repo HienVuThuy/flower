@@ -145,6 +145,15 @@ class CheckoutDetailsRequest extends FormRequest
              */
             'momo_flow' => ['nullable', Rule::in(MomoFlow::values())],
 
+            /*
+             * SỐ KỲ TRẢ GÓP — chỉ kiểm dạng ở đây. Trần số kỳ phụ thuộc điểm tín
+             * dụng của khách, nên InstallmentService kiểm lại lúc tạo đơn.
+             */
+            'so_ky' => [
+                Rule::requiredIf(fn () => $this->input('payment_method') === PaymentMethod::TraGop->value),
+                'nullable', 'integer', 'min:1', 'max:24',
+            ],
+
             /* ---------- xuất hoá đơn GTGT ---------- */
 
             /*
@@ -222,6 +231,7 @@ class CheckoutDetailsRequest extends FormRequest
             'delivery_note' => 'ghi chú',
             'payment_method' => 'hình thức thanh toán',
             'momo_flow' => 'cách thanh toán MoMo',
+            'so_ky' => 'số kỳ trả góp',
             'invoice_buyer_type' => 'đối tượng xuất hoá đơn',
             'invoice_buyer_name' => 'tên trên hoá đơn',
             'invoice_email' => 'email nhận hoá đơn',

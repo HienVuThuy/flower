@@ -148,6 +148,9 @@ class CheckoutController extends Controller
              */
             'paymentMethods' => PaymentMethod::available(),
 
+            // Trả góp được hay không, vì sao — cùng luật với lúc tạo đơn (InstallmentPolicy).
+            'traGop' => app(\App\Services\Installment\InstallmentPolicy::class)->xet(Auth::user(), $basket->grandTotal()),
+
             // Để giao diện nói rõ mã này do hệ thống tự chọn hay khách chọn.
             'couponIsAuto' => $this->source->couponIsAuto(),
 
@@ -532,11 +535,31 @@ class CheckoutController extends Controller
         }
 
         $basket = $this->source->basket();
+        $values = session(self::SESSION_KEY, []);
+
+        /*
+         * LỊCH TRẢ GÓP DỰ KIẾN — cùng hàm với lúc tạo đơn, trên tổng tiền thật.
+         * Không còn đủ điều kiện (vừa đổi giỏ, điểm vừa đổi) thì nói ngay ở đây,
+         * không đợi bấm đặt hàng mới báo.
+         */
+        $lichTraGop = null;
+        $traGopLoi = null;
+
+        if (($values['payment_method'] ?? null) === PaymentMethod::TraGop->value) {
+            try {
+                $lichTraGop = app(\App\Services\Installment\InstallmentService::class)
+                    ->duKien(Auth::user(), $basket->grandTotal(), (int) ($values['so_ky'] ?? 0))['lich'];
+            } catch (\App\Services\Installment\InstallmentException $e) {
+                $traGopLoi = $e->getMessage() . ' Hãy quay lại chọn hình thức thanh toán khác.';
+            }
+        }
 
         return view('shop.checkout.confirm', [
             'step' => 2,
             'basket' => $basket,
-            'values' => session(self::SESSION_KEY, []),
+            'values' => $values,
+            'lichTraGop' => $lichTraGop,
+            'traGopLoi' => $traGopLoi,
         ]);
     }
 
@@ -624,6 +647,14 @@ class CheckoutController extends Controller
              */
             $this->source->clearPoints();
 
+            return redirect()
+                ->route('shop.checkout.details')
+                ->with('error', $e->getMessage());
+        } catch (\App\Services\Installment\InstallmentException $e) {
+            /*
+             * Không còn đủ điều kiện trả góp lúc bấm đặt (điểm vừa đổi, tab khác
+             * vừa mở một kế hoạch). Đơn đã cuộn lại; về bước chọn thanh toán.
+             */
             return redirect()
                 ->route('shop.checkout.details')
                 ->with('error', $e->getMessage());

@@ -52,6 +52,7 @@ class ProfileController extends Controller
         'thong-tin' => 'Thông tin',
         'diem-thuong' => 'Điểm thưởng',
         'hang-thanh-vien' => 'Hạng thành viên',
+        'tra-gop' => 'Trả góp & tín dụng',
         'bao-mat' => 'Bảo mật',
         'tuy-chon' => 'Tuỳ chọn',
     ];

@@ -77,7 +77,8 @@ class RefundService
             return 'Đơn này đã được hoàn đủ tiền.';
         }
 
-        if ($order->payment_status !== PaymentStatus::Paid) {
+        // Đơn trả góp vỡ giữa chừng vẫn "chưa thanh toán", nhưng tiền các kỳ đã trả là tiền thật phải hoàn.
+        if ($order->payment_status !== PaymentStatus::Paid && bccomp($order->daThu(), '0', 2) <= 0) {
             return 'Khách chưa trả tiền cho đơn này nên không có gì để hoàn.';
         }
 
@@ -105,6 +106,28 @@ class RefundService
     }
 
     /**
+     * Hoàn qua MoMo được không: cổng đã cấu hình và đơn có ĐÚNG MỘT giao dịch
+     * MoMo thành công.
+     *
+     * Đơn trả góp trả nhiều kỳ qua MoMo có nhiều giao dịch; MoMo chỉ hoàn trên
+     * từng giao dịch, không quá số tiền của giao dịch đó, còn sổ hoàn tiền
+     * không ghi hoàn trên giao dịch nào. Cho hoàn qua MoMo ở đó là mời một lần
+     * hoàn bị MoMo từ chối giữa chừng — chuyển khoản hoặc tiền mặt thì đúng.
+     */
+    public function hoanQuaMomoDuoc(Order $order): bool
+    {
+        if (! $this->momo->configured()) {
+            return false;
+        }
+
+        return $order->transactions()
+            ->where('gateway', MomoGateway::GATEWAY)
+            ->where('status', PaymentTransactionStatus::Paid->value)
+            ->whereNotNull('transaction_id')
+            ->count() === 1;
+    }
+
+    /**
      * Cách hoàn dùng được cho đơn.
      *
      * @return list<RefundMethod>
@@ -113,7 +136,7 @@ class RefundService
     {
         $ds = [];
 
-        if ($this->momo->configured() && $this->giaoDichMomo($order)) {
+        if ($this->hoanQuaMomoDuoc($order)) {
             $ds[] = RefundMethod::Momo;
         }
 
@@ -184,8 +207,8 @@ class RefundService
             }
 
             if ($cach === RefundMethod::Momo) {
-                if (! $this->momo->configured() || ! $this->giaoDichMomo($khoa)) {
-                    throw new RefundException('Đơn này không có giao dịch MoMo thành công nên không hoàn qua MoMo được.');
+                if (! $this->hoanQuaMomoDuoc($khoa)) {
+                    throw new RefundException('Đơn này không có đúng một giao dịch MoMo thành công nên không hoàn qua MoMo được. Hãy hoàn bằng chuyển khoản hoặc tiền mặt.');
                 }
 
                 if ((int) $soTien < self::MOMO_TOI_THIEU) {
@@ -371,7 +394,8 @@ class RefundService
 
         $khoa->load('refunds');
 
-        if (bccomp($khoa->refundedAmount(), (string) $khoa->grand_total, 2) >= 0) {
+        // So với tiền ĐÃ THU THẬT (đơn trả góp vỡ chỉ thu một phần), không phải tổng đơn.
+        if (bccomp($khoa->refundedAmount(), $khoa->daThu(), 2) >= 0) {
             $khoa->payment_status = PaymentStatus::Refunded;
             $khoa->save();
         }

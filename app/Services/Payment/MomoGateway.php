@@ -50,7 +50,7 @@ class MomoGateway implements PaymentGateway
      *
      * @throws PaymentException
      */
-    public function createPayment(Order $order, ?MomoFlow $flow = null): string
+    public function createPayment(Order $order, ?MomoFlow $flow = null, ?\App\Models\InstallmentPayment $ky = null): string
     {
         if (! $this->configured()) {
             throw new PaymentException('Cổng MoMo chưa được cấu hình.');
@@ -58,10 +58,16 @@ class MomoGateway implements PaymentGateway
 
         $flow ??= MomoFlow::macDinh();
 
+        /*
+         * TRẢ GÓP: lượt này thu ĐÚNG số tiền của một kỳ và ghi kỳ đó vào giao
+         * dịch — callback đối chiếu số tiền với chính giao dịch, nên không ai
+         * trả một kỳ 100.000₫ mà được ghi cả đơn.
+         */
         $transaction = PaymentTransaction::create([
             'order_id' => $order->id,
+            'installment_payment_id' => $ky?->id,
             'gateway' => self::GATEWAY,
-            'amount' => $order->grand_total,
+            'amount' => $ky?->amount ?? $order->grand_total,
             'status' => PaymentTransactionStatus::Pending,
         ]);
 
@@ -114,7 +120,7 @@ class MomoGateway implements PaymentGateway
          * `grand_total` là decimal(12,2) nên phải ép trước khi ký — ký
          * chuỗi "580000.00" rồi gửi "580000" là chữ ký không khớp.
          */
-        $amount = (string) (int) round((float) $order->grand_total);
+        $amount = (string) (int) round((float) $transaction->amount);
 
         /*
          * DUY NHẤT CHO TỪNG LƯỢT, không phải cho từng đơn.
