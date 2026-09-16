@@ -1,0 +1,1031 @@
+================================================================================
+              HƯỚNG DẪN ĐỌC HIỂU CODE DỰ ÁN ANGEVIL — DÀNH CHO NGƯỜI MỚI
+================================================================================
+
+Tài liệu này dạy cách đọc code của dự án theo thứ tự dễ → khó:
+
+  PHẦN 0. Cách dùng tài liệu và cách tìm nhanh trong VS Code
+  PHẦN 1. Kiến thức nền: 22 khái niệm gặp liên tục trong dự án
+  PHẦN 2. Bản đồ thư mục: tệp nào nằm ở đâu, làm gì
+  PHẦN 3. 20 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
+  PHẦN 4. Tự học và gỡ lỗi
+  PHẦN 5. Bảng tra nhanh thuật ngữ
+
+Quy ước ghi trong tài liệu:
+  - "app/Services/Pricing/PricingService.php → resolve()"
+      nghĩa là mở tệp đó, tìm hàm tên resolve.
+  - "PricingService::resolve()"   = hàm resolve của lớp PricingService.
+  - "CartController@store"         = hàm store của controller (cách Laravel
+                                     ghi trong route).
+  - Comment giải thích chi tiết của từng tệp nằm ở docs/CHU-THICH-CODE.md
+    (tìm theo tên tệp). Lý do của các quyết định thiết kế nằm ở
+    docs/DOMAIN-DECISIONS.md (tìm "QĐ-số").
+
+
+================================================================================
+PHẦN 0. CÁCH DÙNG TÀI LIỆU VÀ TÌM NHANH TRONG VS CODE
+================================================================================
+
+  Ctrl + P            gõ tên tệp (vd "PricingService") để mở ngay
+  Ctrl + Shift + O    trong một tệp: liệt kê mọi hàm, gõ tên hàm để nhảy tới
+  Ctrl + Shift + F    tìm một chữ trong toàn dự án (vd "->resolve(")
+  F12                 đứng trên tên hàm/lớp, nhảy tới nơi định nghĩa
+                      (cần cài extension "PHP Intelephense")
+  Shift + F12         xem mọi nơi đang gọi hàm đó
+
+  Tra một đường dẫn web đi vào hàm nào: mở terminal, chạy
+      php artisan route:list --path=gio-hang
+  sẽ ra dòng kiểu:  POST gio-hang ... Shop\CartController@store
+
+  Mẹo đọc một luồng lạ: bắt đầu từ ROUTE → CONTROLLER → xem controller gọi
+  SERVICE nào → service đọc/ghi MODEL nào → controller trả VIEW nào.
+
+
+================================================================================
+PHẦN 1. KIẾN THỨC NỀN (đọc một lần, quay lại tra khi cần)
+================================================================================
+
+--------------------------------------------------------------------------------
+1.1  Một yêu cầu đi qua Laravel như thế nào
+--------------------------------------------------------------------------------
+  Người dùng mở https://.../gio-hang
+    1. public/index.php                 cửa vào duy nhất của mọi yêu cầu
+    2. bootstrap/app.php                cấu hình: nạp route, đăng ký middleware
+    3. Middleware (bộ lọc chạy trước)   vd: đã đăng nhập chưa, có bị khoá không
+    4. routes/web.php                   tìm dòng khớp địa chỉ + phương thức
+    5. Controller                       hàm xử lý yêu cầu
+    6. Service                          nơi chứa luật nghiệp vụ (tính tiền, kho…)
+    7. Model                            đọc/ghi bảng trong CSDL
+    8. View (Blade)                     dựng HTML
+    9. Middleware (chạy sau)            vd: thêm header bảo mật
+   10. Trả HTML về trình duyệt
+
+  Ví dụ thật: bootstrap/app.php đăng ký middleware:
+      $middleware->appendToGroup('web', PreventBackHistory::class);
+      $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
+--------------------------------------------------------------------------------
+1.2  Route (đường dẫn) — routes/web.php, routes/admin.php
+--------------------------------------------------------------------------------
+  Route::get('gio-hang', [CartController::class, 'index'])->name('shop.cart.index');
+    - get / post / put / patch / delete : phương thức HTTP
+    - 'gio-hang'                        : địa chỉ
+    - [CartController::class, 'index']  : gọi hàm index của CartController
+    - ->name('shop.cart.index')         : TÊN route; trong code dùng
+                                          route('shop.cart.index') để sinh URL,
+                                          đổi địa chỉ không phải sửa chỗ khác
+
+  Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,staff'])
+       ->group(function () { ... });
+    - prefix   : mọi route bên trong bắt đầu bằng /admin
+    - middleware: mọi route bên trong phải đăng nhập và là admin/nhân viên
+    - group    : gom nhiều route cùng cấu hình
+
+  Tham số trên URL:
+      Route::get('san-pham/{product:slug}', ...)
+    Laravel tự tìm sản phẩm có cột slug khớp rồi truyền vào hàm controller dưới
+    dạng biến $product (gọi là "route model binding"). Không có thì trả 404.
+
+  ->whereNumber('post') : tham số phải là số.
+  ->middleware('throttle:10,1') : tối đa 10 lần mỗi 1 phút, quá thì báo 429.
+
+  routes/admin.php chứa toàn bộ route quản trị, được nạp ở cuối routes/web.php
+  bằng dòng  require __DIR__.'/admin.php';
+
+  routes/console.php : lịch chạy tự động (Schedule::command(...)->dailyAt('08:00')).
+
+--------------------------------------------------------------------------------
+1.3  Middleware — app/Http/Middleware
+--------------------------------------------------------------------------------
+  Mỗi middleware có hàm  handle(Request $request, Closure $next).
+    - Gọi $next($request) = cho yêu cầu đi tiếp.
+    - Không gọi (abort(403) / redirect) = chặn lại.
+
+  Ví dụ app/Http/Middleware/CoQuyen.php → handle():
+      foreach ($ma as $m) {                         // các quyền ghi trên route
+          if ($user->duoc($quyen)) return $next($request);   // có quyền → đi tiếp
+      }
+      abort(403, 'Tài khoản của bạn không có quyền vào khu vực này.');
+
+  Trong route viết  ->middleware('quyen:kho')  thì $ma = ['kho'].
+
+  Các middleware của dự án:
+    EnsureUserHasRole     chặn theo vai trò (admin / staff / customer)
+    CoQuyen               chặn theo khu vực quyền (don-hang, kho, tai-chinh…)
+    EnsureUserIsNotLocked tài khoản bị khoá thì đăng xuất ngay
+    PreventBackHistory    không cho trình duyệt lưu trang cần đăng nhập
+    GhiNhanNgayGhe        ghi nhận ngày ghé thăm để tính chuỗi ngày
+    SecurityHeaders       thêm header bảo mật cho mọi phản hồi
+
+--------------------------------------------------------------------------------
+1.4  Controller — app/Http/Controllers
+--------------------------------------------------------------------------------
+  Controller trong dự án được giữ MỎNG: nhận dữ liệu → kiểm tra → gọi service →
+  trả kết quả. Không tính tiền, không trừ kho ở controller.
+
+  Ví dụ app/Http/Controllers/Shop/CommunityPostOwnerController.php → pin():
+      $bai = $chuBai->baiCuaToi(Auth::user(), $post);   // lấy bài CỦA TÔI
+      try {
+          $ghim = $chuBai->doiGhim($bai);               // luật nằm ở service
+      } catch (CommunityException $e) {
+          return back()->with('error', $e->getMessage());   // báo lỗi đỏ
+      }
+      return back()->with('success', 'Đã ghim bài…');       // báo xanh
+
+  Các cách trả kết quả hay gặp:
+    return view('shop.cart.index', ['cart' => $cart]);
+        → dựng resources/views/shop/cart/index.blade.php, truyền biến $cart
+    return redirect()->route('shop.orders.show', $order);  → chuyển trang
+    return back()->with('success', '...');  → quay lại trang trước + lời nhắn
+    return response()->json([...]);         → trả JSON cho JavaScript
+
+  Chia thư mục: Shop/ (khách), Admin/ (quản trị), Auth/ (đăng nhập),
+  Api/ (JSON), Concerns/ (đoạn dùng chung giữa nhiều controller — "trait").
+
+--------------------------------------------------------------------------------
+1.5  Kiểm tra dữ liệu gửi lên (validation)
+--------------------------------------------------------------------------------
+  Cách 1 — ngay trong controller:
+      $data = $request->validate([
+          'body' => ['required', 'string', 'max:1000'],
+      ], [], ['body' => 'bình luận']);
+    Sai thì Laravel TỰ quay lại trang trước kèm lỗi; đúng thì $data chỉ chứa
+    các trường đã khai → an toàn khi lưu.
+
+  Cách 2 — Form Request (app/Http/Requests), dùng khi luật dài:
+      public function rules(): array    // luật
+      public function messages(): array // câu báo lỗi tiếng Việt
+    Controller chỉ cần khai kiểu:  public function store(AddressRequest $request)
+
+  Luật hay gặp: required, nullable, string, integer, email, max:255, min:1,
+  confirmed (có ô nhập lại), image, mimes:jpg,png, exists:bảng,cột,
+  Rule::enum(OrderStatus::class) (giá trị phải thuộc enum).
+
+--------------------------------------------------------------------------------
+1.6  Service và "tiêm phụ thuộc" (Dependency Injection)
+--------------------------------------------------------------------------------
+  Service = lớp PHP thường chứa luật nghiệp vụ, nằm ở app/Services/<Miền>/.
+
+  Laravel tự tạo đối tượng và truyền vào, gọi là tiêm phụ thuộc:
+      class OrderService
+      {
+          public function __construct(
+              private readonly CouponService $coupons,   // Laravel tự tạo
+              private readonly OrderMailer $mailer,
+          ) {}
+      }
+    "private readonly CouponService $coupons" trong ngoặc của __construct là cú
+    pháp rút gọn (constructor promotion): vừa khai thuộc tính, vừa gán giá trị.
+    readonly = gán một lần, không sửa được nữa.
+
+  Cũng có thể xin service ở bất kỳ đâu:  app(PricingService::class)->resolve($p)
+
+  Singleton (chỉ tạo một lần cho cả yêu cầu) khai ở
+  app/Providers/AppServiceProvider.php → register().
+
+--------------------------------------------------------------------------------
+1.7  Model Eloquent — app/Models
+--------------------------------------------------------------------------------
+  Mỗi model ứng với một bảng: Product ↔ products, OrderItem ↔ order_items.
+
+  Đọc:
+      Product::find(5)                          tìm theo id, không có → null
+      Product::findOrFail(5)                    không có → 404
+      Product::where('status', 'active')->get() danh sách (Collection)
+      Order::where('user_id', Auth::id())->latest()->paginate(10)
+  Ghi:
+      Order::create([...])           tạo mới — chỉ nhận cột trong $fillable
+      $order->update([...])          sửa
+      $post->forceFill([...])->save() sửa cả cột không nằm trong $fillable
+                                      (chỉ dùng với dữ liệu do máy chủ tự đặt)
+      $product->decrement('stock_quantity', 2)   trừ 2
+
+  $fillable / $guarded : danh sách cột được phép gán hàng loạt. Chống việc kẻ
+  xấu gửi thêm trường "role=admin" lên biểu mẫu.
+
+  $casts / casts() : đổi kiểu khi đọc, vd 'approved_at' => 'datetime',
+  'status' => OrderStatus::class (đọc ra thành enum).
+
+  Quan hệ:
+      public function items(): HasMany       { return $this->hasMany(OrderItem::class); }
+      public function user(): BelongsTo      { return $this->belongsTo(User::class); }
+    Dùng:  $order->items  (danh sách),  $order->user->name
+
+  Scope — điều kiện đặt tên sẵn:
+      public function scopeApproved(Builder $query): Builder
+      { return $query->whereNotNull('approved_at')->whereNull('hidden_at'); }
+    Dùng:  CommunityPost::approved()->get()   (bỏ chữ "scope", viết thường)
+
+  Nạp sẵn quan hệ (eager loading) — chống lỗi N+1:
+      Product::with(['category', 'promotions'])->get();
+    Không có with(): 20 sản phẩm → 1 truy vấn lấy sản phẩm + 20 truy vấn lấy
+    danh mục = 21 truy vấn (lỗi N+1). Có with(): 2 truy vấn.
+      ->withCount('reviews')  thêm cột reviews_count
+      ->withAvg('reviews', 'rating')  thêm cột trung bình
+
+  Xoá mềm (SoftDeletes): xoá chỉ ghi deleted_at, dữ liệu vẫn còn, khôi phục
+  được (sản phẩm, đơn hàng).
+
+--------------------------------------------------------------------------------
+1.8  Migration — database/migrations
+--------------------------------------------------------------------------------
+  Tệp mô tả cấu trúc bảng; chạy  php artisan migrate  để áp vào CSDL.
+      Schema::create('wishlists', function (Blueprint $table) {
+          $table->id();
+          $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+          $table->foreignId('product_id')->constrained()->cascadeOnDelete();
+          $table->timestamps();
+          $table->unique(['user_id', 'product_id']);    // không trùng cặp
+      });
+    - up()   : áp thay đổi.  down() : hoàn tác.
+    - constrained() : khoá ngoại tới bảng users / products.
+    - cascadeOnDelete() : xoá người dùng thì dòng yêu thích bị xoá theo.
+  Tên tệp có ngày giờ ở đầu để chạy đúng thứ tự.
+  database/seeders : tạo dữ liệu mẫu (php artisan db:seed).
+  database/factories : tạo dữ liệu giả trong kiểm thử (User::factory()->create()).
+
+--------------------------------------------------------------------------------
+1.9  Enum — app/Enums
+--------------------------------------------------------------------------------
+  Danh sách giá trị đóng, thay cho chuỗi gõ tay dễ sai.
+      enum OrderStatus: string
+      {
+          case Pending = 'pending';
+          case Completed = 'completed';
+          public function label(): string { return match ($this) { ... }; }
+      }
+    OrderStatus::Pending            một giá trị
+    OrderStatus::from('pending')    từ chuỗi → enum (sai thì lỗi)
+    OrderStatus::tryFrom('abc')     sai thì trả null
+    OrderStatus::cases()            mọi giá trị
+  Dự án dùng enum cả để chứa luật nhỏ, vd OrderStatus::canTransitionTo()
+  quyết định đơn được chuyển sang trạng thái nào.
+
+--------------------------------------------------------------------------------
+1.10 Blade (giao diện) — resources/views
+--------------------------------------------------------------------------------
+  {{ $product->name }}      in ra, TỰ thoát ký tự HTML (chống XSS) — dùng mặc định
+  {!! $html !!}             in HTML thô — CHỈ dùng khi HTML đã được làm sạch
+  {{-- ghi chú --}}         comment Blade, không ra trình duyệt
+  @if (...) @elseif @else @endif,  @foreach ($a as $x) @endforeach,
+  @forelse ... @empty ... @endforelse (danh sách rỗng thì hiện phần @empty)
+  @php ... @endphp          khối PHP nhỏ trong view
+  @auth ... @endauth        chỉ hiện khi đã đăng nhập
+  @csrf                     thêm ô ẩn chứa mã chống giả mạo biểu mẫu — BẮT BUỘC
+                            với mọi biểu mẫu POST
+  @method('PATCH')          giả phương thức PATCH/PUT/DELETE (HTML chỉ có GET/POST)
+  @error('email') ... @enderror   hiện lỗi của ô email
+
+  Bố cục:
+    @extends('layouts.app')           dùng khung trang chung
+    @section('content') ... @endsection   điền phần nội dung
+    Khung: resources/views/layouts/app.blade.php (cửa hàng),
+           resources/views/layouts/admin.blade.php (quản trị)
+
+  Component (mẩu giao diện dùng lại):
+    <x-product.price :product="$product" />
+      → resources/views/components/product/price.blade.php
+    Dấu ":" trước tên = truyền biểu thức PHP; không có ":" = truyền chuỗi.
+    Trong tệp component: @props(['product']) khai biến nhận vào;
+    $attributes->merge(['class' => 'icon']) gộp class của nơi gọi.
+
+  @include('shop.community.partials.post-card', ['post' => $post])
+    → chèn tệp shop/community/partials/post-card.blade.php
+
+--------------------------------------------------------------------------------
+1.11 Tính tiền bằng bcmath — KHÔNG dùng số thực
+--------------------------------------------------------------------------------
+  Máy tính lưu số thực gần đúng: 0.1 + 0.2 = 0.30000000000000004. Với tiền, sai
+  một đồng cũng là sai, nên dự án tính tiền trên CHUỖI số:
+      bcadd('100.50', '20', 2)   = "120.50"   cộng, 2 chữ số thập phân
+      bcsub(a, b, 2)             trừ
+      bcmul(a, b, 2)             nhân
+      bcdiv(a, b, 2)             chia
+      bccomp(a, b, 2)            so sánh: -1 (a<b), 0 (bằng), 1 (a>b)
+  Ví dụ app/Services/Pricing/PricingService.php → applyDiscount():
+      giảm %:  bcsub($base, bcdiv(bcmul($base, $value, 4), '100', 2), 2)
+             = giá gốc − (giá gốc × % ÷ 100)
+  Hiển thị tiền: app/Services/Shop/Money.php → format().
+
+--------------------------------------------------------------------------------
+1.12 Giao dịch CSDL và khoá dòng
+--------------------------------------------------------------------------------
+  DB::transaction(function () { ... });
+    Mọi lệnh ghi bên trong thành công hết, hoặc lỗi thì HUỶ HẾT. Đặt hàng mà trừ
+    kho xong rồi lỗi ghi đơn → kho được trả lại như cũ.
+
+  Product::whereKey($id)->lockForUpdate()->first();
+    Khoá dòng đó tới hết transaction. Hai người mua món cuối cùng cùng lúc:
+    người thứ hai phải chờ, tới lượt thì kho đã về 0 → báo hết hàng.
+
+  UPDATE có điều kiện (app/Services/Coupon/CouponService.php → redeem()):
+      Coupon::whereKey($id)
+          ->where(fn ($q) => $q->whereNull('usage_limit')
+                               ->orWhereColumn('used_count', '<', 'usage_limit'))
+          ->update(['used_count' => DB::raw('used_count + 1')]);
+    Kiểm và ghi trong MỘT câu lệnh → hai người không cùng lấy được lượt cuối.
+
+  Idempotency (chống làm hai lần): app/Services/Checkout/CheckoutGuard.php sinh
+  một khoá ngẫu nhiên lưu trong session; cột orders.idempotency_key là duy nhất
+  nên bấm "Đặt hàng" hai lần vẫn chỉ ra một đơn.
+
+--------------------------------------------------------------------------------
+1.13 Collection — danh sách có sẵn nhiều hàm
+--------------------------------------------------------------------------------
+  collect([1,2,3]) hoặc kết quả ->get() của Eloquent.
+    ->map(fn ($x) => $x * 2)       biến đổi từng phần tử
+    ->filter(fn ($x) => $x > 1)    giữ phần tử thoả điều kiện
+    ->sum('quantity')              tổng
+    ->pluck('name')                lấy một cột
+    ->groupBy('category_id')       gom nhóm
+    ->sortByDesc('score')          sắp xếp giảm dần
+    ->first(), ->isEmpty(), ->count(), ->take(4), ->values()
+    ->reduce(fn ($carry, $x) => ..., $khoiDau)   gộp dồn thành một giá trị
+
+  "fn ($x) => ..." là hàm mũi tên (arrow function) viết gọn.
+
+--------------------------------------------------------------------------------
+1.14 Exception nghiệp vụ — lỗi có câu nói sẵn cho khách
+--------------------------------------------------------------------------------
+  Service gặp tình huống không làm được thì NÉM lỗi:
+      throw new CartException('Sản phẩm hiện không còn được bán.');
+  Controller BẮT lỗi và đổi thành lời nhắn:
+      try { ... } catch (CartException $e) { return back()->with('error', $e->getMessage()); }
+  Các lớp lỗi: CartException, OrderException, CouponException, PointException,
+  RefundException, InstallmentException, CommunityException…
+  (nằm cùng thư mục với service tương ứng).
+
+--------------------------------------------------------------------------------
+1.15 Đăng nhập, session
+--------------------------------------------------------------------------------
+  Auth::check()       đã đăng nhập chưa
+  Auth::id()          id người đang đăng nhập (null nếu khách)
+  Auth::user()        đối tượng User
+  $request->user()    như trên, lấy từ yêu cầu
+  session(['khoa' => 'giá trị'])   ghi session;   session('khoa')  đọc
+  session()->forget('khoa')        xoá
+  Giỏ khách vãng lai gắn với session()->getId().
+
+--------------------------------------------------------------------------------
+1.16 JavaScript của dự án — resources/js
+--------------------------------------------------------------------------------
+  - resources/js/app.js là cửa vào: import các tệp nhỏ và gọi hàm init… khi
+    trang tải. Mỗi tệp một việc (add-to-cart.js, cart-live.js…).
+  - "export function initX()" ở tệp con, "import { initX } from './x'" ở app.js.
+  - Uỷ quyền sự kiện: document.addEventListener('submit', ...) rồi kiểm
+    event.target.closest('form.product-buy') — nhờ vậy nút thêm vào trang sau
+    vẫn chạy.
+  - fetch + FormData (resources/js/ajax.js → guiForm()): gửi biểu mẫu không tải
+    lại trang, kèm header Accept: application/json để máy chủ trả JSON.
+  - NGUYÊN TẮC "nâng cấp dần" (progressive enhancement): mọi nút đều là biểu mẫu
+    thật chạy được khi tắt JavaScript; JavaScript chỉ làm cho mượt hơn. Có lỗi
+    thì .catch(() => form.submit()) gửi theo cách thường.
+  - Dữ liệu gán vào trang bằng textContent (không phải innerHTML) khi đó là chữ
+    người dùng nhập → chống XSS.
+  - Đóng gói: npm run build (Vite) → public/build. Blade nạp bằng @vite(...).
+
+--------------------------------------------------------------------------------
+1.17 CSS — resources/css
+--------------------------------------------------------------------------------
+  core/     token màu, cỡ chữ, khoảng cách (biến CSS --ten-bien), nền tối
+  components/ mỗi thành phần một tệp (cart.css, product-card.css…)
+  themes/, seasonal/  màu và trang trí theo mùa
+  admin/    giao diện quản trị
+  Tên class theo kiểu BEM: .gc-bai (khối), .gc-bai__head (phần tử),
+  .gc-bai--don (biến thể).
+
+--------------------------------------------------------------------------------
+1.18 Lệnh artisan tự viết và lịch chạy
+--------------------------------------------------------------------------------
+  app/Console/Commands/*.php:
+      protected $signature = 'care:remind';     tên lệnh
+      public function handle(): int { ... }     việc làm khi chạy
+  Chạy tay:  php artisan care:remind
+  Lịch:      routes/console.php — cần một tác vụ hệ điều hành chạy
+             php artisan schedule:run mỗi phút (xem docs/TU-DONG-HOA.md).
+
+--------------------------------------------------------------------------------
+1.19 Kiểm thử — tests/
+--------------------------------------------------------------------------------
+      class QuanLyBaiCuaToiTest extends TestCase
+      {
+          use RefreshDatabase;                 // CSDL sạch cho mỗi bài
+          #[Test]
+          public function nguoi_khac_khong_an_duoc_bai_cua_toi(): void
+          {
+              $chu = User::factory()->create();          // tạo người dùng giả
+              $this->actingAs(User::factory()->create()) // đăng nhập người khác
+                   ->patch(route('shop.community.owner.hide', $bai->id))
+                   ->assertNotFound();                   // phải bị 404
+          }
+      }
+  Chạy tất cả:        php vendor/bin/phpunit
+  Chạy một tệp:       php vendor/bin/phpunit tests/Feature/Community/QuanLyBaiCuaToiTest.php
+  Chạy theo tên:      php vendor/bin/phpunit --filter khoa_binh_luan
+  Http::fake([...])   giả lập GHN / MoMo / Gemini, không gọi mạng thật.
+
+--------------------------------------------------------------------------------
+1.20 Cú pháp PHP hiện đại hay gặp
+--------------------------------------------------------------------------------
+  $a ?? 'mặc định'          nếu $a null / không tồn tại thì lấy 'mặc định'
+  $order?->user?->name      nullsafe: một khâu null thì cả biểu thức là null
+  $x ??= tinh()             chỉ gán khi $x đang null (dùng để nhớ kết quả)
+  match ($loai) { 'a' => 1, 'b', 'c' => 2, default => 0 }   như switch nhưng trả
+                            giá trị và so sánh chặt
+  fn ($x) => $x + 1         hàm mũi tên
+  ['score' => $diem, 'reason' => $lyDo] = $taste->match($p);   tách mảng ra biến
+  [...$mang1, ...$mang2]    trải mảng
+  foo(strict: true)         đối số có tên
+  final readonly class X    lớp không kế thừa được, thuộc tính không sửa được
+  #[Test]                   thuộc tính (attribute) gắn nhãn cho hàm
+  str_contains, str_starts_with   kiểm chuỗi con / đầu chuỗi
+  sprintf('Còn %d', $n)     ghép chuỗi theo mẫu
+  <<<SQL ... SQL;           chuỗi nhiều dòng (heredoc)
+
+--------------------------------------------------------------------------------
+1.21 Giờ Việt Nam
+--------------------------------------------------------------------------------
+  CSDL lưu giờ UTC. Hiển thị và nhận giờ từ biểu mẫu theo giờ Việt Nam qua
+  app/Services/Time/Gio.php (mui(), hien(), doiONhap()). Báo cáo gom ngày theo
+  giờ Việt Nam: app/Services/Analytics/KhoangThoiGian.php.
+
+--------------------------------------------------------------------------------
+1.22 Cấu hình và biến môi trường
+--------------------------------------------------------------------------------
+  .env (không đưa lên Git) chứa mật khẩu CSDL, khoá API.
+  config/*.php đọc .env bằng env('TEN', mặc định). Trong code dùng
+  config('payment.gateways.momo.secret_key') — KHÔNG gọi env() ngoài thư mục
+  config. Sửa .env xong chạy php artisan config:clear.
+
+
+================================================================================
+PHẦN 2. BẢN ĐỒ THƯ MỤC
+================================================================================
+
+app/
+  Console/Commands/     15 lệnh artisan (care:remind, ghn:dong-bo…)
+  Enums/                63 danh sách đóng (OrderStatus, Quyen, PaymentMethod…)
+  Http/
+    Controllers/Shop/   trang khách: giỏ, thanh toán, sản phẩm, Góc cây…
+    Controllers/Admin/  trang quản trị
+    Controllers/Auth/   đăng ký, đăng nhập, OTP, quên mật khẩu
+    Controllers/Api/    API gợi ý tìm kiếm (JSON)
+    Middleware/         bộ lọc quyền, khoá tài khoản, header bảo mật
+    Requests/           luật kiểm tra dữ liệu biểu mẫu
+  Mail/                 lớp dựng email
+  Models/               57 model ↔ bảng
+  Observers/            tự cập nhật chỉ mục tìm kiếm khi sản phẩm đổi
+  Providers/            AppServiceProvider: đăng ký singleton, quyền, view composer
+  Services/             TOÀN BỘ LUẬT NGHIỆP VỤ, chia theo miền:
+    AI/            trợ lý mua sắm Gemini
+    Admin/         hàng đợi việc ở trang tổng quan
+    Analytics/     báo cáo, xuất tệp
+    Audit/         nhật ký thao tác
+    Auth/          OTP, bảo mật tài khoản, xoá tài khoản, thiết bị
+    Care/          lịch chăm cây
+    Cart/          giỏ hàng
+    Catalog/       bằng chứng xã hội (đã bán, chỉ còn)
+    Checkout/      tính tiền thanh toán, nguồn hàng, chống đặt trùng
+    Community/     Góc cây
+    Content/       trang nội dung
+    Coupon/        mã giảm giá, ví voucher
+    Credit/        điểm tín dụng
+    Exchange/      đổi hàng
+    Gift/          quà tặng
+    Installment/   trả góp
+    Inventory/     kho, nhập, kiểm kê, lô hoa, trả nhà cung cấp
+    Invoice/       dữ liệu hoá đơn
+    Loyalty/       hạng thành viên
+    Mail/          kiểm tra cấu hình gửi thư thật
+    Media/         ảnh, video, làm sạch HTML
+    Notification/  thông báo trong trang
+    Order/         đặt hàng, trạng thái, rủi ro, email đơn
+    Payment/       MoMo
+    Points/        điểm thưởng, chuỗi ngày
+    Pricing/       giá bán, cố vấn giá
+    Product/       ảnh và khối mô tả sản phẩm
+    Promotion/     khuyến mại đang chạy, lịch dịp lễ
+    Recommendation/ gợi ý cá nhân hoá, tư vấn chọn cây
+    Refund/        hoàn tiền
+    Search/        tìm kiếm mờ
+    Shipping/      GHN, phí giao
+    Shop/          thông tin cửa hàng, tiền tệ, tỉnh thành, sáng/tối
+    Tax/           thuế GTGT
+    Theme/         theme theo mùa
+    Time/          giờ Việt Nam
+bootstrap/app.php       cấu hình middleware, route, xử lý lỗi
+config/                 cấu hình (ai, payment, shipping, tax, risk…)
+database/               migrations, seeders, factories
+docs/                   tài liệu
+lang/vi/                câu thông báo tiếng Việt của Laravel
+public/                 cửa vào web, ảnh đã build
+resources/
+  views/layouts/        khung trang
+  views/components/     component dùng lại (admin, cart, product, site…)
+  views/shop/           trang khách     views/admin/  trang quản trị
+  views/auth/           đăng nhập…      views/emails/ nội dung thư
+  js/, css/, images/, content/ (văn bản trang chính sách)
+routes/web.php          route cửa hàng + đăng nhập
+routes/admin.php        route quản trị
+routes/console.php      lịch chạy tự động
+storage/                tệp tải lên, log (storage/logs/laravel.log), cache
+tests/Feature/          bài kiểm thử theo miền
+tools/                  script Node tải và tối ưu ảnh mẫu
+
+
+================================================================================
+PHẦN 3. 20 LUỒNG CHẠY THẬT
+================================================================================
+
+Mỗi luồng ghi: người dùng làm gì → các bước (tệp → hàm) → điểm cần hiểu.
+
+--------------------------------------------------------------------------------
+LUỒNG 1. Xem trang sản phẩm và giá được tính thế nào
+--------------------------------------------------------------------------------
+  Người dùng mở /san-pham/hoa-hong-do
+  1. routes/web.php            san-pham/{product:slug} → Shop\ProductController@show
+  2. app/Http/Controllers/Shop/ProductController.php → show()
+       - abort_unless(... 'active' ...) : sản phẩm ngừng bán → 404
+       - $product->load([...]) : nạp sẵn danh mục, khuyến mại, quy cách, nhãn
+       - SocialProof::banGanDay(), chiCon(), quyCachBanChay() : số liệu thật
+  3. app/Models/Product.php → price()
+       return $this->resolvedPrice ??= app(PricingService::class)->resolve($this);
+       (tính một lần rồi nhớ lại cho lần gọi sau)
+  4. app/Services/Pricing/PricingService.php → resolve()
+       a. base_price null → sản phẩm "liên hệ báo giá"
+       b. bestPromotionFor(): lấy các khuyến mại ĐANG CHẠY
+          (Promotion::isRunning() xét ngày, khung giờ, thứ), chọn cái cho GIÁ
+          THẤP NHẤT; hoà thì ưu tiên priority cao hơn
+       c. applyDiscount(): giảm % / giảm số tiền / giá cố định; mức riêng của
+          từng sản phẩm (bảng promotion_product) được ưu tiên
+       d. Kẹp: không âm, không cao hơn giá gốc
+  5. app/Services/Pricing/ProductPrice.php — kết quả: basePrice, finalPrice,
+     promotion; isDiscounted(), discountPercent()
+  6. resources/views/shop/products/show.blade.php →
+     <x-product.price> (resources/views/components/product/price.blade.php)
+     gạch giá gốc, nhãn -X%.
+  Điểm cần hiểu: MỌI nơi hiện giá đều đi qua PricingService → không bao giờ hai
+  trang báo hai giá khác nhau.
+
+--------------------------------------------------------------------------------
+LUỒNG 2. Bấm "Thêm vào giỏ" mà trang không tải lại
+--------------------------------------------------------------------------------
+  1. Blade: biểu mẫu <form class="product-buy" method="POST" action="/gio-hang">
+     với nút có thuộc tính data-add-to-cart
+  2. resources/js/add-to-cart.js → initAddToCart()
+       nghe sự kiện submit trên cả trang, đúng form + đúng nút thì
+       event.preventDefault() (chặn tải lại) rồi gọi submit()
+  3. resources/js/ajax.js → guiForm(form)
+       fetch(form.action, { method: 'POST', body: new FormData(form),
+             headers: { Accept: 'application/json' } })
+       (FormData tự mang theo ô ẩn _token chống CSRF)
+  4. routes/web.php → Shop\CartController@store
+  5. app/Http/Controllers/Shop/CartController.php → store()
+       validate product_id, quantity, variant_id → gọi CartService::add()
+       yêu cầu mong JSON thì trả response()->json([... 'cartCount' => ...])
+  6. app/Services/Cart/CartService.php → add()
+       - assertPurchasable(): còn bán, có giá, chọn đúng quy cách, còn hàng
+       - current(): giỏ theo user_id (đã đăng nhập) hoặc session_id (khách)
+       - CartItem::firstOrNew([...]): có dòng rồi thì cộng dồn
+       - clampToStock(): vượt tồn kho thì kẹp lại, ghi lastClamped để báo khách
+  7. Quay về add-to-cart.js: capNhatSoGio() đổi số trên icon giỏ, showToast()
+     hiện thông báo, nút đổi thành "Đã thêm" trong 1,6 giây.
+  Tắt JavaScript: biểu mẫu gửi bình thường, controller trả back()->with(...).
+
+--------------------------------------------------------------------------------
+LUỒNG 3. Thanh toán và đặt hàng
+--------------------------------------------------------------------------------
+  BƯỚC 1 — /thanh-toan
+  1. CheckoutController@details (app/Http/Controllers/Shop/CheckoutController.php)
+  2. app/Services/Checkout/CheckoutSource.php → basket()
+       quyết định lấy hàng từ GIỎ (món đã tick) hay từ "MUA NGAY" (session);
+       dựng danh sách CheckoutLine (mỗi dòng: sản phẩm, quy cách, số lượng)
+  3. CheckoutSource → autoApplyBestCoupon() → app/Services/Coupon/BestCouponFinder.php
+       → find(): thử từng mã trong ví, lấy mã giảm nhiều nhất
+  4. Khách điền biểu mẫu → POST /thanh-toan → CheckoutController@storeDetails
+       app/Http/Requests/Shop/CheckoutDetailsRequest.php kiểm dữ liệu → lưu
+       session → chuyển sang /thanh-toan/xac-nhan
+
+  TÍNH TIỀN — app/Services/Checkout/CheckoutBasket.php (đối tượng bất biến,
+  mỗi with…() trả một bản MỚI):
+       itemsTotal()          tổng tiền hàng sau khuyến mại
+                             (CheckoutLine::lineTotal() = đơn giá × số lượng)
+       memberDiscount()      giảm theo hạng thành viên (bị tắt nếu mã không
+                             cho cộng dồn — memberDiscountBlockedByCoupon())
+       couponDiscount()      CouponService::discountFor() trên phần còn lại
+       pointsDiscount()      PointRedemption: 100đ/điểm, trần 30%
+       shippingFee()         0đ nếu đạt ngưỡng miễn phí, không thì
+                             ShippingQuote::feeFor() hỏi GHN
+       grandTotal()          = tiền hàng − các khoản giảm + phí giao
+       tax()                 BasketTax::for(): tách thuế theo dòng
+  Thứ tự: khuyến mại → hạng → mã → điểm → phí giao.
+
+  BƯỚC 2 — Bấm "Đặt hàng": POST /thanh-toan/dat-hang → CheckoutController@place
+  1. CheckoutGuard::existingOrder(): khoá này đã có đơn → đưa về đơn đó
+  2. app/Services/Order/OrderService.php → place($basket, $checkout, $guard->key())
+       DB::transaction(fn () => createOrder(...)):
+         a. buildLine() cho từng dòng → consumeStock():
+              assertStillSellable() (còn bán không, quy cách còn không)
+              lockForUpdate() rồi kiểm tồn → decrement('stock_quantity')
+         b. Order::create([...]) ghi mọi con số lấy từ CheckoutBasket
+         c. $order->items()->createMany($lines)
+         d. GiftGranter::tangChoDon()   ghi dòng quà 0đ
+         e. InvoiceService::taoTuDon()  dữ liệu hoá đơn
+         f. COD → tạo PaymentTransaction chờ thu; Trả góp → InstallmentService::taoKeHoach()
+         g. OrderRiskScorer::apply()    chấm điểm rủi ro
+         h. CouponService::redeem()     ghi lượt dùng mã (UPDATE có điều kiện)
+         i. PointLedger::dungChoDon()   trừ điểm
+         j. OrderStatusEvent::create()  mốc đầu tiên của dòng thời gian
+       Sau transaction: OrderMailer::notifyShopOfNewOrder()
+       Trùng khoá idempotency (bấm hai lần) → trả lại đơn đã có
+  3. Quay lại controller: xoá món đã mua khỏi giỏ (CartService::clearSelected())
+     hoặc xoá "mua ngay"; ghi sự kiện mua hàng cho gợi ý (logPurchase());
+     MoMo → chuyển sang /thanh-toan/momo/{order}; còn lại → trang đơn hàng.
+  Điểm cần hiểu: bước nào lỗi (hết hàng, mã hết lượt…) thì cả transaction huỷ,
+  không có đơn nửa vời. Trình duyệt không gửi con số tiền nào.
+
+--------------------------------------------------------------------------------
+LUỒNG 4. Thanh toán MoMo
+--------------------------------------------------------------------------------
+  1. MomoController@start (app/Http/Controllers/Shop/MomoController.php)
+       authorizeOrderAccess(): đúng chủ đơn (hoặc khách vừa đặt trong phiên)
+  2. app/Services/Payment/MomoGateway.php → createPayment()
+       ghép chuỗi theo đúng thứ tự MoMo quy định, ký bằng
+       hash_hmac('sha256', chuỗi, secretKey), gọi API, nhận payUrl
+       → chuyển khách sang trang MoMo
+  3. MoMo gọi về HAI đường:
+     - Trình duyệt quay về: GET /thanh-toan/momo/ket-qua → MomoController@callback
+     - Máy chủ MoMo gọi thẳng: POST /thanh-toan/momo/ipn → MomoController@ipn
+       (đường duy nhất được miễn CSRF — bootstrap/app.php)
+  4. MomoGateway::verifySignature(): tự ký lại dữ liệu nhận được và so bằng
+     hash_equals() — không khớp thì bỏ qua và ghi log
+  5. MomoController → ghiNhanThanhToan() trong DB::transaction:
+       khoá giao dịch → đã trả rồi thì thôi (gọi 2 lần vẫn 1 kết quả)
+       → thất bại thì markFailed() → SỐ TIỀN không khớp thì markFailed() + log
+       → markPaid() → OrderService::setPaymentStatus(Paid)
+       (giao dịch của kỳ trả góp thì InstallmentService::ghiNhanKy())
+  6. hoanTatSauThanhToan() → app/Services/Order/PaidOrderFulfilment.php →
+     sauKhiTraTien(): tự xác nhận đơn đã trả đủ.
+
+--------------------------------------------------------------------------------
+LUỒNG 5. Admin đổi trạng thái đơn
+--------------------------------------------------------------------------------
+  1. PATCH admin/orders/{order}/status → Admin\OrderController@updateStatus
+       (routes/admin.php, middleware quyen:don-hang)
+  2. validate status bằng Rule::enum(OrderStatus::class)
+  3. OrderService::changeStatus()
+       - khoá dòng đơn; OrderStatus::canTransitionTo(): chỉ được đi
+         Chờ xác nhận → Đã xác nhận → Đang chuẩn bị → Đang giao → Đã giao
+         (hoặc Huỷ ở bất kỳ bước chưa kết thúc)
+       - đơn trả góp chưa trả đủ → không cho chuẩn bị / giao
+       - đơn đã có vận đơn GHN còn hiệu lực → không cho huỷ
+       - HUỶ: StockReturn::congLai() trả kho, CouponService::release() trả lượt
+         mã, PointLedger::traDiemCuaDon() trả điểm, GiftGranter::traSuatCuaDon(),
+         InstallmentService::dongTheoDon()
+       - ghi OrderStatusEvent (dòng thời gian), ActivityLogger::logChange()
+       - ĐÃ GIAO: CareScheduler::scheduleForOrder() (lịch chăm cây),
+         PointEarning::donHoanTat() (cộng điểm)
+       - OrderMailer::sendStatusUpdate() gửi thư cho khách
+  Xem: app/Enums/OrderStatus.php → nextStates()
+
+--------------------------------------------------------------------------------
+LUỒNG 6. Đăng ký và xác thực email bằng OTP
+--------------------------------------------------------------------------------
+  1. POST /register → Auth\AuthController@register
+       app/Http/Requests/Auth/RegisterRequest.php (mật khẩu đủ mạnh)
+       tạo User role=customer → Auth::login() → $request->session()->regenerate()
+       CartService::mergeSessionCartInto() gộp giỏ khách vãng lai
+  2. app/Services/Auth/EmailVerifier.php → send()
+       newCode(): random_int(0, 999999) đệm đủ 6 số
+       lưu Hash::make($code) vào email_verification_codes (KHÔNG lưu mã gốc)
+       gửi app/Mail/EmailVerificationMail.php
+  3. POST /xac-thuc-email → EmailVerificationController@confirm →
+     EmailVerifier::confirm(): hết hạn (15 phút)? sai quá 5 lần? Hash::check()
+     khớp → markEmailAsVerified(), xoá mã.
+  4. Gửi lại mã: EmailVerifier::secondsUntilResend() (chờ 60 giây),
+     resources/js/otp-resend.js đếm ngược trên nút.
+  Xem thêm: docs/LUONG-HOAT-DONG.md mục 1.
+
+--------------------------------------------------------------------------------
+LUỒNG 7. Phân quyền khu quản trị
+--------------------------------------------------------------------------------
+  1. routes/admin.php: nhóm middleware ['auth', 'role:admin,staff']
+     từng route thêm ->middleware('quyen:kho') …
+  2. app/Http/Middleware/EnsureUserHasRole.php → handle(): vai trò có trong danh
+     sách không
+  3. app/Http/Middleware/CoQuyen.php → handle() → User::duoc($quyen)
+  4. app/Enums/Quyen.php: 8 khu vực; app/Enums/UserRole.php: 3 vai trò
+  5. Trong view: @can('tai-chinh') ... @endcan — quyền được đăng ký làm Gate ở
+     app/Providers/AppServiceProvider.php → boot()
+  6. Admin/UserController@updateRole: 3 chốt chặn khi đổi vai trò.
+
+--------------------------------------------------------------------------------
+LUỒNG 8. Gợi ý sản phẩm cá nhân hoá (Recommendation)
+--------------------------------------------------------------------------------
+  Ghi hành vi: mỗi lần xem / thêm giỏ / yêu thích / mua, controller ghi một dòng
+  vào bảng user_events (app/Models/UserEvent.php, loại ở app/Enums/UserEventType.php).
+
+  Tính gợi ý: app/Services/Recommendation/RecommendationService.php → forViewer()
+  1. history(): lấy 60 sự kiện gần nhất theo user_id HOẶC session_id
+  2. new TasteProfile($history) (app/Services/Recommendation/TasteProfile.php)
+       __construct(): cộng điểm theo trọng số WEIGHTS
+         (mua 5, yêu thích 4, thêm giỏ 3, xem 1) cho từng:
+         diemTheoCot('category_id')   danh mục
+         diemTheoCot('selling_form')  hình thức bán
+         diemTheoNhan()               đặc điểm (màu, dáng, vị trí…)
+         diemTheoPhanLoai()           họ / chi / loài (lan lên tổ tiên,
+                                      chỉ từ bậc Họ trở xuống)
+  3. matching(): lấy sản phẩm khớp top 3 của mỗi trục, bỏ hàng đã xem
+  4. TasteProfile::match($product): mỗi trục cho "độ hợp" 0..1
+       (hopDanhMuc, hopHinhThuc, hopDacDiem, hopPhanLoai)
+       điểm = Σ trọng số trục (AXIS_WEIGHTS: 3, 2, 2, 1) × độ hợp
+       lyDo(): chọn lý do từ trục HẸP nhất có độ hợp ≥ 0.5
+  5. Thiếu thì popular(): bù hàng được xem nhiều, lý do "Được nhiều người xem"
+  6. Trả về ['items' => ..., 'personalized' => true/false] — view đổi tiêu đề
+     theo personalized (resources/views/components/product/recommendations.blade.php)
+  Điểm cần hiểu: chuẩn hoá từng trục về 0..1 TRƯỚC khi nhân trọng số, để sản
+  phẩm gắn nhiều nhãn không tự động thắng.
+
+--------------------------------------------------------------------------------
+LUỒNG 9. Tìm kiếm mờ
+--------------------------------------------------------------------------------
+  Khách gõ "hoaa hong"
+  1. Shop\ProductController@index gọi app/Services/Search/ProductSearch.php
+  2. ProductSearch::terms($raw)
+       a. TextNormalizer::tokenize(): chữ thường, bỏ dấu (bảng ACCENTS), bỏ ký
+          tự lạ, tách từ → ['hoaa', 'hong']
+       b. từng từ: SearchDictionary::matches() có trong catalog không?
+          không có → FuzzyMatcher::closest(): tìm từ gần nhất bằng
+          levenshtein() (số lần thêm/xoá/sửa ký tự). Ngưỡng theo độ dài
+          (THRESHOLDS); từ < 5 ký tự phải trùng chữ đầu → 'hoaa' thành 'hoa'
+       c. không sửa gì mà chỉ có một từ → alternativeFor(): gợi ý
+          "Bạn có muốn tìm…" nếu từ khác phổ biến hơn hẳn
+       → SearchTerms (app/Services/Search/SearchTerms.php)
+  3. ProductSearch::filter(): mỗi từ khớp search_text theo ĐẦU TIẾNG
+       LIKE 'hoa%' OR LIKE '% hoa%'   (escapeLike() thoát % và _)
+       không ra gì → controller gọi lại với $matchAll = false (AND → OR)
+  4. ProductSearch::orderByRelevance(): điểm = trùng tên 100, tên bắt đầu bằng
+     cụm 50, có trong nội dung 25, mỗi từ khớp đầu tiếng 10 → sắp giảm dần
+  5. resources/views/components/product/search-notice.blade.php báo đã sửa từ
+  Chỉ mục: cột products.search_name / search_text do
+  app/Services/Search/ProductSearchIndexer.php dựng; app/Observers/ProductObserver.php
+  tự dựng lại khi sản phẩm được lưu; lệnh search:reindex dựng lại toàn bộ.
+
+--------------------------------------------------------------------------------
+LUỒNG 10. Tư vấn chọn cây theo nhu cầu
+--------------------------------------------------------------------------------
+  /chon-cay?vi-tri=ban-cong&menh=moc&kinh-nghiem=moi
+  1. Shop\AdvisorController@index: Placement::tryFrom(), FengShuiElement::tryFrom(),
+     CareDifficulty::tryFrom() đọc tham số (sai giá trị thì bỏ qua)
+  2. app/Services/Recommendation/PlantAdvisor.php → suggest()
+       baseQuery() (đang bán, còn hàng) → Product::scopeWithTrait() cho từng
+       điều kiện (bảng product_traits) → onlyDifficulty() → limit 8
+  3. availableTraitValues(): chỉ hiện lựa chọn còn sản phẩm (đếm sẵn)
+  4. accessoriesFor($product): phụ kiện có nhãn accessory_for trùng hình thức bán
+
+--------------------------------------------------------------------------------
+LUỒNG 11. Chấm điểm rủi ro đơn hàng
+--------------------------------------------------------------------------------
+  app/Services/Order/OrderRiskScorer.php
+  score(): chạy 5 phép kiểm, mỗi phép trả null hoặc ['code','label','points']:
+    cancelledBefore()  đơn huỷ trước đây (theo tài khoản hoặc số điện thoại)
+    highValueCod()     COD ≥ ngưỡng config('risk.thresholds.high_value')
+    guest()            đặt không đăng nhập
+    noEmail()          không để lại email
+    burstOrders()      nhiều đơn cùng số trong 24 giờ
+  tổng tối đa 100; apply() lưu risk_score, risk_flags vào đơn.
+  Trọng số ở config/risk.php. Trang admin đơn hàng hiện cờ vàng kèm lý do.
+
+--------------------------------------------------------------------------------
+LUỒNG 12. Điểm thưởng và chuỗi ngày ghé thăm
+--------------------------------------------------------------------------------
+  1. Mỗi yêu cầu web đi qua app/Http/Middleware/GhiNhanNgayGhe.php →
+     app(VisitStreak::class)->ghiNhan($user)
+  2. app/Services/Points/VisitStreak.php → ghiNhan()
+       hôm nay đã ghi → thôi; hôm qua có ghé → chuỗi +1, không → về 1
+       (khoá dòng users trong transaction); moc(): ngày 3 → 10 điểm, bội số
+       của 7 → 30 điểm → PointLedger::cong()
+  3. app/Services/Points/PointLedger.php
+       cong() / tru(): ghi một dòng point_transactions có source_key DUY NHẤT
+         (vd 'chuoi:2026-09-16') → làm lại cũng không cộng hai lần
+       soDu(): TỔNG các dòng (không có cột số dư)
+       doiVoucher(): khoá người dùng, đủ điểm thì trừ và tạo mã riêng
+         (owner_user_id) vào ví
+  4. Nguồn điểm khác: PointEarning::donHoanTat() (mua hàng), danhGia() (đánh giá),
+     CommunityReward::thuong() (bài Góc cây được duyệt), luotThich().
+
+--------------------------------------------------------------------------------
+LUỒNG 13. Trả góp trước khi giao và điểm tín dụng
+--------------------------------------------------------------------------------
+  1. Trang thanh toán hỏi app/Services/Installment/InstallmentPolicy.php → xet()
+       đã bật? đã đăng nhập? đơn đủ tối thiểu? đang có kế hoạch dở?
+       → CreditScore::cua() (app/Services/Credit/CreditScore.php):
+          50 điểm gốc + đơn tốt (+2, trần 20) + kỳ đúng hạn (+3, trần 30)
+          − kỳ trễ (5) − vỡ nợ (30) − từ chối nhận COD (10), kẹp 0..100
+       → đủ điểm tối thiểu? mức "tốt" hay "thường" → số kỳ tối đa, % trả trước
+  2. Đặt hàng: OrderService → InstallmentService::taoKeHoach()
+       InstallmentPlanner::lich(): chia tiền thành kỳ 0 (trả trước) + các kỳ
+       (phép tính thuần, không đọc CSDL)
+  3. Trả kỳ: Shop\InstallmentPaymentController@momo → MoMo (Luồng 4) →
+     InstallmentService::ghiNhanKy(); hoặc admin thu tại quầy:
+     Admin\InstallmentController@record → InstallmentService::thuTaiCuaHang()
+  4. Trả đủ → PaidOrderFulfilment::sauKhiTraTien() → đơn được giao.
+  5. Mỗi đêm 00:30: lệnh tra-gop:qua-han (app/Console/Commands/XuLyTraGopQuaHan.php)
+     → InstallmentService::xuLyQuaHan() → voNo(): huỷ đơn, tiền đã trả thành
+     khoản phải hoàn.
+  6. Mọi ngưỡng: app/Services/Installment/InstallmentSettings.php (admin sửa).
+
+--------------------------------------------------------------------------------
+LUỒNG 14. Trợ lý AI
+--------------------------------------------------------------------------------
+  1. resources/js/ai-chat.js gửi câu hỏi POST /tro-ly-ai (throttle)
+  2. Shop\AiChatController@store → app/Services/AI/ShoppingAdvisor.php → hoi()
+       cắt câu hỏi tối đa 500 ký tự, lấy lịch sử chat trong session
+  3. app/Services/AI/AdvisorContext.php → xayDung()
+       timSanPham(): tìm sản phẩm khớp câu hỏi bằng bộ tìm kiếm Luồng 9
+       (không ra thì dùng câu hỏi trước), moTa(): tên, giá (PricingService),
+       tồn, hướng dẫn chăm, quà; + cây dễ chăm, khuyến mại đang chạy, mã công
+       khai; khách đăng nhập: sản phẩm yêu thích, vài đơn gần nhất của chính họ
+  4. ShoppingAdvisor::chiDan(): ghép "LUẬT BẮT BUỘC" (không bịa, bỏ qua lệnh
+     đổi vai, không tiết lộ dữ liệu người khác) + DỮ LIỆU CỬA HÀNG
+  5. app/Services/AI/AiManager.php → provider() chọn nhà cung cấp theo
+     config/ai.php → app/Services/AI/GeminiProvider.php → reply() gọi API
+     (khoá gửi trong header, tắt "suy nghĩ" để trả lời đủ ý)
+  6. ShoppingAdvisor::vanBanThuong(): bỏ ký hiệu markdown (**, #, *)
+  7. Lưu lịch sử vào session (không lưu CSDL), trả JSON về khung chat.
+  Muốn đổi sang AI khác: viết lớp mới implements AiProvider
+  (app/Services/AI/AiProvider.php) và khai trong AiManager.
+
+--------------------------------------------------------------------------------
+LUỒNG 15. Góc cây: đăng bài, cảm xúc, bình luận, thông báo
+--------------------------------------------------------------------------------
+  Đăng bài: POST /goc-cay → Shop\CommunityController@store
+    validate + CommunityMediaStore::quyTac() (loại tệp, dung lượng, số tệp)
+    → tạo CommunityPost (chưa duyệt) → CommunityMediaStore::them() cho từng tệp
+       ảnh: ImageStore (tước EXIF), video: VideoMetadataStripper::tuoc() (xoá GPS)
+  Duyệt: Admin\CommunityModerationController@approve → đặt approved_at →
+    CommunityReward::thuong() cộng điểm → NotificationCenter::baiDuocDuyet()
+  Cảm xúc: POST /goc-cay/{post}/thich (cam_xuc=yeu…) → CommunityController@like
+    → CommunityInteraction::doiThich(): cùng cảm xúc = bỏ, khác = đổi
+    → JSON; resources/js/community.js cập nhật số và biểu tượng
+  Bình luận: CommunityController@comment → CommunityInteraction::binhLuan()
+    chủ bài đã khoá bình luận → CommunityException; trả lời lồng 1 tầng
+    → NotificationCenter::binhLuan() tạo thông báo cho chủ bài
+  Chủ bài quản lý: Shop\CommunityPostOwnerController → app/Services/Community/PostOwner.php
+    baiCuaToi() (lọc user_id rồi findOrFail → bài người khác 404),
+    doiAn(), doiGhim(), doiKhoaBinhLuan(), doiAnBinhLuan()
+  Báo cáo: CommunityController@report → CommunityReports::baoCao() →
+    admin xử lý: CommunityReports::anNoiDung() / boQua()
+  Điểm cần hiểu: CommunityPost::scopeApproved() là "cửa" duy nhất — bài chưa
+  duyệt, bị cửa hàng ẩn, hoặc chủ bài tự ẩn đều không lọt ra ngoài.
+
+--------------------------------------------------------------------------------
+LUỒNG 16. Nhập kho
+--------------------------------------------------------------------------------
+  1. Admin\StockReceiptController@store: lập PHIẾU NHẬP nháp (nhà cung cấp, các
+     dòng hàng, giá nhập) — chưa đụng tồn kho
+  2. POST admin/nhap-kho/{phieu}/ghi-so → @post →
+     app/Services/Inventory/StockReceiptService.php → ghiSo()
+       transaction: từng dòng → StockAdjuster::dieuChinh() cộng tồn (NƠI DUY
+       NHẤT cộng/trừ tồn theo chứng từ), ghi giá vốn, đổi trạng thái phiếu
+  3. Kiểm kê tương tự: StockCountService::lap() chụp tồn → ghiSo() cộng/trừ
+     chênh lệch, không để âm.
+  4. Hoa tươi: FlowerLotService (lô mở → đóng lô), không cộng vào tồn thường.
+
+--------------------------------------------------------------------------------
+LUỒNG 17. Hoàn tiền
+--------------------------------------------------------------------------------
+  1. POST admin/orders/{order}/hoan-tien → Admin\RefundController@store
+     (quyền don-hang + tai-chinh)
+  2. app/Services/Refund/RefundService.php → hoan()
+       lyDoKhongHoanDuoc(): còn tiền để hoàn không (Order::daThu())
+       cachHoan(): đơn trả qua MoMo → hoàn qua MoMo; còn lại chuyển khoản/tiền mặt
+       ghi Refund + RefundItem TRƯỚC, rồi mới gọi MomoGateway::refund()
+       MoMo không trả lời → để "đang chờ", không coi là thất bại
+       hàng trả về chỉ vào lại kho khi tiền đã hoàn và bán lại được
+       PointEarning::hoanTien() trừ lại điểm đã cộng từ phần tiền hoàn,
+       PointLedger::traDiemCuaDon() trả lại điểm khách đã dùng (khi hoàn đủ),
+       OrderMailer::sendRefund()
+  3. Hoàn tay: admin bấm xacNhanDaHoan() / danhDauThatBai().
+
+--------------------------------------------------------------------------------
+LUỒNG 18. Cố vấn giá cho admin
+--------------------------------------------------------------------------------
+  1. GET admin/de-xuat-gia → Admin\PricingAdvisorController@index
+  2. app/Services/Pricing/PricingAdvisor.php → suggest()
+       DemandSignals::all() gom số liệu mỗi sản phẩm thành ProductDemand
+         (lượt xem, thêm giỏ, số đơn, ngày từ lần bán cuối, tồn, đang giảm giá)
+       bỏ sản phẩm dưới config('pricing-advisor.min_views') lượt xem
+       thin_data: tổng đơn < confident_orders → cảnh báo mẫu mỏng
+       mocGiaTheoDanhMuc(): TRUNG VỊ giá các sản phẩm cùng danh mục đã bán
+       tinHieuCho(): chọn 1 trong 5 PriceSignal (app/Enums/PriceSignal.php)
+       → PriceSuggestion kèm bằng chứng (con số đã sinh ra đề xuất)
+  3. OccasionCalendar::upcoming(): dịp lễ sắp tới chưa có khuyến mại.
+
+--------------------------------------------------------------------------------
+LUỒNG 19. Báo cáo và xuất tệp
+--------------------------------------------------------------------------------
+  1. Admin\AnalyticsController@index / AnalyticsPagesController@sales…
+     ChonKy::tuRequest() đọc kỳ đang xem (7 ngày, 30 ngày, tự chọn…)
+  2. app/Services/Analytics/AnalyticsService.php: funnel(), topProducts(),
+     revenueByDay()… ; SalesBreakdown, ProfitReport, ReviewReport,
+     PurchasingReport, AbandonedCarts, InventoryReport: mỗi báo cáo một lớp
+     KhoangThoiGian: đổi mốc ngày giờ Việt Nam sang UTC để lọc
+  3. Biểu đồ SVG: resources/views/components/admin/chart/{line,bars,donut,heatmap}.blade.php
+  4. Xuất: GET admin/phan-tich/xuat/tai-ve → AnalyticsController@export →
+     ReportSections::danhSach() (danh sách phần) → ReportExporter::xuat()
+     → CSV / Export/XlsxWriter / JSON / Export/ReportHtml / Export/PdfWriter
+
+--------------------------------------------------------------------------------
+LUỒNG 20. Tải ảnh lên
+--------------------------------------------------------------------------------
+  Controller (sản phẩm, danh mục, bài Góc cây…) sau khi validate image/mimes:
+  1. app/Services/Media/ImageStore.php → luu($file, 'products')
+       $file->store(): tên ngẫu nhiên, disk public
+  2. ImageMetadataStripper::tuoc(): xoay ảnh theo EXIF rồi xoá EXIF (GPS…)
+  3. ImageStore::toiUu() → ImageOptimizer::xuLyMot(): sinh WebP nhiều cỡ, ghi
+     manifest
+  4. Hiển thị: ResponsiveImage::info() / webpSrcset() chọn cỡ phù hợp;
+     component <x-site.image :path="..."> in thẻ <picture> với srcset.
+  5. Xoá: ImageStore::xoa() xoá cả bản gốc và bản WebP.
+
+
+================================================================================
+PHẦN 4. TỰ HỌC VÀ GỠ LỖI
+================================================================================
+
+  4.1 Xem một biến đang chứa gì
+      dd($bien);        dừng chương trình và in biến ra trình duyệt
+      dump($bien);      in ra nhưng chạy tiếp
+      Log::info('mô tả', ['bien' => $bien]);   ghi vào storage/logs/laravel.log
+      (NHỚ xoá dd()/dump() trước khi commit)
+
+  4.2 Thử code trực tiếp
+      php artisan tinker
+      >>> App\Models\Product::count()
+      >>> app(App\Services\Pricing\PricingService::class)->resolve(App\Models\Product::first())
+
+  4.3 Xem lỗi
+      storage/logs/laravel.log (lỗi mới nhất ở cuối tệp)
+      .env có APP_DEBUG=true thì trang lỗi hiện chi tiết (chỉ dùng khi phát triển)
+
+  4.4 Lệnh hay dùng
+      php artisan route:list --path=admin      xem route
+      php artisan migrate                      chạy migration mới
+      php artisan optimize:clear               xoá mọi cache khi sửa không ăn
+      php artisan view:clear                   xoá view đã biên dịch
+      npm run build                            đóng gói JS/CSS sau khi sửa
+      php vendor/bin/phpunit --filter TenBai   chạy một bài kiểm thử
+
+  4.5 Cách đọc một tính năng lạ trong 10 phút
+      1. Tìm chữ hiển thị trên giao diện bằng Ctrl+Shift+F → ra tệp Blade
+      2. Trong Blade tìm route('...') của nút / biểu mẫu
+      3. php artisan route:list --name=... → ra Controller@hàm
+      4. Mở hàm → xem gọi service nào → F12 vào service
+      5. Đọc bài kiểm thử cùng tên trong tests/Feature → biết luật mong đợi
+      6. Đọc comment gốc ở docs/CHU-THICH-CODE.md và "QĐ-" liên quan ở
+         docs/DOMAIN-DECISIONS.md để biết VÌ SAO làm vậy
+
+  4.6 Tài liệu chính thức nên tra
+      Laravel: https://laravel.com/docs (Routing, Controllers, Validation,
+               Eloquent, Blade, Middleware, Testing)
+      PHP:     https://www.php.net/manual/vi/ (bcmath, enum, match)
+      MDN:     https://developer.mozilla.org (fetch, FormData, addEventListener)
+
+
+================================================================================
+PHẦN 5. BẢNG TRA NHANH THUẬT NGỮ
+================================================================================
+
+  MVC                 Model (dữ liệu) – View (giao diện) – Controller (điều phối)
+  Service layer       lớp chứa luật nghiệp vụ, tách khỏi controller
+  Route               quy tắc nối địa chỉ web với hàm xử lý
+  Middleware          bộ lọc chạy trước/sau controller
+  Eloquent / ORM      thao tác bảng CSDL bằng đối tượng PHP
+  Migration           tệp mô tả thay đổi cấu trúc bảng
+  Seeder / Factory    tạo dữ liệu mẫu / dữ liệu giả cho kiểm thử
+  Eager loading       nạp sẵn quan hệ bằng with() để tránh N+1
+  N+1                 lỗi hiệu năng: 1 truy vấn danh sách + N truy vấn từng dòng
+  Transaction         nhóm lệnh ghi "được cả hoặc không gì cả"
+  lockForUpdate       khoá dòng để hai người không cùng sửa
+  Idempotency         làm nhiều lần cho cùng một kết quả
+  CSRF                giả mạo yêu cầu từ trang khác; chặn bằng @csrf
+  XSS                 chèn mã độc vào trang; chặn bằng {{ }} và làm sạch HTML
+  SQL Injection       chèn lệnh SQL; chặn bằng truy vấn có tham số
+  Mass assignment     gán hàng loạt cột; chặn bằng $fillable
+  Rate limit/throttle giới hạn số lần gọi trong một khoảng thời gian
+  HMAC                chữ ký bằng khoá bí mật để chứng minh dữ liệu không bị sửa
+  IPN                 thông báo thanh toán máy chủ MoMo gọi thẳng về
+  OTP                 mã dùng một lần
+  Hash / băm          biến đổi một chiều, không đảo ngược được (lưu mật khẩu, OTP)
+  Enum                danh sách giá trị cố định
+  DI (tiêm phụ thuộc) Laravel tự tạo và truyền đối tượng vào hàm khởi tạo
+  Singleton           chỉ một đối tượng dùng chung
+  Observer            lớp tự chạy khi model được lưu / xoá
+  Scope               điều kiện truy vấn đặt tên sẵn trong model
+  Component (Blade)   mẩu giao diện dùng lại <x-...>
+  Progressive enhancement   chạy được không cần JS, có JS thì mượt hơn
+  Levenshtein         số lần sửa ký tự tối thiểu để biến từ này thành từ kia
+  Trung vị (median)   giá trị đứng giữa dãy đã sắp xếp
+  UTC                 giờ chuẩn quốc tế, giờ Việt Nam = UTC + 7
+  bcmath              thư viện tính số chính xác trên chuỗi

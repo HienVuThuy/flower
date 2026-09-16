@@ -1,0 +1,214 @@
+================================================================================
+                 BÁO CÁO RÀ SOÁT MÃ NGUỒN ANGEVIL — NGÀY 16/09/2026
+================================================================================
+
+Báo cáo trả lời 3 yêu cầu:
+  (1) chuyển comment ra tệp riêng,
+  (2) rút gọn tên quá dài,
+  (3) kiểm tra cấu trúc, code sạch, tối ưu, phân tách, bảo mật, logic.
+
+Mỗi thay đổi có một commit riêng để xem lại hoặc hoàn tác (Phần 5).
+Sau mọi thay đổi: 1275/1275 bài kiểm thử xanh.
+
+
+================================================================================
+PHẦN 1. CHUYỂN COMMENT RA TỆP RIÊNG
+================================================================================
+
+KẾT QUẢ
+  - 931 tệp (PHP, Blade, JS, CSS) đã bỏ khoảng 38.500 dòng comment; tổng số dòng
+    code giảm từ 151.656 xuống 113.123.
+  - Toàn bộ nội dung comment nằm ở docs/CHU-THICH-CODE.md, chia theo từng tệp,
+    mỗi đoạn ghi: số dòng gốc, nằm trong class::hàm nào, đứng trước dòng code nào.
+    Mở tệp trong VS Code, dùng Outline hoặc Ctrl+F tên tệp để nhảy tới.
+  - Trong code chỉ giữ:
+      * MỘT dòng tóm tắt ở đầu mỗi class / tệp (719 dòng)
+      * các dòng cảnh báo ⚠️ rút gọn còn một câu (vd "DỮ LIỆU RIÊNG TƯ.")
+  - Comment gốc của Laravel (config/app.php, lang/en/*, …) giữ nguyên: 82 đoạn.
+
+CÁCH LÀM ĐỂ KHÔNG PHÁ CODE
+  Không tìm-thay bằng biểu thức chính quy thô (dễ cắt nhầm "//" trong URL hay
+  chuỗi). Dùng bộ phân tích cú pháp thật cho từng loại tệp, rồi KIỂM CHỨNG:
+  - PHP   : so dãy token (bỏ comment và khoảng trắng) trước / sau — 829 tệp khớp
+  - Blade : biên dịch bằng trình biên dịch Blade trước / sau rồi so — khớp; 4 tệp có
+            <script> chỉ khác phần comment JavaScript, đã soát từng dòng
+  - JS    : so cây cú pháp (rolldown parseAst) trước / sau — khớp
+  - CSS   : so bản rút gọn của lightningcss trước / sau — khớp (98/98 tệp JS+CSS)
+  - Chạy lại toàn bộ bài kiểm thử — xanh.
+
+
+================================================================================
+PHẦN 2. TÊN DÀI — ĐÃ ĐO, QUYẾT ĐỊNH KHÔNG ĐỔI
+================================================================================
+
+SỐ ĐO (toàn bộ app/, database/, routes/, config/)
+  Tên class dài nhất      30 ký tự  ValidatesProductClassification
+                          29        CommunityModerationController
+                          28        CommunityPostOwnerController, OrderCancelledByCustomerMail
+  Tên hàm dài nhất        29        sendPasswordResetNotification, memberDiscountBlockedByCoupon
+                          26        scopeOrderByEffectivePrice
+  Tên biến dài nhất       18        $soDongChuaTachVat
+  Tên hàm kiểm thử        1152 hàm, trung vị 39 ký tự, dài nhất 72
+
+VÌ SAO KHÔNG ĐỔI
+  1. Không tên nào vượt ngưỡng thường gặp của dự án Laravel (tên class 30 ký tự
+     theo kiểu "Việc + Đối tượng + Loại" là chuẩn PSR / Laravel).
+  2. Một số tên do framework ÁP ĐẶT, đổi là hỏng:
+       - sendPasswordResetNotification: ghi đè hàm của Laravel trong User
+       - scopeOrderByEffectivePrice: Laravel đọc tiền tố "scope"
+       - ensureIsNotRateLimited, throttleKey: theo mẫu LoginRequest của Laravel
+  3. Đổi tên class kéo theo route, controller, view, bài kiểm thử, tài liệu —
+     nhiều chỗ phải sửa mà không làm code chạy tốt hơn, lại trái ràng buộc
+     "không phá chức năng đang chạy".
+  4. Tên hàm kiểm thử là CÂU MÔ TẢ LUẬT (vd
+     khoa_binh_luan_chan_o_server_chu_khong_chi_giau_o_nhap). Khi một bài đỏ,
+     tên đó cho biết ngay luật nào bị vỡ; rút ngắn là mất thông tin.
+  Nếu nhóm vẫn muốn đổi một tên cụ thể, dùng tính năng Rename Symbol (F2) của
+  PHP Intelephense rồi chạy lại toàn bộ kiểm thử.
+
+
+================================================================================
+PHẦN 3. KIỂM TRA CẤU TRÚC, CODE SẠCH, TỐI ƯU, BẢO MẬT, LOGIC
+================================================================================
+
+KÝ HIỆU:  [ĐÃ SỬA] đã sửa và kiểm chứng   [TỐT] đạt, không cần sửa
+          [KHUYẾN NGHỊ] nên làm, chưa tự làm vì lý do ghi kèm
+
+--------------------------------------------------------------------------------
+3.1 CẤU TRÚC & PHÂN TÁCH
+--------------------------------------------------------------------------------
+  [TỐT] Chia lớp rõ: Route → Middleware → Request → Controller (mỏng) → Service
+        (luật nghiệp vụ, 136 lớp theo 34 miền) → Model / Enum → View.
+  [TỐT] Mỗi luật có MỘT nơi chịu trách nhiệm: giá (PricingService), tiền thanh toán
+        (CheckoutBasket), thuế (TaxCalculator), kho (StockAdjuster / OrderService),
+        điểm (PointLedger), quà (GiftResolver), hoàn tiền (RefundService)…
+  [TỐT] Lỗi nghiệp vụ dùng Exception riêng có câu nói cho người dùng.
+  [ĐÃ SỬA] routes/web.php dài 908 dòng, trộn route khách và quản trị → tách 425
+        dòng route quản trị sang routes/admin.php, nạp đúng vị trí cũ.
+        Kiểm chứng: php artisan route:list trước / sau GIỐNG HỆT (287 route, cả thứ
+        tự và middleware).
+  [ĐÃ SỬA] StoreProductRequest và UpdateProductRequest trùng ~420 / 450 dòng;
+        Store/UpdateCategoryRequest trùng ~90 / 100 dòng → bản "Update" kế thừa
+        bản "Store", chỉ ghi đè phần khác (bỏ ~500 dòng). Kiểm chứng: so luật và
+        thông báo lỗi cũ / mới giống hệt; thử bỏ ->ignore() thì kiểm thử đỏ.
+  [KHUYẾN NGHỊ] Admin\ProductController::update() dài 305 dòng, store() 158 dòng
+        (xử lý quy cách, ảnh, video, khối mô tả, hoàn tác khi lỗi). Nên tách phần
+        đồng bộ quy cách sang một service như ProductBlockService /
+        ProductImageService đã làm. Chưa tự tách vì đây là luồng có hoàn tác tệp
+        khi lỗi, rủi ro cao nếu tách vội.
+  [KHUYẾN NGHỊ] 44 chỗ gọi app(\App\Services\...) giữa hàm (8 chỗ trong
+        OrderService). Phần lớn để tránh vòng phụ thuộc (OrderService ↔
+        InstallmentService ↔ PaidOrderFulfilment). Nơi không có vòng nên chuyển
+        sang tiêm qua hàm khởi tạo để dễ đọc và dễ giả lập khi kiểm thử.
+
+--------------------------------------------------------------------------------
+3.2 CODE SẠCH
+--------------------------------------------------------------------------------
+  [ĐÃ SỬA] CheckoutBasket::money() không nơi nào gọi → bỏ.
+  [ĐÃ SỬA] OrderService::changeStatus() có hai khối if ($restoreStock) liền nhau →
+        gộp một.
+  [ĐÃ SỬA] storage/quet.js (script đo tương phản dùng một lần, nằm lẫn trong
+        storage/, không nơi nào gọi) → gỡ khỏi Git.
+  [ĐÃ SỬA] docs/LUONG-HOAT-DONG.md nhắc tệp resources/js/cart-select.js không còn
+        tồn tại → sửa thành cart-live.js.
+  [TỐT] Không có class nào bị bỏ quên (đã dò mọi class trong app/ có nơi dùng; lệnh
+        artisan được Laravel tự tìm). Không còn hàm private chết (2 hàm khởi tạo
+        private là cố ý: buộc tạo đối tượng qua hàm dựng có tên).
+  [KHUYẾN NGHỊ] Sau khi bỏ comment còn một số dòng trống thừa trong mảng / giữa hàm
+        (chỉ thẩm mỹ). Có thể chạy "vendor/bin/pint" để định dạng đồng loạt — nên
+        làm trong một commit riêng vì nó đổi khoảng trắng ở rất nhiều tệp.
+
+--------------------------------------------------------------------------------
+3.3 TỐI ƯU
+--------------------------------------------------------------------------------
+  [ĐÃ SỬA] Đo lỗi N+1: bật Model::preventLazyLoading() và ghi lại mọi lần nạp lười
+        trong khi chạy toàn bộ 1275 bài kiểm thử. Chỉ có 2 vị trí:
+          - Product::traits ở trang sản phẩm (20 lần) → đã thêm vào danh sách
+            nạp sẵn trong Shop\ProductController::show()
+          - OrderStatusEvent::changedBy (1 lần, trang quản trị đã nạp sẵn ở luồng
+            chính) → không đáng sửa
+  [TỐT] Truy vấn gợi ý, danh sách sản phẩm dùng with() / withCount() / withAvg().
+  [TỐT] Sắp xếp theo giá sau khuyến mại làm ngay trong SQL; tìm kiếm dùng cột chỉ
+        mục đã bỏ dấu thay vì bỏ dấu lúc truy vấn.
+  [TỐT] Ảnh WebP dựng sẵn nhiều cỡ; header cache ở .htaccess; tải trước trang.
+  [TỐT] Kiểm tra thư viện: composer audit và npm audit — 0 lỗ hổng.
+
+--------------------------------------------------------------------------------
+3.4 LOGIC NGHIỆP VỤ (đọc lại các luồng tiền và kho)
+--------------------------------------------------------------------------------
+  [TỐT] Đặt hàng: một transaction, lockForUpdate khi trừ kho, kiểm lại "còn bán
+        không" ngay trong transaction, khoá idempotency chống đặt trùng.
+  [TỐT] Mã giảm giá: ghi lượt dùng bằng MỘT câu UPDATE có điều kiện → không vượt
+        giới hạn khi hai người dùng cùng lúc; huỷ đơn trả lại lượt.
+  [TỐT] Đổi trạng thái đơn theo máy trạng thái (OrderStatus::nextStates), chặn huỷ
+        khi vận đơn GHN còn hiệu lực, chặn giao đơn trả góp chưa trả đủ; huỷ thì
+        trả kho, trả mã, trả điểm, trả quà trong cùng transaction.
+  [TỐT] MoMo IPN: kiểm chữ ký bằng hash_equals, khoá giao dịch, bỏ qua khi đã trả,
+        ĐỐI CHIẾU SỐ TIỀN trước khi ghi nhận.
+  [TỐT] Tiền tính bằng bcmath; trình duyệt không gửi con số tiền nào.
+
+--------------------------------------------------------------------------------
+3.5 BẢO MẬT
+--------------------------------------------------------------------------------
+  [ĐÃ SỬA] Thiếu header bảo mật HTTP → thêm middleware toàn cục SecurityHeaders:
+          X-Frame-Options: SAMEORIGIN        (chống nhúng trang vào iframe để lừa bấm)
+          X-Content-Type-Options: nosniff    (chống trình duyệt đoán sai kiểu tệp)
+          Referrer-Policy: strict-origin-when-cross-origin
+        Áp cho mọi phản hồi, kể cả trang 404. Có 3 bài kiểm thử; bỏ middleware
+        thì kiểm thử đỏ.
+  [TỐT] Phân quyền: đã dò bằng route:list — 154/154 route quản trị có middleware
+        quyền; mọi tài nguyên của khách kiểm chủ sở hữu (địa chỉ, giỏ, đơn, nhật
+        ký, thông báo, đánh giá, bài Góc cây).
+  [TỐT] CSRF: chỉ miễn đúng đường IPN của MoMo (được bảo vệ bằng chữ ký).
+  [TỐT] XSS: chỗ in HTML thô chỉ có bài Cẩm nang và mô tả theo khối, cả hai đi qua
+        HtmlSanitizer theo danh sách trắng; các {!! !!} còn lại đều bọc e().
+        JavaScript gán tên sản phẩm bằng textContent.
+  [TỐT] SQL Injection: các đoạn SQL thô (orderByRaw, selectRaw) chỉ ghép hằng số,
+        giá trị người dùng đi qua tham số; LIKE thoát ký tự đặc biệt.
+  [TỐT] Mass assignment: không nơi nào đưa $request->all() vào create / update;
+        model nhạy cảm dùng $guarded = ['*'].
+  [TỐT] Đăng nhập: giới hạn 5 lần theo email + IP, đổi mã phiên, thông báo lỗi
+        không lộ email; OTP lưu băm; chống chuyển hướng ra trang ngoài.
+  [TỐT] Tệp tải lên: kiểm mimes + mimetypes + dung lượng, tên ngẫu nhiên, tước
+        metadata; logo không nhận SVG.
+  [TỐT] Bí mật chỉ nằm trong .env (đã có trong .gitignore); khoá Gemini gửi qua
+        header.
+  [GHI CHÚ] .env.example chứa bộ khoá MoMo — đây là khoá MÔI TRƯỜNG THỬ do MoMo
+        công bố công khai cho lập trình viên (đã ghi rõ ngay trong tệp), không phải
+        khoá của cửa hàng. Giữ nguyên để thành viên mới chạy được luồng thanh toán
+        thử. Các bài kiểm thử MoMo dùng cùng bộ khoá này với HTTP giả lập.
+  [KHUYẾN NGHỊ] Content-Security-Policy chưa bật: nhiều view có <script> nội tuyến
+        và @json, bật CSP phải kèm nonce cho từng thẻ — làm vội sẽ chặn chính
+        JavaScript của trang. Nên làm thành một đợt riêng.
+  [KHUYẾN NGHỊ — KHI TRIỂN KHAI THẬT] (không áp dụng khi chạy trên máy XAMPP)
+          APP_ENV=production, APP_DEBUG=false (đang true cho môi trường học)
+          SESSION_SECURE_COOKIE=true khi có HTTPS
+          MOMO_VERIFY_SSL=true và khoá MoMo thật của doanh nghiệp
+          php artisan config:cache, route:cache, view:cache
+          cấu hình cron chạy php artisan schedule:run mỗi phút
+          bật OPcache (docs/OPCACHE-XAMPP.md)
+
+
+================================================================================
+PHẦN 4. TÀI LIỆU ĐÃ TẠO
+================================================================================
+  docs/CHU-THICH-CODE.md       toàn bộ comment đã chuyển ra (mục 1)
+  docs/RA-SOAT-CODE.txt        báo cáo này (mục 2, 3)
+  docs/BAO-CAO-CHUC-NANG.txt   chức năng, chiến lược tâm lý, bảo mật (mục 4)
+  docs/HUONG-DAN-DOC-CODE.txt  hướng dẫn đọc code kèm tệp và hàm (mục 5)
+  docs/PHAN-CONG-NHOM.txt      chia khối chức năng và tệp cho 5 người (mục 6)
+
+
+================================================================================
+PHẦN 5. DANH SÁCH COMMIT
+================================================================================
+  94db459  Chuyển comment trong code về docs/CHU-THICH-CODE.md
+  f1b1640  Rà soát: header bảo mật, tách route quản trị, dọn tệp thừa
+  5d52eca  Chú thích: dòng cảnh báo ⚠️ giữ lại trong code không còn bị cắt giữa câu
+  442ea80  Rà soát: bỏ hàm không dùng CheckoutBasket::money, gộp hai khối if trùng
+  db39de5  Rà soát: nạp sẵn nhãn phân loại ở trang sản phẩm
+  cc0c96f  Rà soát: bỏ ~500 dòng luật kiểm tra trùng lặp giữa thêm và sửa
+  (commit tài liệu cuối cùng)
+
+  Hoàn tác một thay đổi:  git revert <mã commit>
+  Xem lại tệp trước khi bỏ comment:  git show 5880f33:<đường-dẫn-tệp>

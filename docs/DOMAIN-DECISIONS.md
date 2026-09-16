@@ -8295,3 +8295,21 @@ có thanh bên.
 - Mọi nút quản lý là PATCH + CSRF, và quyền lấy từ `PostOwner::baiCuaToi()` (lọc
   theo `user_id` rồi mới `findOrFail`) nên bài người khác trả 404, không phải 403:
   không xác nhận hộ rằng bài đó có tồn tại.
+
+## QĐ-302. Comment nằm ở docs/CHU-THICH-CODE.md; route quản trị tách tệp; header bảo mật toàn cục
+
+- Comment giải thích trong code được chuyển về `docs/CHU-THICH-CODE.md` (chia theo
+  tệp, kèm số dòng gốc ở commit `5880f33` và hàm chứa nó). Trong code chỉ còn một
+  dòng tóm tắt đầu class / tệp và dòng cảnh báo ⚠️ một câu. Comment gốc của
+  Laravel giữ nguyên. Việc tách được kiểm chứng bằng bộ phân tích cú pháp (token
+  PHP, biên dịch Blade, cây cú pháp JS, bản rút gọn CSS) chứ không bằng mắt.
+- Viết comment mới: ngắn, đặt ở đầu class / hàm; phần giải thích dài ("vì sao")
+  ghi thành một mục QĐ ở tệp này.
+- Route quản trị nằm ở `routes/admin.php`, nạp ở cuối `routes/web.php` bằng
+  `require` để giữ nguyên thứ tự route (QĐ-196).
+- `SecurityHeaders` đăng ký bằng `$middleware->append()` chứ không vào nhóm `web`:
+  trang 404 không khớp route nào nên không đi qua nhóm `web`.
+- Bản "Update" của FormRequest sản phẩm / danh mục kế thừa bản "Store" và chỉ ghi
+  đè phần khác; không chép lại cả bộ luật.
+- Tên dài không đổi hàng loạt: đã đo, không vượt quy ước Laravel, một số do
+  framework áp đặt, tên hàm kiểm thử là câu mô tả luật (docs/RA-SOAT-CODE.txt).

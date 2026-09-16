@@ -1,0 +1,755 @@
+================================================================================
+                 BÁO CÁO CHỨC NĂNG DỰ ÁN ANGEVIL — HOA TƯƠI & CÂY CẢNH
+================================================================================
+
+Tài liệu này liệt kê TOÀN BỘ những gì hệ thống làm được, sắp theo mức độ từ cơ
+bản đến nâng cao, kèm các chiến lược tâm lý mua hàng, các lớp bảo mật và những
+thông tin khác dùng cho báo cáo. Mỗi mục có ghi tệp chính để người đọc mở ra
+kiểm chứng. Mọi con số dưới đây đều đếm trực tiếp từ mã nguồn.
+
+MỤC LỤC
+  PHẦN A. Tổng quan dự án
+  PHẦN B. Chức năng — từ cơ bản đến nâng cao (6 cấp)
+  PHẦN C. Chiến lược tâm lý học / kinh tế học hành vi
+  PHẦN D. Bảo mật
+  PHẦN E. Chất lượng: kiểm thử, hiệu năng, tự động hoá
+  PHẦN F. Tích hợp dịch vụ bên ngoài
+  PHẦN G. Cơ sở dữ liệu
+  PHẦN H. Nguyên tắc thiết kế và những việc CỐ Ý không làm
+
+
+================================================================================
+PHẦN A. TỔNG QUAN DỰ ÁN
+================================================================================
+
+A1. Mô tả
+  Angevil là website thương mại điện tử bán hoa tươi, cây cảnh và phụ kiện
+  chăm cây. Gồm hai khu:
+    - Khu CỬA HÀNG cho khách: xem, tìm, chọn cây, mua, theo dõi đơn, chăm cây,
+      viết nhật ký, đăng bài cộng đồng, tích điểm, trả góp, hỏi trợ lý AI.
+    - Khu QUẢN TRỊ cho chủ cửa hàng và nhân viên: sản phẩm, đơn hàng, kho,
+      khuyến mại, khách hàng, báo cáo, tài chính, kiểm duyệt nội dung.
+
+A2. Công nghệ
+  - Backend : PHP 8.4, Laravel 13 (MVC), Eloquent ORM
+  - Giao diện: Blade (render phía máy chủ), Bootstrap 5.3, CSS thuần theo
+               thành phần, JavaScript thuần (ES module) đóng gói bằng Vite
+  - CSDL    : MariaDB 10.4 (XAMPP); kiểm thử chạy trên SQLite trong bộ nhớ
+  - Thư viện : dompdf (xuất PDF), openspout (xuất XLSX), endroid/qr-code
+  - Dịch vụ ngoài: Giao Hàng Nhanh (GHN), MoMo, Google Gemini (AI)
+
+A3. Kiến trúc (chia lớp rõ ràng)
+  Trình duyệt → routes/web.php, routes/admin.php (đường dẫn)
+             → app/Http/Middleware (chặn quyền, khoá tài khoản…)
+             → app/Http/Requests (kiểm tra dữ liệu gửi lên)
+             → app/Http/Controllers (mỏng: nhận yêu cầu, gọi service, trả view)
+             → app/Services (TOÀN BỘ luật nghiệp vụ: giá, giỏ, đơn, kho, điểm…)
+             → app/Models (Eloquent, quan hệ bảng) + app/Enums (danh sách đóng)
+             → resources/views (Blade) + resources/js + resources/css
+
+  Nguyên tắc "một nơi chịu trách nhiệm": giá chỉ tính ở PricingService, tiền
+  thanh toán chỉ cộng ở CheckoutBasket, tồn kho chỉ cộng/trừ ở StockAdjuster /
+  OrderService, điểm chỉ ghi ở PointLedger, thuế chỉ tính ở TaxCalculator…
+
+A4. Quy mô (đếm từ mã nguồn)
+  - 284 đường dẫn (route), trong đó 154 thuộc khu quản trị
+  - 69 controller, 136 lớp service, 57 model, 63 enum
+  - 89 migration tạo khoảng 70 bảng
+  - 235 view Blade, 42 tệp JavaScript, 47 tệp CSS
+  - 15 lệnh artisan tự viết, 5 tác vụ chạy theo lịch
+  - 128 tệp kiểm thử, 1275 bài kiểm thử, 4688 phép khẳng định
+  - Tài liệu: docs/ (quyết định thiết kế 301 mục, luồng hoạt động, kiểm thử,
+    hiệu năng, tự động hoá, chú thích code)
+
+
+================================================================================
+PHẦN B. CHỨC NĂNG — TỪ CƠ BẢN ĐẾN NÂNG CAO
+================================================================================
+
+--------------------------------------------------------------------------------
+CẤP 1 — NỀN TẢNG: XEM VÀ TÌM HÀNG, TÀI KHOẢN
+--------------------------------------------------------------------------------
+
+1.1  Trang chủ
+     Hero theo mùa, băng chuyền banner khuyến mại, "Chọn theo nhu cầu",
+     "Được yêu thích gần đây" (dựng từ dữ liệu thật), "Hàng mới về" (giới hạn
+     theo ngày, được phép rỗng), khối gợi ý cá nhân hoá.
+     → HomeController, resources/views/welcome.blade.php
+
+1.2  Danh mục & danh sách sản phẩm
+     Lọc theo danh mục, hình thức bán (bó hoa, cây chậu, giỏ, lẵng…), giá, độ
+     khó chăm, màu, dáng, vị trí đặt…; sắp xếp theo GIÁ KHÁCH THẤY (đã tính
+     khuyến mại, làm bằng SQL); phân trang.
+     → Shop/CategoryController, Shop/ProductController@index,
+       Product::scopeOrderByEffectivePrice
+
+1.3  Trang chi tiết sản phẩm
+     Thư viện ảnh + video (đường dẫn nhúng hoặc MP4), mô tả theo khối chữ/ảnh,
+     quy cách (biến thể) có giá riêng và tồn riêng, hướng dẫn chăm sóc, phân
+     loại sinh học (Họ/Chi/Loài), nhãn phong thuỷ dân gian, quà tặng kèm,
+     đánh giá, sản phẩm mua kèm (phụ kiện), gợi ý liên quan.
+     → Shop/ProductController@show, resources/views/shop/products/show.blade.php
+
+1.4  Tìm kiếm
+     Ô tìm kiếm có gợi ý tức thời (API JSON), tìm không dấu, tìm theo đầu
+     tiếng. (Phần "thông minh" của tìm kiếm xem Cấp 6.)
+     → Api/SearchSuggestionController, resources/js/search-suggest.js
+
+1.5  Trang nội dung
+     Giới thiệu, liên hệ, chính sách (admin sửa được), trang ghi công tác giả
+     ảnh (tự dựng từ credits.json).
+     → Shop/PageController, Shop/CreditsController
+
+1.6  Đăng ký, đăng nhập, đăng xuất
+     Mật khẩu tối thiểu 8 ký tự, có chữ hoa, chữ thường và số; giới hạn số lần
+     thử; thông báo lỗi không tiết lộ email có tồn tại hay không.
+     → Auth/AuthController, app/Http/Requests/Auth/*
+
+1.7  Xác thực email bằng mã OTP 6 số
+     Mã lưu dạng BĂM, hết hạn 15 phút, tối đa 5 lần sai, chờ 60 giây mới gửi
+     lại (có đồng hồ đếm ngược). Vẫn giữ đường xác thực bằng liên kết có chữ
+     ký của Laravel.
+     → Services/Auth/EmailVerifier, Auth/EmailVerificationController
+
+1.8  Quên mật khẩu / đặt lại mật khẩu
+     → Auth/PasswordResetController, Services/Auth/PasswordResetMailer
+
+1.9  Hồ sơ tài khoản (3 mục có địa chỉ riêng)
+     Sửa thông tin, đổi mật khẩu (tự đăng xuất thiết bị khác), xem và đá từng
+     THIẾT BỊ đang đăng nhập, tuỳ chọn thư thông báo, chế độ sáng/tối, XOÁ TÀI
+     KHOẢN theo 3 bước (yêu cầu → thư xác nhận → xoá).
+     → Shop/ProfileController, Services/Auth/{AccountSecurity, ActiveSessions,
+       AccountDeleter}
+
+1.10 Chế độ hiển thị sáng / tối, theme theo mùa (Tết, Noel, Valentine)
+     Theme theo mùa có hiệu ứng vẽ bằng canvas (Tết: cánh mai rơi, Noel: tuyết rơi,
+     Valentine: cánh hồng rơi), tách biệt với
+     sáng/tối của từng người xem.
+     → Services/Theme/ThemeRegistry, Services/Shop/DisplayScheme,
+       resources/js/theme/*
+
+--------------------------------------------------------------------------------
+CẤP 2 — MUA HÀNG
+--------------------------------------------------------------------------------
+
+2.1  Giỏ hàng
+     Thêm vào giỏ không tải lại trang; gộp dòng trùng; tự kẹp số lượng theo
+     tồn kho và báo cho khách; giỏ khách vãng lai (theo phiên) tự gộp vào tài
+     khoản khi đăng nhập; TICK CHỌN từng món để thanh toán, món không chọn được
+     giữ lại; sửa số lượng không tải lại trang.
+     → Services/Cart/CartService, Shop/CartController, resources/js/cart-live.js,
+       resources/js/add-to-cart.js
+
+2.2  Mua ngay
+     Mua một món riêng, không đụng tới giỏ hàng.
+     → CartController@buyNow, Services/Checkout/CheckoutSource
+
+2.3  Chọn quy cách ngay trên thẻ sản phẩm
+     Hộp thoại chọn quy cách hiện tại chỗ, không phải vào trang chi tiết.
+     → resources/js/variant-dialog.js
+
+2.4  Thanh toán 2 bước
+     Bước 1: người nhận, địa chỉ, ngày giao, ghi chú, mã giảm giá, điểm.
+     Bước 2: trang xác nhận để soát lại rồi đặt hàng.
+     → Shop/CheckoutController, Requests/Shop/CheckoutDetailsRequest
+
+2.5  Sổ địa chỉ + chọn địa giới GHN
+     Tỉnh → Quận/Huyện → Phường/Xã nối nhau, dùng lại địa chỉ đã lưu (điền sẵn
+     đủ cả ba cấp), đánh dấu địa chỉ mặc định.
+     → Shop/AddressController, Shop/GHNController, resources/js/ghn-address.js
+
+2.6  Phí giao hàng
+     Máy chủ hỏi GHN cước thật theo cân nặng; GHN không phản hồi thì tạm nghỉ
+     gọi và dùng bảng phí theo vùng; miễn phí giao khi đơn đạt ngưỡng (ngưỡng
+     có thể thấp hơn theo hạng thành viên); hiện "còn thiếu X để được miễn phí".
+     → Services/Shipping/{ShippingQuote, ShippingRates, GHNService}
+
+2.7  Thuế GTGT (VAT)
+     Giá niêm yết ĐÃ GỒM VAT; thuế được TÁCH RA theo từng dòng hàng, theo nhóm
+     thuế suất; tiền giảm của mã được chia cho các dòng (dòng cuối gánh phần
+     lẻ); phí giao có phần thuế riêng.
+     → Services/Tax/{TaxCalculator, BasketTax}, Models/TaxClass
+
+2.8  Mã giảm giá & ví voucher
+     Mã % hoặc số tiền, có trần giảm, đơn tối thiểu, giới hạn tổng lượt và lượt
+     của từng tài khoản, giới hạn hình thức thanh toán, yêu cầu hạng tối thiểu,
+     cờ "cộng dồn với ưu đãi hạng". Khách LƯU mã về ví; hệ thống TỰ CHỌN mã lợi
+     nhất trong ví; khách bỏ mã được, ẩn mã đã dùng được; mã tự rụng thì báo.
+     → Services/Coupon/{CouponService, CouponWallet, BestCouponFinder},
+       Shop/VoucherController
+
+2.9  Thanh toán
+     - COD (thu tiền khi nhận)
+     - Ví MoMo (có chữ ký HMAC, nhận IPN, trả lại lần nữa được)
+     - Trả góp trước khi giao (xem Cấp 6)
+     → Services/Payment/MomoGateway, Shop/MomoController
+
+2.10 Đặt hàng an toàn
+     Trong MỘT giao dịch CSDL: khoá dòng sản phẩm, kiểm còn bán, trừ kho, ghi
+     đơn + dòng đơn, ghi lượt dùng mã, trừ điểm. Khoá chống đặt trùng (bấm hai
+     lần vẫn một đơn). Mã đơn dạng FP-260823-A7K2.
+     → Services/Order/{OrderService, OrderNumberGenerator},
+       Services/Checkout/CheckoutGuard
+
+2.11 Theo dõi đơn hàng
+     Danh sách đơn, chi tiết đơn, dòng thời gian trạng thái, trạng thái kiện
+     hàng GHN, khách tự huỷ đơn khi còn được phép, thanh toán lại MoMo.
+     → Shop/OrderController, Models/OrderStatusEvent
+
+2.12 Tra cứu đơn cho khách vãng lai
+     → Shop/OrderLookupController
+
+2.13 Email giao dịch
+     Xác nhận đơn (chỉ khi đơn đã xác nhận), đổi trạng thái, huỷ đơn, hoàn tiền,
+     thư cho cửa hàng khi có đơn mới / yêu cầu báo giá, thư nhắc chăm cây.
+     → Services/Order/OrderMailer, app/Mail/*
+
+2.14 Đặt số lượng lớn / báo giá sự kiện
+     Biểu mẫu nhiều yêu cầu thêm (tông màu, ngân sách, thời gian…).
+     → Shop/BulkInquiryController, Admin/BulkInquiryController
+
+--------------------------------------------------------------------------------
+CẤP 3 — SAU MUA HÀNG: CHĂM SÓC KHÁCH & CỘNG ĐỒNG
+--------------------------------------------------------------------------------
+
+3.1  Đánh giá sản phẩm
+     Chỉ khách đã mua và đã nhận hàng mới đánh giá; admin ẩn/hiện, trả lời,
+     thao tác hàng loạt; "Đánh giá của tôi".
+     → Shop/ReviewController, Admin/ReviewController
+
+3.2  Danh sách yêu thích
+     → Shop/WishlistController, resources/js/wishlist.js
+
+3.3  Lịch chăm cây (nhắc tưới nước / bón phân)
+     Tự dựng lịch khi đơn giao xong; gửi thư nhắc 08:00 mỗi ngày; khách bật/tắt
+     từng lịch, đánh dấu đã làm.
+     → Services/Care/{CareScheduler, CareReminderMailer}, Shop/CareController,
+       lệnh care:remind
+
+3.4  Nhật ký cây cá nhân (RIÊNG TƯ)
+     5 loại sổ: sinh trưởng, mục tiêu, theo dõi giá, phân tích cây, tự do. Mỗi
+     trang ghi có ảnh, chỉ số (chiều cao, số lá…), biểu đồ SVG vẽ ở máy chủ,
+     mốc mục tiêu, trang trí bằng bộ nhãn dán SVG, lưu trữ thay vì xoá.
+     → Shop/JournalController, Models/Journal*, components/journal/*
+
+3.5  Cẩm nang (blog)
+     Chuyên mục, bài viết có HTML đã làm sạch, gắn sản phẩm liên quan, slug cố
+     định.
+     → Shop/BlogController, Admin/BlogPostController, Services/Media/HtmlSanitizer
+
+3.6  Góc cây của bạn (mạng xã hội thu nhỏ)
+     - Đăng bài nhiều ảnh / video (ảnh bị tước metadata, video bị xoá toạ độ GPS)
+     - Duyệt trước khi hiện, từ chối phải có lý do
+     - 5 cảm xúc (Thích, Yêu thích, Haha, Wow, Buồn), rê chuột mở bảng cảm xúc
+     - Bình luận, trả lời lồng một tầng, cảm xúc cho bình luận, emoji
+     - Lưu bài, báo cáo bài / bình luận cho cửa hàng xử lý
+     - Trang cá nhân; chủ bài tự tạm ẩn, ghim, khoá bình luận, ẩn bình luận
+     - Thông báo trong trang khi có bình luận / bài được duyệt
+     → Shop/CommunityController, Shop/CommunityPostOwnerController,
+       Services/Community/*, Services/Notification/NotificationCenter
+
+3.7  Trang hướng dẫn theo nhu cầu & duyệt theo loài cây
+     4 nhu cầu: tặng người thương, trang trí, khai trương & sự kiện, người mới.
+     → Shop/IntentController, Shop/PlantTaxonController
+
+--------------------------------------------------------------------------------
+CẤP 4 — QUẢN TRỊ VẬN HÀNH
+--------------------------------------------------------------------------------
+
+4.1  Phân quyền 3 vai trò + 8 khu vực quyền
+     Chủ cửa hàng (toàn quyền), Nhân viên (theo khu vực được giao), Khách hàng.
+     8 khu vực: Đơn hàng · Sản phẩm · Kho · Khuyến mại · Đánh giá · Báo cáo ·
+     Tài chính · Hệ thống. Cả 154 đường dẫn quản trị đều gắn quyền.
+     → app/Enums/{UserRole, Quyen}, Middleware/{EnsureUserHasRole, CoQuyen}
+
+4.2  Sản phẩm & danh mục
+     Thêm/sửa/xoá mềm/khôi phục/xoá vĩnh viễn, thùng rác, thao tác hàng loạt,
+     sắp xếp theo cột (danh sách trắng), quy cách, thư viện ảnh/video, mô tả
+     theo khối, nhãn phân loại, loài cây, nhóm thuế, cân nặng, trang "xem" sản
+     phẩm. Ảnh tải lên được tối ưu ngay (WebP nhiều cỡ).
+     → Admin/ProductController, Admin/CategoryController,
+       Services/Product/*, Services/Media/ImageStore
+
+4.3  Đơn hàng
+     Lọc, xem, đổi trạng thái theo máy trạng thái (không nhảy bước), cập nhật
+     thanh toán, ghi chú nội bộ, sửa thông tin giao, IN phiếu soạn hàng (không
+     giá) và phiếu giao hàng, điểm rủi ro, tạo / huỷ vận đơn GHN bằng tay.
+     → Admin/OrderController, app/Enums/OrderStatus, Services/Shipping/GHNOrderService
+
+4.4  Đồng bộ vận đơn GHN tự động mỗi 30 phút, tự ghi nhận COD đã thu
+     → Services/Shipping/GhnStatusSync, lệnh ghn:dong-bo
+
+4.5  Kho hàng
+     - Tồn kho: sắp hết, đã hết, hàng "chết vốn"
+     - Phiếu nhập kho (nháp → ghi sổ), giá vốn
+     - Tồn đầu kỳ (hàng có sẵn trước khi có hệ thống)
+     - Phiếu kiểm kê (chụp tồn lúc lập, ghi sổ phần chênh lệch, không để âm)
+     - Nhà cung cấp; trả hàng cho nhà cung cấp (xử lý tiền quyết định giá vốn)
+     - HOA TƯƠI đếm theo LÔ (lô mở / đóng, loại hoa thu mua, chất lượng)
+     - Tắt quản lý tồn thì ô số lượng khoá lại
+     → Admin/{InventoryController, StockReceiptController, StockCountController,
+       OpeningStockController, SupplierController, SupplierReturnController,
+       FlowerLotController, FlowerKindController}, Services/Inventory/*
+
+4.6  Đổi hàng (chứng từ riêng, không sửa đơn cũ)
+     → Admin/ExchangeController, Services/Exchange/ExchangeService
+
+4.7  Hoàn tiền (chứng từ riêng)
+     Hoàn qua MoMo tự động (ghi trước, gọi sau), chuyển khoản, tiền mặt; hàng
+     trả về chỉ vào lại kho khi tiền đã hoàn và phần bán lại được; trả lại
+     điểm; thư báo khách.
+     → Admin/RefundController, Services/Refund/RefundService
+
+4.8  Khuyến mại
+     % / số tiền / giá cố định; mức riêng cho từng sản phẩm; khung giờ trong ngày
+     (kể cả qua nửa đêm) và thứ trong tuần; trạng thái tự bật/tắt theo lịch;
+     trang sự kiện (landing page) và banner; chọn chương trình cho GIÁ THẤP
+     NHẤT khi chồng nhau (không cộng dồn).
+     → Admin/PromotionController, Services/Pricing/PricingService,
+       lệnh khuyen-mai:cap-nhat-trang-thai, Shop/EventController
+
+4.9  Quà tặng
+     Quà kèm theo sản phẩm / quy cách ("mua mỗi N tặng M, tối đa X"), quà theo
+     chương trình, danh mục vật phẩm quà; luật khi thiếu kho và khi trả hàng.
+     → Admin/{ProductGiftController, GiftCampaignController, GiftItemController},
+       Services/Gift/*
+
+4.10 Hạng thành viên (Mầm, Lá, Hoa, Vườn, Rừng) — cấu hình trong bảng
+     → Admin/MemberTierController, Services/Loyalty/*
+
+4.11 Khách hàng & quản trị viên
+     Hồ sơ khách ("đã chi" cùng định nghĩa với danh sách), KHOÁ tài khoản (có lý
+     do) thay vì xoá, đổi vai trò với 3 chốt chặn (không tự đổi vai trò / tự khoá
+     chính mình, luôn còn ít nhất một quản trị viên dùng được, ghi nhật ký).
+     → Admin/UserController, Middleware/EnsureUserIsNotLocked
+
+4.12 Kiểm duyệt Góc cây: duyệt / từ chối / ẩn / xoá bài, xử lý báo cáo
+     → Admin/CommunityModerationController, Services/Community/CommunityReports
+
+4.13 Cấu hình cửa hàng
+     Tên, logo, hotline, email, địa chỉ, cam kết dịch vụ, theme, ảnh hero từng
+     theme, định dạng tiền tệ (khoá VND); sửa nội dung trang chính sách.
+     → Admin/{SettingsController, PageContentController}, Services/Shop/*
+
+4.14 Nhật ký thao tác quản trị (không có đường xoá)
+     → Services/Audit/ActivityLogger, Admin/ActivityLogController
+
+4.15 Sổ thu chi
+     Ghi chi phí vận hành theo loại; chép khoản cố định sang tháng mới bằng một
+     nút; dòng tiền và lãi ròng ước tính theo tháng.
+     → Admin/ExpenseController, Services/Analytics/CashFlowReport
+
+4.16 Điều hướng quản trị không tải lại trang, giao diện tối cho quản trị
+     → resources/js/admin/nav.js
+
+--------------------------------------------------------------------------------
+CẤP 5 — PHÂN TÍCH & BÁO CÁO
+--------------------------------------------------------------------------------
+
+5.1  Trang Tổng quan mở đầu bằng HÀNG ĐỢI VIỆC (đơn chờ, lô hoa quên đóng,
+     đổi hàng dở dang, hàng sắp hết…), mỗi con số dẫn thẳng tới việc cần làm.
+     → Admin/DashboardController, Services/Admin/WorkQueue
+
+5.2  Phân tích (chọn kỳ dựng sẵn hoặc khoảng ngày tự chọn, so với kỳ trước,
+     gom theo GIỜ VIỆT NAM trong khi dữ liệu lưu UTC):
+     - Tổng quan: phễu (xem → thêm giỏ → đặt), sản phẩm/danh mục bán chạy,
+       từ khoá tìm nhiều, doanh thu theo ngày, trạng thái đơn
+     - Doanh thu: theo danh mục, tỉnh, khung giờ, khách mới / quay lại
+     - Khách hàng, giỏ hàng bỏ dở
+     - Đánh giá: sản phẩm bị chê nhiều, theo tháng
+     - Lợi nhuận: lãi gộp CHỈ trên phần doanh thu có giá vốn thật, lãi hoa tươi
+       theo lô
+     - Thu mua: nguồn hàng nào đáng tiền nhất (theo giá dùng được)
+     Biểu đồ SVG vẽ ở máy chủ, màu chọn theo thuật toán an toàn mù màu.
+     → Admin/{AnalyticsController, AnalyticsPagesController}, Services/Analytics/*
+
+5.3  Xuất báo cáo 5 định dạng: CSV, XLSX (mỗi phần một trang tính), JSON,
+     HTML, PDF (đủ dấu tiếng Việt); chọn phần muốn xuất.
+     → Services/Analytics/{ReportExporter, ReportSections, Export/*}
+
+5.4  Báo cáo tồn kho, báo cáo cước giao hàng cửa hàng thật sự trả
+     → Services/Analytics/InventoryReport
+
+--------------------------------------------------------------------------------
+CẤP 6 — CHỨC NĂNG THÔNG MINH / NÂNG CAO
+--------------------------------------------------------------------------------
+
+6.1  RECOMMENDATION — Gợi ý sản phẩm cá nhân hoá
+     Dựa trên hành vi của CHÍNH người đang xem (kể cả khách chưa đăng nhập): mua
+     = 5 điểm, yêu thích = 4, thêm giỏ = 3, xem = 1. Chấm trên 4 trục, mỗi trục
+     chuẩn hoá về 0..1 rồi nhân trọng số: danh mục 3.0, đặc điểm (màu, dáng, vị
+     trí…) 2.0, hình thức bán 2.0, phân loại sinh học 1.0 (chỉ từ bậc Họ trở
+     xuống). Mỗi gợi ý kèm LÝ DO ("Cùng họ Ráy", "Cùng hình thức Bó hoa"); lý do
+     chọn theo trục hẹp nhất và chỉ nêu khi độ hợp ≥ 0.5. Thiếu thì bù bằng hàng
+     được xem nhiều và đổi tiêu đề cho đúng sự thật.
+     → Services/Recommendation/{RecommendationService, TasteProfile}
+
+6.2  PLANT ADVISOR — Tư vấn chọn cây theo nhu cầu (chạy từ lượt đầu tiên)
+     Khách tự khai: vị trí đặt, mệnh (phong thuỷ dân gian), độ khó chăm, màu,
+     dáng, môi trường sống… → danh sách cây phù hợp; chỉ hiện lựa chọn còn hàng.
+     Gợi ý PHỤ KIỆN mua kèm theo hình thức bán (không cần nối tay từng cặp).
+     → Services/Recommendation/PlantAdvisor, Shop/AdvisorController
+
+6.3  FUZZY SEARCH — Tìm kiếm mờ tiếng Việt
+     Chỉ mục là cột thật đã bỏ dấu (search_name, search_text); khớp theo ĐẦU
+     TIẾNG; 3 lớp: bỏ dấu → sửa lỗi gõ bằng khoảng cách Levenshtein (ngưỡng tăng
+     theo độ dài, từ ngắn phải trùng chữ đầu) → nới AND thành OR; gợi ý "Bạn có
+     muốn tìm…"; xếp hạng theo độ liên quan; dựng lại chỉ mục bằng lệnh.
+     → Services/Search/{ProductSearch, FuzzyMatcher, TextNormalizer,
+       SearchDictionary, ProductSearchIndexer}, lệnh search:reindex
+
+6.4  DYNAMIC PRICING — Giá linh hoạt theo thời điểm
+     Khuyến mại theo khung giờ trong ngày và theo thứ (ví dụ xả hàng hoa cuối
+     ngày 19:00–22:00), luôn giữ luật "giá cuối ≤ giá gốc", chọn mức giá thấp
+     nhất khi nhiều chương trình chồng nhau.
+     → Services/Pricing/PricingService, Models/Promotion
+
+6.5  PRICING ADVISOR — Cố vấn giá cho admin
+     Phân loại 5 tình huống: nhiều xem không ai mua / thêm giỏ nhiều nhưng ít
+     đơn (giá KHÔNG phải vấn đề) / tồn lâu / đang giảm mà vẫn không bán / bán
+     tốt mà giá dưới mặt bằng (nên NÂNG giá). Mốc tham chiếu là trung vị giá các
+     sản phẩm cùng danh mục đã bán được. Dưới 20 lượt xem thì im lặng; dưới 30
+     đơn thì cảnh báo mẫu mỏng; mỗi đề xuất kèm số liệu đã sinh ra nó.
+     → Services/Pricing/{PricingAdvisor, DemandSignals, ProductDemand,
+       PriceSuggestion}, Admin/PricingAdvisorController
+
+6.6  OCCASION CALENDAR — Lịch dịp lễ
+     Nhắc dịp sắp tới chưa có chương trình nào phủ; không đoán ngày âm lịch.
+     → Services/Promotion/OccasionCalendar
+
+6.7  FRAUD DETECTION — Chấm điểm rủi ro đơn hàng
+     Từng huỷ đơn (20/lần, trần 40), COD giá trị cao (25), nhiều đơn cùng số
+     điện thoại trong 24 giờ (20), khách vãng lai (10), không có email (10). Chỉ
+     gắn cờ và nêu lý do để NGƯỜI quyết định, không tự chặn.
+     → Services/Order/OrderRiskScorer, config/risk.php
+
+6.8  LOYALTY — Điểm thưởng
+     Sổ điểm (không có cột số dư, mỗi việc một dòng khoá duy nhất). Kiếm điểm từ:
+     đơn đã giao, đánh giá sản phẩm đã mua, bài Góc cây được duyệt (có ảnh +10,
+     nổi bật +30, tối đa 3 bài/tuần), lượt thích (có trần mỗi tuần), chuỗi ngày
+     ghé thăm (ngày 3 +10, mỗi 7 ngày +30). Dùng điểm: trừ tiền khi đặt hàng
+     (100đ/điểm, tối thiểu 100 điểm, trần 30%) hoặc đổi voucher riêng.
+     → Services/Points/{PointLedger, PointEarning, PointRedemption,
+       CommunityReward, VisitStreak}, Middleware/GhiNhanNgayGhe
+
+6.9  MEMBER TIERS — Hạng thành viên theo chi tiêu hợp lệ
+     Giảm % theo hạng, ngưỡng miễn phí giao riêng; thứ tự tính giá: khuyến mại
+     → ưu đãi hạng → mã giảm giá → điểm → phí giao.
+     → Services/Loyalty/{MemberTierResolver, QualifiedSpending},
+       Services/Checkout/CheckoutBasket
+
+6.10 INSTALLMENT + CREDIT SCORE — Trả góp trước khi giao, điểm tín dụng
+     Cửa hàng không cho vay: giữ hàng, khách trả trước rồi trả theo kỳ (MoMo
+     hoặc tại cửa hàng), đủ tiền mới giao. Quá hạn vượt ân hạn thì kế hoạch vỡ,
+     đơn huỷ, tiền đã trả thành khoản phải hoàn, không phạt. Điểm tín dụng 0–100
+     tính lại từ lịch sử mỗi lần (đơn đã trả, kỳ đúng hạn/trễ, vỡ nợ, từ chối
+     nhận COD) và quyết định được trả góp không, mấy kỳ, trả trước bao nhiêu.
+     Mọi ngưỡng admin sửa được.
+     → Services/Installment/*, Services/Credit/CreditScore, lệnh tra-gop:qua-han
+
+6.11 AI SHOPPING ADVISOR — Trợ lý mua sắm (Google Gemini)
+     Máy chủ tự gom dữ liệu thật (sản phẩm khớp câu hỏi, giá đã tính khuyến
+     mại, tồn kho, hướng dẫn chăm, cây dễ chăm, khuyến mại đang chạy, mã công
+     khai; với khách đăng nhập: sản phẩm yêu thích và vài đơn gần nhất CỦA CHÍNH
+     HỌ — không địa chỉ, điện thoại, email) rồi đưa cho mô hình kèm luật "không
+     bịa". Chống chèn lệnh (prompt injection), lịch sử chat trong phiên, giao
+     diện nhà cung cấp AI thay được.
+     → Services/AI/{ShoppingAdvisor, AdvisorContext, AiManager, AiProvider,
+       GeminiProvider}, Shop/AiChatController, resources/js/ai-chat.js
+
+6.12 SOCIAL PROOF từ dữ liệu thật (xem Phần C)
+     → Services/Catalog/SocialProof
+
+6.13 IMAGE PIPELINE — Ảnh tối ưu và an toàn
+     Sinh sẵn WebP nhiều cỡ + manifest, chọn đúng cỡ cho từng chỗ hiển thị; tước
+     metadata EXIF/GPS của ảnh công khai (xoay ảnh trước khi xoá EXIF); xoá toạ
+     độ GPS khỏi video MP4/MOV bằng bộ đọc hộp MP4 tự viết.
+     → Services/Media/{ImageOptimizer, ResponsiveImage, ImageMetadataStripper,
+       VideoMetadataStripper}, lệnh anh:toi-uu
+
+6.14 TẢI TRƯỚC TRANG (Speculation Rules) để chuyển trang gần như tức thì,
+     không đổi sang SPA.
+     → resources/views/components/site/speculation-rules.blade.php
+
+6.15 HOÁ ĐƠN: dựng dữ liệu hoá đơn từ đơn hàng (không phát hành hoá đơn điện tử)
+     → Services/Invoice/InvoiceService
+
+6.16 TỰ ĐỘNG HOÁ (routes/console.php)
+     - auth:clear-resets             hằng ngày  — xoá token đặt lại mật khẩu cũ
+     - care:remind                   08:00      — thư nhắc chăm cây
+     - ghn:dong-bo                   30 phút/lần — đồng bộ vận đơn, ghi COD
+     - khuyen-mai:cap-nhat-trang-thai mỗi giờ   — bật/tắt khuyến mại theo lịch
+     - tra-gop:qua-han               00:30 giờ VN — huỷ kế hoạch trả góp quá hạn
+     Lệnh hỗ trợ: search:reindex, anh:toi-uu, do:hieu-nang (đo trang chậm),
+     quan-tri:lam-nong (làm nóng trang quản trị), shipping:zones,
+     addresses:check-provinces, ghn:tra-dia-chi, assets:sync-credits,
+     products:link-photos, products:link-gallery, categories:link-photos.
+
+
+================================================================================
+PHẦN C. CHIẾN LƯỢC TÂM LÝ HỌC / KINH TẾ HỌC HÀNH VI
+================================================================================
+
+Nguyên tắc chung (QĐ-288): mọi chiến lược chỉ dùng DỮ LIỆU THẬT. Dự án CỐ Ý KHÔNG
+làm: đồng hồ đếm ngược giả, "N người đang xem", giá gốc bịa để khuyến mại trông
+sâu hơn.
+
+C1. Bằng chứng xã hội (Social Proof)
+    - "Đã bán N trong 30 ngày" — chỉ đếm đơn ĐÃ GIAO; bằng 0 thì không in
+    - Đánh giá sao và nhận xét của người đã mua thật
+    - "Được yêu thích gần đây", "Được nhiều người xem"
+    - Góc cây: ảnh cây thật của khách, số cảm xúc và bình luận
+    → Services/Catalog/SocialProof::banGanDay, welcome.blade.php, Góc cây
+
+C2. Sự khan hiếm (Scarcity)
+    - "Chỉ còn N" khi tồn thật từ 1 đến 5
+    → SocialProof::chiCon
+
+C3. Sự cấp bách thật (Urgency)
+    - "Còn N ngày" / "Kết thúc hôm nay" tính từ ngày kết thúc thật của chương
+      trình
+    - Voucher sắp hết hạn xếp đầu ví, dưới 72 giờ có dòng "dùng trước khi mất mã"
+    - Khung giờ xả hàng cuối ngày (dynamic pricing)
+    → components/seasonal/campaign-banner, components/shop/voucher-card
+
+C4. Hiệu ứng mặc định (Default Effect)
+    - Tự chọn sẵn quy cách BÁN CHẠY THẬT trong 90 ngày ("Phổ biến nhất") khi bán
+      từ 3 cái và không hoà
+    - Hệ thống tự áp mã giảm giá lợi nhất trong ví
+    → SocialProof::quyCachBanChay, Coupon/BestCouponFinder
+
+C5. Neo giá (Anchoring)
+    - Gạch giá gốc bên cạnh giá sau khuyến mại, nhãn "-X%"; giá gốc luôn là giá
+      thật, luật "giá cuối ≤ giá gốc"
+    → components/product/price.blade.php, Pricing/ProductPrice
+
+C6. Hiệu ứng tiến tới mục tiêu (Goal-Gradient)
+    - "Còn thiếu X để được miễn phí giao hàng"
+    - "Còn thiếu X để lên hạng kế tiếp"
+    - Mốc thưởng kế tiếp của chuỗi ngày ghé thăm
+    → CheckoutBasket::amountToFreeShipping, MemberTierResolver::cua,
+      VisitStreak::mocTiepTheo
+
+C7. Né tránh mất mát / chi phí chìm (Loss Aversion, Sunk Cost)
+    - Chuỗi ngày ghé thăm: đã giữ 6 ngày thì ngày thứ 7 quay lại để không mất
+      chuỗi và nhận +30 điểm
+    - Voucher sắp mất, điểm tích luỹ có giá trị quy ra tiền
+    → Services/Points/VisitStreak
+
+C8. Hiệu ứng sở hữu (Endowment Effect)
+    - "Lưu mã về ví": mã đã là "của mình" nên khách muốn dùng
+    - Điểm thưởng hiện ngay trong menu tài khoản
+    → Services/Coupon/CouponWallet, components/site/header.blade.php
+
+C9. Có đi có lại (Reciprocity)
+    - Quà tặng kèm sản phẩm, quà theo chương trình
+    - Lịch nhắc chăm cây miễn phí sau khi mua
+    → Services/Gift/*, Services/Care/CareScheduler
+
+C10. Địa vị & phân tầng (Status / Tiered Loyalty)
+    - 5 hạng thành viên có tên gợi hình (Mầm → Rừng), ưu đãi tăng dần
+    → Services/Loyalty/MemberTierResolver
+
+C11. Củng cố hành vi (Gamification / Variable Reward)
+    - Điểm cho bài viết, bài nổi bật được thưởng thêm, điểm cho lượt thích
+    → Services/Points/CommunityReward
+
+C12. Giảm "nỗi đau khi trả tiền" (Pain of Paying)
+    - Trả góp theo kỳ; dùng điểm trừ tiền
+    → Services/Installment/*, Services/Points/PointRedemption
+
+C13. Giảm quá tải lựa chọn (Choice Overload)
+    - "Chọn cây theo nhu cầu" thay vì bắt lướt hàng trăm sản phẩm
+    - 4 trang nhu cầu; hệ thống tự chọn mã
+    → Recommendation/PlantAdvisor, Shop/IntentController
+
+C14. Cá nhân hoá & minh bạch lý do (Personalization)
+    - "Gợi ý cho bạn — Vì bạn quan tâm Hoa cưới"; nói thật khi chưa đủ dữ liệu
+    → Recommendation/RecommendationService
+
+C15. Bán kèm (Cross-sell / Bundling)
+    - Phụ kiện mua kèm ở trang sản phẩm và trong giỏ
+    → components/product/cross-sell.blade.php
+
+C16. Giảm ma sát (Friction Reduction)
+    - Thêm giỏ không tải lại trang, chọn quy cách tại chỗ, "Mua ngay", gộp bước
+      thanh toán, điền sẵn địa chỉ đã lưu, tải trước trang
+    → resources/js/{add-to-cart, variant-dialog, cart-live}.js
+
+C17. Hiệu ứng mùa vụ / cảm xúc (Seasonal Framing)
+    - Theme Tết, Noel, Valentine có hiệu ứng động; trang sự kiện theo dịp lễ
+    → Services/Theme/ThemeRegistry, Shop/EventController
+
+C18. Niềm tin (Trust Signals)
+    - Cam kết dịch vụ, chính sách đổi trả, trạng thái kiện hàng GHN thật, dòng
+      thời gian đơn hàng, thư xác nhận đơn không nói dối
+    → Services/Shop/ServiceCommitments, components/order/timeline
+
+
+================================================================================
+PHẦN D. BẢO MẬT
+================================================================================
+
+D1. Xác thực & tài khoản
+    - Mật khẩu băm bcrypt (Laravel), chính sách: ≥ 8 ký tự, hoa, thường, số
+    - Giới hạn đăng nhập sai (RateLimiter, 5 lần) theo email + IP
+    - Thông báo lỗi đăng nhập và quên mật khẩu KHÔNG tiết lộ email có tồn tại
+    - Đổi mã phiên sau đăng nhập (chống cố định phiên), huỷ phiên khi đăng xuất
+    - OTP email: lưu BĂM, hết hạn, giới hạn số lần sai, khoảng chờ gửi lại
+    - Đổi mật khẩu thì đăng xuất các thiết bị khác; xem và đá từng thiết bị
+    - Xoá tài khoản 3 bước qua thư xác nhận có chữ ký
+    - Khoá tài khoản bị đẩy ra NGAY giữa phiên (EnsureUserIsNotLocked)
+    - Chặn nút Back xem lại trang cần đăng nhập sau khi đăng xuất
+      (PreventBackHistory)
+    - Chống chuyển hướng sang trang ngoài (open redirect) ở tham số redirect
+      (AuthController::isInternalUrl)
+
+D2. Phân quyền
+    - Vai trò (role:admin,staff) + quyền theo khu vực (quyen:...) trên TỪNG route
+      quản trị; đã kiểm: 154/154 route có quyền
+    - Ba chốt chặn khi đổi vai trò; thanh toán và hoàn tiền cần quyền tài chính
+    - Kiểm CHỦ SỞ HỮU mọi tài nguyên của khách: địa chỉ, giỏ, đơn, nhật ký, thông
+      báo, đánh giá, bài Góc cây (tìm theo user_id rồi mới findOrFail → trả 404,
+      không xác nhận hộ tài nguyên có tồn tại)
+    - "Vé xem đơn" của khách vãng lai gắn với phiên, mất khi có người đăng nhập
+    - Nhật ký cá nhân là dữ liệu RIÊNG TƯ: không bộ máy gợi ý / phân tích / AI
+      nào được đọc (có bài kiểm thử riêng)
+
+D3. Chống tấn công web
+    - CSRF: mọi biểu mẫu có token; chỉ miễn đúng MỘT đường là IPN của MoMo (bảo
+      vệ bằng chữ ký thay thế)
+    - XSS: Blade {{ }} tự thoát ký tự; chỗ in HTML thô duy nhất (bài Cẩm nang, mô
+      tả theo khối) đi qua bộ lọc HTML theo DANH SÁCH TRẮNG thẻ + thuộc tính +
+      giao thức (HtmlSanitizer); JavaScript gán tên sản phẩm bằng textContent
+    - SQL Injection: Eloquent / Query Builder có tham số; các đoạn SQL thô chỉ ghép
+      hằng số; LIKE được thoát ký tự %, _
+    - Mass assignment: $fillable / $guarded = ['*']; đường dẫn tệp không bao giờ
+      nằm trong $fillable; dữ liệu lưu luôn đi qua validate()
+    - Sắp xếp theo cột dùng danh sách trắng (không đưa tên cột từ URL vào SQL)
+    - Header bảo mật trên mọi phản hồi, kể cả trang lỗi: X-Frame-Options
+      (chống clickjacking), X-Content-Type-Options: nosniff, Referrer-Policy
+      (Middleware/SecurityHeaders)
+    - Giới hạn tần suất (throttle) trên hầu hết thao tác ghi: đăng ký, OTP, quên
+      mật khẩu, thêm giỏ, đặt hàng, bình luận, AI chat, thao tác quản trị…
+
+D4. Thanh toán
+    - Chữ ký HMAC-SHA256 cho mọi yêu cầu và phản hồi MoMo, so bằng hash_equals
+      (chống tấn công đo thời gian)
+    - IPN: khoá dòng giao dịch, bỏ qua nếu đã trả (gọi nhiều lần vẫn một kết quả),
+      ĐỐI CHIẾU SỐ TIỀN với giao dịch đã ghi, ghi log khi sai chữ ký / lệch tiền
+    - Không tin giá, giảm giá, tổng tiền từ trình duyệt: trình duyệt chỉ gửi mã
+      giảm giá, mọi con số do máy chủ tính bằng bcmath
+    - Chống đặt trùng đơn bằng khoá idempotency (chỉ mục duy nhất)
+    - Ghi lượt dùng mã là MỘT câu UPDATE có điều kiện (chống vượt lượt khi hai
+      người dùng cùng lúc); trừ kho có lockForUpdate trong transaction
+
+D5. Tệp tải lên & quyền riêng tư
+    - Kiểm loại tệp (mimes + mimetypes), dung lượng; logo không nhận SVG
+    - Tên tệp ngẫu nhiên do Laravel sinh, lưu ở disk public
+    - Ảnh công khai bị tước EXIF (GPS, hãng máy, tên chủ máy); video bị xoá toạ
+      độ GPS
+    - Nhúng video chỉ nhận đường dẫn hợp lệ, chuyển thành địa chỉ nhúng an toàn
+      (VideoLink)
+    - Trợ lý AI chỉ nhận dữ liệu tối thiểu, không có địa chỉ / điện thoại / email
+
+D6. Bí mật & cấu hình
+    - Khoá API (GHN, MoMo, Gemini), mật khẩu CSDL chỉ đọc từ .env; .env nằm trong
+      .gitignore; khoá Gemini gửi trong header, không đặt trên URL
+    - .env.example chỉ chứa bộ khoá THỬ NGHIỆM mà MoMo công bố công khai
+    - Kiểm tra lỗ hổng thư viện: composer audit và npm audit — 0 lỗ hổng
+
+D7. Kiểm soát & truy vết
+    - Nhật ký thao tác quản trị không có đường xoá; tự nói rõ giới hạn của nó
+    - Việc hệ thống tự làm được ghi tên "Hệ thống"
+    - Xoá mềm cho dữ liệu quan trọng (sản phẩm, đơn); khoá tài khoản thay vì xoá
+
+
+================================================================================
+PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
+================================================================================
+
+E1. Kiểm thử tự động: 1275 bài / 4688 phép khẳng định (PHPUnit), chạy trên
+    SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
+    Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
+    Order, Payment, Points, Pricing, Profile, Recommendation, Security,
+    Shipping, Smoke.
+E2. Bài quét 5xx: mở MỌI đường dẫn GET (kể cả có tham số) để bắt lỗi 500.
+E3. Kiểm thử đột biến (mutation testing): cố ý làm hỏng từng luật nghiệp vụ và
+    khẳng định bộ kiểm thử phát hiện ra.
+E4. Hiệu năng: đo trước khi tối ưu (lệnh do:hieu-nang); ảnh WebP dựng sẵn; nạp
+    sẵn quan hệ (chỉ còn 2 chỗ nạp lười khi đo bằng preventLazyLoading trên toàn
+    bộ kiểm thử); header cache ở .htaccess; nén; tải trước trang; làm nóng
+    trang quản trị; OPcache (docs/OPCACHE-XAMPP.md).
+E5. Tài liệu: docs/DOMAIN-DECISIONS.md (301 quyết định), LUONG-HOAT-DONG.md,
+    KIEM-THU.md, HIEU-NANG.md, TU-DONG-HOA.md, MYSQL-XAMPP.md, CHU-THICH-CODE.md.
+E6. Quản lý mã nguồn: Git, mỗi thay đổi một commit có mô tả.
+E7. Khả năng tiếp cận (a11y): icon SVG có aria-label, không dùng emoji làm icon,
+    tương phản nền tối được đo, bảng màu biểu đồ an toàn mù màu, mọi tính năng
+    JavaScript đều có đường chạy khi tắt JavaScript (progressive enhancement).
+E8. Giờ Việt Nam ở cả hai đầu: lưu UTC, hiển thị và nhận dữ liệu theo giờ VN
+    (Services/Time/Gio).
+
+
+================================================================================
+PHẦN F. TÍCH HỢP DỊCH VỤ BÊN NGOÀI
+================================================================================
+
+F1. Giao Hàng Nhanh (GHN): danh mục địa giới, tính cước, tạo / huỷ vận đơn, tra
+    trạng thái kiện hàng, đồng bộ tự động, tạm nghỉ gọi khi GHN lỗi.
+    → Services/Shipping/*
+F2. MoMo: tạo thanh toán, nhận kết quả (callback + IPN), hoàn tiền qua API,
+    thanh toán kỳ trả góp.
+    → Services/Payment/MomoGateway
+F3. Google Gemini: trả lời trợ lý mua sắm (tắt suy nghĩ để trả lời đủ ý, lọc
+    markdown).
+    → Services/AI/GeminiProvider, config/ai.php
+F4. Openverse / Unsplash: công cụ tải ảnh mẫu có ghi công tác giả (tools/*.mjs).
+F5. SMTP: gửi thư (có phát hiện cấu hình giả để không báo "đã gửi" sai sự thật).
+    → Services/Mail/MailTransport
+
+
+================================================================================
+PHẦN G. CƠ SỞ DỮ LIỆU (khoảng 70 bảng, nhóm theo miền)
+================================================================================
+
+  Người dùng   : users, sessions, password_reset_tokens,
+                 email_verification_codes, addresses, user_events,
+                 user_notifications, activity_logs
+  Danh mục     : categories, products, product_variants, product_images,
+                 product_blocks, product_traits, plant_taxa, tax_classes
+  Bán hàng     : carts, cart_items, orders, order_items, order_status_events,
+                 payment_transactions, invoices, wishlists, reviews
+  Khuyến mại   : promotions, promotion_product, coupons, coupon_user,
+                 gift_items, product_gifts, gift_campaigns
+  Thành viên   : member_tiers, point_transactions,
+                 installment_plans, installment_payments
+  Kho          : stock_receipts, stock_receipt_items, stock_counts,
+                 stock_count_items, suppliers, flower_kinds, flower_lots
+  Sau bán      : refunds, refund_items, exchanges, exchange_items,
+                 care_reminders, bulk_order_inquiries
+  Nội dung     : blog_categories, blog_posts, blog_post_product, settings
+  Cộng đồng    : community_posts, community_post_media, community_post_likes,
+                 community_post_saves, community_comments,
+                 community_comment_reactions, community_reports
+  Nhật ký cây  : journals, journal_entries, journal_metrics, journal_milestones
+  Tài chính    : expenses
+  Hệ thống     : cache, cache_locks, jobs, job_batches, failed_jobs
+
+
+================================================================================
+PHẦN H. NGUYÊN TẮC THIẾT KẾ VÀ NHỮNG VIỆC CỐ Ý KHÔNG LÀM
+================================================================================
+
+H1. Không bịa dữ liệu: chưa có số liệu thì trả "chưa có" (null), không trả 0%;
+    không có giá vốn thì không báo lợi nhuận; cố vấn giá thiếu dữ liệu thì im.
+H2. Không lọc cộng tác "người mua X cũng mua Y" khi dữ liệu còn ít (chỉ khuếch
+    đại nhiễu) — dùng hành vi của chính người xem.
+H3. Không tự động chặn đơn nghi gian lận — máy chấm điểm, người quyết định.
+H4. Không đề xuất một con số giá cụ thể — chỉ đưa mốc tham chiếu có thật.
+H5. Không hiện loại khuyến mại chưa hỗ trợ (Combo, Mua X tặng Y) trên giao diện.
+H6. Không phát hành hoá đơn điện tử — chỉ dựng dữ liệu hoá đơn.
+H7. Không đoán ngày âm lịch, không khẳng định phong thuỷ ("theo quan niệm dân
+    gian", admin tự gán).
+H8. Không tạo bảng hay tính năng khi backend chưa hỗ trợ; không để giao diện
+    hiện chức năng giả.
+H9. Một nơi chịu trách nhiệm cho mỗi luật (giá, thuế, tiền, kho, điểm, quà).

@@ -1,0 +1,1338 @@
+================================================================================
+                    PHÂN CÔNG NHÓM — DỰ ÁN ANGEVIL (5 THÀNH VIÊN)
+================================================================================
+
+Thành viên: Hưng · Hùng · Huy · Dũng · Hiền
+
+CÁCH CHIA
+  - Chia theo KHỐI CHỨC NĂNG (mỗi khối trọn một mảng nghiệp vụ: từ route,
+    controller, service, model, migration, giao diện, JavaScript, CSS đến bài
+    kiểm thử), để mỗi người trình bày được một luồng hoàn chỉnh từ đầu đến cuối
+    thay vì mỗi người giữ một "tầng" rời rạc.
+  - Mọi tệp code của dự án (994 tệp, không tính ảnh / phông / tài liệu)
+    đều được giao cho ĐÚNG MỘT người. Danh sách được sinh bằng script từ chính kho
+    mã nên đường dẫn chính xác.
+  - Khối lượng cân nhau:
+      Hưng   225 tệp, khoảng 22.420 dòng code
+      Hùng   181 tệp, khoảng 21.295 dòng code
+      Huy    194 tệp, khoảng 24.420 dòng code
+      Dũng   190 tệp, khoảng 22.266 dòng code
+      Hiền   204 tệp, khoảng 25.709 dòng code
+  - "Phối hợp" ghi rõ chỗ hai khối gọi sang nhau, để khi sửa một bên thì báo
+    người kia.
+  - Tài liệu nên đọc chung: docs/HUONG-DAN-DOC-CODE.txt (kiến thức nền + 20 luồng),
+    docs/BAO-CAO-CHUC-NANG.txt, docs/CHU-THICH-CODE.md (tìm theo tên tệp),
+    docs/DOMAIN-DECISIONS.md (lý do thiết kế).
+
+TỔNG QUAN 5 KHỐI
+  - Hưng : NỀN TẢNG — tài khoản, bảo mật, phân quyền, quản trị hệ thống,
+           giao diện chung, theme
+  - Hùng : SẢN PHẨM & KHÁM PHÁ — danh mục, sản phẩm, ảnh, tìm kiếm mờ, gợi ý cá
+           nhân hoá, tư vấn chọn cây, đánh giá, yêu thích, trang chủ
+  - Huy  : MUA HÀNG & ĐƠN HÀNG — giỏ, thanh toán, mã giảm giá, thuế, GHN, MoMo,
+           đơn hàng, chấm điểm rủi ro, báo giá số lượng lớn
+  - Dũng : KHUYẾN MẠI, THÀNH VIÊN & TÀI CHÍNH — giá động, cố vấn giá, quà tặng,
+           điểm thưởng, hạng, trả góp + điểm tín dụng, hoàn tiền, đổi hàng,
+           thu chi, phân tích & báo cáo
+  - Hiền : KHO VẬN & CỘNG ĐỒNG — kho, nhập, kiểm kê, lô hoa, nhà cung cấp; Góc
+           cây, thông báo, Cẩm nang, nhật ký cây, lịch chăm cây, trợ lý AI
+
+
+================================================================================
+1. HƯNG — NỀN TẢNG, TÀI KHOẢN, BẢO MẬT & QUẢN TRỊ HỆ THỐNG
+================================================================================
+
+PHẠM VI
+  Phần "khung xương" mà mọi khối khác dựa vào: cách một yêu cầu đi vào hệ thống,
+  đăng nhập, phân quyền, bảo mật, bố cục trang, theme, cấu hình cửa hàng. Đề xuất
+  Hưng giữ vai trò TÍCH HỢP (routes, layouts, bootstrap/app.php, AppServiceProvider)
+  vì các tệp này bị cả nhóm đụng tới.
+
+CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
+  1. Cấu trúc route (routes/web.php, routes/admin.php), lịch chạy (routes/console.php)
+  2. Đăng ký, đăng nhập, đăng xuất, giới hạn đăng nhập sai, chống open redirect
+  3. Xác thực email bằng OTP (mã băm, hết hạn, giới hạn lần sai, đếm ngược gửi lại)
+  4. Quên / đặt lại mật khẩu (thông báo trung lập, không lộ email)
+  5. Hồ sơ tài khoản: thông tin, đổi mật khẩu, thiết bị đang đăng nhập, tuỳ chọn
+     thư, xoá tài khoản 3 bước
+  6. Phân quyền: 3 vai trò + 8 khu vực quyền, middleware role / quyen, Gate
+  7. Quản lý người dùng: khoá tài khoản, đổi vai trò với 3 chốt chặn, hồ sơ khách
+  8. Nhật ký thao tác quản trị; trang Tổng quan với hàng đợi việc
+  9. Cấu hình cửa hàng (logo, hotline, cam kết dịch vụ, ảnh hero), sửa trang nội
+     dung / chính sách, định dạng tiền tệ, giờ Việt Nam
+ 10. Bảo mật chung: header bảo mật, chặn nút Back sau đăng xuất, đẩy tài khoản bị
+     khoá ra ngay, kiểm chủ sở hữu (OwnershipTest), bài quét 5xx mọi route
+ 11. Giao diện chung: layout cửa hàng / quản trị, header, footer, icon SVG,
+     component site/*, điều hướng quản trị không tải lại trang, thao tác hàng loạt,
+     sắp xếp theo cột (danh sách trắng), thông báo toast
+ 12. Chế độ sáng / tối và theme theo mùa (Tết, Noel, Valentine) có hiệu ứng canvas
+ 13. Hiệu năng: tải trước trang (speculation rules), lệnh đo trang chậm, làm nóng
+     trang quản trị
+
+ĐIỂM KỸ THUẬT NỔI BẬT ĐỂ TRÌNH BÀY
+  - Vòng đời một yêu cầu Laravel qua middleware (HUONG-DAN mục 1.1, 1.3)
+  - OTP lưu băm + giới hạn tần suất (EmailVerifier)
+  - Phân quyền hai lớp: vai trò + khu vực (EnsureUserHasRole, CoQuyen, Enums/Quyen)
+  - Header bảo mật toàn cục, CSRF, chống XSS trong Blade
+
+PHỐI HỢP
+  - Mọi khối: thêm route mới vào routes/web.php hoặc routes/admin.php, mục menu
+    trong layouts/admin.blade.php hoặc components/site/header.blade.php
+  - Dũng: giờ Việt Nam (Services/Time/Gio) dùng trong báo cáo
+  - Huy: giỏ khách vãng lai gộp vào tài khoản ngay lúc đăng nhập (AuthController
+    gọi CartService::mergeSessionCartInto)
+
+DANH SÁCH TỆP
+  [Route] (3)
+    routes/admin.php
+    routes/console.php
+    routes/web.php
+  [Controller] (16)
+    app/Http/Controllers/Admin/ActivityLogController.php
+    app/Http/Controllers/Admin/Concerns/HandlesBulkAction.php
+    app/Http/Controllers/Admin/Concerns/LogsAdminActivity.php
+    app/Http/Controllers/Admin/Concerns/SortsAdminList.php
+    app/Http/Controllers/Admin/DashboardController.php
+    app/Http/Controllers/Admin/PageContentController.php
+    app/Http/Controllers/Admin/SettingsController.php
+    app/Http/Controllers/Admin/UserController.php
+    app/Http/Controllers/Auth/AuthController.php
+    app/Http/Controllers/Auth/EmailVerificationController.php
+    app/Http/Controllers/Auth/PasswordResetController.php
+    app/Http/Controllers/Controller.php
+    app/Http/Controllers/Shop/CreditsController.php
+    app/Http/Controllers/Shop/DisplaySchemeController.php
+    app/Http/Controllers/Shop/PageController.php
+    app/Http/Controllers/Shop/ProfileController.php
+  [Middleware] (5)
+    app/Http/Middleware/CoQuyen.php
+    app/Http/Middleware/EnsureUserHasRole.php
+    app/Http/Middleware/EnsureUserIsNotLocked.php
+    app/Http/Middleware/PreventBackHistory.php
+    app/Http/Middleware/SecurityHeaders.php
+  [Kiểm tra dữ liệu (Request)] (6)
+    app/Http/Requests/Auth/ForgotPasswordRequest.php
+    app/Http/Requests/Auth/LoginRequest.php
+    app/Http/Requests/Auth/RegisterRequest.php
+    app/Http/Requests/Auth/ResetPasswordRequest.php
+    app/Http/Requests/Shop/ChangePasswordRequest.php
+    app/Http/Requests/Shop/ProfileRequest.php
+  [Service (luật nghiệp vụ)] (19)
+    app/Services/Admin/WorkQueue.php
+    app/Services/Audit/ActivityLogger.php
+    app/Services/Auth/AccountDeleter.php
+    app/Services/Auth/AccountDeletionException.php
+    app/Services/Auth/AccountSecurity.php
+    app/Services/Auth/ActiveSessions.php
+    app/Services/Auth/EmailVerificationException.php
+    app/Services/Auth/EmailVerifier.php
+    app/Services/Auth/PasswordResetMailer.php
+    app/Services/Content/TrangNoiDung.php
+    app/Services/Mail/MailTransport.php
+    app/Services/Shop/DisplayScheme.php
+    app/Services/Shop/ImageCredits.php
+    app/Services/Shop/Money.php
+    app/Services/Shop/ServiceCommitments.php
+    app/Services/Shop/StoreProfile.php
+    app/Services/Theme/HeroImages.php
+    app/Services/Theme/ThemeRegistry.php
+    app/Services/Time/Gio.php
+  [Model / Observer] (4)
+    app/Models/ActivityLog.php
+    app/Models/EmailVerificationCode.php
+    app/Models/Setting.php
+    app/Models/User.php
+  [Enum] (3)
+    app/Enums/ContactChannel.php
+    app/Enums/Quyen.php
+    app/Enums/UserRole.php
+  [Email] (4)
+    app/Mail/AccountDeletionMail.php
+    app/Mail/EmailVerificationMail.php
+    app/Mail/PasswordChangedMail.php
+    app/Mail/PasswordResetMail.php
+  [Lệnh artisan] (3)
+    app/Console/Commands/DoHieuNang.php
+    app/Console/Commands/LamNongQuanTri.php
+    app/Console/Commands/SyncAssetCredits.php
+  [Khởi động / Provider] (3)
+    app/Providers/AppServiceProvider.php
+    bootstrap/app.php
+    bootstrap/providers.php
+  [Cấu hình / Ngôn ngữ] (20)
+    config/app.php
+    config/auth.php
+    config/cache.php
+    config/database.php
+    config/features.php
+    config/filesystems.php
+    config/logging.php
+    config/mail.php
+    config/queue.php
+    config/services.php
+    config/session.php
+    config/theme.php
+    lang/en/auth.php
+    lang/en/pagination.php
+    lang/en/passwords.php
+    lang/en/validation.php
+    lang/vi/auth.php
+    lang/vi/pagination.php
+    lang/vi/passwords.php
+    lang/vi/validation.php
+  [Migration (bảng CSDL)] (10)
+    database/migrations/0001_01_01_000000_create_users_table.php
+    database/migrations/0001_01_01_000001_create_cache_table.php
+    database/migrations/0001_01_01_000002_create_jobs_table.php
+    database/migrations/2026_08_22_095347_add_role_to_users_table.php
+    database/migrations/2026_08_23_010004_create_settings_table.php
+    database/migrations/2026_08_30_010000_tune_indexes_for_analytics.php
+    database/migrations/2026_09_11_010000_create_email_verification_codes_table.php
+    database/migrations/2026_09_12_010000_add_sent_at_to_email_verification_codes.php
+    database/migrations/2026_09_15_010000_create_activity_logs_table.php
+    database/migrations/2026_09_15_030000_add_lock_to_users_table.php
+  [Seeder / Factory (dữ liệu mẫu)] (3)
+    database/factories/UserFactory.php
+    database/seeders/AdminUserSeeder.php
+    database/seeders/DatabaseSeeder.php
+  [Giao diện Blade] (53)
+    resources/views/admin/activity-logs/index.blade.php
+    resources/views/admin/dashboard.blade.php
+    resources/views/admin/pages/edit.blade.php
+    resources/views/admin/settings/edit.blade.php
+    resources/views/admin/users/index.blade.php
+    resources/views/admin/users/show.blade.php
+    resources/views/auth/forgot-password.blade.php
+    resources/views/auth/login.blade.php
+    resources/views/auth/register.blade.php
+    resources/views/auth/reset-password.blade.php
+    resources/views/auth/verify-email.blade.php
+    resources/views/components/admin/bulk-bar.blade.php
+    resources/views/components/admin/empty-row.blade.php
+    resources/views/components/admin/filter-bar.blade.php
+    resources/views/components/admin/nhom-tab.blade.php
+    resources/views/components/admin/sort-header.blade.php
+    resources/views/components/form-error.blade.php
+    resources/views/components/form/password-input.blade.php
+    resources/views/components/site/announcement-bar.blade.php
+    resources/views/components/site/brand-mark.blade.php
+    resources/views/components/site/brand.blade.php
+    resources/views/components/site/breadcrumb.blade.php
+    resources/views/components/site/commitments.blade.php
+    resources/views/components/site/empty-state.blade.php
+    resources/views/components/site/footer.blade.php
+    resources/views/components/site/header.blade.php
+    resources/views/components/site/icon-sprite.blade.php
+    resources/views/components/site/icon.blade.php
+    resources/views/components/site/money.blade.php
+    resources/views/components/site/scheme-boot.blade.php
+    resources/views/components/site/scheme-toggle.blade.php
+    resources/views/components/site/speculation-rules.blade.php
+    resources/views/components/site/time.blade.php
+    resources/views/emails/auth/delete-account.blade.php
+    resources/views/emails/auth/password-changed.blade.php
+    resources/views/emails/auth/password-reset.blade.php
+    resources/views/emails/auth/verify-email.blade.php
+    resources/views/errors/403.blade.php
+    resources/views/errors/429.blade.php
+    resources/views/layouts/admin.blade.php
+    resources/views/layouts/app.blade.php
+    resources/views/shop/credits.blade.php
+    resources/views/shop/pages/_layout.blade.php
+    resources/views/shop/pages/custom.blade.php
+    resources/views/shop/profile/delete.blade.php
+    resources/views/shop/profile/edit.blade.php
+    resources/views/shop/profile/partials/doi-mat-khau.blade.php
+    resources/views/shop/profile/partials/nen-sang-toi.blade.php
+    resources/views/shop/profile/partials/thiet-bi.blade.php
+    resources/views/shop/profile/partials/thong-tin.blade.php
+    resources/views/shop/profile/partials/thu-thong-bao.blade.php
+    resources/views/shop/profile/partials/tom-tat.blade.php
+    resources/views/shop/profile/partials/xoa-tai-khoan.blade.php
+  [JavaScript] (17)
+    resources/js/account-menu.js
+    resources/js/admin/bulk-actions.js
+    resources/js/admin/nav.js
+    resources/js/ajax.js
+    resources/js/announcement.js
+    resources/js/app.js
+    resources/js/copy-button.js
+    resources/js/display-scheme.js
+    resources/js/flash.js
+    resources/js/otp-resend.js
+    resources/js/password-toggle.js
+    resources/js/scheme-toggle.js
+    resources/js/theme/effects/base-effect.js
+    resources/js/theme/effects/noel-effect.js
+    resources/js/theme/effects/tet-effect.js
+    resources/js/theme/effects/valentine-effect.js
+    resources/js/theme/theme-manager.js
+  [CSS] (31)
+    resources/css/admin/admin.css
+    resources/css/app.css
+    resources/css/components/auth.css
+    resources/css/components/badges.css
+    resources/css/components/breadcrumb.css
+    resources/css/components/buttons.css
+    resources/css/components/cards.css
+    resources/css/components/empty-state.css
+    resources/css/components/filters.css
+    resources/css/components/footer.css
+    resources/css/components/forms.css
+    resources/css/components/icon.css
+    resources/css/components/navigation.css
+    resources/css/components/pagination.css
+    resources/css/components/seasonal.css
+    resources/css/components/sections.css
+    resources/css/components/toast.css
+    resources/css/core/dark.css
+    resources/css/core/fonts.css
+    resources/css/core/layout.css
+    resources/css/core/reset.css
+    resources/css/core/tokens.css
+    resources/css/core/typography.css
+    resources/css/core/utilities.css
+    resources/css/seasonal/noel.css
+    resources/css/seasonal/tet.css
+    resources/css/seasonal/valentine.css
+    resources/css/themes/default.css
+    resources/css/themes/noel.css
+    resources/css/themes/tet.css
+    resources/css/themes/valentine.css
+  [Kiểm thử] (22)
+    tests/Feature/Admin/ActivityLogTest.php
+    tests/Feature/Admin/AdminDarkModeTest.php
+    tests/Feature/Admin/DashboardTest.php
+    tests/Feature/Admin/DashboardTodoTest.php
+    tests/Feature/Admin/GopDieuHuongTest.php
+    tests/Feature/Admin/HoSoKhachHangTest.php
+    tests/Feature/Admin/ListFilterTest.php
+    tests/Feature/Admin/PhanQuyenTest.php
+    tests/Feature/Admin/SortAndBulkTest.php
+    tests/Feature/Admin/StoreSettingsTest.php
+    tests/Feature/Admin/TongQuanKhongTrungTest.php
+    tests/Feature/Admin/TrangNoiDungTest.php
+    tests/Feature/Admin/UserManagementTest.php
+    tests/Feature/Auth/EmailVerificationTest.php
+    tests/Feature/Profile/AccountDeletionTest.php
+    tests/Feature/Profile/ProfileGapsTest.php
+    tests/Feature/Profile/ProfileTabsTest.php
+    tests/Feature/Security/OwnershipTest.php
+    tests/Feature/Security/SecurityHeadersTest.php
+    tests/Feature/Smoke/HeaderNavTest.php
+    tests/Feature/Smoke/RouteSmokeTest.php
+    tests/TestCase.php
+  [Công cụ / script] (3)
+    scripts/soat-ten-cot.php
+    tools/build-theme-artwork.mjs
+    tools/preview-theme-artwork.mjs
+
+
+================================================================================
+2. HÙNG — SẢN PHẨM, KHÁM PHÁ & CÁ NHÂN HOÁ
+================================================================================
+
+PHẠM VI
+  Mọi thứ giúp khách TÌM và CHỌN được sản phẩm: danh mục, trang sản phẩm, ảnh,
+  tìm kiếm, gợi ý, tư vấn theo nhu cầu, đánh giá, yêu thích, trang chủ.
+
+CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
+  1. Trang chủ: hero, "Được yêu thích gần đây", "Hàng mới về"
+  2. Danh mục (nhóm danh mục, ảnh danh mục), danh sách sản phẩm, bộ lọc, sắp xếp
+     theo giá khách thấy
+  3. Trang chi tiết: thư viện ảnh / video, mô tả theo khối, quy cách, hướng dẫn
+     chăm sóc, phân loại sinh học, phụ kiện mua kèm
+  4. Quản trị sản phẩm & danh mục: thêm / sửa / xoá mềm / khôi phục / thùng rác,
+     thao tác hàng loạt, nhãn phân loại, loài cây, video
+  5. Ảnh: lưu qua một cửa (ImageStore), WebP nhiều cỡ, ảnh responsive, nhúng video
+     an toàn; công cụ tải ảnh mẫu có ghi công tác giả
+  6. Đánh giá sản phẩm (chỉ người đã mua), admin trả lời / ẩn / hàng loạt
+  7. Danh sách yêu thích
+  8. Duyệt cây theo phân loại sinh học; trang phụ kiện; 4 trang nhu cầu
+  9. Bằng chứng xã hội từ dữ liệu thật: "Đã bán N", "Chỉ còn N", quy cách phổ biến
+ 10. FUZZY SEARCH: bỏ dấu, khớp đầu tiếng, sửa lỗi gõ bằng Levenshtein, nới
+     AND → OR, gợi ý "Bạn có muốn tìm", chỉ mục cột thật + Observer, API gợi ý
+ 11. PLANT ADVISOR: chọn cây theo vị trí, mệnh, độ khó, màu, dáng…
+ 12. RECOMMENDATION: chân dung sở thích 4 trục chuẩn hoá, trọng số, lý do gợi ý
+
+ĐIỂM KỸ THUẬT NỔI BẬT ĐỂ TRÌNH BÀY
+  - Tìm kiếm mờ tiếng Việt (HUONG-DAN Luồng 9)
+  - Gợi ý cá nhân hoá chấm điểm 4 trục (Luồng 8), tư vấn theo nhu cầu (Luồng 10)
+  - Tránh N+1 bằng eager loading; ảnh WebP + tước metadata (Luồng 20)
+
+PHỐI HỢP
+  - Dũng: giá hiển thị lấy từ PricingService (Product::price()), quà kèm hiện ở
+    trang sản phẩm
+  - Huy: nút thêm giỏ / mua ngay trên thẻ và trang sản phẩm (components/product/actions)
+  - Hiền: hướng dẫn chăm sóc của sản phẩm dùng cho lịch chăm cây và trợ lý AI;
+    AI tìm sản phẩm bằng ProductSearch
+
+DANH SÁCH TỆP
+  [Controller] (13)
+    app/Http/Controllers/Admin/CategoryController.php
+    app/Http/Controllers/Admin/ProductController.php
+    app/Http/Controllers/Admin/ReviewController.php
+    app/Http/Controllers/Api/SearchSuggestionController.php
+    app/Http/Controllers/HomeController.php
+    app/Http/Controllers/Shop/AdvisorController.php
+    app/Http/Controllers/Shop/CategoryController.php
+    app/Http/Controllers/Shop/IntentController.php
+    app/Http/Controllers/Shop/PlantTaxonController.php
+    app/Http/Controllers/Shop/ProductController.php
+    app/Http/Controllers/Shop/ReviewController.php
+    app/Http/Controllers/Shop/SupplyController.php
+    app/Http/Controllers/Shop/WishlistController.php
+  [Kiểm tra dữ liệu (Request)] (6)
+    app/Http/Requests/Admin/Concerns/ValidatesProductClassification.php
+    app/Http/Requests/Admin/StoreCategoryRequest.php
+    app/Http/Requests/Admin/StoreProductRequest.php
+    app/Http/Requests/Admin/UpdateCategoryRequest.php
+    app/Http/Requests/Admin/UpdateProductRequest.php
+    app/Http/Requests/Shop/ReviewRequest.php
+  [Service (luật nghiệp vụ)] (17)
+    app/Services/Analytics/ReviewReport.php
+    app/Services/Catalog/SocialProof.php
+    app/Services/Media/ImageOptimizer.php
+    app/Services/Media/ImageStore.php
+    app/Services/Media/ResponsiveImage.php
+    app/Services/Media/VideoLink.php
+    app/Services/Product/ProductBlockService.php
+    app/Services/Product/ProductImageService.php
+    app/Services/Recommendation/PlantAdvisor.php
+    app/Services/Recommendation/RecommendationService.php
+    app/Services/Recommendation/TasteProfile.php
+    app/Services/Search/FuzzyMatcher.php
+    app/Services/Search/ProductSearch.php
+    app/Services/Search/ProductSearchIndexer.php
+    app/Services/Search/SearchDictionary.php
+    app/Services/Search/SearchTerms.php
+    app/Services/Search/TextNormalizer.php
+  [Model / Observer] (12)
+    app/Models/Category.php
+    app/Models/PlantTaxon.php
+    app/Models/Product.php
+    app/Models/ProductBlock.php
+    app/Models/ProductImage.php
+    app/Models/ProductTrait.php
+    app/Models/ProductVariant.php
+    app/Models/Review.php
+    app/Models/UserEvent.php
+    app/Models/Wishlist.php
+    app/Observers/CategoryObserver.php
+    app/Observers/ProductObserver.php
+  [Enum] (16)
+    app/Enums/CareDifficulty.php
+    app/Enums/CareProfile.php
+    app/Enums/CategoryKind.php
+    app/Enums/FengShuiElement.php
+    app/Enums/GrowthForm.php
+    app/Enums/Habitat.php
+    app/Enums/Placement.php
+    app/Enums/PlantColor.php
+    app/Enums/PlantCondition.php
+    app/Enums/PlantShape.php
+    app/Enums/ProductType.php
+    app/Enums/SellingForm.php
+    app/Enums/ShoppingIntent.php
+    app/Enums/TaxonRank.php
+    app/Enums/TraitType.php
+    app/Enums/UserEventType.php
+  [Lệnh artisan] (5)
+    app/Console/Commands/LinkCategoryPhotos.php
+    app/Console/Commands/LinkProductGallery.php
+    app/Console/Commands/LinkProductPhotos.php
+    app/Console/Commands/ReindexSearch.php
+    app/Console/Commands/ToiUuAnh.php
+  [Cấu hình / Ngôn ngữ] (1)
+    config/catalog.php
+  [Migration (bảng CSDL)] (21)
+    database/migrations/2026_08_18_182726_create_categories_table.php
+    database/migrations/2026_08_18_182759_create_products_table.php
+    database/migrations/2026_08_18_182818_create_product_variants_table.php
+    database/migrations/2026_08_23_010000_add_commerce_fields_to_products_table.php
+    database/migrations/2026_08_23_010001_add_inventory_fields_to_product_variants_table.php
+    database/migrations/2026_08_23_010003_create_user_events_table.php
+    database/migrations/2026_08_25_010000_create_product_images_table.php
+    database/migrations/2026_08_26_010000_create_reviews_table.php
+    database/migrations/2026_08_26_010001_create_wishlists_table.php
+    database/migrations/2026_08_27_010000_split_occasion_out_of_product_type.php
+    database/migrations/2026_08_28_010000_add_event_flowers_category.php
+    database/migrations/2026_08_31_010000_add_search_columns_to_products_table.php
+    database/migrations/2026_09_03_010000_create_product_traits_table.php
+    database/migrations/2026_09_09_010000_add_kind_to_categories_table.php
+    database/migrations/2026_09_13_010000_add_admin_reply_to_reviews_table.php
+    database/migrations/2026_09_14_020000_keep_user_events_after_delete.php
+    database/migrations/2026_09_16_020000_add_weight_to_products_table.php
+    database/migrations/2026_09_18_010000_create_plant_taxa_table.php
+    database/migrations/2026_09_19_010000_add_taxon_note_to_products_table.php
+    database/migrations/2026_10_02_010000_add_video_to_product_images_table.php
+    database/migrations/2026_10_02_020000_create_product_blocks_tables.php
+  [Seeder / Factory (dữ liệu mẫu)] (9)
+    database/factories/CategoryFactory.php
+    database/factories/ProductFactory.php
+    database/seeders/CatalogSeeder.php
+    database/seeders/ExtraCatalogSeeder.php
+    database/seeders/PlantAdvisorSeeder.php
+    database/seeders/PlantTaxonomySeeder.php
+    database/seeders/PlantTraitSeeder.php
+    database/seeders/ReviewSampleSeeder.php
+    database/seeders/SupplyCatalogSeeder.php
+  [Giao diện Blade] (43)
+    resources/views/admin/analytics/reviews.blade.php
+    resources/views/admin/categories/_form.blade.php
+    resources/views/admin/categories/create.blade.php
+    resources/views/admin/categories/edit.blade.php
+    resources/views/admin/categories/index.blade.php
+    resources/views/admin/products/_block-row.blade.php
+    resources/views/admin/products/_form.blade.php
+    resources/views/admin/products/create.blade.php
+    resources/views/admin/products/edit.blade.php
+    resources/views/admin/products/index.blade.php
+    resources/views/admin/products/show.blade.php
+    resources/views/admin/reviews/index.blade.php
+    resources/views/components/category/card.blade.php
+    resources/views/components/product/actions.blade.php
+    resources/views/components/product/card.blade.php
+    resources/views/components/product/care-guide.blade.php
+    resources/views/components/product/classification.blade.php
+    resources/views/components/product/cross-sell.blade.php
+    resources/views/components/product/detail-blocks.blade.php
+    resources/views/components/product/gallery.blade.php
+    resources/views/components/product/price.blade.php
+    resources/views/components/product/rating-stars.blade.php
+    resources/views/components/product/recommendations.blade.php
+    resources/views/components/product/reviews.blade.php
+    resources/views/components/product/search-notice.blade.php
+    resources/views/components/product/videos.blade.php
+    resources/views/components/product/wishlist-button.blade.php
+    resources/views/components/site/image.blade.php
+    resources/views/components/site/leaf-placeholder.blade.php
+    resources/views/shop/advisor/index.blade.php
+    resources/views/shop/categories/index.blade.php
+    resources/views/shop/categories/show.blade.php
+    resources/views/shop/intents/_guide.blade.php
+    resources/views/shop/intents/show.blade.php
+    resources/views/shop/products/_filter-form.blade.php
+    resources/views/shop/products/index.blade.php
+    resources/views/shop/products/show.blade.php
+    resources/views/shop/reviews/mine.blade.php
+    resources/views/shop/supplies/index.blade.php
+    resources/views/shop/taxa/index.blade.php
+    resources/views/shop/taxa/show.blade.php
+    resources/views/shop/wishlist/index.blade.php
+    resources/views/welcome.blade.php
+  [JavaScript] (8)
+    resources/js/admin/care-profile.js
+    resources/js/admin/product-blocks.js
+    resources/js/components/hero-carousel.js
+    resources/js/components/product-detail.js
+    resources/js/components/video-embed.js
+    resources/js/product-variants.js
+    resources/js/search-suggest.js
+    resources/js/wishlist.js
+  [CSS] (6)
+    resources/css/components/category-card.css
+    resources/css/components/price.css
+    resources/css/components/product-card.css
+    resources/css/components/product-detail.css
+    resources/css/components/reviews.css
+    resources/css/components/search.css
+  [Kiểm thử] (17)
+    tests/Feature/Admin/CatalogNhatQuanTest.php
+    tests/Feature/Admin/ProductClassificationTest.php
+    tests/Feature/Admin/ProductDeleteTest.php
+    tests/Feature/Admin/ProductMediaTest.php
+    tests/Feature/Admin/ProductTaxonTest.php
+    tests/Feature/Admin/ReviewReplyTest.php
+    tests/Feature/Catalog/AdvisorMergeTest.php
+    tests/Feature/Catalog/BangChungMuaHangTest.php
+    tests/Feature/Catalog/NewArrivalTest.php
+    tests/Feature/Catalog/PlantClassificationTest.php
+    tests/Feature/Catalog/PriceSortTest.php
+    tests/Feature/Catalog/ProductVariantTest.php
+    tests/Feature/Catalog/SupplyCatalogTest.php
+    tests/Feature/Catalog/WishlistToggleTest.php
+    tests/Feature/Media/AutoOptimizeUploadTest.php
+    tests/Feature/Media/ResponsiveImageTest.php
+    tests/Feature/Recommendation/TasteProfileTest.php
+  [Công cụ / script] (7)
+    tools/fetch-category-photos.mjs
+    tools/fetch-photos.mjs
+    tools/fetch-product-gallery.mjs
+    tools/fetch-product-photos.mjs
+    tools/lib/openverse.mjs
+    tools/lib/product-targets.mjs
+    tools/optimize-product-photos.mjs
+
+
+================================================================================
+3. HUY — GIỎ HÀNG, THANH TOÁN, ĐƠN HÀNG & VẬN CHUYỂN
+================================================================================
+
+PHẠM VI
+  Toàn bộ đường đi của đồng tiền và đơn hàng: từ bấm "Thêm vào giỏ" tới khi kiện
+  hàng giao xong.
+
+CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
+  1. Giỏ hàng: thêm không tải lại trang, sửa số lượng trực tiếp, kẹp theo tồn,
+     tick chọn món để thanh toán, giỏ khách vãng lai, chọn quy cách tại chỗ
+  2. Mua ngay (không đụng giỏ)
+  3. Sổ địa chỉ, chọn Tỉnh → Quận → Phường theo GHN, chuẩn hoá tên tỉnh
+  4. Thanh toán 2 bước, tính tiền tập trung (CheckoutBasket)
+  5. Mã giảm giá: điều kiện, giới hạn lượt, ví voucher, tự chọn mã tốt nhất
+  6. Thuế GTGT tách theo từng dòng, chia tiền giảm cho các dòng
+  7. Phí giao: hỏi GHN, bảng phí theo vùng khi GHN lỗi, miễn phí theo ngưỡng
+  8. Đặt hàng an toàn: transaction, khoá dòng trừ kho, chống đặt trùng
+  9. Thanh toán COD và MoMo (chữ ký HMAC, IPN, đối chiếu số tiền, trả lại lần nữa)
+ 10. Đơn hàng phía khách: danh sách, chi tiết, dòng thời gian, tự huỷ, tra cứu đơn
+     cho khách vãng lai
+ 11. Đơn hàng phía quản trị: máy trạng thái, cập nhật thanh toán, sửa thông tin
+     giao, in phiếu soạn / phiếu giao, tạo / huỷ vận đơn GHN, đồng bộ tự động
+ 12. Email đơn hàng cho khách và cho cửa hàng; dữ liệu hoá đơn
+ 13. FRAUD DETECTION: chấm điểm rủi ro đơn hàng có lý do
+ 14. Đặt số lượng lớn / báo giá sự kiện; báo cáo giỏ hàng bỏ dở
+
+ĐIỂM KỸ THUẬT NỔI BẬT ĐỂ TRÌNH BÀY
+  - Luồng đặt hàng trong một transaction + lockForUpdate + idempotency (Luồng 3)
+  - Tính tiền bằng bcmath, không tin số tiền từ trình duyệt (mục 1.11)
+  - Tích hợp MoMo có chữ ký và đối chiếu số tiền (Luồng 4); tích hợp GHN
+  - Thêm giỏ không tải lại trang theo kiểu "nâng cấp dần" (Luồng 2)
+
+PHỐI HỢP
+  - Dũng: CheckoutBasket gọi ưu đãi hạng (MemberTier), điểm (PointRedemption),
+    trả góp (InstallmentService), quà (GiftGranter); OrderService::changeStatus
+    gọi hoàn điểm, trả quà, cộng điểm khi giao xong
+  - Hiền: OrderService trả kho qua StockReturn; giao xong thì dựng lịch chăm cây
+    (CareScheduler)
+  - Hùng: sản phẩm, quy cách, giá hiển thị trên dòng giỏ
+
+DANH SÁCH TỆP
+  [Controller] (13)
+    app/Http/Controllers/Admin/BulkInquiryController.php
+    app/Http/Controllers/Admin/CouponController.php
+    app/Http/Controllers/Admin/OrderController.php
+    app/Http/Controllers/Concerns/AuthorizesOrderAccess.php
+    app/Http/Controllers/Shop/AddressController.php
+    app/Http/Controllers/Shop/BulkInquiryController.php
+    app/Http/Controllers/Shop/CartController.php
+    app/Http/Controllers/Shop/CheckoutController.php
+    app/Http/Controllers/Shop/GHNController.php
+    app/Http/Controllers/Shop/MomoController.php
+    app/Http/Controllers/Shop/OrderController.php
+    app/Http/Controllers/Shop/OrderLookupController.php
+    app/Http/Controllers/Shop/VoucherController.php
+  [Kiểm tra dữ liệu (Request)] (7)
+    app/Http/Requests/Admin/CouponRequest.php
+    app/Http/Requests/Admin/UpdateInquiryStatusRequest.php
+    app/Http/Requests/Shop/AddressRequest.php
+    app/Http/Requests/Shop/CheckoutDetailsRequest.php
+    app/Http/Requests/Shop/OrderCancelRequest.php
+    app/Http/Requests/Shop/OrderLookupRequest.php
+    app/Http/Requests/StoreBulkOrderInquiryRequest.php
+  [Service (luật nghiệp vụ)] (29)
+    app/Services/Analytics/AbandonedCarts.php
+    app/Services/Cart/CartException.php
+    app/Services/Cart/CartService.php
+    app/Services/Checkout/CheckoutBasket.php
+    app/Services/Checkout/CheckoutGuard.php
+    app/Services/Checkout/CheckoutLine.php
+    app/Services/Checkout/CheckoutSource.php
+    app/Services/Coupon/BestCouponFinder.php
+    app/Services/Coupon/CouponException.php
+    app/Services/Coupon/CouponService.php
+    app/Services/Coupon/CouponWallet.php
+    app/Services/Invoice/InvoiceService.php
+    app/Services/Order/OrderException.php
+    app/Services/Order/OrderMailer.php
+    app/Services/Order/OrderNumberGenerator.php
+    app/Services/Order/OrderRiskScorer.php
+    app/Services/Order/OrderService.php
+    app/Services/Order/PaidOrderFulfilment.php
+    app/Services/Payment/Contracts/PaymentGateway.php
+    app/Services/Payment/MomoGateway.php
+    app/Services/Payment/PaymentException.php
+    app/Services/Shipping/GHNOrderService.php
+    app/Services/Shipping/GHNService.php
+    app/Services/Shipping/GhnStatusSync.php
+    app/Services/Shipping/ShippingQuote.php
+    app/Services/Shipping/ShippingRates.php
+    app/Services/Shop/Provinces.php
+    app/Services/Tax/BasketTax.php
+    app/Services/Tax/TaxCalculator.php
+  [Model / Observer] (11)
+    app/Models/Address.php
+    app/Models/BulkOrderInquiry.php
+    app/Models/Cart.php
+    app/Models/CartItem.php
+    app/Models/Coupon.php
+    app/Models/Invoice.php
+    app/Models/Order.php
+    app/Models/OrderItem.php
+    app/Models/OrderStatusEvent.php
+    app/Models/PaymentTransaction.php
+    app/Models/TaxClass.php
+  [Enum] (12)
+    app/Enums/AddressLabel.php
+    app/Enums/CouponType.php
+    app/Enums/GhnFeePayer.php
+    app/Enums/InquiryStatus.php
+    app/Enums/InvoiceBuyerType.php
+    app/Enums/InvoiceStatus.php
+    app/Enums/MomoFlow.php
+    app/Enums/OrderStatus.php
+    app/Enums/PaymentMethod.php
+    app/Enums/PaymentStatus.php
+    app/Enums/PaymentTransactionStatus.php
+    app/Enums/ShippingStatus.php
+  [Email] (5)
+    app/Mail/NewBulkInquiryForShopMail.php
+    app/Mail/NewOrderForShopMail.php
+    app/Mail/OrderCancelledByCustomerMail.php
+    app/Mail/OrderConfirmationMail.php
+    app/Mail/OrderStatusMail.php
+  [Lệnh artisan] (4)
+    app/Console/Commands/CheckAddressProvinces.php
+    app/Console/Commands/CheckShippingZones.php
+    app/Console/Commands/DongBoVanDon.php
+    app/Console/Commands/GhnLookup.php
+  [Cấu hình / Ngôn ngữ] (5)
+    config/payment.php
+    config/provinces.php
+    config/risk.php
+    config/shipping.php
+    config/tax.php
+  [Migration (bảng CSDL)] (25)
+    database/migrations/2026_08_23_010002_create_bulk_order_inquiries_table.php
+    database/migrations/2026_08_23_100000_create_carts_table.php
+    database/migrations/2026_08_23_100100_create_cart_items_table.php
+    database/migrations/2026_08_23_100200_create_orders_table.php
+    database/migrations/2026_08_23_100300_create_order_items_table.php
+    database/migrations/2026_08_23_150000_create_addresses_table.php
+    database/migrations/2026_08_23_160000_create_coupons_table.php
+    database/migrations/2026_08_29_010000_add_idempotency_key_to_orders_table.php
+    database/migrations/2026_09_01_010000_add_notify_order_updates_to_users_table.php
+    database/migrations/2026_09_02_010000_create_coupon_user_table.php
+    database/migrations/2026_09_06_010000_add_risk_score_to_orders_table.php
+    database/migrations/2026_09_07_010000_add_event_details_to_bulk_order_inquiries_table.php
+    database/migrations/2026_09_08_010000_add_is_selected_to_cart_items_table.php
+    database/migrations/2026_09_14_010000_fix_cart_items_unique_index.php
+    database/migrations/2026_09_15_020000_create_order_status_events_table.php
+    database/migrations/2026_09_16_010000_add_ghn_shipping_to_orders_table.php
+    database/migrations/2026_09_17_010000_remove_bank_transfer_payment_method.php
+    database/migrations/2026_09_20_010000_add_tax_to_orders_table.php
+    database/migrations/2026_09_23_010000_add_hidden_at_to_coupon_user_table.php
+    database/migrations/2026_09_25_010000_create_tax_classes_table.php
+    database/migrations/2026_09_25_020000_add_tax_snapshot_to_order_items_table.php
+    database/migrations/2026_09_25_030000_create_invoices_table.php
+    database/migrations/2026_09_26_010000_create_payment_transactions_table.php
+    database/migrations/2026_09_27_010000_add_ghn_expected_delivery_to_orders_table.php
+    database/migrations/2026_09_29_010000_record_ghn_fee_payer_on_orders_table.php
+  [Seeder / Factory (dữ liệu mẫu)] (2)
+    database/factories/CouponFactory.php
+    database/seeders/TaxClassSeeder.php
+  [Giao diện Blade] (35)
+    resources/views/admin/bulk-inquiries/index.blade.php
+    resources/views/admin/bulk-inquiries/show.blade.php
+    resources/views/admin/coupons/form.blade.php
+    resources/views/admin/coupons/index.blade.php
+    resources/views/admin/orders/index.blade.php
+    resources/views/admin/orders/print.blade.php
+    resources/views/admin/orders/show.blade.php
+    resources/views/components/cart/line.blade.php
+    resources/views/components/cart/steps.blade.php
+    resources/views/components/cart/summary.blade.php
+    resources/views/components/form/province-select.blade.php
+    resources/views/components/order/invoice-card.blade.php
+    resources/views/components/order/payment-log.blade.php
+    resources/views/components/order/shipping-status.blade.php
+    resources/views/components/order/tax-lines.blade.php
+    resources/views/components/order/timeline.blade.php
+    resources/views/components/shop/voucher-card.blade.php
+    resources/views/emails/orders/bulk-inquiry-for-shop.blade.php
+    resources/views/emails/orders/cancelled-by-customer.blade.php
+    resources/views/emails/orders/confirmation.blade.php
+    resources/views/emails/orders/new-for-shop.blade.php
+    resources/views/emails/orders/status.blade.php
+    resources/views/shop/addresses/form.blade.php
+    resources/views/shop/addresses/index.blade.php
+    resources/views/shop/bulk-inquiry/create.blade.php
+    resources/views/shop/cart/index.blade.php
+    resources/views/shop/cart/partials/noi-dung.blade.php
+    resources/views/shop/checkout/confirm.blade.php
+    resources/views/shop/checkout/details.blade.php
+    resources/views/shop/orders/index.blade.php
+    resources/views/shop/orders/lookup.blade.php
+    resources/views/shop/orders/partials/dong-qua.blade.php
+    resources/views/shop/orders/show.blade.php
+    resources/views/shop/vouchers/index.blade.php
+    resources/views/shop/vouchers/show.blade.php
+  [JavaScript] (4)
+    resources/js/add-to-cart.js
+    resources/js/cart-live.js
+    resources/js/ghn-address.js
+    resources/js/variant-dialog.js
+  [CSS] (4)
+    resources/css/components/bulk-inquiry.css
+    resources/css/components/cart.css
+    resources/css/components/order-timeline.css
+    resources/css/components/voucher.css
+  [Kiểm thử] (38)
+    tests/Feature/Admin/InPhieuDonTest.php
+    tests/Feature/Admin/LienHeBaoGiaTest.php
+    tests/Feature/Admin/OrderPaymentTest.php
+    tests/Feature/Admin/SuaGiaoHangTest.php
+    tests/Feature/Admin/TaxClassAdminTest.php
+    tests/Feature/BulkInquiryYeuCauThemTest.php
+    tests/Feature/Cart/AddToCartTest.php
+    tests/Feature/Cart/CartLiveTest.php
+    tests/Feature/Cart/ClearCartAndAddressTest.php
+    tests/Feature/Cart/VariantCardTest.php
+    tests/Feature/Checkout/BuyNowTest.php
+    tests/Feature/Checkout/CartSelectionTest.php
+    tests/Feature/Checkout/CheckoutTestCase.php
+    tests/Feature/Checkout/CouponChoiceTest.php
+    tests/Feature/Checkout/CouponDroppedNoticeTest.php
+    tests/Feature/Checkout/CouponRemovalTest.php
+    tests/Feature/Checkout/DiaChiDaLuuTest.php
+    tests/Feature/Checkout/PlaceOrderTest.php
+    tests/Feature/Coupon/CouponServiceTest.php
+    tests/Feature/Coupon/VoucherWalletCleanupTest.php
+    tests/Feature/Coupon/VoucherWalletVisibilityTest.php
+    tests/Feature/GioHienThiTest.php
+    tests/Feature/Order/InvoiceTest.php
+    tests/Feature/Order/OrderMailTimingTest.php
+    tests/Feature/Order/OrderTaxTest.php
+    tests/Feature/Order/OrderTimelineTest.php
+    tests/Feature/Order/TransactionSafetyTest.php
+    tests/Feature/Order/VatPerProductTest.php
+    tests/Feature/Payment/MomoAutoFulfilTest.php
+    tests/Feature/Payment/MomoPaymentTest.php
+    tests/Feature/Shipping/CustomerTrackingTest.php
+    tests/Feature/Shipping/GhnServiceTest.php
+    tests/Feature/Shipping/GhnStatusSyncTest.php
+    tests/Feature/Shipping/ShippingCostReportTest.php
+    tests/Feature/Shipping/ShippingFeeDisplayTest.php
+    tests/Feature/Shipping/ShippingQuoteTest.php
+    tests/Feature/Shipping/VungPhiTheoTenTinhTest.php
+    tests/Feature/ThongBaoCuaHangTest.php
+
+
+================================================================================
+4. DŨNG — KHUYẾN MẠI, KHÁCH HÀNG THÂN THIẾT, TÀI CHÍNH & BÁO CÁO
+================================================================================
+
+PHẠM VI
+  Mọi thứ làm thay đổi GIÁ và GIỮ CHÂN khách, cùng các chứng từ tiền sau bán và
+  báo cáo cho chủ cửa hàng.
+
+CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
+  1. Khuyến mại: % / số tiền / giá cố định, mức riêng từng sản phẩm, tự bật / tắt
+     theo lịch, trang sự kiện, banner đang chạy
+  2. DYNAMIC PRICING: khung giờ trong ngày (kể cả qua nửa đêm), thứ trong tuần, chọn
+     giá thấp nhất khi chồng chương trình (PricingService — nguồn giá duy nhất)
+  3. PRICING ADVISOR: 5 tình huống giá, trung vị giá cùng danh mục, im lặng khi
+     thiếu dữ liệu; lịch dịp lễ
+  4. Quà tặng: quà kèm sản phẩm / quy cách, quà theo chương trình, vật phẩm quà,
+     luật thiếu kho và trả hàng
+  5. Điểm thưởng: sổ điểm, kiếm điểm (mua hàng, đánh giá, bài Góc cây, lượt thích),
+     chuỗi ngày ghé thăm, đổi voucher, dùng điểm trừ tiền
+  6. Hạng thành viên theo chi tiêu hợp lệ, ưu đãi hạng, luật cộng dồn với mã
+  7. TRẢ GÓP trước khi giao + ĐIỂM TÍN DỤNG, xử lý quá hạn tự động, cấu hình ngưỡng
+  8. Hoàn tiền (MoMo tự động / chuyển khoản / tiền mặt), đổi hàng
+  9. Sổ thu chi, dòng tiền, lãi ròng ước tính; lãi gộp
+ 10. Phân tích: phễu, doanh thu theo danh mục / tỉnh / khung giờ / khách mới-cũ,
+     khách hàng, đánh giá; chọn kỳ tuỳ ý so với kỳ trước; biểu đồ SVG
+ 11. Xuất báo cáo 5 định dạng: CSV, XLSX, JSON, HTML, PDF
+
+ĐIỂM KỸ THUẬT NỔI BẬT ĐỂ TRÌNH BÀY
+  - Giá linh hoạt theo thời điểm và nguyên tắc "một nguồn giá" (Luồng 1)
+  - Sổ điểm không có cột số dư, khoá nguồn chống cộng hai lần (Luồng 12)
+  - Trả góp + điểm tín dụng (Luồng 13); cố vấn giá dựa trên dữ liệu (Luồng 18)
+  - Các chiến lược tâm lý: neo giá, khan hiếm thật, chuỗi ngày, hạng thành viên
+    (BAO-CAO-CHUC-NANG Phần C)
+
+PHỐI HỢP
+  - Huy: thứ tự tính giá trong CheckoutBasket (khuyến mại → hạng → mã → điểm →
+    phí giao); thanh toán kỳ trả góp đi qua MoMo
+  - Hùng: sản phẩm gọi PricingService để hiện giá
+  - Hiền: thưởng điểm khi bài Góc cây được duyệt (CommunityReward); báo cáo lãi
+    hoa tươi dùng dữ liệu lô hoa
+
+DANH SÁCH TỆP
+  [Controller] (15)
+    app/Http/Controllers/Admin/AnalyticsController.php
+    app/Http/Controllers/Admin/AnalyticsPagesController.php
+    app/Http/Controllers/Admin/ExchangeController.php
+    app/Http/Controllers/Admin/ExpenseController.php
+    app/Http/Controllers/Admin/GiftCampaignController.php
+    app/Http/Controllers/Admin/GiftItemController.php
+    app/Http/Controllers/Admin/InstallmentController.php
+    app/Http/Controllers/Admin/MemberTierController.php
+    app/Http/Controllers/Admin/PricingAdvisorController.php
+    app/Http/Controllers/Admin/ProductGiftController.php
+    app/Http/Controllers/Admin/PromotionController.php
+    app/Http/Controllers/Admin/RefundController.php
+    app/Http/Controllers/Shop/EventController.php
+    app/Http/Controllers/Shop/InstallmentPaymentController.php
+    app/Http/Controllers/Shop/PointController.php
+  [Middleware] (1)
+    app/Http/Middleware/GhiNhanNgayGhe.php
+  [Kiểm tra dữ liệu (Request)] (4)
+    app/Http/Requests/Admin/RefundRequest.php
+    app/Http/Requests/Admin/StorePromotionRequest.php
+    app/Http/Requests/Admin/SyncPromotionProductsRequest.php
+    app/Http/Requests/Admin/UpdatePromotionRequest.php
+  [Service (luật nghiệp vụ)] (41)
+    app/Services/Analytics/AnalyticsService.php
+    app/Services/Analytics/CashFlowReport.php
+    app/Services/Analytics/ChonKy.php
+    app/Services/Analytics/Export/PdfWriter.php
+    app/Services/Analytics/Export/ReportHtml.php
+    app/Services/Analytics/Export/XlsxWriter.php
+    app/Services/Analytics/KhoangThoiGian.php
+    app/Services/Analytics/ProfitReport.php
+    app/Services/Analytics/ReportExporter.php
+    app/Services/Analytics/ReportSections.php
+    app/Services/Analytics/SalesBreakdown.php
+    app/Services/Analytics/TenTinh.php
+    app/Services/Credit/CreditScore.php
+    app/Services/Exchange/ExchangeException.php
+    app/Services/Exchange/ExchangeService.php
+    app/Services/Gift/GiftGranter.php
+    app/Services/Gift/GiftResolver.php
+    app/Services/Gift/GiftReturnCalculator.php
+    app/Services/Installment/InstallmentException.php
+    app/Services/Installment/InstallmentPlanner.php
+    app/Services/Installment/InstallmentPolicy.php
+    app/Services/Installment/InstallmentService.php
+    app/Services/Installment/InstallmentSettings.php
+    app/Services/Loyalty/MemberTierResolver.php
+    app/Services/Loyalty/QualifiedSpending.php
+    app/Services/Points/CommunityReward.php
+    app/Services/Points/PointEarning.php
+    app/Services/Points/PointException.php
+    app/Services/Points/PointLedger.php
+    app/Services/Points/PointRedemption.php
+    app/Services/Points/VisitStreak.php
+    app/Services/Pricing/DemandSignals.php
+    app/Services/Pricing/PriceSuggestion.php
+    app/Services/Pricing/PricingAdvisor.php
+    app/Services/Pricing/PricingService.php
+    app/Services/Pricing/ProductDemand.php
+    app/Services/Pricing/ProductPrice.php
+    app/Services/Promotion/ActivePromotionProvider.php
+    app/Services/Promotion/OccasionCalendar.php
+    app/Services/Refund/RefundException.php
+    app/Services/Refund/RefundService.php
+  [Model / Observer] (13)
+    app/Models/Exchange.php
+    app/Models/ExchangeItem.php
+    app/Models/Expense.php
+    app/Models/GiftCampaign.php
+    app/Models/GiftItem.php
+    app/Models/InstallmentPayment.php
+    app/Models/InstallmentPlan.php
+    app/Models/MemberTier.php
+    app/Models/PointTransaction.php
+    app/Models/ProductGift.php
+    app/Models/Promotion.php
+    app/Models/Refund.php
+    app/Models/RefundItem.php
+  [Enum] (17)
+    app/Enums/ExchangeReason.php
+    app/Enums/ExchangeStatus.php
+    app/Enums/ExpenseCategory.php
+    app/Enums/GiftCampaignKind.php
+    app/Enums/GiftKind.php
+    app/Enums/GiftReturnRule.php
+    app/Enums/GiftStockRule.php
+    app/Enums/InstallmentStatus.php
+    app/Enums/PointReason.php
+    app/Enums/PriceSignal.php
+    app/Enums/PromotionStatus.php
+    app/Enums/PromotionType.php
+    app/Enums/RefundMethod.php
+    app/Enums/RefundReason.php
+    app/Enums/RefundStatus.php
+    app/Enums/ReturnReason.php
+    app/Enums/ReturnSettlement.php
+  [Email] (1)
+    app/Mail/RefundMail.php
+  [Lệnh artisan] (2)
+    app/Console/Commands/CapNhatTrangThaiKhuyenMai.php
+    app/Console/Commands/XuLyTraGopQuaHan.php
+  [Cấu hình / Ngôn ngữ] (2)
+    config/occasions.php
+    config/pricing-advisor.php
+  [Migration (bảng CSDL)] (16)
+    database/migrations/2026_08_24_010000_create_promotions_table.php
+    database/migrations/2026_08_24_010001_create_promotion_product_table.php
+    database/migrations/2026_09_05_010000_add_time_window_to_promotions_table.php
+    database/migrations/2026_09_10_010000_link_coupons_to_promotions.php
+    database/migrations/2026_09_30_010000_create_refunds_tables.php
+    database/migrations/2026_10_03_010000_create_exchanges_tables.php
+    database/migrations/2026_10_08_010000_create_expenses_table.php
+    database/migrations/2026_10_09_010000_create_point_transactions_table.php
+    database/migrations/2026_10_10_010000_add_visit_streak_to_users_table.php
+    database/migrations/2026_10_12_010000_add_points_to_orders_table.php
+    database/migrations/2026_10_13_010000_create_member_tiers_table.php
+    database/migrations/2026_10_14_010000_add_member_benefits_to_coupons_and_orders.php
+    database/migrations/2026_10_15_010000_create_gift_tables.php
+    database/migrations/2026_10_16_010000_create_product_gifts_table.php
+    database/migrations/2026_10_17_010000_add_rules_to_product_gifts_table.php
+    database/migrations/2026_10_18_010000_create_installment_tables.php
+  [Giao diện Blade] (46)
+    resources/views/admin/analytics/_header.blade.php
+    resources/views/admin/analytics/customers.blade.php
+    resources/views/admin/analytics/export.blade.php
+    resources/views/admin/analytics/index.blade.php
+    resources/views/admin/analytics/profit.blade.php
+    resources/views/admin/analytics/sales.blade.php
+    resources/views/admin/exchanges/index.blade.php
+    resources/views/admin/exchanges/show.blade.php
+    resources/views/admin/expenses/form.blade.php
+    resources/views/admin/expenses/index.blade.php
+    resources/views/admin/gift-campaigns/form.blade.php
+    resources/views/admin/gift-campaigns/index.blade.php
+    resources/views/admin/gift-items/form.blade.php
+    resources/views/admin/gift-items/index.blade.php
+    resources/views/admin/installments/index.blade.php
+    resources/views/admin/member-tiers/index.blade.php
+    resources/views/admin/orders/_doi-hang.blade.php
+    resources/views/admin/orders/_refunds.blade.php
+    resources/views/admin/orders/_tra-gop.blade.php
+    resources/views/admin/pricing-advisor/index.blade.php
+    resources/views/admin/product-gifts/_luat.blade.php
+    resources/views/admin/product-gifts/edit.blade.php
+    resources/views/admin/product-gifts/index.blade.php
+    resources/views/admin/promotions/_form.blade.php
+    resources/views/admin/promotions/create.blade.php
+    resources/views/admin/promotions/edit.blade.php
+    resources/views/admin/promotions/index.blade.php
+    resources/views/admin/refunds/index.blade.php
+    resources/views/components/admin/chart/bars.blade.php
+    resources/views/components/admin/chart/donut.blade.php
+    resources/views/components/admin/chart/heatmap.blade.php
+    resources/views/components/admin/chart/line.blade.php
+    resources/views/components/admin/chon-ky.blade.php
+    resources/views/components/admin/kpi.blade.php
+    resources/views/components/admin/promo-tabs.blade.php
+    resources/views/components/admin/stat-card.blade.php
+    resources/views/components/admin/trend.blade.php
+    resources/views/components/admin/tuoi-so-lieu.blade.php
+    resources/views/components/seasonal/campaign-banner.blade.php
+    resources/views/components/site/banner-carousel.blade.php
+    resources/views/emails/orders/refund.blade.php
+    resources/views/shop/events/show.blade.php
+    resources/views/shop/orders/partials/tra-gop.blade.php
+    resources/views/shop/profile/partials/diem-thuong.blade.php
+    resources/views/shop/profile/partials/hang-thanh-vien.blade.php
+    resources/views/shop/profile/partials/tra-gop.blade.php
+  [JavaScript] (6)
+    resources/js/admin/chon-ky.js
+    resources/js/admin/export-picker.js
+    resources/js/admin/gift-variant-picker.js
+    resources/js/admin/refund-gift-autofill.js
+    resources/js/admin/tuoi-so-lieu.js
+    resources/js/components/banner-rotator.js
+  [CSS] (2)
+    resources/css/admin/analytics.css
+    resources/css/admin/charts.css
+  [Kiểm thử] (23)
+    tests/Feature/Admin/AnalyticsBreakdownTest.php
+    tests/Feature/Admin/DanhSachHoanTienTest.php
+    tests/Feature/Admin/DoiHangTest.php
+    tests/Feature/Admin/KhoangNgayTest.php
+    tests/Feature/Admin/LoHongNghiepVuTest.php
+    tests/Feature/Admin/PromotionStatusSyncTest.php
+    tests/Feature/Admin/ReportExportTest.php
+    tests/Feature/Admin/SoThuChiTest.php
+    tests/Feature/Gift/BaoCaoKhongDemQuaTest.php
+    tests/Feature/Gift/QuaTangTest.php
+    tests/Feature/Gift/TraDoiQuaTest.php
+    tests/Feature/Installment/TraGopTest.php
+    tests/Feature/Loyalty/HangThanhVienTest.php
+    tests/Feature/Loyalty/UuDaiHangThanhToanTest.php
+    tests/Feature/Order/RefundTest.php
+    tests/Feature/Points/ChuoiNgayGheTest.php
+    tests/Feature/Points/DiemTruTienTest.php
+    tests/Feature/Points/KiemDiemTest.php
+    tests/Feature/Points/SoDiemThuongTest.php
+    tests/Feature/Points/ThuongBaiGocCayTest.php
+    tests/Feature/Pricing/BannerKhuyenMaiDangChayTest.php
+    tests/Feature/Pricing/KhungGioKhuyenMaiTest.php
+    tests/Feature/Pricing/PricingAdvisorTest.php
+  [Công cụ / script] (1)
+    tools/fetch-promotion-banners.mjs
+
+
+================================================================================
+5. HIỀN — KHO VẬN & CỘNG ĐỒNG, NỘI DUNG, TRỢ LÝ AI
+================================================================================
+
+PHẠM VI
+  Hai mảng: (a) KHO — hàng vào, hàng ra, kiểm đếm, hoa tươi theo lô, nhà cung
+  cấp; (b) CỘNG ĐỒNG & NỘI DUNG — Góc cây, thông báo, Cẩm nang, nhật ký cây, lịch
+  chăm cây, trợ lý AI.
+
+CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
+  KHO
+  1. Trang tồn kho: sắp hết, đã hết, hàng chết vốn
+  2. Phiếu nhập kho (nháp → ghi sổ), giá vốn; tồn đầu kỳ
+  3. Phiếu kiểm kê: chụp tồn, ghi sổ chênh lệch, không để âm
+  4. Nhà cung cấp; trả hàng cho nhà cung cấp
+  5. Hoa tươi theo LÔ: loại hoa, chất lượng, mở / đóng lô, lô quên đóng
+  6. Phân tích thu mua (nguồn hàng đáng tiền nhất), lãi gộp hoa theo lô
+  CỘNG ĐỒNG & NỘI DUNG
+  7. Cẩm nang (blog): chuyên mục, bài viết, làm sạch HTML theo danh sách trắng
+  8. Lịch chăm cây: tự dựng khi giao hàng, thư nhắc 08:00, bật / tắt / đã làm
+  9. Nhật ký cây riêng tư: 5 loại sổ, chỉ số, biểu đồ SVG, mốc mục tiêu, nhãn dán
+ 10. Góc cây: đăng bài nhiều ảnh / video, duyệt bài, 5 cảm xúc, bình luận lồng,
+     lưu bài, báo cáo, trang cá nhân, chủ bài tự quản lý bài
+ 11. Thông báo trong trang (bình luận, bài được duyệt / bị ẩn)
+ 12. Tước metadata ảnh (EXIF / GPS) và xoá GPS trong video MP4
+ 13. AI SHOPPING ADVISOR (Gemini): gom dữ liệu thật, luật chống bịa và chống chèn
+     lệnh, bảo vệ dữ liệu riêng tư
+
+ĐIỂM KỸ THUẬT NỔI BẬT ĐỂ TRÌNH BÀY
+  - Kho theo chứng từ, một nơi duy nhất cộng / trừ tồn (Luồng 16)
+  - Mạng xã hội thu nhỏ có kiểm duyệt (Luồng 15)
+  - Trợ lý AI dựa trên dữ liệu cửa hàng — RAG thu nhỏ (Luồng 14)
+  - Quyền riêng tư: nhật ký không bị bộ máy nào đọc, GPS bị xoá khỏi tệp
+
+PHỐI HỢP
+  - Huy: đơn huỷ / trả hàng cộng lại kho (StockReturn); giao xong dựng lịch chăm cây
+  - Dũng: điểm thưởng bài Góc cây; hoàn tiền đưa hàng về kho
+  - Hùng: AI dùng bộ tìm kiếm ProductSearch; ảnh bài viết đi qua ImageStore
+
+DANH SÁCH TỆP
+  [Controller] (18)
+    app/Http/Controllers/Admin/BlogCategoryController.php
+    app/Http/Controllers/Admin/BlogPostController.php
+    app/Http/Controllers/Admin/CommunityModerationController.php
+    app/Http/Controllers/Admin/FlowerKindController.php
+    app/Http/Controllers/Admin/FlowerLotController.php
+    app/Http/Controllers/Admin/InventoryController.php
+    app/Http/Controllers/Admin/OpeningStockController.php
+    app/Http/Controllers/Admin/StockCountController.php
+    app/Http/Controllers/Admin/StockReceiptController.php
+    app/Http/Controllers/Admin/SupplierController.php
+    app/Http/Controllers/Admin/SupplierReturnController.php
+    app/Http/Controllers/Shop/AiChatController.php
+    app/Http/Controllers/Shop/BlogController.php
+    app/Http/Controllers/Shop/CareController.php
+    app/Http/Controllers/Shop/CommunityController.php
+    app/Http/Controllers/Shop/CommunityPostOwnerController.php
+    app/Http/Controllers/Shop/JournalController.php
+    app/Http/Controllers/Shop/NotificationController.php
+  [Kiểm tra dữ liệu (Request)] (1)
+    app/Http/Requests/Admin/StockReceiptRequest.php
+  [Service (luật nghiệp vụ)] (30)
+    app/Services/AI/AdvisorContext.php
+    app/Services/AI/AiException.php
+    app/Services/AI/AiManager.php
+    app/Services/AI/AiProvider.php
+    app/Services/AI/GeminiProvider.php
+    app/Services/AI/ShoppingAdvisor.php
+    app/Services/Analytics/FlowerCostReport.php
+    app/Services/Analytics/InventoryReport.php
+    app/Services/Analytics/PurchasingReport.php
+    app/Services/Care/CareReminderMailer.php
+    app/Services/Care/CareScheduler.php
+    app/Services/Community/CommunityException.php
+    app/Services/Community/CommunityInteraction.php
+    app/Services/Community/CommunityMediaStore.php
+    app/Services/Community/CommunityReports.php
+    app/Services/Community/PostOwner.php
+    app/Services/Inventory/FlowerLotException.php
+    app/Services/Inventory/FlowerLotService.php
+    app/Services/Inventory/InventoryException.php
+    app/Services/Inventory/StockAdjuster.php
+    app/Services/Inventory/StockCountService.php
+    app/Services/Inventory/StockReceiptException.php
+    app/Services/Inventory/StockReceiptService.php
+    app/Services/Inventory/StockReturn.php
+    app/Services/Inventory/StockUnits.php
+    app/Services/Inventory/SupplierReturnService.php
+    app/Services/Media/HtmlSanitizer.php
+    app/Services/Media/ImageMetadataStripper.php
+    app/Services/Media/VideoMetadataStripper.php
+    app/Services/Notification/NotificationCenter.php
+  [Model / Observer] (19)
+    app/Models/BlogCategory.php
+    app/Models/BlogPost.php
+    app/Models/CareReminder.php
+    app/Models/CommunityComment.php
+    app/Models/CommunityPost.php
+    app/Models/CommunityPostMedia.php
+    app/Models/CommunityReport.php
+    app/Models/FlowerKind.php
+    app/Models/FlowerLot.php
+    app/Models/Journal.php
+    app/Models/JournalEntry.php
+    app/Models/JournalMetric.php
+    app/Models/JournalMilestone.php
+    app/Models/StockCount.php
+    app/Models/StockCountItem.php
+    app/Models/StockReceipt.php
+    app/Models/StockReceiptItem.php
+    app/Models/Supplier.php
+    app/Models/UserNotification.php
+  [Enum] (15)
+    app/Enums/CareTask.php
+    app/Enums/CommunityReaction.php
+    app/Enums/CommunityReportReason.php
+    app/Enums/CommunityReportStatus.php
+    app/Enums/FlowerLotStatus.php
+    app/Enums/FlowerQuality.php
+    app/Enums/FlowerUnit.php
+    app/Enums/JournalKind.php
+    app/Enums/JournalSticker.php
+    app/Enums/JournalTheme.php
+    app/Enums/NotificationType.php
+    app/Enums/StockCountStatus.php
+    app/Enums/StockReceiptKind.php
+    app/Enums/StockReceiptStatus.php
+    app/Enums/SupplierKind.php
+  [Email] (1)
+    app/Mail/CareReminderMail.php
+  [Lệnh artisan] (1)
+    app/Console/Commands/SendCareReminders.php
+  [Cấu hình / Ngôn ngữ] (1)
+    config/ai.php
+  [Migration (bảng CSDL)] (17)
+    database/migrations/2026_09_04_010000_create_care_reminders_table.php
+    database/migrations/2026_09_21_010000_create_journals_tables.php
+    database/migrations/2026_09_22_010000_add_journal_design_tables.php
+    database/migrations/2026_09_24_010000_create_blog_tables.php
+    database/migrations/2026_09_24_020000_create_community_posts_table.php
+    database/migrations/2026_09_28_010000_create_stock_receipts_tables.php
+    database/migrations/2026_10_01_010000_create_stock_counts_tables.php
+    database/migrations/2026_10_04_010000_create_suppliers_table.php
+    database/migrations/2026_10_05_010000_add_kind_to_stock_receipts.php
+    database/migrations/2026_10_06_010000_create_flower_lots_tables.php
+    database/migrations/2026_10_07_010000_add_supplier_return_fields.php
+    database/migrations/2026_10_11_010000_create_community_interactions_tables.php
+    database/migrations/2026_10_19_010000_upgrade_community_corner.php
+    database/migrations/2026_10_20_010000_create_user_notifications_table.php
+    database/migrations/2026_10_21_010000_add_reaction_to_community_post_likes.php
+    database/migrations/2026_10_22_010000_create_community_comment_reactions_table.php
+    database/migrations/2026_10_23_010000_add_owner_controls_to_community.php
+  [Seeder / Factory (dữ liệu mẫu)] (3)
+    database/seeders/BlogSeeder.php
+    database/seeders/CommunityPostSampleSeeder.php
+    database/seeders/DuLieuMauKhoSeeder.php
+  [Giao diện Blade] (58)
+    resources/views/admin/analytics/purchasing.blade.php
+    resources/views/admin/blog/categories.blade.php
+    resources/views/admin/blog/form.blade.php
+    resources/views/admin/blog/index.blade.php
+    resources/views/admin/community/index.blade.php
+    resources/views/admin/flower-kinds/index.blade.php
+    resources/views/admin/flower-lots/create.blade.php
+    resources/views/admin/flower-lots/index.blade.php
+    resources/views/admin/inventory/index.blade.php
+    resources/views/admin/opening-stock/create.blade.php
+    resources/views/admin/stock-counts/create.blade.php
+    resources/views/admin/stock-counts/index.blade.php
+    resources/views/admin/stock-counts/show.blade.php
+    resources/views/admin/stock-receipts/create.blade.php
+    resources/views/admin/stock-receipts/index.blade.php
+    resources/views/admin/stock-receipts/show.blade.php
+    resources/views/admin/supplier-returns/index.blade.php
+    resources/views/admin/suppliers/form.blade.php
+    resources/views/admin/suppliers/index.blade.php
+    resources/views/components/community/comment-reaction.blade.php
+    resources/views/components/community/emoji-picker.blade.php
+    resources/views/components/community/like-button.blade.php
+    resources/views/components/community/reaction-summary.blade.php
+    resources/views/components/community/save-button.blade.php
+    resources/views/components/journal/entry-form.blade.php
+    resources/views/components/journal/metric-chart.blade.php
+    resources/views/components/journal/panel/care-summary.blade.php
+    resources/views/components/journal/panel/chart.blade.php
+    resources/views/components/journal/panel/findings.blade.php
+    resources/views/components/journal/panel/goal.blade.php
+    resources/views/components/journal/panel/milestones.blade.php
+    resources/views/components/journal/panel/photo-strip.blade.php
+    resources/views/components/journal/panel/price-stats.blade.php
+    resources/views/components/journal/panel/price-table.blade.php
+    resources/views/components/journal/panel/rating.blade.php
+    resources/views/components/journal/panel/timeline.blade.php
+    resources/views/components/journal/pattern.blade.php
+    resources/views/components/journal/sticker.blade.php
+    resources/views/components/site/ai-chat.blade.php
+    resources/views/emails/care/reminder.blade.php
+    resources/views/shop/blog/index.blade.php
+    resources/views/shop/blog/show.blade.php
+    resources/views/shop/care/index.blade.php
+    resources/views/shop/community/edit.blade.php
+    resources/views/shop/community/index.blade.php
+    resources/views/shop/community/partials/comment.blade.php
+    resources/views/shop/community/partials/composer-fields.blade.php
+    resources/views/shop/community/partials/composer-modal.blade.php
+    resources/views/shop/community/partials/media-grid.blade.php
+    resources/views/shop/community/partials/owner-menu.blade.php
+    resources/views/shop/community/partials/post-card.blade.php
+    resources/views/shop/community/partials/report-modal.blade.php
+    resources/views/shop/community/profile.blade.php
+    resources/views/shop/community/show.blade.php
+    resources/views/shop/journals/form.blade.php
+    resources/views/shop/journals/index.blade.php
+    resources/views/shop/journals/show.blade.php
+    resources/views/shop/notifications/index.blade.php
+  [JavaScript] (5)
+    resources/js/admin/receipt-lines.js
+    resources/js/admin/stock-lock.js
+    resources/js/ai-chat.js
+    resources/js/community.js
+    resources/js/journal-form.js
+  [CSS] (4)
+    resources/css/components/ai-chat.css
+    resources/css/components/blog.css
+    resources/css/components/community.css
+    resources/css/components/journal.css
+  [Kiểm thử] (31)
+    tests/Feature/AI/TroLyAiTest.php
+    tests/Feature/Admin/ChuyenMucCamNangTest.php
+    tests/Feature/Admin/InventoryReportTest.php
+    tests/Feature/Admin/LaiGopTachHoaTest.php
+    tests/Feature/Admin/LoHoaTest.php
+    tests/Feature/Admin/NhaCungCapTest.php
+    tests/Feature/Admin/SoatQuanTriTest.php
+    tests/Feature/Admin/StockCountTest.php
+    tests/Feature/Admin/StockReceiptTest.php
+    tests/Feature/Admin/SuaLoHoaTest.php
+    tests/Feature/Admin/ThuMuaTest.php
+    tests/Feature/Admin/TonDauKyTest.php
+    tests/Feature/Admin/TongQuanNghiepVuTest.php
+    tests/Feature/Admin/TraHangNccTest.php
+    tests/Feature/Blog/BlogTest.php
+    tests/Feature/Blog/HtmlSanitizerTest.php
+    tests/Feature/Community/CamXucTest.php
+    tests/Feature/Community/CommunityPostTest.php
+    tests/Feature/Community/GocCayNangCapTest.php
+    tests/Feature/Community/GocCayTuongTacTest.php
+    tests/Feature/Community/QuanLyBaiCuaToiTest.php
+    tests/Feature/Community/ThongBaoTest.php
+    tests/Feature/Community/TrangCaNhanTest.php
+    tests/Feature/Community/VideoMetadataStripperTest.php
+    tests/Feature/DuLieuMauKhoTest.php
+    tests/Feature/Journal/JournalCoverTest.php
+    tests/Feature/Journal/JournalKindStructureTest.php
+    tests/Feature/Journal/JournalPrivacyTest.php
+    tests/Feature/Journal/JournalTest.php
+    tests/Feature/Media/ImageMetadataStripperTest.php
+    tests/Support/TaoAnhCoGps.php
+
+
+================================================================================
+GỢI Ý CÁCH LÀM VIỆC CHUNG
+================================================================================
+  - Mỗi người tạo nhánh Git riêng theo khối (vd: git checkout -b hung/tai-khoan),
+    gộp vào main qua Pull Request để người khác xem trước.
+  - Trước khi gộp: chạy php vendor/bin/phpunit (toàn bộ phải xanh) và npm run build.
+  - Sửa tệp thuộc khối người khác (mục "Phối hợp") thì báo người đó xem lại.
+  - Khi trình bày: mỗi người đi một luồng hoàn chỉnh trong HUONG-DAN-DOC-CODE.txt
+    Phần 3, mở đúng tệp và hàm được ghi, rồi chạy bài kiểm thử tương ứng để chứng
+    minh luật hoạt động.
