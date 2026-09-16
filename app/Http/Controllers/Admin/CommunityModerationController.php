@@ -8,6 +8,7 @@ use App\Models\CommunityPost;
 use App\Models\CommunityReport;
 use App\Services\Community\CommunityMediaStore;
 use App\Services\Community\CommunityReports;
+use App\Services\Notification\NotificationCenter;
 use App\Services\Points\CommunityReward;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -91,6 +92,9 @@ class CommunityModerationController extends Controller
 
         $diem = $thuong->thuong($post, $request->boolean('noi_bat'));
 
+        // Người đăng phải biết bài đã lên — trước đây phải tự vào mục "Bài của tôi" xem.
+        app(NotificationCenter::class)->baiDuocDuyet($post);
+
         $thongBao = 'Đã duyệt bài của ' . $post->user?->name . '.';
 
         if ($diem > 0) {
@@ -115,6 +119,8 @@ class CommunityModerationController extends Controller
         $post->reject_reason = $data['reject_reason'];
         $post->save();
 
+        app(NotificationCenter::class)->baiTuChoi($post, $data['reject_reason']);
+
         return back()->with('success', 'Đã từ chối bài.');
     }
 
@@ -129,6 +135,8 @@ class CommunityModerationController extends Controller
 
         $data = $request->validate(['hidden_reason' => ['required', 'string', 'max:200']], [], ['hidden_reason' => 'lý do ẩn']);
         $post->forceFill(['hidden_at' => now(), 'hidden_reason' => $data['hidden_reason']])->save();
+
+        app(NotificationCenter::class)->baiBiAn($post, $data['hidden_reason']);
 
         return back()->with('success', 'Đã ẩn bài.');
     }

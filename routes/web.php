@@ -732,6 +732,20 @@ Route::prefix('api')
 Route::middleware('auth')->group(function () {
 
     /*
+     * THÔNG BÁO TRONG TRANG — của riêng một người, lọc theo user_id ngay trong
+     * truy vấn (xem NotificationController).
+     */
+    Route::get('thong-bao', [\App\Http\Controllers\Shop\NotificationController::class, 'index'])
+        ->name('shop.notifications.index');
+
+    Route::get('thong-bao/{notification}', [\App\Http\Controllers\Shop\NotificationController::class, 'open'])
+        ->whereNumber('notification')
+        ->name('shop.notifications.open');
+
+    Route::post('thong-bao/doc-het', [\App\Http\Controllers\Shop\NotificationController::class, 'readAll'])
+        ->name('shop.notifications.read-all');
+
+    /*
  * NHẬT KÝ CÁ NHÂN — riêng tư tuyệt đối.
  * ============================================================
  * Mọi route ở đây nằm sau `auth`: không có khách vãng lai nào chạm tới

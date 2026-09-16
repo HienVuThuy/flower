@@ -8223,3 +8223,27 @@ có thanh bên.
   gửi bằng fetch trả JSON: bấm giữa bảng tin không tải lại trang rồi nhảy về đầu.
 - Emoji là NỘI DUNG khách gõ (bảng chọn emoji trong ô soạn), khác với icon giao
   diện — icon vẫn là SVG.
+
+## QĐ-299. Thông báo trong trang, và cảm xúc thay cho một nút "Thích"
+
+- THÔNG BÁO chỉ lưu SỰ VIỆC (ai, bài nào, bình luận nào), không lưu câu chữ:
+  đổi tên người hay sửa bài thì thông báo cũ vẫn đúng. Báo khi có người bình
+  luận bài của bạn, trả lời bình luận của bạn, và khi cửa hàng duyệt / từ chối /
+  ẩn bài của bạn (kèm lý do). Không tự báo cho chính mình; một việc chạm tới
+  nhiều người thì mỗi người CHỈ MỘT thông báo.
+- KHÔNG GỬI EMAIL: dự án chưa có tiến trình hàng đợi chạy nền, gửi thư đồng bộ
+  sẽ làm chậm đúng lúc khách bấm gửi bình luận. Chuông trên thanh đầu trang đếm
+  số chưa đọc, dựng ở máy chủ nên không cần JavaScript.
+- Thông báo trỏ tới bài chưa duyệt / bị ẩn thì dẫn về mục "Bài của tôi" chứ
+  không dẫn vào trang công khai (bài đó không mở được, sẽ thành 404).
+- CẢM XÚC: năm loại (thích, yêu thích, haha, wow, buồn) — không bảy như
+  Facebook: "phẫn nộ" ở một trang bán cây gần như không có chỗ dùng, mà mỗi loại
+  là một ô nữa trên màn hình điện thoại. Biểu tượng là SVG chứ không phải emoji
+  (emoji là chữ khách gõ; mỗi máy hiện một kiểu).
+- MỘT NGƯỜI MỘT CẢM XÚC cho một bài: thêm cột `reaction` vào
+  `community_post_likes` thay vì bảng mới, nên ràng buộc UNIQUE cũ giữ nguyên ý
+  nghĩa. Đổi cảm xúc là SỬA dòng đã có — số đếm không nhân lên và điểm thưởng
+  cho tác giả (2 điểm mỗi lượt) không cộng lại. Bấm lại đúng cảm xúc đang có thì
+  bỏ. Dòng cũ mặc định "thích" — đúng với việc đã xảy ra.
+- Bảng chọn cảm xúc mở bằng <details> chứ không bằng hover: hover thì điện thoại
+  không có và bàn phím không tới được.

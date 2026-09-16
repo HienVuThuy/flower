@@ -253,6 +253,24 @@
                     </a>
                 @endif
 
+                {{--
+                    CHUÔNG THÔNG BÁO — chỉ cho người đã đăng nhập.
+
+                    Số chưa đọc dựng ở MÁY CHỦ: không có JavaScript thì con số vẫn
+                    đúng, chỉ là phải tải lại trang mới đổi. Huy hiệu luôn nằm trong
+                    DOM và chỉ ẩn khi không còn gì — cùng cách với huy hiệu giỏ hàng.
+                --}}
+                @auth
+                    @php($soChuaDoc = app(\App\Services\Notification\NotificationCenter::class)->chuaDoc(Auth::user()))
+                    <a href="{{ route('shop.notifications.index') }}" class="btn-icon"
+                       data-thong-bao-link
+                       aria-label="Thông báo{{ $soChuaDoc ? ' (' . $soChuaDoc . ' chưa đọc)' : ' (đã đọc hết)' }}">
+                        <x-site.icon :name="$soChuaDoc ? 'bell-fill' : 'bell'" />
+                        <span class="btn-icon__badge" data-thong-bao-badge
+                              @if($soChuaDoc < 1) hidden @endif>{{ $soChuaDoc > 99 ? '99+' : $soChuaDoc }}</span>
+                    </a>
+                @endauth
+
                 @guest
                     <a href="{{ route('login') }}" class="btn btn-ghost btn-sm d-none d-md-inline-flex">
                         Đăng nhập

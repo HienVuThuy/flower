@@ -99,12 +99,12 @@
             @endif
 
             <div class="gc-bai__stats">
-                <span>{{ $post->likers_count }} lượt thích</span>
+                <x-community.reaction-summary :tom-tat="$tomTatCamXuc[$post->id] ?? []" :count="$post->likers_count" />
                 <span>{{ $post->so_binh_luan }} bình luận</span>
             </div>
 
             <div class="gc-bai__actions">
-                <x-community.like-button :post="$post" :liked="$daThich" :count="$post->likers_count" />
+                <x-community.like-button :post="$post" :cam-xuc="$camXucCuaToi[$post->id] ?? null" :count="$post->likers_count" />
 
                 <a href="#binh-luan" class="post-action">
                     <x-site.icon name="chat" />

@@ -10,7 +10,7 @@
 --}}
 @php
     $laCuaToi = auth()->id() === $post->user_id;
-    $daThichBai = in_array($post->id, $daThich ?? [], true);
+    $camXucBai = ($camXucCuaToi ?? [])[$post->id] ?? null;
     $daLuuBai = in_array($post->id, $daLuu ?? [], true);
     $dangHien = $post->isApproved() && ! $post->isHidden();
     $binhLuanXemTruoc = $post->relationLoaded('comments') ? $post->comments->sortBy('created_at') : collect();
@@ -110,14 +110,14 @@
 
     @if($dangHien)
         <div class="gc-bai__stats">
-            <span data-tom-tat-thich="{{ $post->id }}">{{ $post->likers_count ?? 0 }} lượt thích</span>
+            <x-community.reaction-summary :tom-tat="($tomTatCamXuc ?? [])[$post->id] ?? []" :count="$post->likers_count ?? 0" />
             <a href="{{ route('shop.community.show', $post->id) }}#binh-luan" data-so-binh-luan="{{ $post->id }}">
                 {{ $post->so_binh_luan ?? 0 }} bình luận
             </a>
         </div>
 
         <div class="gc-bai__actions">
-            <x-community.like-button :post="$post" :liked="$daThichBai" :count="$post->likers_count ?? 0" />
+            <x-community.like-button :post="$post" :cam-xuc="$camXucBai" :count="$post->likers_count ?? 0" />
 
             <a href="{{ route('shop.community.show', $post->id) }}#binh-luan" class="post-action">
                 <x-site.icon name="chat" />

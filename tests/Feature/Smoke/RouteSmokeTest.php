@@ -116,6 +116,7 @@ class RouteSmokeTest extends TestCase
         'nhu-cau/{intent}',
         'storage/{path}',
         'thanh-toan/momo/{order}',
+        'thong-bao/{notification}',
         'trang/{slug}',
         'xac-thuc-email/{id}/{hash}',
     ];

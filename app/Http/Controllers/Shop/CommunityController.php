@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Enums\CommunityReaction;
 use App\Enums\CommunityReportReason;
 use App\Http\Controllers\Controller;
 use App\Models\CommunityComment;
@@ -85,7 +86,8 @@ class CommunityController extends Controller
         return view('shop.community.index', [
             'posts' => $posts,
             'tab' => $tab,
-            'daThich' => $this->cuaToiTrong('community_post_likes', $ids),
+            'camXucCuaToi' => $this->camXucCuaToi($ids),
+            'tomTatCamXuc' => $this->tomTatCamXuc($ids),
             'daLuu' => $this->cuaToiTrong('community_post_saves', $ids),
             'diemBai' => $tab === 'cua-toi' ? $thuong->daThuong($posts->getCollection()) : [],
             'cayDaMua' => Auth::check() ? $this->cayDaMua() : collect(),
@@ -114,7 +116,8 @@ class CommunityController extends Controller
                 ->orderBy('created_at')
                 ->orderBy('id')
                 ->get(),
-            'daThich' => $this->cuaToiTrong('community_post_likes', [$bai->id]) !== [],
+            'camXucCuaToi' => $this->camXucCuaToi([$bai->id]),
+            'tomTatCamXuc' => $this->tomTatCamXuc([$bai->id]),
             'daLuu' => $this->cuaToiTrong('community_post_saves', [$bai->id]) !== [],
             'coTheBinhLuan' => $tuongTac->coTheBinhLuan(Auth::user()),
         ]);
@@ -123,10 +126,27 @@ class CommunityController extends Controller
     public function like(Request $request, int $post, CommunityInteraction $tuongTac): JsonResponse|RedirectResponse
     {
         $bai = CommunityPost::approved()->findOrFail($post);
-        $dangThich = $tuongTac->doiThich(Auth::user(), $bai);
+
+        $data = $request->validate(
+            ['cam_xuc' => ['nullable', Rule::enum(CommunityReaction::class)]],
+            [],
+            ['cam_xuc' => 'cảm xúc'],
+        );
+
+        $ket = $tuongTac->doiThich(
+            Auth::user(),
+            $bai,
+            isset($data['cam_xuc']) ? CommunityReaction::from($data['cam_xuc']) : null,
+        );
 
         if ($request->expectsJson()) {
-            return response()->json(['thich' => $dangThich, 'so' => $bai->likers()->count()]);
+            return response()->json([
+                // `thich` giữ tên cũ: đang có cảm xúc hay không.
+                'thich' => $ket['co'],
+                'loai' => $ket['loai']?->value,
+                'so' => $bai->likers()->count(),
+                'tom_tat' => $this->tomTatCamXuc([$bai->id])[$bai->id] ?? [],
+            ]);
         }
 
         return $this->veBai($bai);
@@ -361,7 +381,52 @@ class CommunityController extends Controller
     }
 
     /**
-     * Id những bài trong danh sách mà người đang xem đã thích / đã lưu.
+     * Cảm xúc CỦA NGƯỜI ĐANG XEM cho từng bài trong danh sách.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, string> id bài => loại cảm xúc
+     */
+    private function camXucCuaToi(array $ids): array
+    {
+        if (! Auth::check() || $ids === []) {
+            return [];
+        }
+
+        return DB::table('community_post_likes')
+            ->where('user_id', Auth::id())
+            ->whereIn('community_post_id', $ids)
+            ->pluck('reaction', 'community_post_id')
+            ->map(fn ($r) => (string) $r)
+            ->all();
+    }
+
+    /**
+     * Cảm xúc của MỌI NGƯỜI, gộp theo loại — để hiện mấy biểu tượng dưới bài.
+     *
+     * Một truy vấn cho cả trang, không phải mỗi bài một lần.
+     *
+     * @param  list<int>  $ids
+     * @return array<int, list<array{loai: string, so: int}>>
+     */
+    private function tomTatCamXuc(array $ids): array
+    {
+        if ($ids === []) {
+            return [];
+        }
+
+        return DB::table('community_post_likes')
+            ->selectRaw('community_post_id, reaction, COUNT(*) as so')
+            ->whereIn('community_post_id', $ids)
+            ->groupBy('community_post_id', 'reaction')
+            ->orderByDesc('so')
+            ->get()
+            ->groupBy('community_post_id')
+            ->map(fn ($nhom) => $nhom->map(fn ($d) => ['loai' => (string) $d->reaction, 'so' => (int) $d->so])->values()->all())
+            ->all();
+    }
+
+    /**
+     * Id những bài trong danh sách mà người đang xem đã lưu.
      *
      * @param  list<int>  $ids
      * @return list<int>

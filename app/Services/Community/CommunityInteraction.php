@@ -2,6 +2,7 @@
 
 namespace App\Services\Community;
 
+use App\Enums\CommunityReaction;
 use App\Models\CommunityComment;
 use App\Models\CommunityPost;
 use App\Models\User;
@@ -30,32 +31,47 @@ class CommunityInteraction
     }
 
     /**
-     * Thích / bỏ thích.
+     * Bày tỏ cảm xúc / đổi cảm xúc / bỏ cảm xúc.
      *
-     * @return bool trạng thái SAU thao tác: true là đang thích
+     * MỘT NGƯỜI MỘT CẢM XÚC cho một bài: bấm lại đúng cảm xúc đang có thì bỏ,
+     * bấm cảm xúc khác thì ĐỔI dòng đã có (không thêm dòng mới) — nên số đếm và
+     * điểm thưởng không nhân lên khi khách đổi ý.
+     *
+     * @return array{co: bool, loai: ?CommunityReaction} trạng thái SAU thao tác
      */
-    public function doiThich(User $user, CommunityPost $post): bool
+    public function doiThich(User $user, CommunityPost $post, ?CommunityReaction $camXuc = null): array
     {
+        $camXuc ??= CommunityReaction::macDinh();
         $dieuKien = ['community_post_id' => $post->id, 'user_id' => $user->id];
+        $dangCo = DB::table('community_post_likes')->where($dieuKien)->first();
 
-        if (DB::table('community_post_likes')->where($dieuKien)->delete() > 0) {
-            return false;
+        if ($dangCo) {
+            if ($dangCo->reaction === $camXuc->value) {
+                DB::table('community_post_likes')->where($dieuKien)->delete();
+
+                return ['co' => false, 'loai' => null];
+            }
+
+            DB::table('community_post_likes')->where($dieuKien)->update(['reaction' => $camXuc->value]);
+
+            return ['co' => true, 'loai' => $camXuc];
         }
 
         try {
-            DB::table('community_post_likes')->insert($dieuKien + ['created_at' => now()]);
+            DB::table('community_post_likes')->insert($dieuKien + ['reaction' => $camXuc->value, 'created_at' => now()]);
         } catch (QueryException $e) {
-            // Hai tab bấm cùng lúc: dòng đã có — kết quả vẫn là "đang thích".
+            // Hai tab bấm cùng lúc: dòng đã có — kết quả vẫn là "đang có cảm xúc".
             if ($e->getCode() === '23000') {
-                return true;
+                return ['co' => true, 'loai' => $camXuc];
             }
 
             throw $e;
         }
 
+        // Điểm thưởng tính theo NGƯỜI, không theo loại cảm xúc: đổi cảm xúc không cộng thêm.
         $this->thuong->luotThich($post, $user);
 
-        return true;
+        return ['co' => true, 'loai' => $camXuc];
     }
 
     /**
@@ -125,6 +141,21 @@ class CommunityInteraction
             'parent_id' => $goc?->id,
             'reply_to_user_id' => $nguoiDuocTraLoi,
         ])->save();
+
+        /*
+         * BÁO CHO NGƯỜI LIÊN QUAN — việc phụ, không được làm hỏng việc chính.
+         *
+         * Bình luận đã ghi xong rồi; một lỗi khi tạo thông báo không được biến
+         * thành trang lỗi trước mặt người vừa bấm Gửi.
+         */
+        try {
+            app(\App\Services\Notification\NotificationCenter::class)->binhLuan($binhLuan);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Không tạo được thông báo bình luận.', [
+                'binh_luan' => $binhLuan->id,
+                'loi' => $e->getMessage(),
+            ]);
+        }
 
         return $binhLuan;
     }

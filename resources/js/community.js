@@ -32,24 +32,73 @@ function doiIcon(nut, thuocTinh, ten) {
     }
 }
 
+/** Biểu tượng và tên của từng cảm xúc — khớp với App\Enums\CommunityReaction. */
+const CAM_XUC = {
+    thich: { icon: 'hand-thumbs-up-fill', nhan: 'Thích' },
+    yeu: { icon: 'heart-fill', nhan: 'Yêu thích' },
+    haha: { icon: 'emoji-laughing-fill', nhan: 'Haha' },
+    wow: { icon: 'emoji-surprise-fill', nhan: 'Wow' },
+    buon: { icon: 'emoji-frown-fill', nhan: 'Buồn' },
+};
+
 function nhanThich(form, data) {
-    const nut = form.querySelector('[data-thich]');
+    /*
+     * Nút chính và bảng chọn nằm trong CÙNG khối .cam-xuc nhưng KHÁC biểu mẫu —
+     * bấm ở bảng chọn vẫn phải cập nhật nút chính, nên tìm theo khối chứ không
+     * theo biểu mẫu vừa gửi.
+     */
+    const khoi = form.closest('.cam-xuc');
+    const nut = khoi?.querySelector('[data-thich]') || form.querySelector('[data-thich]');
 
     if (!nut) return;
 
-    nut.classList.toggle('is-on', data.thich);
-    nut.setAttribute('aria-pressed', data.thich ? 'true' : 'false');
-    doiIcon(nut, 'data-icon-thich', data.thich ? 'heart-fill' : 'heart');
+    const loai = data.thich && CAM_XUC[data.loai] ? data.loai : null;
+
+    nut.classList.toggle('is-on', !!loai);
+    Object.keys(CAM_XUC).forEach((k) => nut.classList.remove(`cam-xuc--${k}`));
+    if (loai) nut.classList.add(`cam-xuc--${loai}`);
+    nut.setAttribute('aria-pressed', loai ? 'true' : 'false');
+    doiIcon(nut, 'data-icon-thich', loai ? CAM_XUC[loai].icon : 'hand-thumbs-up');
+
+    const nhan = nut.querySelector('[data-nhan-thich]');
+
+    if (nhan) nhan.textContent = loai ? CAM_XUC[loai].nhan : 'Thích';
 
     const so = nut.querySelector('[data-so-thich]');
 
     if (so) so.textContent = data.so;
 
+    // Bấm lại nút chính lần nữa phải BỎ đúng cảm xúc đang có.
+    const oHienTai = khoi?.querySelector('[data-cam-xuc-hien-tai]');
+
+    if (oHienTai) oHienTai.value = loai || 'thich';
+
+    khoi?.querySelectorAll('[data-chon-cam-xuc]').forEach((n) => {
+        n.classList.toggle('is-on', n.dataset.chonCamXuc === loai);
+    });
+
+    // Đóng bảng chọn sau khi đã chọn.
+    const bangChon = khoi?.querySelector('details.cam-xuc-chon');
+
+    if (bangChon) bangChon.open = false;
+
     // Dòng tóm tắt phía trên nút (bảng tin) cũng phải khớp.
     const bai = form.closest('[data-bai]');
     const tomTat = bai?.querySelector('[data-tom-tat-thich]');
 
-    if (tomTat) tomTat.textContent = `${data.so} lượt thích`;
+    if (tomTat) {
+        /*
+         * Dựng lại mấy biểu tượng: loại cảm xúc đến từ enum của máy chủ và được
+         * lọc qua CAM_XUC, nên chuỗi dưới đây không mang dữ liệu người dùng.
+         */
+        const icons = (data.tom_tat || [])
+            .filter((x) => CAM_XUC[x.loai])
+            .slice(0, 3)
+            .map((x) => `<span class="cam-xuc-tomtat__icon cam-xuc--${x.loai}"><svg class="icon" width="1em" height="1em" fill="currentColor" aria-hidden="true"><use href="#i-${CAM_XUC[x.loai].icon}"></use></svg></span>`)
+            .join('');
+
+        tomTat.innerHTML = `${icons} <span data-so-cam-xuc>${data.so}</span> cảm xúc`;
+    }
 }
 
 function nhanLuu(form, data) {
@@ -78,9 +127,14 @@ function nhanLuu(form, data) {
 }
 
 async function guiToggle(form) {
+    /*
+     * GỬI CẢ NỘI DUNG BIỂU MẪU: loại cảm xúc nằm trong một ô ẩn, gửi thiếu thì
+     * máy chủ luôn hiểu là "Thích" và bảng chọn năm cảm xúc thành vô nghĩa.
+     */
     const res = await fetch(form.action, {
         method: 'POST',
         headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token() },
+        body: new FormData(form),
     });
 
     if (!res.ok) throw new Error('loi');

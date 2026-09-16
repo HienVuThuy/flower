@@ -113,6 +113,7 @@ class CommunityReports
 
             if ($noiDung instanceof CommunityPost) {
                 $noiDung->forceFill(['hidden_at' => $noiDung->hidden_at ?? now(), 'hidden_reason' => $lyDo])->save();
+                app(\App\Services\Notification\NotificationCenter::class)->baiBiAn($noiDung, $lyDo);
             } elseif ($noiDung instanceof CommunityComment) {
                 $noiDung->forceFill(['hidden_at' => $noiDung->hidden_at ?? now()])->save();
             }
