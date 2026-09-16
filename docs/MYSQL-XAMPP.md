@@ -129,3 +129,31 @@ D:\xampp\mysql\bin\mysql.exe -u root < "D:\xampp-backup-sql\btlar-<ngày>.sql"
 Đã **thử phục hồi thật** vào một database riêng để kiểm chứng, không chỉ
 tạo ra tệp rồi tin là nó chạy được: 32 bảng, đúng 43/10/42/39 dòng như
 bản gốc.
+
+## Sự cố 16/09/2026 — hai kiểu hỏng mà Bước 3 chưa chữa được
+
+Lỗi thật (chạy `--console`):
+
+```
+[ERROR] Fatal error: Can't open and lock privilege tables: Incorrect file format 'roles_mapping'
+```
+
+`aria_chk -s *.MAI` cho thấy ba bảng hỏng: `db`, `proxies_priv` (sửa được bằng
+`-r` rồi `-o` như Bước 3) và `roles_mapping` — cái này báo **"is not a Aria
+table"**: phần đầu tệp đã bị ghi đè nên `aria_chk` không nhận ra, không sửa được.
+
+**Cách chữa `roles_mapping`:** chép lại cặp `roles_mapping.MAD` / `.MAI` sạch từ
+`D:\xampp\mysql\backup\mysql\` (bảng này rỗng trên máy dùng `root`, không dùng
+role, nên không mất gì). Nhớ sao lưu `data\mysql\` trước khi chép đè.
+
+**Kiểu hỏng thứ hai, âm thầm từ 13/09:** lúc máy sập, mấy dòng log bị ghi nhầm
+vào `data\multi-master.info`. Từ đó mỗi lần khởi động, MariaDB coi *mỗi dòng log*
+là tên một máy chủ chính để sao chép, rồi mở luồng replication, báo
+`Slave I/O: Invalid (empty) username` và đẻ thêm tệp `master-*.info`,
+`mysql-relay-bin*`. Máy này không dùng replication, nên đã tắt MySQL sạch
+(`mysqladmin -u root shutdown`) rồi **chuyển** (không xoá) các tệp đó sang
+`D:\xampp-backup-sql\mysql-he-thong-20260916-175406\replication-rac\`.
+
+Sau khi sửa: khởi động không còn dòng ERROR nào, dữ liệu đủ (53 sản phẩm,
+10 người dùng, 44 đơn, 9 bài Góc cây, migration mới nhất vẫn còn), đã xuất
+bản `.sql` mới vào `D:\xampp-backup-sql\`.
