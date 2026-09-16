@@ -205,7 +205,7 @@ gộp giỏ vãng lai vào tài khoản.
 
 Từng dòng hàng vẽ bằng `resources/views/components/cart/line.blade.php`;
 bảng tiền bên phải là `resources/views/components/cart/summary.blade.php`.
-`resources/js/cart-select.js` chỉ lo phần tick chọn cho mượt — tắt
+`resources/js/cart-live.js` lo phần tick chọn và đổi số lượng cho mượt — tắt
 JavaScript thì vẫn bấm nút gửi biểu mẫu được.
 
 **Mở trang giỏ = huỷ lượt "Mua ngay" đang dang dở.** Không làm vậy thì

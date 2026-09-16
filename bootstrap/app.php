@@ -22,6 +22,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', PreventBackHistory::class);
 
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         $middleware->appendToGroup('web', EnsureUserIsNotLocked::class);
 
         $middleware->appendToGroup('web', \App\Http\Middleware\GhiNhanNgayGhe::class);
