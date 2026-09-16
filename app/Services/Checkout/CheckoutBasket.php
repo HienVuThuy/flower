@@ -250,9 +250,4 @@ final readonly class CheckoutBasket
             ? bcadd((string) $this->memberTier->free_shipping_from, '0', 2)
             : $chung;
     }
-
-    private function money(mixed $value): string
-    {
-        return number_format((float) $value, 2, '.', '');
-    }
 }

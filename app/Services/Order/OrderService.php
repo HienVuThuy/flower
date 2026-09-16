@@ -343,9 +343,6 @@ class OrderService
 
             if ($restoreStock) {
                 $this->restoreStock($order);
-            }
-
-            if ($restoreStock) {
                 $this->coupons->release($order);
 
                 app(\App\Services\Points\PointLedger::class)->traDiemCuaDon($order);
