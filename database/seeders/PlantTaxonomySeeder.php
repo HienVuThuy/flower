@@ -8,48 +8,9 @@ use App\Models\Product;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
-/**
- * Cây phân loại sinh học + gán sản phẩm vào đúng nhánh.
- * ============================================================
- * DỮ LIỆU Ở ĐÂY LÀ DỮ LIỆU THỰC VẬT HỌC CÓ THẬT, không phải dữ liệu bịa
- * cho đủ chỗ. Mỗi tên khoa học dưới đây là tên được dùng trong tài liệu
- * thực vật, và cây phân cấp đi theo hệ thống phân loại phổ thông (Giới →
- * Ngành → Lớp → Bộ → Họ → Chi → Loài).
- *
- * ============================================================
- * NGUYÊN TẮC QUAN TRỌNG NHẤT: KHÔNG BỊA XUỐNG TỚI LOÀI.
- *
- * Nhiều mặt hàng KHÔNG xác định được tới loài, và đó là sự thật chứ
- * không phải dữ liệu thiếu:
- *
- *   - "Sen đá mix chậu đá" là nhiều loài trong một chậu — dừng ở HỌ
- *     Thuốc bỏng (Crassulaceae).
- *   - "Xương rồng bi" là tên chợ chứ không phải tên loài — dừng ở HỌ
- *     Xương rồng (Cactaceae).
- *   - "Vạn niên thanh" ở Việt Nam dùng cho vài chi khác nhau trong họ
- *     Ráy — dừng ở HỌ Ráy (Araceae).
- *   - Hoa hồng, lan hồ điệp, cúc bán ngoài chợ đều là giống lai, không
- *     có tên loài đơn — dừng ở CHI.
- *   - Lẵng hoa khai trương, hoa cưới, set quà là những sản phẩm PHỐI
- *     nhiều loài — KHÔNG gắn phân loại nào cả (`taxon_id` để NULL).
- *
- * Bịa một cái tên loài cho đủ bảy bậc thì trang chi tiết trông "đầy đủ"
- * hơn, và sai. Một người biết cây nhìn vào là mất tin cậy ngay.
- *
- * ============================================================
- * ẢNH ĐẠI DIỆN LẤY TỪ ẢNH SẢN PHẨM ĐÃ CÓ.
- *
- * Không tải ảnh mới từ Internet: mỗi ảnh mới là một giấy phép phải kiểm
- * và một dòng ghi công phải thêm. Ảnh sản phẩm sẵn có đã qua bước đó rồi
- * (xem ASSETS.md và trang /nguon-anh), và một tấm ảnh Monstera thật thì
- * minh hoạ cho Chi Monstera đúng y như một tấm ảnh tải mới.
- *
- * Nút nào không có ảnh đại diện thì để trống — giao diện tự vẽ hình lá
- * mặc định. Bậc Lớp và Bộ hầu như không có ảnh nào tả được chúng.
- */
+/** Cây phân loại sinh học + gán sản phẩm vào đúng nhánh. */
 class PlantTaxonomySeeder extends Seeder
 {
-    /** @var array<string, PlantTaxon> slug => nút đã tạo */
     private array $nut = [];
 
     public function run(): void
@@ -58,13 +19,6 @@ class PlantTaxonomySeeder extends Seeder
         $this->ganSanPham();
     }
 
-    /**
-     * Tạo một nút, hoặc lấy lại nếu đã có.
-     *
-     * firstOrCreate theo `slug`: chạy seeder lần thứ hai không được sinh
-     * ra cây thứ hai. Đây là seeder có thể phải chạy lại sau khi thêm
-     * sản phẩm mới.
-     */
     private function them(
         string $slug,
         TaxonRank $rank,
@@ -88,9 +42,6 @@ class PlantTaxonomySeeder extends Seeder
             ],
         );
 
-        // Chạy lại: cập nhật phần mô tả/ảnh nếu seeder được bổ sung,
-        // nhưng KHÔNG đụng vào parent_id của nút đã có — người quản trị
-        // có thể đã sửa lại cây bằng tay.
         if (! $taxon->wasRecentlyCreated) {
             $taxon->fill(array_filter([
                 'name' => $name,
@@ -108,17 +59,12 @@ class PlantTaxonomySeeder extends Seeder
         $this->them('gioi-thuc-vat', TaxonRank::Kingdom, 'Thực vật', 'Plantae', null,
             'Toàn bộ cây xanh — sinh vật tự dưỡng bằng quang hợp.');
 
-        /* ============================================================
-         * NGÀNH HẠT KÍN — cây có hoa. Phần lớn hàng của cửa hàng.
-         * ============================================================ */
         $this->them('nganh-hat-kin', TaxonRank::Phylum, 'Hạt kín', 'Magnoliophyta', 'gioi-thuc-vat',
             'Cây có hoa và có quả bọc hạt. Nhóm đông nhất trong giới thực vật.');
 
-        // ---------- LỚP HAI LÁ MẦM ----------
         $this->them('lop-hai-la-mam', TaxonRank::ClassRank, 'Hai lá mầm', 'Magnoliopsida', 'nganh-hat-kin',
             'Hạt có hai lá mầm, gân lá hình mạng, thân thường phân nhánh nhiều.');
 
-        // Bộ Hoa hồng
         $this->them('bo-hoa-hong', TaxonRank::Order, 'Hoa hồng', 'Rosales', 'lop-hai-la-mam');
         $this->them('ho-hoa-hong', TaxonRank::Family, 'Hoa hồng', 'Rosaceae', 'bo-hoa-hong',
             'Họ lớn gồm hoa hồng, đào, mận, táo — hoa thường 5 cánh.',
@@ -131,7 +77,6 @@ class PlantTaxonomySeeder extends Seeder
             'Cây đào — nở vào dịp Tết ở miền Bắc.',
             'products/canh-dao-phai-choi-tet.jpg');
 
-        // Bộ Cúc
         $this->them('bo-cuc', TaxonRank::Order, 'Cúc', 'Asterales', 'lop-hai-la-mam');
         $this->them('ho-cuc', TaxonRank::Family, 'Cúc', 'Asteraceae', 'bo-cuc',
             'Cái mà ta gọi là "bông hoa" thực ra là một cụm gồm rất nhiều hoa nhỏ.',
@@ -144,7 +89,6 @@ class PlantTaxonomySeeder extends Seeder
             'Cúc cắt cành thương mại là giống lai — dừng ở bậc chi.',
             'products/bo-cuc-hoa-mi-trang.jpg');
 
-        // Bộ Cẩm chướng
         $this->them('bo-cam-chuong', TaxonRank::Order, 'Cẩm chướng', 'Caryophyllales', 'lop-hai-la-mam');
         $this->them('ho-cam-chuong', TaxonRank::Family, 'Cẩm chướng', 'Caryophyllaceae', 'bo-cam-chuong',
             'Hoa nhỏ, nhiều cánh mảnh; gồm cẩm chướng và hoa baby.',
@@ -157,7 +101,6 @@ class PlantTaxonomySeeder extends Seeder
             'Gai thay cho lá để giảm thoát hơi nước; thân mọng trữ nước.',
             'products/xuong-rong-bi-chau-dat-nung.jpg');
 
-        // Bộ Thù du — họ Tú cầu
         $this->them('bo-thu-du', TaxonRank::Order, 'Thù du', 'Cornales', 'lop-hai-la-mam');
         $this->them('ho-tu-cau', TaxonRank::Family, 'Tú cầu', 'Hydrangeaceae', 'bo-thu-du',
             'Cụm hoa lớn hình cầu gồm rất nhiều hoa nhỏ.',
@@ -167,7 +110,6 @@ class PlantTaxonomySeeder extends Seeder
             'Màu hoa đổi theo độ chua của đất: đất chua ra xanh, đất kiềm ra hồng.',
             'products/bo-cam-tu-cau-xanh.jpg');
 
-        // Bộ Tai hùm — mẫu đơn và sen đá
         $this->them('bo-tai-hum', TaxonRank::Order, 'Tai hùm', 'Saxifragales', 'lop-hai-la-mam');
         $this->them('ho-mau-don', TaxonRank::Family, 'Mẫu đơn', 'Paeoniaceae', 'bo-tai-hum',
             'Hoa to nhiều lớp cánh; cây sống lâu năm.',
@@ -178,7 +120,6 @@ class PlantTaxonomySeeder extends Seeder
             'Nhóm "sen đá" — lá dày trữ nước, chịu hạn rất tốt.',
             'products/sen-da-mix-chau-da.jpg');
 
-        // Bộ Bông — kim ngân
         $this->them('bo-bong', TaxonRank::Order, 'Bông', 'Malvales', 'lop-hai-la-mam');
         $this->them('ho-cam-quy', TaxonRank::Family, 'Cẩm quỳ', 'Malvaceae', 'bo-bong',
             'Họ của bông, ca cao và kim ngân — lá thường có lông mịn.',
@@ -188,7 +129,6 @@ class PlantTaxonomySeeder extends Seeder
             'Thân dẻo nên bện được; trong tự nhiên mọc ở vùng đầm lầy.',
             'products/kim-ngan-ben-than.jpg');
 
-        // Bộ Long đởm — mai chiếu thuỷ
         $this->them('bo-long-dom', TaxonRank::Order, 'Long đởm', 'Gentianales', 'lop-hai-la-mam');
         $this->them('ho-truc-dao', TaxonRank::Family, 'Trúc đào', 'Apocynaceae', 'bo-long-dom',
             'Thân có nhựa mủ trắng; nhiều loài trong họ có độc.',
@@ -198,11 +138,9 @@ class PlantTaxonomySeeder extends Seeder
             'Hoa trắng nhỏ hướng xuống đất — tên gọi bắt nguồn từ đó.',
             'products/bonsai-mai-chieu-thuy.jpg');
 
-        // ---------- LỚP MỘT LÁ MẦM ----------
         $this->them('lop-mot-la-mam', TaxonRank::ClassRank, 'Một lá mầm', 'Liliopsida', 'nganh-hat-kin',
             'Hạt có một lá mầm, gân lá song song. Gồm lúa, cau dừa, lan, ráy.');
 
-        // Bộ Trạch tả — họ Ráy, nhóm cây cảnh trong nhà đông nhất
         $this->them('bo-trach-ta', TaxonRank::Order, 'Trạch tả', 'Alismatales', 'lop-mot-la-mam');
         $this->them('ho-ray', TaxonRank::Family, 'Ráy', 'Araceae', 'bo-trach-ta',
             'Họ của phần lớn cây cảnh trồng trong nhà: chịu bóng giỏi, lá to bản.',
@@ -223,7 +161,6 @@ class PlantTaxonomySeeder extends Seeder
             '"Hoa" trắng thực ra là mo bao quanh cụm hoa thật.',
             'products/cay-lan-y-chau-su-trang.jpg');
 
-        // Bộ Loa kèn — tulip
         $this->them('bo-loa-ken', TaxonRank::Order, 'Loa kèn', 'Liliales', 'lop-mot-la-mam');
         $this->them('ho-loa-ken', TaxonRank::Family, 'Loa kèn', 'Liliaceae', 'bo-loa-ken',
             'Mọc từ củ, hoa sáu cánh xếp thành hai vòng.',
@@ -233,7 +170,6 @@ class PlantTaxonomySeeder extends Seeder
             'Mọc từ củ; cần một mùa lạnh để ra hoa.',
             'products/bo-tulip-ha-lan.jpg');
 
-        // Bộ Măng tây — lan và lưỡi hổ
         $this->them('bo-mang-tay', TaxonRank::Order, 'Măng tây', 'Asparagales', 'lop-mot-la-mam');
         $this->them('ho-lan', TaxonRank::Family, 'Lan', 'Orchidaceae', 'bo-mang-tay',
             'Họ lớn nhất của thực vật có hoa; phần lớn sống bám trên thân cây khác.',
@@ -244,27 +180,12 @@ class PlantTaxonomySeeder extends Seeder
         $this->them('ho-mang-tay', TaxonRank::Family, 'Măng tây', 'Asparagaceae', 'bo-mang-tay',
             'Gồm măng tây, lưỡi hổ, huyết dụ — phần lớn rất chịu khô.',
             'products/luoi-ho-mini-de-ban.jpg');
-        /*
-         * "HUYẾT GIÁC" chứ không phải "huyết dụ" — LỖI ĐÃ SỬA.
-         *
-         * "Huyết dụ" trong tiếng Việt là tên của *Cordyline fruticosa*,
-         * một chi HOÀN TOÀN KHÁC (họ Măng tây nhưng chi Cordyline). Tên
-         * tiếng Việt của chi Dracaena là "huyết giác" — lấy theo loài
-         * Dracaena cambodiana.
-         *
-         * Gọi sai tên chi thì cả nhánh Lưỡi hổ nằm dưới một cái tên chỉ
-         * vào loài khác, và đó đúng là kiểu sai mà một trang "phân loại
-         * khoa học" không được phép có.
-         */
         $this->them('chi-huyet-du', TaxonRank::Genus, 'Huyết giác', 'Dracaena', 'ho-mang-tay',
             'Trước đây lưỡi hổ được xếp vào chi Sansevieria; nay gộp vào chi này.');
         $this->them('loai-luoi-ho', TaxonRank::Species, 'Lưỡi hổ', 'Dracaena trifasciata', 'chi-huyet-du',
             'Trước đây xếp vào chi Sansevieria; chịu khô và thiếu sáng rất giỏi.',
             'products/luoi-ho-mini-de-ban.jpg');
 
-        /* ============================================================
-         * NGÀNH DƯƠNG XỈ — không có hoa, sinh sản bằng bào tử.
-         * ============================================================ */
         $this->them('nganh-duong-xi', TaxonRank::Phylum, 'Dương xỉ', 'Polypodiophyta', 'gioi-thuc-vat',
             'Không có hoa và không có hạt — sinh sản bằng bào tử ở mặt dưới lá.',
             'products/duong-xi-boston-treo.jpg');
@@ -278,9 +199,6 @@ class PlantTaxonomySeeder extends Seeder
             'Ưa ẩm cao; lá khô mép là dấu hiệu không khí quá khô.',
             'products/duong-xi-boston-treo.jpg');
 
-        /* ============================================================
-         * NGÀNH THÔNG — cây hạt trần, lá kim.
-         * ============================================================ */
         $this->them('nganh-thong', TaxonRank::Phylum, 'Thông', 'Pinophyta', 'gioi-thuc-vat',
             'Hạt trần, không có hoa thật; lá thường hình kim hoặc vảy.',
             'products/bonsai-tung-la-han-dang-truc.jpg');
@@ -295,21 +213,6 @@ class PlantTaxonomySeeder extends Seeder
             'products/bonsai-tung-la-han-dang-truc.jpg');
     }
 
-    /**
-     * Gắn sản phẩm vào nhánh sâu nhất mà cửa hàng biết CHẮC.
-     *
-     * Sản phẩm không có trong bảng này thì `taxon_id` để nguyên NULL —
-     * xem nguyên tắc ở đầu tệp.
-     */
-    /**
-     * Vì sao đường dẫn phân loại của món này DỪNG SỚM.
-     *
-     * Không có mục nào ở đây = xuống tới bậc Loài, không phải giải thích
-     * gì. Xem migration `add_taxon_note_to_products_table` để biết vì
-     * sao ghi chú nằm ở sản phẩm chứ không ở nút phân loại.
-     *
-     * @return array<string, string>
-     */
     private function ghiChuDungSom(): array
     {
         return [
@@ -359,8 +262,6 @@ class PlantTaxonomySeeder extends Seeder
             'Trầu bà leo cột' => 'loai-trau-ba',
             'Cây lan ý chậu sứ trắng' => 'chi-lan-y',
 
-            // "Vạn niên thanh" ở Việt Nam dùng cho vài chi khác nhau
-            // trong họ Ráy — dừng ở bậc HỌ, không đoán chi.
             'Vạn niên thanh chậu sứ' => 'ho-ray',
 
             'Kim ngân bện thân' => 'loai-kim-ngan',
@@ -371,7 +272,6 @@ class PlantTaxonomySeeder extends Seeder
             'Bonsai tùng la hán dáng trực' => 'loai-tung-la-han',
             'Bonsai mai chiếu thuỷ' => 'loai-mai-chieu-thuy',
 
-            // Nhiều loài trong một chậu / tên chợ — dừng ở bậc HỌ.
             'Sen đá mix chậu đá' => 'ho-thuoc-bong',
             'Sen đá nâu chậu sứ mini' => 'ho-thuoc-bong',
             'Sen đá kim cương chậu treo' => 'ho-thuoc-bong',
@@ -392,11 +292,6 @@ class PlantTaxonomySeeder extends Seeder
 
             $product->taxon_id = $taxon->id;
 
-            /*
-             * Ghi chú CHỈ khi chưa xuống tới bậc Loài. Đặt một lời giải
-             * thích lên món đã có tên loài đầy đủ là nói thừa, và người
-             * đọc sẽ đi tìm xem mình vừa bỏ sót cái gì.
-             */
             $product->taxon_note = $taxon->rank === TaxonRank::Species
                 ? null
                 : ($ghiChu[$tenSanPham] ?? null);
@@ -405,13 +300,6 @@ class PlantTaxonomySeeder extends Seeder
             $daGan++;
         }
 
-        /*
-         * BÁO RA những món dừng sớm mà KHÔNG có lời giải thích.
-         *
-         * Đó là trường hợp tệ nhất: chuỗi phân loại cụt mà không nói vì
-         * sao, đúng thứ trông như dữ liệu làm dở. Im lặng bỏ qua thì
-         * người thêm sản phẩm mới sẽ không biết mình còn thiếu gì.
-         */
         foreach ($ban as $tenSanPham => $slug) {
             $taxon = $this->nut[$slug] ?? null;
 

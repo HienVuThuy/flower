@@ -2,17 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Phiếu nhập này là hàng mới về, hay là khai tồn có sẵn.
- * ============================================================
- * HAI LOẠI KHÁC NHAU Ở MỘT ĐIỂM SỐNG CÒN: phiếu tồn đầu kỳ KHÔNG cộng
- * vào kho. Hàng đã nằm trên kệ rồi; cộng thêm là nhân đôi tồn của cả
- * cửa hàng, và sai lệch chỉ lộ ra ở lần kiểm kê đầu tiên.
- *
- * Và khác ở độ tin: giá vốn hàng mới về có chứng từ; giá vốn tồn đầu kỳ
- * là con số người ta nhớ lại. Trộn hai thứ rồi gọi chung là "lãi gộp" là
- * làm mất đúng cái đáng tin của báo cáo.
- */
+/** Phiếu nhập này là hàng mới về, hay là khai tồn có sẵn. */
 enum StockReceiptKind: string
 {
     case NhapMoi = 'nhap_moi';
@@ -37,21 +27,11 @@ enum StockReceiptKind: string
         };
     }
 
-    /** Ghi sổ có cộng vào tồn kho không. */
-    /**
-     * Ghi sổ có đụng tới tồn kho không.
-     *
-     * Phiếu trả CÓ đụng — nhưng theo chiều ngược lại, và điều đó nằm ở
-     * dấu của số lượng chứ không ở đây: dòng phiếu trả lưu số ÂM. Nhờ vậy
-     * cùng một đoạn cộng kho và cùng một bảng giá vốn phục vụ cả hai
-     * chiều, không có bản chép thứ hai để lệch.
-     */
     public function congVaoKho(): bool
     {
         return $this === self::NhapMoi || $this === self::TraNcc;
     }
 
-    /** Giá vốn của loại phiếu này là ước tính hay có chứng từ. */
     public function giaVonUocTinh(): bool
     {
         return $this === self::TonDauKy;

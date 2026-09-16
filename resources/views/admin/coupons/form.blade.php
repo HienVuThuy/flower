@@ -120,8 +120,6 @@
                                    value="{{ old('per_user_limit', $coupon->per_user_limit) }}"
                                    class="form-control">
                             <div class="form-text">
-                                {{-- Nói rõ khác biệt với ô bên trên, vì hai ô
-                                     nằm cạnh nhau và tên gọi gần giống. --}}
                                 Khác với ô bên trái: ô kia là tổng lượt của cả chương trình,
                                 ô này là số lần <strong>một khách</strong> được dùng.
                                 Bỏ trống là không giới hạn riêng.
@@ -143,9 +141,6 @@
                                 @endforeach
                             </select>
                             <div class="form-text">
-                                {{-- Nói rõ hệ quả: gắn vào sự kiện là mã BIẾN MẤT
-                                     khỏi trang Voucher chung. Không nói thì admin
-                                     gắn xong lại tưởng mã bị hỏng. --}}
                                 Gắn vào chương trình thì mã chỉ hiện ở <strong>trang sự kiện</strong>
                                 đó, không hiện ở trang Voucher chung.
                             </div>
@@ -158,9 +153,6 @@
                             @endphp
 
                             <div class="d-flex flex-wrap gap-3 pt-1">
-                                {{-- available(): không cho ràng buộc mã giảm giá
-                                     vào một hình thức chưa dùng được — mã đó sẽ
-                                     thành mã không ai áp dụng nổi. --}}
                                 @foreach(\App\Enums\PaymentMethod::available() as $method)
                                     <div class="form-check">
                                         <input class="form-check-input" type="checkbox"
@@ -182,7 +174,6 @@
                             <x-form-error name="payment_methods" :array="true"/>
                         </div>
 
-                        {{-- QUYỀN LỢI HẠNG THÀNH VIÊN: mã dành cho hạng nào, và có cộng dồn với giảm theo hạng không. --}}
                         <div class="col-md-6">
                             <label class="form-label" for="min_member_tier_id">Dành cho hạng thành viên</label>
                             @php
@@ -224,10 +215,6 @@
                                 </label>
                             </div>
                             <div class="form-text">
-                                {{-- Cảnh báo đúng chỗ ra quyết định: bật ô này là
-                                     công khai mã cho mọi người, kể cả khách chưa
-                                     đăng nhập. Mã in trên phiếu hay gửi riêng thì
-                                     phải để tắt. --}}
                                 Tắt thì mã vẫn dùng được khi khách <strong>nhập tay</strong>,
                                 chỉ là không ai tự tìm thấy. Mã in trên phiếu mua hàng hoặc
                                 gửi riêng cho một khách nên để tắt.

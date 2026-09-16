@@ -13,7 +13,6 @@
         </p>
     </div>
 
-    {{-- Chọn cửa sổ quan sát bằng liên kết thường, không cần JavaScript. --}}
     <div class="d-flex flex-wrap gap-2">
         @foreach($windows as $value => $label)
             <a href="{{ route('admin.pricing-advisor.index', ['ngay' => $value]) }}"
@@ -24,16 +23,7 @@
     </div>
 </div>
 
-{{-- ============ MẪU DỮ LIỆU ĐANG LỚN HAY NHỎ ============ --}}
 @if($result['thin_data'])
-    {{--
-        NÓI TRƯỚC KHI ADMIN ĐỌC ĐỀ XUẤT, không phải chú thích nhỏ ở cuối
-        trang.
-
-        Cửa hàng mới có vài chục đơn. Ở quy mô đó một đề xuất là gợi ý để
-        đi kiểm tra, không phải kết luận để hành động ngay — và admin cần
-        biết điều đó TRƯỚC khi đọc, chứ không phải sau khi đã đổi giá.
-    --}}
     <div class="alert alert-warning d-flex gap-3 align-items-start">
         
         <div>
@@ -75,7 +65,6 @@
     </p>
 </div>
 
-{{-- ============ DANH SÁCH ĐỀ XUẤT ============ --}}
 @if($result['suggestions']->isEmpty())
     <div class="admin-panel p-4 mb-4">
         <x-site.empty-state
@@ -107,13 +96,6 @@
                     </a>
                 </div>
 
-                {{--
-                    BẰNG CHỨNG ĐỨNG TRƯỚC LỜI KHUYÊN.
-
-                    Đây là công cụ khuyên đổi giá bán. Admin phải kiểm lại
-                    được kết luận mà không cần tin vào mã nguồn — nên con
-                    số đọc trước, ý kiến đọc sau.
-                --}}
                 <ul class="mb-2 ps-3">
                     @foreach($s->evidence as $e)
                         <li>{{ $e }}</li>
@@ -130,7 +112,6 @@
     </div>
 @endif
 
-{{-- ============ DỊP LỄ SẮP TỚI ============ --}}
 <div class="admin-panel p-4 mb-4">
     <h2 class="h6 fw-bold mb-1">Dịp lễ sắp tới (90 ngày)</h2>
     <p class="admin-page-subtitle mb-3">
@@ -179,17 +160,8 @@
     @endif
 </div>
 
-{{-- ============ DỊP ÂM LỊCH ============ --}}
 <div class="admin-panel p-4">
     <h2 class="h6 fw-bold mb-1">Dịp theo âm lịch</h2>
-    {{--
-        KHÔNG ĐOÁN NGÀY DƯƠNG.
-
-        Ngày dương của các dịp này đổi mỗi năm. Viết cứng một ngày là ghi
-        một dữ kiện sai cho mọi năm trừ một năm — và sai một cách im lặng.
-        Nên chỉ liệt kê để nhắc, không kết luận "đã có chương trình chưa",
-        vì không biết ngày thì không kiểm được.
-    --}}
     <p class="admin-page-subtitle mb-3">
         Ngày dương thay đổi theo từng năm nên hệ thống <strong>không tự tra</strong> và
         không kết luận dịp nào đã có chương trình. Đây là danh sách để nhắc — ngày cụ thể

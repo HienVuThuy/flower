@@ -11,16 +11,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Ảnh và video của bài Góc cây — MỘT CỬA để lưu và xoá.
- * ============================================================
- * Ảnh đi qua ImageStore (tước metadata, sinh WebP); video qua
- * VideoMetadataStripper (xoá toạ độ GPS). Giới hạn khai ở đây, dùng chung cho
- * kiểm dữ liệu ở máy chủ và câu chữ trên giao diện.
- *
- * Tổng dung lượng một lần gửi còn bị máy chủ giới hạn (post_max_size = 40MB
- * trên XAMPP), nên video tối đa 30MB và giao diện báo trước khi gửi.
- */
+/** Ảnh và video của bài Góc cây — MỘT CỬA để lưu và xoá. */
 class CommunityMediaStore
 {
     public const TOI_DA_TEP = 10;
@@ -44,13 +35,6 @@ class CommunityMediaStore
         return str_starts_with((string) $tep->getMimeType(), 'video/');
     }
 
-    /**
-     * Luật kiểm tệp tải lên cho bài.
-     *
-     * @param  int  $daCo  số tệp bài đang có (khi sửa bài)
-     * @param  int  $videoDaCo  số video bài đang có
-     * @return array<string, list<mixed>>
-     */
     public static function quyTac(int $daCo = 0, int $videoDaCo = 0): array
     {
         return [
@@ -81,7 +65,6 @@ class CommunityMediaStore
         ];
     }
 
-    /** @param list<UploadedFile> $tep */
     public function them(CommunityPost $post, array $tep): void
     {
         $thuTu = (int) ($post->media()->max('sort_order') ?? -1) + 1;
@@ -93,7 +76,6 @@ class CommunityMediaStore
                 try {
                     $this->video->tuoc($duongDan);
                 } catch (\Throwable $e) {
-                    // Cùng mức với ảnh: không tước được là dữ liệu vị trí còn trên máy chủ.
                     Log::error('KHÔNG XOÁ ĐƯỢC VỊ TRÍ của video vừa tải lên', ['path' => $duongDan, 'loi' => $e->getMessage()]);
                 }
 

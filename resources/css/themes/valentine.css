@@ -1,8 +1,4 @@
-/*
- * THEME: valentine — Layer 1 (màu sắc/identity).
- * Layer 2: resources/css/seasonal/valentine.css.
- * Layer 3: resources/js/theme/effects/valentine-effect.js (cánh hoa rơi rất nhẹ).
- */
+/* THEME: valentine — Layer 1 (màu sắc/identity). */
 
 [data-theme="valentine"] {
     --brand-50:  #fbeef1;

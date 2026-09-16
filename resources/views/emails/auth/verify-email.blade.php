@@ -1,10 +1,4 @@
-{{--
-    Thư chứa mã OTP xác thực email.
-
-    Bảng + style nội tuyến, KHÔNG dùng class hay tệp CSS ngoài — Gmail và
-    Outlook bỏ <link> và cắt <style> ở <head>. Xem chú thích dài hơn ở
-    emails/orders/confirmation.blade.php.
---}}
+{{-- Thư chứa mã OTP xác thực email. --}}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -34,12 +28,6 @@
         </td>
     </tr>
 
-    {{--
-        MÃ ĐỂ TRONG MỘT Ô LỚN, GIÃN CHỮ.
-
-        Khách sẽ đọc mã trên điện thoại rồi gõ lại trên máy tính. Chữ to,
-        giãn ra và dùng phông đều nét để không nhầm 0 với O, 1 với l.
-    --}}
     <tr>
         <td style="padding:8px 24px 16px 24px;">
             <div style="padding:18px 12px; border:1px dashed #2f6b46; border-radius:8px; background:#f2f7f3; text-align:center;">
@@ -57,13 +45,6 @@
                 Mã có hiệu lực trong <strong>{{ $minutes }} phút</strong> và chỉ dùng được một lần.
             </p>
 
-            {{--
-                Nói rõ phải làm gì nếu KHÔNG phải họ yêu cầu.
-
-                Ai đó có thể gõ nhầm địa chỉ email khi đăng ký, và người
-                nhận thư này cần biết mình không phải làm gì cả — im lặng
-                ở đây làm người ta lo, hoặc tệ hơn, làm họ bấm bừa.
-            --}}
             <p style="margin:0 0 12px 0; color:#5d6660;">
                 Nếu bạn không đăng ký tài khoản tại {{ \App\Services\Shop\StoreProfile::name() }}, hãy bỏ qua thư này.
                 Không ai có thể dùng địa chỉ email của bạn nếu không có mã ở trên.

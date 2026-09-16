@@ -87,7 +87,6 @@
                 Trạng thái &amp; thứ tự
             </h2>
 
-            {{-- Nhóm quyết định danh mục hiện ở trang cây & hoa hay ở trang /phu-kien. --}}
             <div class="mb-3">
                 <label class="form-label" for="kind">Nhóm danh mục</label>
                 @php $kindOld = old('kind', isset($category) ? ($category->kind?->value ?? 'plant') : 'plant'); @endphp

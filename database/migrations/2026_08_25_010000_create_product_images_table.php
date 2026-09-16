@@ -6,18 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Thư viện ảnh của sản phẩm.
-     *
-     * `products.main_image` vẫn được giữ làm ảnh đại diện (dùng ở
-     * card, danh sách, kết quả tìm kiếm) — bảng này bổ sung các ảnh
-     * phụ cho gallery ở trang chi tiết và cho hiệu ứng đổi ảnh khi
-     * rê chuột trên card.
-     *
-     * Không gộp main_image vào bảng này để tránh phải sửa mọi nơi
-     * đang đọc nó, và vì "ảnh đại diện" là quan hệ 1-1 có ý nghĩa
-     * riêng, không phải một phần tử bất kỳ trong danh sách.
-     */
     public function up(): void
     {
         Schema::create('product_images', function (Blueprint $table) {

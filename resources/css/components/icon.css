@@ -1,8 +1,4 @@
-/*
- * ICON — SVG sprite, thay cho icon font.
- * Kích thước theo font-size của phần tử cha (1em), màu theo
- * currentColor, nên dùng ở đâu cũng khớp với chữ bên cạnh.
- */
+/* ICON — SVG sprite, thay cho icon font. */
 
 .icon {
     display: inline-block;

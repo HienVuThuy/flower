@@ -1,25 +1,8 @@
 @props(['journal'])
 
 @php
-    /*
-     * ĐÃ CHĂM SÓC NHỮNG GÌ — tổng hợp việc đã làm.
-     * ============================================================
-     * Trả lời câu người trồng cây thật sự hỏi khi mở sổ ra: *lần gần nhất
-     * mình bón phân là bao giờ?* Thông tin đó vốn đã nằm rải trong dòng
-     * thời gian, nhưng muốn biết thì phải cuộn và đếm bằng mắt.
-     *
-     * KHÔNG NHẮC "ĐÃ ĐẾN LÚC TƯỚI CHƯA". Chu kỳ tưới phụ thuộc loài,
-     * mùa, chậu, chỗ đặt và thời tiết tuần đó — hệ thống không biết gì
-     * trong số đó. Đưa ra một lời nhắc dựa trên phép đếm ngày là bịa một
-     * lời khuyên chăm cây, và người tin theo có thể làm úng cây.
-     *
-     * Nói *"đã tưới 6 lần, gần nhất 3 ngày trước"* là sự thật; nói *"nên
-     * tưới hôm nay"* thì không.
-     */
     $dem = $journal->careTally();
 
-    // Lần gần nhất làm từng việc — quét một lượt qua các trang đã nạp sẵn,
-    // không truy vấn thêm.
     $ganNhat = [];
 
     foreach ($journal->entries as $entry) {

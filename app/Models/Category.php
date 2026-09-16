@@ -36,13 +36,6 @@ class Category extends Model
         return $this->hasMany(Product::class);
     }
 
-    /**
-     * Danh mục HÀNG CHÍNH (hoa, cây cảnh) — mặc định của mọi trang bán.
-     *
-     * NULL cũng tính là hàng chính: bản ghi tạo trước migration thêm cột
-     * này đều là hoa và cây cảnh. Bỏ sót điều kiện đó thì catalog cũ biến
-     * mất khỏi trang chủ mà không báo lỗi gì.
-     */
     public function scopePlants(Builder $query): Builder
     {
         return $query->where(fn ($q) => $q
@@ -50,20 +43,11 @@ class Category extends Model
             ->orWhereNull('kind'));
     }
 
-    /**
-     * Danh mục đang bật.
-     *
-     * TÁCH RIÊNG khỏi plants()/supplies() vì hai câu hỏi khác nhau:
-     * "danh mục này thuộc nhóm nào" và "cửa hàng có đang mở bán nhóm
-     * này không". Gộp lại thì trang quản trị — nơi PHẢI thấy cả danh
-     * mục đã tắt — không dùng lại được scope nhóm.
-     */
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
     }
 
-    /** Danh mục PHỤ TRỢ (phụ kiện, vật tư chăm sóc). */
     public function scopeSupplies(Builder $query): Builder
     {
         return $query->where('kind', CategoryKind::Supply->value);

@@ -1,6 +1,4 @@
-/*
- * UTILITIES — số lượng nhỏ, có chủ đích. Không thay Bootstrap utilities.
- */
+/* UTILITIES — số lượng nhỏ, có chủ đích. */
 
 .visually-hidden-focusable:not(:focus):not(:focus-within) {
     position: absolute !important;
@@ -36,16 +34,6 @@
 }
 
 
-/*
- * THANH THỜI GIAN CỦA THÔNG BÁO TỰ ĐÓNG
- * ============================================================
- * Vạch mảnh chạy hết bề ngang thông báo rồi nó tự đóng. Không có vạch
- * này thì thông báo đột ngột biến mất trông như trang bị lỗi.
- *
- * Thời lượng do JavaScript đặt qua animation-duration (khác nhau giữa
- * thông báo thành công và lỗi), nên ở đây không gán con số nào.
- */
-
 .alert {
     position: relative;
     overflow: hidden;
@@ -70,10 +58,6 @@
     to   { transform: scaleX(0); }
 }
 
-/*
- * Người bật "giảm chuyển động" vẫn muốn thông báo tự dọn đi — chỉ là
- * không muốn nhìn thấy thanh chạy. Ẩn thanh, giữ nguyên hành vi đóng.
- */
 @media (prefers-reduced-motion: reduce) {
     .alert__timer {
         display: none;

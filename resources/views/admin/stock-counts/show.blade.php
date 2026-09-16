@@ -7,12 +7,6 @@
 @php
     $tien = fn ($v) => \App\Services\Shop\Money::format((string) $v);
 
-    /*
-     * GIÁ TRỊ CHÊNH LỆCH TÍNH THEO GIÁ BÁN HIỆN TẠI, và nói rõ như vậy.
-     *
-     * Giá vốn của phần hao hụt thường không có (hàng tồn từ trước không có phiếu
-     * nhập). Gọi con số này là "thiệt hại" là nói sai một con số kế toán.
-     */
     $giaTri = fn ($d) => $d->variant?->price ?? $d->product?->price()->finalPrice;
     $tongGiaTri = '0.00';
     $khongDinhGia = 0;

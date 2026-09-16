@@ -16,9 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Dùng điểm thưởng trừ tiền khi đặt hàng.
- */
+/** Dùng điểm thưởng trừ tiền khi đặt hàng. */
 class DiemTruTienTest extends TestCase
 {
     use RefreshDatabase;
@@ -42,7 +40,6 @@ class DiemTruTienTest extends TestCase
         $this->so()->cong($this->u, $diem, PointReason::DangBai, 'nap:' . $diem . ':' . random_int(1, 999999));
     }
 
-    /** Bỏ một món 300.000đ vào giỏ và điền xong bước thông tin. */
     private function vaoThanhToan(string $gia = '300000.00'): Product
     {
         $sp = Product::factory()->for(Category::factory())->price($gia)->stock(50)->create();
@@ -65,7 +62,6 @@ class DiemTruTienTest extends TestCase
         $this->nap(5000);
         $this->vaoThanhToan();
 
-        // 300.000 × 30% = 90.000đ = 900 điểm.
         $this->post(route('shop.checkout.apply-points'), ['points' => 5000])
             ->assertSessionHas('success', fn ($m) => str_contains($m, 'tối đa 900 điểm'));
 
@@ -83,14 +79,8 @@ class DiemTruTienTest extends TestCase
         $this->post(route('shop.checkout.apply-coupon'), ['coupon_code' => 'GIAM100K'])->assertSessionHas('success');
         $this->post(route('shop.checkout.apply-points'), ['points' => 5000]);
 
-        // (300.000 − 100.000) × 30% = 60.000đ — không phải 90.000đ tính trên giá trước mã.
         $this->get(route('shop.checkout.details'))->assertSee('data-diem-giam="60000.00"', false);
 
-        /*
-         * GIỎ TỰ KẸP, không chỉ dựa vào CheckoutSource. Thử phá code đã chứng
-         * minh: tính trần của giỏ trên giá TRƯỚC mã mà bài trên vẫn xanh, vì
-         * CheckoutSource đã kẹp sẵn số điểm trước khi đưa vào giỏ.
-         */
         $gio = app(\App\Services\Checkout\CheckoutSource::class)->basket();
         $this->assertNotNull($gio->coupon, 'Giỏ phải đang mang mã để phép kiểm có nghĩa');
         $this->assertSame(600, $gio->withPoints(5000)->pointsUsed());
@@ -145,13 +135,11 @@ class DiemTruTienTest extends TestCase
 
         $this->assertSame(500, $this->so()->soDu($this->u));
 
-        // Đối soát: phần giảm phân bổ xuống dòng = mã + điểm.
         $this->assertSame(
             bcadd((string) $don->coupon_discount, (string) $don->points_discount, 2),
             bcadd((string) $don->items()->sum('discount_amount'), '0', 2),
         );
 
-        // Đặt xong thì đơn sau không tự dùng điểm.
         $this->assertNull(session(\App\Services\Checkout\CheckoutSource::POINTS_KEY));
     }
 
@@ -162,7 +150,6 @@ class DiemTruTienTest extends TestCase
         $this->vaoThanhToan();
         $this->post(route('shop.checkout.apply-points'), ['points' => 500]);
 
-        // Tab khác vừa tiêu gần hết điểm.
         $this->so()->tru($this->u, 450, PointReason::DoiVoucher, 'tab-khac');
 
         $this->post('/thanh-toan/dat-hang')->assertRedirect();
@@ -223,7 +210,6 @@ class DiemTruTienTest extends TestCase
         $tra = \App\Models\PointTransaction::where('reason', PointReason::HoanDiem->value)->sole();
         $this->assertSame(500, $tra->amount);
 
-        // Điểm kiếm được từ đơn đã bị trừ hết lại → số dư về đúng số trước khi mua.
         $this->assertSame(1000, $this->so()->soDu($this->u));
     }
 }

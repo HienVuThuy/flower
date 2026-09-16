@@ -12,11 +12,7 @@
         <div class="surface-card p-4 p-md-5">
             <h1 class="text-h3 mb-2">Sửa bài của bạn</h1>
 
-            {{--
-                NÓI TRƯỚC HỆ QUẢ: bài đã đăng sửa xong quay lại hàng chờ duyệt.
-                "Duyệt trước khi hiện" là luật của Góc cây, và sửa sau khi được
-                duyệt không được là cửa sau để đăng thứ chưa ai đọc.
-            --}}
+            {{-- NÓI TRƯỚC HỆ QUẢ: bài đã đăng sửa xong quay lại hàng chờ duyệt. --}}
             @if($post->isApproved() || $post->isHidden())
                 <p class="composer__canhbao" data-canh-bao-duyet>
                     Bài đang hiển thị. Lưu thay đổi xong, bài sẽ được gửi duyệt lại trước khi hiện.

@@ -17,16 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/**
- * Trả hàng cho nhà cung cấp.
- * ============================================================
- * MỘT TRANG CHO CẢ HAI LOẠI HÀNG.
- *
- * Bên dưới là hai cơ chế khác nhau (phiếu số âm cho hàng đếm được, ghi
- * thẳng lên lô cho hoa), nhưng với người đứng ở quầy thì đó là MỘT việc:
- * "hàng này hỏng, trả lại vựa". Bắt họ nhớ hai chỗ khác nhau tuỳ loại
- * hàng là bắt họ học cấu trúc bên trong của phần mềm.
- */
+/** Trả hàng cho nhà cung cấp. */
 class SupplierReturnController extends Controller
 {
     public function __construct(
@@ -45,11 +36,6 @@ class SupplierReturnController extends Controller
             ->get();
 
         return view('admin.supplier-returns.index', [
-            /*
-             * NGUỒN ĐỂ TRẢ: phiếu nhập ĐÃ GHI SỔ và lô hoa CHƯA trả lần
-             * nào. Phiếu còn nháp không hiện — hàng chưa vào kho thì
-             * không có gì để trả, sửa phiếu nháp đó thay vì lập phiếu trả.
-             */
             'phieuNhap' => $phieuNhap,
 
             'loHoa' => FlowerLot::query()
@@ -78,16 +64,6 @@ class SupplierReturnController extends Controller
         ] + $this->daTraTheoDong($phieuNhap));
     }
 
-    /**
-     * Số đã trả của MỌI dòng phiếu trên trang, trong MỘT truy vấn.
-     *
-     * Lỗi đã sửa: trước đây view gọi soDaTra() cho từng dòng — hai truy vấn
-     * mỗi dòng. Đo trên dữ liệu mẫu: 130 truy vấn cho một trang. Cùng định
-     * nghĩa với SupplierReturnService::soDaTra(): cộng số lượng trên các
-     * phiếu trả trỏ về phiếu gốc, theo mặt hàng và quy cách.
-     *
-     * @return array{daTraTheoDong: \Closure(int): int}
-     */
     private function daTraTheoDong(\Illuminate\Support\Collection $phieuNhap): array
     {
         $tong = \App\Models\StockReceiptItem::query()

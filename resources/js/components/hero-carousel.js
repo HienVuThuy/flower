@@ -1,14 +1,4 @@
-/*
- * Luân phiên ảnh trong khung hero.
- * ============================================================
- * Bộ ảnh do server render sẵn theo theme đang bật (config/theme.php),
- * JS chỉ lo việc đổi ảnh — không biết và không cần biết theme nào.
- *
- * Ba điều bắt buộc:
- *  1. Tôn trọng prefers-reduced-motion: không tự đổi ảnh.
- *  2. Dừng khi tab bị ẩn, để không chạy timer vô ích ở nền.
- *  3. Không làm gì nếu chỉ có một ảnh.
- */
+/* Luân phiên ảnh trong khung hero. */
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
@@ -51,7 +41,6 @@ function startCarousel(root) {
         document.hidden ? stop() : start();
     });
 
-    // Người dùng bật/tắt giảm chuyển động ngay khi đang xem trang.
     window.matchMedia(REDUCED_MOTION).addEventListener('change', (e) => {
         e.matches ? stop() : start();
     });

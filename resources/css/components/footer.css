@@ -1,6 +1,4 @@
-/*
- * FOOTER
- */
+/* FOOTER */
 
 .site-footer {
     background: var(--surface-alt);
@@ -45,7 +43,6 @@
     font-size: 0.8125rem;
 }
 
-/* Địa chỉ dài — cho xuống dòng thay vì tràn ra khỏi cột. */
 .site-footer__address {
     line-height: 1.5;
     overflow-wrap: anywhere;

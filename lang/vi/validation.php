@@ -1,16 +1,6 @@
 <?php
 
-/*
- * THÔNG BÁO KIỂM TRA DỮ LIỆU — TIẾNG VIỆT
- * ============================================================
- * :attribute được thay bằng tên trường. Muốn tên hiển thị thân thiện
- * (ví dụ "số điện thoại" thay vì "recipient_phone") thì khai ở mảng
- * 'attributes' cuối tệp, hoặc ở phương thức attributes() của FormRequest.
- *
- * Giữ ĐẦY ĐỦ danh sách quy tắc của Laravel thay vì chỉ dịch vài cái hay
- * dùng: thiếu khoá nào thì Laravel rơi về chuỗi tiếng Anh, và lỗi đó
- * chỉ lộ ra đúng lúc người dùng nhập sai — rất khó phát hiện khi test.
- */
+/* THÔNG BÁO KIỂM TRA DỮ LIỆU — TIẾNG VIỆT */
 
 return [
 
@@ -186,10 +176,6 @@ return [
     'ulid' => ':attribute phải là ULID hợp lệ.',
     'uuid' => ':attribute phải là UUID hợp lệ.',
 
-    /*
-     * Thông báo riêng cho từng trường, dạng: 'trường.quy_tắc' => '...'
-     * Dùng khi câu chung ở trên chưa đủ rõ với người dùng cuối.
-     */
     'custom' => [
         'attribute-name' => [
             'rule-name' => 'thông báo tuỳ chỉnh',
@@ -200,10 +186,6 @@ return [
         ],
     ],
 
-    /*
-     * Tên hiển thị của các trường dùng nhiều nơi.
-     * FormRequest có attributes() riêng thì bản đó được ưu tiên.
-     */
     'attributes' => [
         'name' => 'họ tên',
         'email' => 'email',

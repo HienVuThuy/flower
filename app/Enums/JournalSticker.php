@@ -2,29 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Nhãn dán gắn vào một trang nhật ký.
- * ============================================================
- * KHÔNG DÙNG EMOJI. Nhãn dán ở đây là hình vẽ SVG nằm trong mã nguồn
- * (`components/journal/sticker.blade.php`), vì ba lý do:
- *
- *   1. Emoji hiển thị khác nhau trên từng hệ điều hành — cùng một trang
- *      nhật ký, máy này ra hình này, máy kia ra hình khác.
- *   2. Emoji ăn theo màu chữ không được; SVG thì theo được màu của bộ
- *      giao diện sổ mà người dùng chọn.
- *   3. Trình đọc màn hình đọc emoji ra một cái tên tiếng Anh dài dòng.
- *
- * ============================================================
- * NHÃN DÁN CÓ NGHĨA, KHÔNG CHỈ ĐỂ ĐẸP.
- *
- * Mỗi nhãn kèm một `meaning()` — "hôm nay đã tưới", "cây ra hoa", "bị
- * sâu". Nhờ vậy nhìn lướt dòng thời gian là thấy được chuyện gì đã xảy
- * ra mà không phải đọc từng trang.
- *
- * Đó cũng là lý do bộ nhãn ĐÓNG chứ không cho tự tải lên: một bộ hình có
- * ý nghĩa chung thì đọc lướt được; một bộ hình ai thích gì dán nấy thì
- * chỉ là hình.
- */
+/** Nhãn dán gắn vào một trang nhật ký. */
 enum JournalSticker: string
 {
     case Sprout = 'sprout';
@@ -58,7 +36,6 @@ enum JournalSticker: string
         };
     }
 
-    /** Câu mô tả đầy đủ — dùng cho `title` và cho trình đọc màn hình. */
     public function meaning(): string
     {
         return match ($this) {
@@ -77,13 +54,6 @@ enum JournalSticker: string
         };
     }
 
-    /**
-     * Nhóm để xếp trong bảng chọn.
-     *
-     * Mười hai hình xếp thành một dãy dài thì phải quét mắt cả dãy mới
-     * tìm được cái cần. Chia ba nhóm theo việc — chăm sóc, biến chuyển,
-     * đánh dấu — thì tìm bằng cách nghĩ chứ không bằng cách nhìn.
-     */
     public function group(): string
     {
         return match ($this) {
@@ -93,15 +63,6 @@ enum JournalSticker: string
         };
     }
 
-    /**
-     * Nhãn dán nào hợp với loại sổ nào.
-     *
-     * Sổ theo dõi giá không cần "đã tưới" hay "thay chậu"; bày ra cả bộ ở
-     * đó là bắt người dùng lọc bằng mắt qua chín hình vô nghĩa để tìm ba
-     * hình dùng được.
-     *
-     * @return list<self>
-     */
     public static function forKind(JournalKind $kind): array
     {
         return match ($kind) {
@@ -113,8 +74,6 @@ enum JournalSticker: string
                 self::Note, self::Star,
             ],
 
-            // Sổ giá và sổ mục tiêu chỉ cần đánh dấu, không cần việc
-            // chăm cây.
             JournalKind::Price, JournalKind::Goal => [
                 self::Heart, self::Star, self::Note,
             ],
@@ -123,7 +82,6 @@ enum JournalSticker: string
         };
     }
 
-    /** @return array<string, string> value => label */
     public static function options(): array
     {
         $out = [];

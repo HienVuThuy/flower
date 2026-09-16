@@ -1,8 +1,6 @@
 @extends('layouts.admin')
 
 @php
-    /* MỘT biểu mẫu cho cả ghi mới và sửa: hai bản thì sớm muộn một bản
-       thiếu ô, và sửa lô là lặng lẽ xoá mất giá trị ô đó. */
     $lo = $lo ?? null;
     $tieuDe = $lo ? 'Sửa lô ' . $lo->code : 'Ghi lô hoa';
 @endphp
@@ -62,7 +60,6 @@
                                class="form-control @error('quantity') is-invalid @enderror"
                                min="0.01" step="0.01" value="{{ old('quantity', $lo ? rtrim(rtrim((string) $lo->quantity, '0'), '.') : null) }}">
                         <x-form-error name="quantity" />
-                        {{-- Có phần thập phân: mua theo cân thì 3,5kg là chuyện thường. --}}
                         <div class="form-text">Được ghi số lẻ, ví dụ 3,5 kg.</div>
                     </div>
 
@@ -141,8 +138,6 @@
                         @endforeach
                     </select>
                     <x-form-error name="quality" />
-                    {{-- Câu hỏi thật không phải "ở đâu rẻ nhất" mà là "ở đâu đáng
-                         tiền nhất" — và cái đắt vì hoa dập không nằm trên hoá đơn. --}}
                     <div class="form-text">Để so cùng với giá: rẻ hơn mà hay dập thì không rẻ hơn.</div>
                 </div>
 

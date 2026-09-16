@@ -5,26 +5,13 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Viết lại bảng ghi công ảnh trong ASSETS.md từ các tệp credits.json.
- *
- * VÌ SAO PHẢI CÓ LỆNH NÀY: giấy phép CC BY / CC BY-SA BẮT BUỘC ghi tên tác
- * giả. Nghĩa vụ đó chỉ được coi là hoàn thành khi bảng ghi công khớp với
- * số ảnh đang thực sự dùng. Chép tay 47 dòng thì lần tải ảnh sau bảng sẽ
- * lệch ngay — và lệch ở đây là THIẾU GHI CÔNG, tức là vi phạm giấy phép,
- * chứ không phải một lỗi tài liệu vô hại.
- *
- * NGUỒN SỰ THẬT vẫn là credits.json (do script Node ghi ra lúc tải ảnh).
- * ASSETS.md chỉ là bản cho người đọc, dựng lại từ đó — không phải bản
- * thứ hai để sửa tay.
- */
+/** Viết lại bảng ghi công ảnh trong ASSETS.md từ các tệp credits.json. */
 class SyncAssetCredits extends Command
 {
     protected $signature = 'assets:sync-credits {--check : Chỉ báo lệch, không ghi}';
 
     protected $description = 'Dựng lại bảng ghi công ảnh trong ASSETS.md từ credits.json';
 
-    /** Mỗi nhóm: nhãn hiển thị, tệp credits, cột thứ hai của bảng. */
     private const GROUPS = [
         'products' => ['Ảnh sản phẩm', 'products/credits.json', 'Sản phẩm'],
         'gallery' => ['Ảnh phụ trong thư viện', 'products/gallery/credits.json', 'Sản phẩm'],
@@ -84,7 +71,6 @@ class SyncAssetCredits extends Command
         return self::SUCCESS;
     }
 
-    /** Dựng phần thân bảng Markdown, hoặc null nếu chưa có tệp credits. */
     private function rows(string $file, string $column): ?string
     {
         $disk = Storage::disk('public');
@@ -99,7 +85,6 @@ class SyncAssetCredits extends Command
             return null;
         }
 
-        // Sắp theo tên tệp để lần chạy sau không xáo trộn thứ tự vô cớ.
         usort($credits, fn ($a, $b) => strcmp($a['file'] ?? '', $b['file'] ?? ''));
 
         $out = "| Tệp | {$column} | Tác giả | Giấy phép | Nguồn |\n|---|---|---|---|---|";
@@ -119,7 +104,6 @@ class SyncAssetCredits extends Command
         return $out;
     }
 
-    /** Dấu | trong dữ liệu sẽ cắt đôi ô bảng Markdown, phải thoát. */
     private function cell(string $value): string
     {
         return str_replace(['|', "\n"], ['\|', ' '], trim($value));

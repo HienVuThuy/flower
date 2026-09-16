@@ -1,11 +1,4 @@
-/* ============ GÓC CÂY — BẢNG TIN ============
- *
- * Ba cột trên màn rộng: điều hướng · bảng tin · luật thưởng điểm. Bảng tin ở
- * giữa và hẹp có chủ ý (~640px): dòng chữ dài quá 75 ký tự khó đọc, và ảnh cây
- * dọc chụp bằng điện thoại không bị kéo ngang.
- *
- * Khung soạn bài nằm trong hộp thoại, không chiếm chỗ của bảng tin nữa.
- */
+/* GÓC CÂY — BẢNG TIN */
 
 .avatar {
     display: inline-flex;
@@ -27,24 +20,11 @@
     font-size: 0.85rem;
 }
 
-/* ---------- Điều hướng ---------- */
-
-/*
- * CẢ CỘT LÀ MỘT KHỐI DÍNH, KHÔNG PHẢI TỪNG THẺ MỘT.
- *
- * LỖI ĐÃ SỬA: chỉ thanh điều hướng và thẻ điểm thưởng được `sticky`, còn thẻ
- * "Quy tắc ngắn" nằm dưới thì cuộn bình thường — cuộn xuống là nó trượt LÊN
- * ĐÈ chồng chữ vào thanh điều hướng đang đứng yên.
- *
- * `top` phải trừ chiều cao thanh đầu trang (thanh đó cũng sticky), nếu không
- * khối này chui xuống dưới nó. Cột cao hơn màn hình thì tự cuộn bên trong.
- */
 .goc-cay__cot {
     position: sticky;
     top: calc(var(--goc-cay-header, 5.25rem) + 0.75rem);
     max-height: calc(100vh - var(--goc-cay-header, 5.25rem) - 1.5rem);
     overflow-y: auto;
-    /* Chừa chỗ cho bóng đổ của thẻ bên trong khi cuộn. */
     padding-right: 0.15rem;
 }
 
@@ -97,12 +77,9 @@
     color: var(--ink-500);
 }
 
-/* Thẻ điểm thưởng nằm trong khối dính của cột phải — không tự dính nữa. */
 .goc-cay-thuong {
     margin-bottom: 0;
 }
-
-/* ---------- Ô mở hộp soạn bài ---------- */
 
 .composer-bar {
     display: flex;
@@ -152,8 +129,6 @@
     }
 }
 
-/* ---------- Soạn bài ---------- */
-
 .composer__privacy,
 .composer__canhbao {
     padding: 0.55rem 0.7rem;
@@ -192,8 +167,6 @@
     font-size: 0.75rem;
     color: var(--ink-500);
 }
-
-/* ---------- Thẻ bài ---------- */
 
 .gc-bai {
     padding: 1rem;
@@ -238,7 +211,6 @@
 }
 
 .gc-bai__text {
-    /* pre-line giữ xuống dòng khách gõ nhưng không giữ khoảng trắng thừa. */
     white-space: pre-line;
     overflow-wrap: anywhere;
     margin-bottom: 0.6rem;
@@ -251,11 +223,6 @@
     color: var(--ink-500);
 }
 
-/*
- * Nhãn "Đã ghim" / "Đã khoá bình luận" trên dòng thời gian.
- * Nhạt hơn status-pill: đây là trạng thái do chủ bài tự đặt, không phải
- * phán quyết của cửa hàng, nên không được nổi bằng "Bị ẩn".
- */
 .gc-bai__nhan {
     display: inline-flex;
     align-items: center;
@@ -333,8 +300,6 @@
     font-size: 0.85rem;
 }
 
-/* ---------- Menu "⋯" ---------- */
-
 .post-menu {
     position: relative;
     flex: 0 0 auto;
@@ -392,8 +357,6 @@
 .post-menu__item--danger {
     color: var(--danger, #b3261e);
 }
-
-/* ---------- Lưới ảnh / video ---------- */
 
 .media-grid {
     display: grid;
@@ -455,8 +418,6 @@
     pointer-events: none;
 }
 
-/* ---------- Trang một bài ---------- */
-
 .media-full {
     display: flex;
     flex-direction: column;
@@ -475,8 +436,6 @@
 .gc-bai--don {
     margin-bottom: 0;
 }
-
-/* ---------- Bình luận ---------- */
 
 .comment {
     display: flex;
@@ -543,10 +502,6 @@
     text-decoration: underline;
 }
 
-/*
- * Bình luận CHỦ BÀI đang ẩn — chỉ chính họ thấy.
- * Làm mờ chứ không giấu: phải nhìn thấy mình đã ẩn cái gì thì mới bật lại được.
- */
 .comment--an > .comment__body > .comment__bubble {
     opacity: 0.55;
     border: 1px dashed var(--border-soft);
@@ -558,7 +513,6 @@
     color: var(--ink-500);
 }
 
-/* Câu trả lời thụt vào MỘT tầng — sâu hơn thì trên điện thoại hết chỗ. */
 .comment-replies {
     margin-left: 1.25rem;
     padding-left: 0.5rem;
@@ -586,8 +540,6 @@
 .comment-form--nhanh textarea {
     flex: 1 1 auto;
 }
-
-/* ---------- Biểu tượng cảm xúc ---------- */
 
 .emoji-picker {
     position: relative;
@@ -653,8 +605,6 @@
     background: var(--surface-alt);
 }
 
-/* ---------- Thông báo ---------- */
-
 .thong-bao {
     display: flex;
     align-items: flex-start;
@@ -672,7 +622,6 @@
     border-color: var(--border-strong);
 }
 
-/* Chưa đọc: nền nhạt và một chấm tròn — nhìn lướt là biết còn gì mới. */
 .thong-bao--moi {
     background: var(--brand-100);
     border-color: var(--brand-500);
@@ -721,8 +670,6 @@
     background: var(--brand-500);
 }
 
-/* ---------- Cảm xúc ---------- */
-
 .cam-xuc {
     position: relative;
     display: flex;
@@ -760,7 +707,6 @@
     color: var(--ink-900);
 }
 
-/* Bảng năm cảm xúc mở LÊN TRÊN: nút nằm gần đáy thẻ bài. */
 .cam-xuc-chon__panel {
     position: absolute;
     bottom: 100%;
@@ -802,11 +748,6 @@
     display: inline-flex;
 }
 
-/*
- * MÀU CỦA TỪNG CẢM XÚC — chỉ để phân biệt nhanh, KHÔNG phải cách duy nhất nhận
- * ra: mỗi cảm xúc còn có hình riêng và tên chữ (title / nhãn trên nút), nên
- * người không phân biệt được màu vẫn đọc được.
- */
 .cam-xuc--thich {
     color: var(--brand-600, #2f6b4f);
 }
@@ -823,8 +764,6 @@
 .cam-xuc--buon {
     color: #4a6fa5;
 }
-
-/* ---------- Cảm xúc dưới bình luận (bản nhỏ) ---------- */
 
 .cam-xuc--nho {
     position: relative;
@@ -852,8 +791,6 @@
     font-size: 0.78rem;
     color: var(--ink-500);
 }
-
-/* ---------- Trang cá nhân ở Góc cây ---------- */
 
 .trang-ca-nhan__dau {
     display: flex;
@@ -886,7 +823,6 @@
     font-weight: 700;
 }
 
-/* Bài trên trang cá nhân hẹp như bảng tin: dòng chữ dài quá 75 ký tự khó đọc. */
 .trang-ca-nhan__bai {
     max-width: 680px;
 }

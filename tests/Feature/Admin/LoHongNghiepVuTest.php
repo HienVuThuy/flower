@@ -21,11 +21,7 @@ use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Các lỗ hổng nghiệp vụ được chỉ ra ở đợt rà soát ngoài.
- * ============================================================
- * Mỗi bài dưới đây đỏ trên mã trước khi sửa.
- */
+/** Các lỗ hổng nghiệp vụ được chỉ ra ở đợt rà soát ngoài. */
 class LoHongNghiepVuTest extends TestCase
 {
     use RefreshDatabase;
@@ -59,8 +55,6 @@ class LoHongNghiepVuTest extends TestCase
 
         return $don->fresh();
     }
-
-    /* ================= 1. QUYỀN TÀI CHÍNH ================= */
 
     #[Test]
     public function nhan_vien_KHONG_danh_dau_duoc_da_thanh_toan(): void
@@ -113,8 +107,6 @@ class LoHongNghiepVuTest extends TestCase
         $this->assertSame(PaymentStatus::Paid, $don->fresh()->payment_status);
     }
 
-    /* ================= 2. HUỶ ĐƠN ĐANG CÓ VẬN ĐƠN GHN ================= */
-
     #[Test]
     public function KHONG_huy_duoc_don_con_van_don_GHN(): void
     {
@@ -143,15 +135,12 @@ class LoHongNghiepVuTest extends TestCase
     #[Test]
     public function don_dang_giao_KHONG_qua_GHN_van_huy_duoc(): void
     {
-        // Cửa hàng tự giao: không có vận đơn nào để lệch.
         $don = $this->don(OrderStatus::Shipping);
 
         app(OrderService::class)->changeStatus($don, OrderStatus::Cancelled, 'khách từ chối nhận');
 
         $this->assertSame(OrderStatus::Cancelled, $don->fresh()->status);
     }
-
-    /* ================= 3. TẠO VẬN ĐƠN SAI TRẠNG THÁI ================= */
 
     #[Test]
     public function KHONG_tao_van_don_cho_don_da_huy_da_giao_hay_chua_xac_nhan(): void
@@ -170,16 +159,9 @@ class LoHongNghiepVuTest extends TestCase
         Http::assertNothingSent();
     }
 
-    /* ================= 4. GIỚI HẠN LƯỢT DÙNG CỦA TỪNG TÀI KHOẢN ================= */
-
     #[Test]
     public function da_dung_het_luot_rieng_thi_redeem_bi_tu_choi_va_luot_chung_cuon_lai(): void
     {
-        /*
-         * Tái hiện race condition không cần hai tiến trình: phép kiểm lúc
-         * thanh toán đã qua (used_count = 0), rồi một đơn khác của CÙNG khách
-         * vừa dùng lượt đó. Bản cũ vẫn +1 thành 2.
-         */
         $khach = $this->nguoi(UserRole::Customer);
         $ma = Coupon::factory()->create(['per_user_limit' => 1, 'usage_limit' => null, 'used_count' => 0]);
 
@@ -212,8 +194,6 @@ class LoHongNghiepVuTest extends TestCase
         $this->assertSame(1, (int) DB::table('coupon_user')->where('user_id', $khach->id)->value('used_count'));
         $this->assertSame(1, (int) $ma->fresh()->used_count);
     }
-
-    /* ================= 5. SỬA SẢN PHẨM THUỘC DANH MỤC ẨN / NHÓM THUẾ TẮT ================= */
 
     #[Test]
     public function trang_sua_giu_danh_muc_dang_an_va_nhom_thue_da_tat_cua_chinh_san_pham(): void

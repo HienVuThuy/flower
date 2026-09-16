@@ -6,17 +6,7 @@ use App\Models\Product;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Gán ảnh đã tải bằng tools/fetch-product-photos.mjs vào cột
- * products.main_image.
- *
- * TÁCH RIÊNG khỏi script tải ảnh vì hai việc khác nhau: script Node chỉ
- * biết tệp, còn việc ghi vào cơ sở dữ liệu phải đi qua Eloquent để không
- * lách qua $fillable và các quy tắc của model.
- *
- * MẶC ĐỊNH KHÔNG GHI ĐÈ ảnh sản phẩm đã có — ảnh do cửa hàng tự tải lên
- * bao giờ cũng đúng hơn ảnh stock tôi tải về. Muốn ghi đè thì --force.
- */
+/** Gán ảnh đã tải bằng tools/fetch-product-photos.mjs vào cột products.main_image. */
 class LinkProductPhotos extends Command
 {
     protected $signature = 'products:link-photos
@@ -64,7 +54,6 @@ class LinkProductPhotos extends Command
                 continue;
             }
 
-            // Bản ghi có thể trỏ tới tệp đã bị xoá tay.
             if (! $disk->exists($file)) {
                 $this->warn("  thiếu tệp {$file}");
                 $missing++;

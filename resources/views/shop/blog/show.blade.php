@@ -36,41 +36,9 @@
             <x-site.image :path="$post->cover_image" :alt="$post->title" class="post-cover" />
         @endif
 
-        {{--
-            NỘI DUNG BÀI — CHỖ DUY NHẤT TRONG DỰ ÁN IN HTML THÔ.
-            ============================================================
-            Bài viết cần đoạn văn, tiêu đề phụ, danh sách, chữ đậm. Escape
-            hết thì admin nhìn thấy `<p>` hiện ra thành chữ.
-
-            AN TOÀN ĐƯỢC vì hai điều kiện, và cả hai phải giữ:
-
-              1. CHỈ ADMIN viết được. Route ghi nằm sau `role:admin`.
-                 Đây không phải nội dung người lạ gửi lên — mục đó là
-                 "Góc cây của bạn", và ở đó nội dung được escape.
-
-              2. Nội dung đã đi qua `HtmlSanitizer` lúc lưu, nên thẻ
-                 `<script>`, `on*=` và `javascript:` bị gỡ ngay khi ghi
-                 vào cơ sở dữ liệu — không phải lúc hiển thị.
-
-            Làm sạch LÚC LƯU chứ không lúc hiện: nếu để lúc hiện thì mỗi
-            chỗ in bài ra phải nhớ gọi, và chỗ thứ ba sẽ quên.
-        --}}
         <div class="post-body">{!! $post->body !!}</div>
 
-        {{-- ---------- SẢN PHẨM NHẮC TRONG BÀI ---------- --}}
         @if($post->products->isNotEmpty())
-            {{--
-                THỨ BIẾN BÀI VIẾT THÀNH DOANH THU.
-
-                Khách đọc xong "7 loại cây để bàn ít cần ánh sáng" mà phải
-                tự đi tìm từng cây trong danh mục thì phần lớn sẽ không
-                tìm. Nút ngay dưới bài là quãng đường ngắn nhất từ "à ra
-                thế" tới "mua cái này".
-
-                `note` là lý do RIÊNG của bài này khi nhắc cây đó — không
-                lấy mô tả chung của sản phẩm, vì cùng một cây ở ba bài
-                khác nhau có ba lý do khác nhau.
-            --}}
             <section class="post-products">
                 <h2 class="text-h3 mb-3">Cây nhắc trong bài</h2>
 
@@ -88,7 +56,6 @@
             </section>
         @endif
 
-        {{-- ---------- BÀI LIÊN QUAN ---------- --}}
         @if($lienQuan->isNotEmpty())
             <section class="post-related">
                 <h2 class="text-h3 mb-3">Đọc tiếp</h2>

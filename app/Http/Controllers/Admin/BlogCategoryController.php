@@ -10,17 +10,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/**
- * Chuyên mục Cẩm nang.
- * ============================================================
- * VÌ SAO CẦN: trước đây ba chuyên mục đến từ dữ liệu mẫu và không có chỗ
- * nào thêm hay sửa. Viết một bài về "hoa cưới" mà không có chuyên mục hợp
- * thì chỉ còn cách nhét vào một chuyên mục sai.
- *
- * KHÔNG XOÁ CHUYÊN MỤC CÒN BÀI — kể cả bài đã xoá mềm: khôi phục bài đó
- * về sau là nó trỏ vào một chuyên mục không còn, và trang Cẩm nang lỗi.
- * Muốn bỏ chuyên mục thì chuyển bài sang chỗ khác trước.
- */
+/** Chuyên mục Cẩm nang. */
 class BlogCategoryController extends Controller
 {
     public function index(): View
@@ -76,15 +66,6 @@ class BlogCategoryController extends Controller
             ->with('success', 'Đã xoá chuyên mục "' . $ten . '".');
     }
 
-    /**
-     * Một bộ quy tắc cho cả thêm lẫn sửa.
-     *
-     * SLUG ĐỂ TRỐNG THÌ SINH TỪ TÊN. Slug là địa chỉ khách thấy
-     * (/cam-nang?chuyen-muc=...), bắt người nhập gõ tay thì sớm muộn có
-     * slug có dấu hoặc khoảng trắng.
-     *
-     * @return array<string, mixed>
-     */
     private function kiemTra(Request $request, ?BlogCategory $hienTai = null): array
     {
         $request->merge([

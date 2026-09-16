@@ -17,15 +17,11 @@ use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Quyền lợi hạng khi thanh toán: giảm theo hạng, miễn phí giao theo hạng,
- * luật cộng dồn với mã, mã dành cho hạng.
- */
+/** Quyền lợi hạng khi thanh toán: giảm theo hạng, miễn phí giao theo hạng, luật cộng dồn với mã, mã dành cho… */
 class UuDaiHangThanhToanTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** Khách đã mua $daMua (đơn đã giao) — quyết định hạng. */
     private function khach(string $daMua): User
     {
         $u = User::factory()->create();
@@ -80,7 +76,6 @@ class UuDaiHangThanhToanTest extends TestCase
         $this->assertSame('6000.00', (string) $don->member_discount);
         $this->assertSame(bcadd('294000.00', (string) $don->shipping_fee, 2), (string) $don->grand_total);
 
-        // Đối soát thuế: phần phân bổ xuống dòng = hạng + mã + điểm.
         $this->assertSame('6000.00', bcadd((string) $don->items()->sum('discount_amount'), '0', 2));
     }
 
@@ -120,7 +115,6 @@ class UuDaiHangThanhToanTest extends TestCase
 
         $gio = $this->gio();
         $this->assertSame('6000.00', $gio->memberDiscount());
-        // 10% của 294.000, không phải của 300.000.
         $this->assertSame('29400.00', $gio->couponDiscount());
         $this->assertSame('264600.00', $gio->payableItemsTotal());
     }
@@ -177,7 +171,7 @@ class UuDaiHangThanhToanTest extends TestCase
     #[Test]
     public function tu_chon_ma_khong_ap_ma_khong_cong_don_kem_hon_uu_dai_hang(): void
     {
-        $u = $this->khach('30000000.00');   // Rừng 5% → 15.000đ trên đơn 300.000đ
+        $u = $this->khach('30000000.00');
         $this->vaoThanhToan();
 
         $it = Coupon::factory()->fixed('10000.00')->create(['code' => 'ITHONHANG']);
@@ -218,7 +212,6 @@ class UuDaiHangThanhToanTest extends TestCase
             'status' => 'active', 'min_member_tier_id' => MemberTier::where('code', 'la')->value('id'),
         ];
 
-        // Bỏ tích "cộng dồn" (không gửi ô) phải tắt được.
         $this->actingAs($admin)->put(route('admin.coupons.update', $ma), $du)->assertSessionHasNoErrors();
         $ma->refresh();
         $this->assertFalse($ma->stack_with_member);

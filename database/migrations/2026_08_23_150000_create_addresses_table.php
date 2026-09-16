@@ -11,12 +11,6 @@ return new class extends Migration
         Schema::create('addresses', function (Blueprint $table) {
             $table->id();
 
-            /*
-             * Sổ địa chỉ chỉ dành cho tài khoản đã đăng nhập.
-             * Khách vãng lai không có chỗ để lưu, và cũng không nên lưu
-             * địa chỉ theo phiên: phiên hết hạn là mất, mà giữ lại thì
-             * máy dùng chung sẽ lộ địa chỉ người trước.
-             */
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
 
             $table->string('recipient_name');
@@ -33,7 +27,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // Truy vấn duy nhất dùng tới: lấy sổ của một người, mặc định lên đầu.
             $table->index(['user_id', 'is_default']);
         });
     }

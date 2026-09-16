@@ -12,13 +12,7 @@
     </p>
 </div>
 
-{{--
-    GET chứ không POST.
-
-    Đây là một thao tác ĐỌC: nó không đổi gì trong hệ thống. Dùng GET thì
-    đường dẫn kết quả chép và lưu dấu trang được — "báo cáo doanh thu 30
-    ngày, dạng CSV" thành một liên kết gửi cho kế toán mỗi tháng.
---}}
+{{-- GET chứ không POST. --}}
 <form method="GET" action="{{ route('admin.analytics.export') }}">
 
     <div class="row g-3">
@@ -29,9 +23,6 @@
                 <div class="d-flex flex-wrap align-items-baseline justify-content-between gap-2 mb-3">
                     <h2 class="h6 fw-bold mb-0">Chọn phần muốn xuất</h2>
 
-                    {{-- Không có JavaScript thì hai nút này không hiện —
-                         xem CSS `html:not(.has-js)`. Bày một nút bấm vào
-                         không có gì xảy ra còn tệ hơn không có nút. --}}
                     <div class="export-pick-all d-flex gap-2">
                         <button type="button" class="btn btn-sm btn-outline-admin" data-pick-all>Chọn tất cả</button>
                         <button type="button" class="btn btn-sm btn-outline-admin" data-pick-none>Bỏ chọn</button>
@@ -39,17 +30,6 @@
                 </div>
 
                 @php
-                    /*
-                     * Gom theo nhóm để danh sách không đọc ra như một dãy
-                     * mười một ô đánh dấu không liên quan gì tới nhau.
-                     *
-                     * preserveKeys: BẮT BUỘC. Không có nó, groupBy() đánh
-                     * số lại từ 0 và mã phần biến mất — mọi ô đánh dấu gửi
-                     * lên value="0", "1", "2"... Controller lọc qua danh
-                     * sách hợp lệ nên tất cả bị bỏ, rơi vào nhánh "không
-                     * chọn gì thì xuất tất cả", và bộ chọn phần trông vẫn
-                     * bình thường trong khi nó KHÔNG hề hoạt động.
-                     */
                     $theoNhom = collect($sections)->groupBy('group', preserveKeys: true);
                 @endphp
 
@@ -59,9 +39,6 @@
                     <div class="export-list mb-3">
                         @foreach($muc as $ma => $m)
                             <label class="export-item">
-                                {{-- Tích sẵn TẤT CẢ: người vào đây thường
-                                     muốn cả bộ, và ai chỉ cần một phần thì
-                                     bỏ tích nhanh hơn là tích từng cái. --}}
                                 <input type="checkbox" class="form-check-input" name="phan[]"
                                        value="{{ $ma }}" checked data-pick>
 
@@ -93,14 +70,6 @@
                         </label>
                     @endforeach
 
-                    {{--
-                        KHOẢNG TỰ CHỌN đi cùng hai ô ngày ngay bên dưới.
-
-                        Không giấu nó sau một nút "nâng cao": người vào đây
-                        từ trang Phân tích đang xem một khoảng cụ thể thì
-                        tệp tải về phải khớp đúng khoảng đó, và họ cần thấy
-                        ngay là nó đang được giữ.
-                    --}}
                     <label class="export-item">
                         <input type="radio" class="form-check-input" name="ky"
                                value="{{ \App\Services\Analytics\ChonKy::TUY_CHON }}"
@@ -138,13 +107,6 @@
                     @endforeach
                 </div>
 
-                {{--
-                    NÓI RÕ HAI CẶP DỄ NHẦM.
-
-                    CSV và XLSX trông như hai cách làm cùng một việc, HTML
-                    và PDF cũng vậy. Không nói thì người dùng chọn bừa rồi
-                    tải lại lần nữa; nói ra thì chọn đúng ngay lần đầu.
-                --}}
                 <p class="admin-page-subtitle mb-3">
                     Mở bằng Excel để lọc và cộng cột thì chọn <strong>XLSX</strong>
                     (mỗi phần một trang tính, số là số); chọn CSV khi cần một bảng

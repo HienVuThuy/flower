@@ -9,16 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Nút tim yêu thích — bấm không tải lại trang.
- * ============================================================
- * Điều PHẢI ĐÚNG ở đây: `active` trong câu trả lời là trạng thái SAU KHI
- * BẤM, do máy chủ nói ra. Trình duyệt không được tự lật ngược cái nó
- * đang hiển thị — khách mở hai tab cùng một sản phẩm rồi bấm ở cả hai
- * thì cái nó đang hiển thị đã sai từ trước.
- *
- * Và như mọi chỗ khác: đường không-JavaScript phải nguyên vẹn.
- */
+/** Nút tim yêu thích — bấm không tải lại trang. */
 class WishlistToggleTest extends TestCase
 {
     use RefreshDatabase;
@@ -69,7 +60,6 @@ class WishlistToggleTest extends TestCase
     #[Test]
     public function khach_chua_dang_nhap_khong_luu_duoc(): void
     {
-        // Nhánh JSON không được là đường vòng bỏ qua đăng nhập.
         $this->postJson('/yeu-thich/' . $this->sanPham()->slug)
             ->assertUnauthorized();
 

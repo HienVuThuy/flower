@@ -14,17 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Nhật ký thao tác quản trị.
- * ============================================================
- * Nhật ký tồn tại để trả lời một câu hỏi: "ai đã làm việc này?". Nó chỉ
- * có giá trị khi ĐẦY ĐỦ — một nhật ký thiếu vài thao tác còn tệ hơn
- * không có, vì người đọc tin rằng những gì không được ghi thì đã không
- * xảy ra.
- *
- * Nên các bài ở đây canh hai điều: thao tác có được ghi không, và ghi
- * có đúng người không.
- */
+/** Nhật ký thao tác quản trị. */
 class ActivityLogTest extends TestCase
 {
     use RefreshDatabase;
@@ -62,11 +52,6 @@ class ActivityLogTest extends TestCase
     #[Test]
     public function nhat_ky_giu_dung_khoa_chinh_cua_thu_vua_bi_xoa(): void
     {
-        /*
-         * Ghi nhật ký SAU khi xoá thì subject_id trỏ vào một bản ghi
-         * không còn nữa hoặc bằng null, và dòng nhật ký mất đường lần
-         * ngược lại. Bài này canh việc ghi trước khi xoá.
-         */
         $product = $this->sanPham();
         $id = $product->id;
 
@@ -81,11 +66,6 @@ class ActivityLogTest extends TestCase
     #[Test]
     public function doi_gia_san_pham_thi_ghi_ca_gia_cu(): void
     {
-        /*
-         * Bản ghi sản phẩm chỉ giữ giá HIỆN TẠI. Không chụp giá cũ vào
-         * nhật ký thì con số trước đó mất vĩnh viễn, và "hôm qua nó bao
-         * nhiêu" là câu hỏi hay được hỏi nhất về một sản phẩm.
-         */
         $product = $this->sanPham();
         $product->base_price = '500000.00';
         $product->save();
@@ -142,11 +122,6 @@ class ActivityLogTest extends TestCase
     #[Test]
     public function nhat_ky_song_sot_khi_nguoi_lam_bi_xoa_tai_khoan(): void
     {
-        /*
-         * Nếu xoá tài khoản làm mất luôn dấu vết việc họ đã làm thì cách
-         * xoá sạch nhật ký của mình là tự xoá tài khoản — và nhật ký hết
-         * dùng được vào truy trách nhiệm.
-         */
         $admin = $this->admin('Người sắp nghỉ việc');
         $product = $this->sanPham();
 
@@ -161,10 +136,6 @@ class ActivityLogTest extends TestCase
         $this->assertStringContainsString('Người sắp nghỉ việc', $log->actorLabel());
         $this->assertStringContainsString('đã xoá', $log->actorLabel());
     }
-
-    // ================================================================
-    // Trang xem nhật ký
-    // ================================================================
 
     #[Test]
     public function trang_nhat_ky_loc_duoc_theo_nhom_viec(): void
@@ -186,11 +157,6 @@ class ActivityLogTest extends TestCase
     #[Test]
     public function khong_co_duong_nao_xoa_duoc_nhat_ky(): void
     {
-        /*
-         * Nhật ký mà người bị ghi xoá được thì không dùng để đối chiếu,
-         * mà đối chiếu là toàn bộ lý do nó tồn tại. Bài này canh việc
-         * KHÔNG AI vô tình thêm một route destroy vào sau này.
-         */
         $this->actingAs($this->admin())->delete("/admin/products/{$this->sanPham()->id}");
 
         $log = ActivityLog::latest('id')->first();

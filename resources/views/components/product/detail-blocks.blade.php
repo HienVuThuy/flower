@@ -3,15 +3,7 @@
 @php $blocks = $product->relationLoaded('blocks') ? $product->blocks : $product->blocks()->get(); @endphp
 
 @if($blocks->isNotEmpty())
-    {{--
-        MÔ TẢ CHI TIẾT THEO KHỐI — chữ và ảnh xen kẽ theo đúng thứ tự người bán
-        đã xếp ở trang quản trị.
-
-        Chữ in bằng {!! !!} vì nó ĐÃ đi qua HtmlSanitizer lúc lưu (xem
-        ProductBlockService). Lọc lúc LƯU chứ không lúc in: lọc lúc in nghĩa là
-        mỗi trang hiển thị lại phải chạy lại bộ lọc, và chỗ nào quên gọi là chỗ
-        đó thủng.
-    --}}
+    {{-- MÔ TẢ CHI TIẾT THEO KHỐI — chữ và ảnh xen kẽ theo đúng thứ tự người bán đã xếp ở trang quản trị. --}}
     <section class="product-blocks mt-5">
         @foreach($blocks as $khoi)
             @if($khoi->laAnh())

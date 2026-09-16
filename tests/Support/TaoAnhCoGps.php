@@ -2,26 +2,9 @@
 
 namespace Tests\Support;
 
-/**
- * Dựng một tệp JPEG có khối EXIF GPS THẬT.
- * ============================================================
- * VÌ SAO KHÔNG DÙNG `UploadedFile::fake()->image()`.
- *
- * Ảnh giả của Laravel không có EXIF. Một bài kiểm thử khẳng định "ảnh đã
- * bị tước GPS" mà dùng ảnh giả thì XANH kể cả khi xoá sạch lớp tước —
- * vì không có gì để tước ngay từ đầu.
- *
- * Đã đo: chèn đột biến cho `CommunityController` gọi thẳng
- * `$file->store()` (bỏ qua ImageStore, tức bỏ qua bước tước metadata)
- * thì bài vẫn xanh. Đúng cái bẫy đã ghi ở QĐ-124.
- *
- * PHP không có hàm GHI exif, nên khối APP1 dưới đây được ghép bằng tay ở
- * mức byte. Đổi lại là bài kiểm thử đo trên một tệp giống hệt thứ điện
- * thoại sinh ra.
- */
+/** Dựng một tệp JPEG có khối EXIF GPS THẬT. */
 trait TaoAnhCoGps
 {
-    /** @return string đường dẫn tệp tạm */
     protected function anhCoGps(int $rong = 120, int $cao = 80): string
     {
         $anh = imagecreatetruecolor($rong, $cao);
@@ -36,13 +19,6 @@ trait TaoAnhCoGps
         return $tam;
     }
 
-    /**
-     * Chèn khối APP1/EXIF tối thiểu có GPS ngay sau SOI của JPEG.
-     *
-     * Toạ độ dùng ở đây là 21°01'40"N 105°45'50"E — Trường Đại học Tài
-     * nguyên và Môi trường Hà Nội, một địa điểm THẬT, để bài kiểm thử
-     * phản ánh đúng thứ nó phòng: một địa chỉ đọc được từ bức ảnh.
-     */
     private function chenExifGps(string $duongDan): void
     {
         $tiff = "II\x2A\x00" . pack('V', 8);
@@ -69,7 +45,6 @@ trait TaoAnhCoGps
         file_put_contents($duongDan, substr($jpeg, 0, 2) . $khoi . substr($jpeg, 2));
     }
 
-    /** Tệp này còn toạ độ GPS đọc được không. */
     protected function conGps(string $duongDan): bool
     {
         $exif = @exif_read_data($duongDan);

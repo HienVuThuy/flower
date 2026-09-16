@@ -14,10 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Góc cây nâng cấp: nhiều ảnh / video, trả lời lồng, sửa bài và bình luận, lưu
- * bài, báo cáo và xử lý báo cáo.
- */
+/** Góc cây nâng cấp: nhiều ảnh / video, trả lời lồng, sửa bài và bình luận, lưu bài, báo cáo và xử lý báo cáo. */
 class GocCayNangCapTest extends TestCase
 {
     use RefreshDatabase;
@@ -43,7 +40,6 @@ class GocCayNangCapTest extends TestCase
 
     private function video(string $ten = 'ban-cong.mp4'): UploadedFile
     {
-        // MP4 tối thiểu có moov/udta/©xyz mang toạ độ — như video điện thoại quay.
         $hop = fn (string $loai, string $trong) => pack('N', 8 + strlen($trong)) . $loai . $trong;
         $noiDung = $hop('ftyp', 'isom0000isomiso2')
             . $hop('moov', $hop('udta', $hop("\xA9xyz", "\x00\x12\x15\xC7" . '+10.7626+106.6602/')))
@@ -54,8 +50,6 @@ class GocCayNangCapTest extends TestCase
 
         return new UploadedFile($tam, $ten, 'video/mp4', null, true);
     }
-
-    /* ================= NHIỀU ẢNH / VIDEO ================= */
 
     #[Test]
     public function dang_nhieu_anh_va_video_video_bi_xoa_toa_do(): void
@@ -124,8 +118,6 @@ class GocCayNangCapTest extends TestCase
         $this->assertDatabaseCount('community_posts', 1);
     }
 
-    /* ================= SỬA BÀI ================= */
-
     #[Test]
     public function sua_bai_da_dang_thi_quay_lai_cho_duyet_va_xoa_duoc_anh_cu(): void
     {
@@ -155,15 +147,11 @@ class GocCayNangCapTest extends TestCase
         $this->assertCount(1, $bai->media()->get());
         Storage::disk('public')->assertMissing($anhBo->path);
 
-        // Bài chờ duyệt không hiện ra ngoài.
         $this->get(route('shop.community.index'))->assertDontSee('Bài đã sửa lại cho rõ hơn.');
 
-        // Người khác không sửa được bài của mình.
         $this->actingAs(User::factory()->create())->patch(route('shop.community.update', $bai->id), ['body' => 'Chen ngang'])
             ->assertNotFound();
     }
-
-    /* ================= TRẢ LỜI BÌNH LUẬN ================= */
 
     #[Test]
     public function tra_loi_long_mot_tang_va_ghi_nguoi_duoc_tra_loi(): void
@@ -181,7 +169,6 @@ class GocCayNangCapTest extends TestCase
         $this->assertSame($goc->id, $traLoi->parent_id);
         $this->assertNull($traLoi->reply_to_user_id);
 
-        // Trả lời một CÂU TRẢ LỜI: vẫn gắn vào bình luận gốc, kèm tên người được trả lời.
         $this->actingAs($a)->post(route('shop.community.comment', $bai->id), ['body' => 'Đúng rồi bạn.', 'tra_loi' => $traLoi->id]);
         $traLoi2 = CommunityComment::where('body', 'Đúng rồi bạn.')->sole();
 
@@ -190,7 +177,6 @@ class GocCayNangCapTest extends TestCase
 
         $this->get(route('shop.community.show', $bai->id))->assertOk()->assertSee('trả lời Bạn B');
 
-        // Trả lời bình luận của bài KHÁC thì không gắn được.
         $baiKhac = $this->bai(User::factory()->create(), ['body' => 'Bài khác hẳn.']);
         $this->actingAs($a)->post(route('shop.community.comment', $baiKhac->id), ['body' => 'Chen sang bài khác', 'tra_loi' => $goc->id])
             ->assertSessionHas('error');
@@ -233,8 +219,6 @@ class GocCayNangCapTest extends TestCase
         $this->assertDatabaseCount('community_comments', 0);
     }
 
-    /* ================= LƯU BÀI ================= */
-
     #[Test]
     public function luu_bai_va_xem_lai_o_tab_da_luu(): void
     {
@@ -253,12 +237,9 @@ class GocCayNangCapTest extends TestCase
         $this->actingAs($u)->get(route('shop.community.index', ['tab' => 'da-luu']))
             ->assertOk()->assertDontSee('Bài đáng lưu lại xem sau.');
 
-        // Khách vãng lai vào tab cần đăng nhập thì được đưa tới trang đăng nhập.
         auth()->logout();
         $this->get(route('shop.community.index', ['tab' => 'da-luu']))->assertRedirect(route('login'));
     }
-
-    /* ================= BÁO CÁO ================= */
 
     #[Test]
     public function bao_cao_bai_mot_lan_khong_bao_bai_cua_chinh_minh(): void
@@ -275,7 +256,6 @@ class GocCayNangCapTest extends TestCase
             'loai' => 'post', 'id' => $bai->id, 'ly_do' => 'xuc_pham', 'ghi_chu' => 'Nội dung gây gổ',
         ])->assertSessionHas('success');
 
-        // Báo lần hai: không sinh báo cáo thứ hai.
         $this->actingAs($nguoiBao)->post(route('shop.community.report'), [
             'loai' => 'post', 'id' => $bai->id, 'ly_do' => 'spam',
         ])->assertSessionHas('error');
@@ -310,16 +290,13 @@ class GocCayNangCapTest extends TestCase
         $this->assertSame('Nội dung sai sự thật', $bai->hidden_reason);
         $this->assertSame(0, CommunityReport::pending()->count());
 
-        // Bài bị ẩn: không ai thấy, không thích được, không báo cáo thêm được.
         $this->get(route('shop.community.index'))->assertDontSee('Bài bị báo cáo nhiều lần.');
         $this->get(route('shop.community.show', $bai->id))->assertNotFound();
         $this->actingAs(User::factory()->create())->post(route('shop.community.like', $bai->id))->assertNotFound();
 
-        // Tác giả vẫn thấy bài của mình kèm lý do, ở tab "Bài của tôi".
         $this->actingAs($tacGia)->get(route('shop.community.index', ['tab' => 'cua-toi']))
             ->assertSee('Bị ẩn')->assertSee('Nội dung sai sự thật');
 
-        // Bỏ ẩn thì bài hiện lại.
         $this->actingAs($admin)->patch(route('admin.community.hide', $bai))->assertRedirect();
         $this->get(route('shop.community.index'))->assertSee('Bài bị báo cáo nhiều lần.');
     }
@@ -371,8 +348,6 @@ class GocCayNangCapTest extends TestCase
         $this->assertSame(0, CommunityPostMedia::count());
         Storage::disk('public')->assertMissing($duongDan);
     }
-
-    /* ================= GIAO DIỆN ================= */
 
     #[Test]
     public function bang_tin_co_o_soan_bai_menu_va_dem_binh_luan(): void

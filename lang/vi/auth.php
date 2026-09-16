@@ -1,10 +1,6 @@
 <?php
 
-/*
- * Thông báo xác thực.
- * Cố ý KHÔNG nói rõ sai email hay sai mật khẩu: nói ra là giúp kẻ dò
- * tài khoản biết email nào có thật trong hệ thống.
- */
+/* Thông báo xác thực. */
 
 return [
     'failed' => 'Email hoặc mật khẩu không đúng.',

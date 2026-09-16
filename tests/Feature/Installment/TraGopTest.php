@@ -29,18 +29,7 @@ use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Trả góp trước khi giao + điểm tín dụng.
- * ============================================================
- * Bất biến được canh:
- *   1. Tổng các kỳ đúng bằng tổng đơn; hàng bị giữ ngay khi đặt.
- *   2. Không đủ điều kiện (khách vãng lai, đơn nhỏ, điểm thấp, vượt số kỳ,
- *      đang có kế hoạch khác) thì KHÔNG có đơn nào, kho không bị giữ.
- *   3. Chưa trả đủ: không chuẩn bị, không giao, không tạo vận đơn, không
- *      đặt tay "đã thanh toán".
- *   4. Kỳ cuối (MoMo hay tại cửa hàng) → đơn "đã thanh toán" và tự xác nhận.
- *   5. Quá hạn vượt ân hạn → vỡ, huỷ đơn, hoàn kho, nợ khách đúng số đã thu.
- */
+/** Trả góp trước khi giao + điểm tín dụng. */
 class TraGopTest extends TestCase
 {
     use RefreshDatabase;
@@ -57,10 +46,8 @@ class TraGopTest extends TestCase
     {
         parent::setUp();
 
-        // 10:00 sáng 01/10 giờ Việt Nam.
         $this->travelTo(Carbon::parse('2026-10-01 03:00:00', 'UTC'));
         config(['payment.gateways.momo.enabled' => false]);
-        // Không gọi ra ngoài ngoài ý muốn; bài MoMo tự dựng giả lập riêng (giả lập rỗng ở đây sẽ khớp trước).
         Http::preventStrayRequests();
     }
 
@@ -81,7 +68,6 @@ class TraGopTest extends TestCase
         Http::fake(['*' => Http::response(['resultCode' => 0, 'message' => 'Successful.', 'payUrl' => 'https://momo.test/pay?t=1'])]);
     }
 
-    /** Gói tin MoMo ký đúng như MoMo ký — ký ngay ở đây, không mượn lớp cần kiểm. */
     private function goiTin(PaymentTransaction $tx, array $ghiDe = []): array
     {
         $p = array_merge([
@@ -163,8 +149,6 @@ class TraGopTest extends TestCase
 
         return $this->post(route('admin.orders.installments.record', $don), ['ky_id' => $ky->id]);
     }
-
-    /* ================= LỊCH VÀ ĐẶT ĐƠN ================= */
 
     #[Test]
     public function chia_lich_tong_dung_bang_don_tra_truoc_lam_tron_len(): void
@@ -259,15 +243,12 @@ class TraGopTest extends TestCase
         $this->assertSame(1, Order::count());
     }
 
-    /* ================= ĐIỂM TÍN DỤNG ================= */
-
     #[Test]
     public function diem_tin_dung_tu_lich_su_va_doi_muc_tra_gop(): void
     {
         $u = $this->nguoi();
         $this->assertSame(50, app(CreditScore::class)->cua($u)['diem']);
 
-        // 12 đơn tốt: +2 mỗi đơn nhưng trần +20.
         $this->donDaGiao($u, 12);
         $this->assertSame(70, app(CreditScore::class)->cua($u)['diem']);
 
@@ -275,12 +256,10 @@ class TraGopTest extends TestCase
         $this->vaoThanhToan();
         $this->get(route('shop.checkout.details'))
             ->assertSee('data-tra-gop="duoc"', false)
-            // Số kỳ nằm trong khối chỉ hiện khi đã chọn trả góp (CSS ẩn theo lớp này).
             ->assertSee('class="tra-gop-chi-tiet d-block"', false)
             ->assertSee('trả trước 30%')
             ->assertSee('tối đa 4 kỳ');
 
-        // COD huỷ lúc đang giao: −10, rơi xuống mức thường.
         $o = Order::create([
             'order_number' => 'TG-TU-CHOI', 'user_id' => $u->id, 'recipient_name' => 'K', 'recipient_phone' => '0912345678',
             'shipping_address' => '1', 'shipping_province' => 'Thành phố Hà Nội', 'payment_method' => 'cod',
@@ -308,8 +287,6 @@ class TraGopTest extends TestCase
         $this->assertSame(0, Order::count());
     }
 
-    /* ================= CHƯA TRẢ ĐỦ THÌ KHÔNG GIAO ================= */
-
     #[Test]
     public function chua_tra_du_khong_chuan_bi_khong_van_don_khong_dat_tay_da_tra(): void
     {
@@ -331,8 +308,6 @@ class TraGopTest extends TestCase
         $this->expectException(OrderException::class);
         $dv->setPaymentStatus($don->fresh(), PaymentStatus::Paid);
     }
-
-    /* ================= THU TẠI CỬA HÀNG ================= */
 
     #[Test]
     public function thu_tai_cua_hang_theo_thu_tu_ky_cuoi_thi_da_tra_va_xac_nhan(): void
@@ -359,15 +334,11 @@ class TraGopTest extends TestCase
         $this->assertSame(InstallmentStatus::HoanTat, $don->installmentPlan->status);
         $this->assertSame(3, PaymentTransaction::where('gateway', InstallmentService::TAI_CUA_HANG)->where('status', 'paid')->count());
 
-        // Trả đủ rồi thì giao được như đơn đã thanh toán.
         app(OrderService::class)->changeStatus($don->fresh(), OrderStatus::Preparing);
         $this->assertSame(OrderStatus::Preparing, $don->fresh()->status);
 
-        // Ba kỳ đúng hạn: +9.
         $this->assertSame(59, app(CreditScore::class)->cua($don->user)['diem']);
     }
-
-    /* ================= MOMO TỪNG KỲ ================= */
 
     #[Test]
     public function momo_tra_tung_ky_dung_so_tien_ky_cuoi_hoan_tat(): void
@@ -382,7 +353,6 @@ class TraGopTest extends TestCase
         $this->assertSame($kyDau->id, $tx->installment_payment_id);
         $this->assertSame((string) $kyDau->amount, (string) $tx->amount);
 
-        // Số tiền lệch: không ghi.
         $this->get(route('shop.payment.momo.callback', $this->goiTin($tx, ['amount' => (string) (int) $don->grand_total])));
         $this->assertNull($kyDau->fresh()->paid_at);
 
@@ -406,11 +376,8 @@ class TraGopTest extends TestCase
 
         $this->get(route('shop.orders.tra-gop.momo', $don))->assertSessionHas('error', fn ($m) => str_contains($m, 'không còn kỳ'));
 
-        // Ba giao dịch MoMo: không bày hoàn qua MoMo.
         $this->assertFalse(app(RefundService::class)->hoanQuaMomoDuoc($don->fresh()));
     }
-
-    /* ================= QUÁ HẠN ================= */
 
     #[Test]
     public function qua_han_vuot_an_han_thi_vo_huy_don_hoan_kho_no_dung_so_da_thu(): void
@@ -421,12 +388,11 @@ class TraGopTest extends TestCase
         $this->thu($don, 0)->assertSessionHas('success');
         $daThu = (string) $don->installmentPlan->payments[0]->amount;
 
-        // Kỳ 1 hạn 15/10, ân hạn 3 ngày: ngày 18/10 vẫn chưa vỡ.
-        $this->travelTo(Carbon::parse('2026-10-18 16:00:00', 'UTC')); // 23:00 ngày 18 giờ Việt Nam
+        $this->travelTo(Carbon::parse('2026-10-18 16:00:00', 'UTC'));
         $this->artisan('tra-gop:qua-han')->assertSuccessful();
         $this->assertSame(InstallmentStatus::DangTra, $don->fresh()->installmentPlan->status);
 
-        $this->travelTo(Carbon::parse('2026-10-18 17:30:00', 'UTC')); // 00:30 ngày 19
+        $this->travelTo(Carbon::parse('2026-10-18 17:30:00', 'UTC'));
         $this->artisan('tra-gop:qua-han')->assertSuccessful();
 
         $don->refresh();
@@ -463,7 +429,6 @@ class TraGopTest extends TestCase
         $khach = $don->user;
         $this->actingAs($this->nguoi(UserRole::Admin));
 
-        // 17:30 UTC ngày 01/10 là 00:30 ngày 02/10 ở Việt Nam: khoản trả trước (hạn 01/10) đã TRỄ.
         $this->travelTo(Carbon::parse('2026-10-01 17:30:00', 'UTC'));
         $this->thu($don, 0)->assertSessionHas('success');
 
@@ -486,8 +451,6 @@ class TraGopTest extends TestCase
         $this->assertSame(50, app(CreditScore::class)->cua($don->user)['diem']);
         $this->assertFalse(app(OrderService::class)->owesRefund($don->fresh()), 'Chưa trả kỳ nào thì không nợ');
     }
-
-    /* ================= CẤU HÌNH VÀ GIAO DIỆN ================= */
 
     #[Test]
     public function admin_sua_cau_hinh_co_rang_buoc_va_tat_duoc(): void
@@ -521,7 +484,6 @@ class TraGopTest extends TestCase
         $this->get(route('shop.orders.show', $don))->assertOk()
             ->assertSee('data-tra-gop="dang_tra"', false)
             ->assertSee('data-ky="2"', false)
-            // Chỉ thị Blade dính liền chữ không được biên dịch và in thô ra trang — đã gặp thật.
             ->assertDontSee('@endif', false);
 
         $this->get(route('shop.profile.edit', ['muc' => 'tra-gop']))->assertOk()

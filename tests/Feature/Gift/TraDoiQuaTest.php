@@ -19,9 +19,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Trả hàng và đổi hàng với dòng quà — theo luật RIÊNG của từng món quà, chỉ điền sẵn.
- */
+/** Trả hàng và đổi hàng với dòng quà — theo luật RIÊNG của từng món quà, chỉ điền sẵn. */
 class TraDoiQuaTest extends TestCase
 {
     use RefreshDatabase;
@@ -78,10 +76,8 @@ class TraDoiQuaTest extends TestCase
     #[Test]
     public function tra_kem_qua_theo_so_mon_con_giu_va_tran_toi_da(): void
     {
-        // Mỗi 1 tặng 1, tối đa 2: mua 3, nhận 2 quà.
         [$don, , $qua] = $this->donCoQua(3, 2, $this->cauHinh(['max_quantity' => 2]));
 
-        // Trả 1 (còn giữ 2 → vẫn được 2 quà) → không phải trả quà; trả 2 → trả 1; trả 3 → trả 2.
         $this->assertSame([0, 0, 1, 2], $this->bang($don, $qua));
     }
 
@@ -112,7 +108,6 @@ class TraDoiQuaTest extends TestCase
             'items' => [$chinh->id => ['quantity' => 2, 'restock' => 1], $qua->id => ['quantity' => 1, 'restock' => 1]],
         ]);
 
-        // Đã trả 2 món chính và 1 quà; còn 1 món chính. Trả tiếp 0 → vẫn nợ 1 quà; trả tiếp 1 → 2 quà.
         $this->assertSame([1, 2], $this->bang($don->fresh('items'), $qua));
     }
 
@@ -129,7 +124,6 @@ class TraDoiQuaTest extends TestCase
         $cauHinh->update(['cho_doi_hang' => true]);
         $this->assertNull($dv->lyDoDongKhongDoiDuoc($qua->fresh()));
 
-        // Quà không còn cấu hình (hoặc quà theo chương trình): không đổi.
         [, , $quaMoCoi] = $this->donCoQua(1, 1, null);
         $this->assertNotNull($dv->lyDoDongKhongDoiDuoc($quaMoCoi));
     }

@@ -9,12 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Một phiếu nhập kho.
- *
- * Xem chú thích dài ở migration create_stock_receipts_tables: vì sao
- * không sửa thẳng `products.stock_quantity`.
- */
+/** Một phiếu nhập kho. */
 class StockReceipt extends Model
 {
     use HasFactory;
@@ -26,15 +21,6 @@ class StockReceipt extends Model
         'note',
         'received_at',
     ];
-
-    /*
-     * `status`, `posted_at`, `created_by`, `created_by_name` CỐ Ý không
-     * nằm trong $fillable.
-     *
-     * Cùng lý do với `orders.status`: ghi sổ là một HÀNH ĐỘNG có tác
-     * động thật (kho được cộng thêm), không phải một ô trong biểu mẫu.
-     * Chỉ StockReceiptService::ghiSo() được phép đặt chúng.
-     */
 
     protected function casts(): array
     {
@@ -49,31 +35,21 @@ class StockReceipt extends Model
         ];
     }
 
-    /** @return HasMany<StockReceiptItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(StockReceiptItem::class)->orderBy('id');
     }
 
-    /** @return BelongsTo<Supplier, $this> */
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
     }
 
-    /**
-     * Tên nhà cung cấp để hiển thị.
-     *
-     * Ưu tiên BẢN CHỤP trên phiếu, không phải tên hiện tại của nhà cung
-     * cấp. Họ đổi tên thì phiếu cũ vẫn phải nói đúng cái tên hồi đó —
-     * cùng nguyên tắc với `order_items.product_name`.
-     */
     public function tenNhaCungCap(): ?string
     {
         return $this->supplier ?: $this->supplier()->first()?->name;
     }
 
-    /** @return BelongsTo<User, $this> */
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -84,7 +60,6 @@ class StockReceipt extends Model
         return $this->kind === StockReceiptKind::TraNcc;
     }
 
-    /** Phiếu nhập gốc mà phiếu trả này trỏ về. */
     public function phieuGoc(): BelongsTo
     {
         return $this->belongsTo(self::class, 'return_of_id');
@@ -100,18 +75,11 @@ class StockReceipt extends Model
         return $this->status === StockReceiptStatus::Posted;
     }
 
-    /** Tổng số đơn vị hàng trên phiếu. */
     public function totalQuantity(): int
     {
         return (int) $this->items->sum('quantity');
     }
 
-    /**
-     * Tổng tiền của phiếu.
-     *
-     * BỎ QUA dòng chưa điền giá. Coi chúng là 0 thì tổng tiền thấp hơn
-     * sự thật mà không có gì báo — xem chú thích `unit_cost` ở migration.
-     */
     public function totalCost(): float
     {
         return (float) $this->items
@@ -119,7 +87,6 @@ class StockReceipt extends Model
             ->sum(fn (StockReceiptItem $i) => (float) $i->unit_cost * $i->quantity);
     }
 
-    /** Có dòng nào chưa điền giá không — giao diện phải nói ra. */
     public function hasUnpricedItems(): bool
     {
         return $this->items->contains(fn (StockReceiptItem $i) => $i->unit_cost === null);

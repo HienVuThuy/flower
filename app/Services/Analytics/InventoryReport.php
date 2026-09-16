@@ -9,41 +9,10 @@ use Illuminate\Support\Collection;
 
 /**
  * Báo cáo tồn kho.
- * ============================================================
- * TRẢ LỜI BA CÂU HỎI mà bảng "sản phẩm" không trả lời được:
- *
- *   1. Sắp hết cái gì?      → còn bán được mấy ngày nữa
- *   2. Đang mất đơn ở đâu?  → hết hàng nhưng vẫn đang bày bán
- *   3. Tiền nằm chết ở đâu? → còn hàng nhưng cả kỳ không bán được cái nào
- *
- * Cột `stock_quantity` một mình không trả lời được câu nào trong ba câu
- * đó. "Còn 5" là nhiều hay ít phụ thuộc hoàn toàn vào bán được bao
- * nhiêu mỗi ngày: 5 chậu sen đá bán 3 cái/ngày là sắp hết, 5 bình gốm
- * bán 1 cái/tháng là thừa.
- *
- * ============================================================
  * ⚠️ KHÔNG TÍNH ĐƯỢC LỢI NHUẬN, VÀ KHÔNG BỊA RA.
- *
- * Cơ sở dữ liệu KHÔNG có giá vốn — bảng `products` chỉ có `base_price`
- * (giá bán). Vì thế:
- *
- *   - "Giá trị tồn kho" ở đây là theo GIÁ BÁN, không phải vốn bỏ ra.
- *   - Không có báo cáo lãi/lỗ, biên lợi nhuận, hay vòng quay vốn.
- *
- * Muốn có thì phải thêm cột giá vốn và nhập số thật vào. Ước lượng bằng
- * một tỉ lệ phần trăm nghĩ ra là bịa một con số kế toán, và nó sẽ được
- * dùng để ra quyết định.
- *
- * ============================================================
- * ĐƠN VỊ KHO LÀ (SẢN PHẨM, QUY CÁCH), không phải sản phẩm.
- *
- * "Lưỡi hổ mini" có hai chậu, mỗi chậu một kho riêng. Gom về một dòng
- * thì báo cáo nói "còn 12" trong khi chậu sứ đã hết sạch và khách không
- * mua được — đúng thứ báo cáo này sinh ra để phát hiện.
  */
 class InventoryReport
 {
-    /** Số ngày dùng để tính tốc độ bán. */
     private int $ngay = 30;
 
     public function trongVong(int $ngay): static
@@ -53,19 +22,6 @@ class InventoryReport
         return $this;
     }
 
-    /**
-     * Mọi đơn vị kho ĐANG THEO DÕI TỒN, kèm tốc độ bán.
-     *
-     * Bỏ qua thứ không theo dõi tồn (`track_inventory = false`): với
-     * chúng, "còn bao nhiêu" không phải một câu hỏi có nghĩa — cửa hàng
-     * cố ý khai là bán không giới hạn.
-     *
-     * @return Collection<int, array{
-     *     product: Product, variant_id: ?int, name: string, variant: ?string,
-     *     stock: int, sold: int, per_day: float, cover: ?float,
-     *     price: float, value: float, selling: bool
-     * }>
-     */
     public function rows(): Collection
     {
         $daBan = $this->daBanTrongKy();
@@ -89,8 +45,6 @@ class InventoryReport
                                 $v->id,
                                 $v->name,
                                 (int) $v->stock_quantity,
-                                // Quy cách có giá riêng thì dùng giá đó;
-                                // không thì lùi về giá sản phẩm.
                                 (float) ($v->price ?? $p->base_price),
                                 $daBan,
                             ));
@@ -110,9 +64,6 @@ class InventoryReport
         return $dong->values();
     }
 
-    /**
-     * @param  Collection<string, int>  $daBan
-     */
     private function dungDong(Product $p, ?int $variantId, ?string $tenQuyCach, int $ton, float $gia, Collection $daBan): array
     {
         $ban = (int) ($daBan[$this->khoa($p->id, $variantId)] ?? 0);
@@ -127,55 +78,18 @@ class InventoryReport
             'sold' => $ban,
             'per_day' => $moiNgay,
 
-            /*
-             * CÒN BÁN ĐƯỢC MẤY NGÀY NỮA.
-             *
-             * null khi CẢ KỲ KHÔNG BÁN ĐƯỢC CÁI NÀO — mẫu số bằng 0.
-             * Trả về một số rất lớn ở đây thì hàng chết vốn lại đứng đầu
-             * bảng "còn nhiều nhất", đúng chỗ nó không nên đứng. Và "vô
-             * hạn ngày" là một câu vô nghĩa: không bán được thì không có
-             * ngày nào để đếm.
-             */
             'cover' => $moiNgay > 0 ? $ton / $moiNgay : null,
 
             'price' => $gia,
             'value' => $ton * $gia,
 
-            /*
-             * CÒN BÀY BÁN HAY KHÔNG — quyết định việc hết hàng có đang
-             * làm mất đơn hay không.
-             *
-             * 'active' là từ vựng THẬT của dự án (xem ô chọn trạng thái ở
-             * biểu mẫu sản phẩm: draft / active / inactive / out_of_stock).
-             * Bản đầu viết 'published' — một giá trị không tồn tại ở bất
-             * kỳ đâu trong mã nguồn — nên `selling` LUÔN false, và mục
-             * "đang mất đơn" của trang Tồn kho vĩnh viễn rỗng: màn hình
-             * nói "Không có mặt hàng nào đang bày bán mà hết kho. Tốt."
-             * dù kho có hết sạch.
-             *
-             * Bài kiểm thử không bắt được vì nó tự đặt status là
-             * 'published' — cùng một giả định sai ở cả hai phía.
-             */
             'selling' => $p->status === 'active',
         ];
     }
 
-    /**
-     * Số lượng đã bán trong kỳ, theo từng đơn vị kho.
-     *
-     * CHỈ ĐƠN ĐÃ GIAO. Đơn đang xử lý có thể bị huỷ, và tính vào tốc độ
-     * bán thì báo cáo giục nhập hàng cho những đơn chưa chắc có thật.
-     *
-     * @return Collection<string, int>
-     */
     private function daBanTrongKy(): Collection
     {
         return OrderItem::query()
-            /*
-             * TỐC ĐỘ BÁN KHÔNG GỒM QUÀ. Quà vẫn trừ kho thật (tồn đã phản ánh),
-             * nhưng tính vào "bán mỗi ngày" thì món dùng làm quà trông như bán
-             * chạy và báo cáo giục nhập hàng theo nhu cầu không có thật.
-             */
             ->hangBan()
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.status', OrderStatus::Completed->value)
@@ -192,15 +106,6 @@ class InventoryReport
         return $productId . ':' . ($variantId ?? '0');
     }
 
-    /**
-     * Sắp hết — xếp theo CÒN BÁN ĐƯỢC ÍT NGÀY NHẤT, không theo số lượng.
-     *
-     * Xếp theo `stock_quantity` tăng dần là cách xếp sai: "còn 2" của
-     * món bán 5 cái/ngày gấp gáp hơn nhiều so với "còn 2" của món bán
-     * một cái mỗi tháng, nhưng cả hai đứng cạnh nhau và trông như nhau.
-     *
-     * Món chưa bán được cái nào KHÔNG nằm ở đây — nó thuộc "chết vốn".
-     */
     public function sapHet(float $nguong = 14, int $limit = 20): Collection
     {
         return $this->rows()
@@ -210,28 +115,15 @@ class InventoryReport
             ->values();
     }
 
-    /**
-     * Hết hàng mà VẪN ĐANG BÀY BÁN — đang mất đơn ngay lúc này.
-     *
-     * Hết hàng của một sản phẩm đã ẩn thì không sao; hết hàng của một
-     * sản phẩm khách vẫn bấm vào được mới là chuyện phải xử lý hôm nay.
-     */
     public function daHet(int $limit = 50): Collection
     {
         return $this->rows()
             ->filter(fn (array $r) => $r['stock'] <= 0 && $r['selling'])
-            // Món bán chạy mà hết thì mất nhiều đơn nhất — lên đầu.
             ->sortByDesc('sold')
             ->take($limit)
             ->values();
     }
 
-    /**
-     * Còn hàng nhưng cả kỳ KHÔNG bán được cái nào.
-     *
-     * Đây là tiền đang nằm im trên giá. Xếp theo giá trị giảm dần: món
-     * đắt nằm chết đáng chú ý hơn món rẻ, dù cùng không bán được.
-     */
     public function chetVon(int $limit = 20): Collection
     {
         return $this->rows()
@@ -241,14 +133,6 @@ class InventoryReport
             ->values();
     }
 
-    /**
-     * Mấy con số tổng.
-     *
-     * `value` là giá trị theo GIÁ BÁN, không phải vốn — cơ sở dữ liệu
-     * không có giá vốn. Xem chú thích đầu lớp.
-     *
-     * @return array{units: int, skus: int, value: float, out: int, low: int, dead: int}
-     */
     public function tongQuan(): array
     {
         $rows = $this->rows();

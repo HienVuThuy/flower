@@ -5,14 +5,7 @@ namespace App\Http\Requests\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
-/**
- * Đặt mật khẩu mới bằng liên kết trong thư.
- *
- * `token` và `email` đến từ ô ẩn trong biểu mẫu, tức là SỬA ĐƯỢC. Ở đây
- * chỉ kiểm tra định dạng; việc token có đúng, còn hạn và thuộc về email
- * đó hay không do Password broker của Laravel đối chiếu — nó so mã băm
- * của token với bản ghi trong bảng password_reset_tokens.
- */
+/** Đặt mật khẩu mới bằng liên kết trong thư. */
 class ResetPasswordRequest extends FormRequest
 {
     public function authorize(): bool
@@ -33,12 +26,6 @@ class ResetPasswordRequest extends FormRequest
             'token' => ['required', 'string'],
             'email' => ['required', 'string', 'email', 'max:255'],
 
-            /*
-             * Quy tắc mật khẩu khai một nơi duy nhất ở AppServiceProvider.
-             * Nếu chép tay lại ở đây thì màn hình đặt lại mật khẩu sẽ dễ
-             * dãi hơn màn hình đăng ký ngay lần đầu ai đó siết quy tắc —
-             * và đó là lệch theo đúng hướng nguy hiểm.
-             */
             'password' => ['required', 'confirmed', Password::defaults()],
         ];
     }

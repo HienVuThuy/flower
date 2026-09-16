@@ -14,18 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Dòng thời gian của đơn hàng.
- * ============================================================
- * "Đơn của tôi đang ở đâu" là câu hỏi khách hỏi nhiều nhất. Trước đây
- * trang đơn chỉ hiện MỘT trạng thái hiện tại, nên câu trả lời duy nhất
- * là gọi điện cho cửa hàng — và cửa hàng mở đúng cái màn hình cũng
- * chẳng có thêm thông tin gì.
- *
- * Điều được canh kỹ nhất ở đây: LỊCH SỬ PHẢI ĐẦY ĐỦ. Một dòng thời gian
- * thiếu mốc còn tệ hơn không có, vì nó trông vẫn như đầy đủ — khách đọc
- * và tin rằng đơn chưa từng đi qua bước bị thiếu.
- */
+/** Dòng thời gian của đơn hàng. */
 class OrderTimelineTest extends TestCase
 {
     use RefreshDatabase;
@@ -44,7 +33,6 @@ class OrderTimelineTest extends TestCase
         return $user;
     }
 
-    /** Đặt một đơn qua đúng đường khách vẫn đi. */
     private function datHang(): Order
     {
         $product = Product::factory()
@@ -73,10 +61,6 @@ class OrderTimelineTest extends TestCase
     #[Test]
     public function don_vua_dat_da_co_moc_dau_tien(): void
     {
-        /*
-         * Không ghi mốc lúc đặt thì mọi đơn mới có dòng thời gian TRỐNG,
-         * và khách hiểu là cửa hàng chưa nhận được gì.
-         */
         $this->actingAs(User::factory()->create());
 
         $order = $this->datHang();
@@ -121,8 +105,6 @@ class OrderTimelineTest extends TestCase
     #[Test]
     public function moc_dau_tien_khong_gan_ten_ai(): void
     {
-        // Đơn do chính khách tạo. Trên dòng thời gian, "bạn đã đặt đơn"
-        // không cần ai đứng tên.
         $this->actingAs(User::factory()->create());
 
         $moc = $this->datHang()->statusEvents->first();
@@ -149,14 +131,6 @@ class OrderTimelineTest extends TestCase
     #[Test]
     public function doi_trang_thai_that_bai_thi_KHONG_de_lai_moc(): void
     {
-        /*
-         * BÀI QUAN TRỌNG NHẤT ở đây.
-         *
-         * Ghi mốc ngoài transaction thì có lúc mốc được ghi trong khi
-         * trạng thái không đổi — dòng thời gian nói đơn đã sang bước
-         * mới, còn bản thân đơn thì chưa. Khách đọc thấy "đang giao"
-         * cho một đơn vẫn nằm ở kho.
-         */
         $this->actingAs(User::factory()->create());
         $order = $this->datHang();
 
@@ -165,12 +139,10 @@ class OrderTimelineTest extends TestCase
 
         $soMoc = $order->fresh()->statusEvents->count();
 
-        // Đơn đã huỷ là trạng thái cuối — mọi bước tiếp theo phải bị từ chối.
         try {
             $this->orders()->changeStatus($order->fresh(), OrderStatus::Confirmed);
             $this->fail('Đơn đã huỷ thì không xác nhận lại được.');
         } catch (OrderException) {
-            // Đúng như mong đợi.
         }
 
         $this->assertSame($soMoc, $order->fresh()->statusEvents->count(),
@@ -199,11 +171,6 @@ class OrderTimelineTest extends TestCase
     #[Test]
     public function trang_cua_khach_KHONG_hien_ten_nhan_vien(): void
     {
-        /*
-         * Với khách, người bấm nút là "cửa hàng". Hiện tên nhân viên
-         * trên trang công khai là lộ thông tin nội bộ mà không đem lại
-         * gì cho người đọc — họ không liên hệ được với người đó.
-         */
         $khach = User::factory()->create();
         $this->actingAs($khach);
         $order = $this->datHang();
@@ -220,7 +187,6 @@ class OrderTimelineTest extends TestCase
     #[Test]
     public function trang_quan_tri_CO_hien_ten_nhan_vien(): void
     {
-        // Mặt còn lại: ở khu quản trị, "ai làm" chính là câu hỏi.
         $this->actingAs(User::factory()->create());
         $order = $this->datHang();
 

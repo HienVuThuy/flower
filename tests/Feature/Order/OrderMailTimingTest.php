@@ -15,20 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Thư nào gửi ở trạng thái nào.
- * ============================================================
- * LỖI GỐC: thư "Xác nhận đơn hàng" được gửi NGAY lúc khách bấm đặt, khi
- * đơn còn ở trạng thái "Chờ xác nhận" — tức là chưa ai ở cửa hàng nhìn
- * thấy nó, chưa ai kiểm hàng còn hay hết, chưa ai xem địa chỉ có ship
- * tới được không.
- *
- * Hậu quả khi cửa hàng phải từ chối sau đó: khách đã cầm trong tay một
- * lá thư tên là "Xác nhận đơn hàng" và hiểu là đã chốt xong.
- *
- * "Chờ xác nhận" và "Đã xác nhận" là HAI TRẠNG THÁI KHÁC NHAU. Các bài
- * dưới đây canh cho sáu trạng thái không bị trộn lẫn.
- */
+/** Thư nào gửi ở trạng thái nào. */
 class OrderMailTimingTest extends TestCase
 {
     use RefreshDatabase;
@@ -38,7 +25,6 @@ class OrderMailTimingTest extends TestCase
         return app(OrderService::class);
     }
 
-    /** Đặt một đơn qua đúng đường khách vẫn đi. */
     private function datHang(): Order
     {
         $product = Product::factory()
@@ -90,24 +76,12 @@ class OrderMailTimingTest extends TestCase
 
         $this->orders()->changeStatus($order, OrderStatus::Confirmed);
 
-        /*
-         * Đây là lúc khách cần một BIÊN NHẬN đầy đủ để đối chiếu: đủ mặt
-         * hàng, đủ số lượng, đủ tổng tiền, đủ địa chỉ giao.
-         */
         Mail::assertSent(OrderConfirmationMail::class);
     }
 
     #[Test]
     public function dang_chuan_bi_khong_gui_thu(): void
     {
-        /*
-         * "Đang chuẩn bị" là bước NỘI BỘ của cửa hàng — gói hàng, cắt
-         * hoa. Với khách thì không có gì mới so với "đã xác nhận".
-         *
-         * Gửi thư cho mọi bước nhỏ là cách nhanh nhất khiến người ta lọc
-         * thẳng thư của cửa hàng vào thùng rác, và khi đó thư THẬT SỰ
-         * quan trọng cũng chung số phận.
-         */
         $this->actingAs(User::factory()->create());
 
         $order = $this->datHang();
@@ -123,8 +97,6 @@ class OrderMailTimingTest extends TestCase
     #[Test]
     public function ba_trang_thai_sau_gui_thu_cap_nhat_ngan(): void
     {
-        // Đang giao / Đã giao / Đã huỷ là tin cập nhật, không cần lặp
-        // lại toàn bộ biên nhận.
         $this->actingAs(User::factory()->create());
 
         $order = $this->datHang();
@@ -144,10 +116,6 @@ class OrderMailTimingTest extends TestCase
     #[Test]
     public function huy_don_van_bao_cho_khach(): void
     {
-        /*
-         * Trạng thái DUY NHẤT mà im lặng là không chấp nhận được: khách
-         * đang chờ hàng, và nếu không ai báo thì họ chờ mãi.
-         */
         $this->actingAs(User::factory()->create());
 
         $order = $this->datHang();
@@ -162,12 +130,6 @@ class OrderMailTimingTest extends TestCase
     #[Test]
     public function man_hinh_sau_khi_dat_khong_hua_mot_la_thu_da_gui(): void
     {
-        /*
-         * Bản trước báo "Xác nhận đơn đã được gửi tới ..." ngay tại màn
-         * hình này. Nay thư chưa đi, nên câu đó thành lời hứa sai: khách
-         * mở hộp thư tìm một lá thư chưa tồn tại rồi kết luận hệ thống
-         * hỏng hoặc đơn không vào.
-         */
         $this->actingAs(User::factory()->create());
 
         $order = $this->datHang();

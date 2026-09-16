@@ -2,20 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * DÁNG của cây hoặc bó hoa.
- * ============================================================
- * Đây là tiêu chí về CHỖ ĐẶT VÀ THẨM MỸ, không phải về sinh học. Khách
- * hỏi kiểu: "có cây nào cao cao đặt góc phòng không", "cần cây rủ xuống
- * cho kệ sách".
- *
- * KHÁC `GrowthForm`: một cây thân leo có thể để rủ (`Trailing`) hoặc cho
- * leo cột (`Columnar`) — cùng dạng sống, hai dáng khác nhau, và khách
- * chọn theo dáng vì đó là thứ quyết định nó hợp với chỗ nào trong nhà.
- *
- * Giữ danh sách NGẮN. Dáng là thứ nhìn ảnh là biết; một bộ lọc mười lăm
- * lựa chọn ở đây chỉ làm khách phải đọc nhiều hơn là ngó ảnh.
- */
+/** DÁNG của cây hoặc bó hoa. */
 enum PlantShape: string
 {
     case Upright = 'upright';
@@ -39,7 +26,6 @@ enum PlantShape: string
         };
     }
 
-    /** Hợp với chỗ nào — xem chú thích đầu tệp. */
     public function hint(): string
     {
         return match ($this) {
@@ -53,7 +39,6 @@ enum PlantShape: string
         };
     }
 
-    /** @return array<string, string> value => label */
     public static function options(): array
     {
         $out = [];

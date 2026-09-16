@@ -1,13 +1,4 @@
-/*
- * Nút "Thêm dòng" ở phiếu nhập kho.
- * ============================================================
- * PHẦN THÊM, KHÔNG PHẢI PHẦN CHÍNH. Biểu mẫu đã dựng sẵn 8 dòng trống ở
- * máy chủ, nên không có JavaScript thì vẫn lập được cả phiếu — chỉ là
- * tối đa 8 mặt hàng một lần.
- *
- * GỌI LẠI ĐƯỢC NHIỀU LẦN: điều hướng quản trị thay ruột trang rồi gọi
- * lại toàn bộ phần khởi tạo (xem admin/nav.js).
- */
+/* Nút "Thêm dòng" ở phiếu nhập kho. */
 export function initReceiptLines() {
     document.querySelectorAll('[data-receipt-add]').forEach((nut) => {
         if (nut.dataset.lineReady) {
@@ -32,13 +23,6 @@ export function initReceiptLines() {
 
             const moi = cuoi.cloneNode(true);
 
-            /*
-             * ĐÁNH SỐ TIẾP, KHÔNG DÙNG LẠI SỐ CŨ.
-             *
-             * `items[7][quantity]` mà nhân bản y nguyên thì hai dòng cùng
-             * một chỉ số, và PHP chỉ nhận dòng cuối — dòng người dùng vừa
-             * gõ ở trên biến mất không dấu vết.
-             */
             const soMoi = dong.length;
 
             moi.querySelectorAll('[name]').forEach((o) => {

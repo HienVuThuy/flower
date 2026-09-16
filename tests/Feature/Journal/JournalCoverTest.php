@@ -11,14 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Ảnh bìa sổ — ba trạng thái, không phải hai.
- * ============================================================
- * Ô tải tệp để trống có thể nghĩa là "không đổi gì" HOẶC "bỏ ảnh đi" —
- * trình duyệt gửi lên y hệt nhau. Không phân biệt được hai ý đó thì người
- * dùng KHÔNG BAO GIỜ gỡ được ảnh bìa đã lỡ chọn: mỗi lần lưu là ảnh cũ
- * lại quay về, và họ sẽ tưởng trang bị hỏng.
- */
+/** Ảnh bìa sổ — ba trạng thái, không phải hai. */
 class JournalCoverTest extends TestCase
 {
     use RefreshDatabase;
@@ -73,7 +66,6 @@ class JournalCoverTest extends TestCase
         $cu = $so->fresh()->cover_image;
         $this->assertNotNull($cu);
 
-        // Lưu lần nữa, lần này không đính tệp nào.
         $this->actingAs($user)->put('/nhat-ky/' . $so->id, [
             'title' => 'Đổi tên thôi',
             'kind' => 'growth',
@@ -107,8 +99,6 @@ class JournalCoverTest extends TestCase
 
         $this->assertNull($so->fresh()->cover_image);
 
-        // Gỡ khỏi cơ sở dữ liệu mà để tệp nằm lại là giữ đúng thứ người
-        // dùng vừa yêu cầu xoá.
         Storage::disk('public')->assertMissing($cu);
     }
 

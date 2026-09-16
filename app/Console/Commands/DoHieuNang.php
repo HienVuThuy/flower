@@ -12,25 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Đo xem trang nào chậm, và chậm vì cái gì.
- * ============================================================
- * VÌ SAO CẦN MỘT LỆNH RIÊNG: mọi lời khuyên tối ưu đều bắt đầu bằng
- * "đo trước đã". Không đo thì tối ưu là đoán, và đoán sai thì công sức
- * đổ vào chỗ không ai chờ trong khi chỗ thật sự chậm vẫn nguyên.
- *
- * ĐO BA THỨ, vì chúng hỏng theo ba kiểu khác nhau:
- *
- *   - THỜI GIAN dựng trang: con số người dùng cảm nhận;
- *   - SỐ TRUY VẤN: nhiều truy vấn nhanh vẫn có thể chậm hơn một truy vấn
- *     chậm, và đó là dấu hiệu của N+1;
- *   - THỜI GIAN TRUY VẤN: tách ra để biết nên sửa SQL hay sửa PHP.
- *
- * Chạy TRONG tiến trình, không qua HTTP thật: bỏ được nhiễu của mạng và
- * của máy chủ web, nên hai lần đo liên tiếp so sánh được với nhau. Đổi
- * lại nó KHÔNG đo được thời gian tải ảnh, CSS, JS — phần đó phải xem
- * bằng công cụ của trình duyệt.
- */
+/** Đo xem trang nào chậm, và chậm vì cái gì. */
 class DoHieuNang extends Command
 {
     protected $signature = 'do:hieu-nang
@@ -73,12 +55,6 @@ class DoHieuNang extends Command
                 continue;
             }
 
-            /*
-             * TRUNG VỊ, KHÔNG PHẢI TRUNG BÌNH.
-             *
-             * Lần chạy đầu luôn chậm hơn hẳn (nạp class, làm nóng đệm).
-             * Trung bình bị nó kéo lệch; trung vị thì không.
-             */
             $thoiGian = $this->trungVi(array_column($ketQua, 'ms'));
             $msSql = $this->trungVi(array_column($ketQua, 'ms_sql'));
             $soTruyVan = $ketQua[0]['so_truy_van'];
@@ -113,11 +89,6 @@ class DoHieuNang extends Command
         return self::SUCCESS;
     }
 
-    /**
-     * Các trang đáng đo, kèm dữ liệu thật để dựng đường dẫn.
-     *
-     * @return array<string, string>
-     */
     private function duongDan(): array
     {
         $sp = Product::query()->where('status', 'active')->first();
@@ -142,9 +113,6 @@ class DoHieuNang extends Command
         ]);
     }
 
-    /**
-     * @return array{ms: float, ms_sql: float, so_truy_van: int, bytes: int, ma: int, truy_van: list<array>}|null
-     */
     private function doMotTrang(string $url): ?array
     {
         $truyVan = [];
@@ -154,13 +122,6 @@ class DoHieuNang extends Command
             $truyVan[] = ['sql' => $q->sql, 'ms' => $q->time];
         });
 
-        /*
-         * Đăng nhập bằng quản trị viên cho MỌI trang.
-         *
-         * Trang admin đòi quyền; trang khách thì đăng nhập hay không đều
-         * dựng gần như y hệt. Dùng một tài khoản cho cả hai giúp hai lần
-         * đo khác nhau vẫn so sánh được.
-         */
         $admin = User::where('role', UserRole::Admin->value)->first();
 
         if ($admin) {
@@ -206,39 +167,10 @@ class DoHieuNang extends Command
     }
 
 
-    /**
-     * Kiểm những thứ ảnh hưởng tới tốc độ NHIỀU HƠN cả mã nguồn.
-     *
-     * VÌ SAO ĐẶT NGAY ĐẦU BÁO CÁO: đo được trên chính dự án này, OPcache
-     * tắt làm TTFB 781 ms; bật lên còn 138 ms — giảm 82% mà không đụng
-     * một dòng mã nào.
-     *
-     * Không kiểm thì người đọc thấy bảng số liệu chậm rồi lao vào tối ưu
-     * truy vấn, trong khi truy vấn chậm nhất chỉ 12,5 ms. Công sức đổ vào
-     * chỗ không ai chờ, còn chỗ thật sự chậm vẫn nguyên.
-     */
     private function chanDoanMoiTruong(): void
     {
         $muc = [];
 
-        /* ---------- OPcache ---------- */
-
-        /*
-         * ĐỌC CẤU HÌNH, KHÔNG ĐỌC TRẠNG THÁI ĐANG CHẠY.
-         *
-         * Lệnh này chạy ở dòng lệnh, mà `opcache.enable_cli` mặc định
-         * TẮT — và đó là đúng: mỗi lần gọi artisan là một tiến trình mới,
-         * đệm chưa kịp dùng đã bị huỷ, nên bật chỉ tốn thêm thời gian
-         * khởi động.
-         *
-         * Nên `opcache_get_status()` ở đây LUÔN trả về false, kể cả khi
-         * máy chủ web đang bật OPcache. Bản đầu của hàm này đọc đúng cái
-         * đó và báo động giả "CHƯA BẬT" — một công cụ chẩn đoán nói sai
-         * còn hại hơn không có, vì người đọc sẽ đi sửa thứ không hỏng.
-         *
-         * `ini_get('opcache.enable')` đọc THIẾT LẬP, thứ áp cho cả máy
-         * chủ web — đó mới là câu hỏi cần trả lời.
-         */
         if (! extension_loaded('Zend OPcache')) {
             $muc[] = ['OPcache', 'CHƯA CÀI', 'php.ini: bỏ ; ở dòng zend_extension=opcache'];
         } elseif (! filter_var(ini_get('opcache.enable'), FILTER_VALIDATE_BOOLEAN)) {
@@ -251,23 +183,17 @@ class DoHieuNang extends Command
                 : 'bật cho máy chủ web (dòng lệnh cố ý không dùng)'];
         }
 
-        /* ---------- Đệm của Laravel ---------- */
-
         foreach (['config' => 'config:cache', 'routes' => 'route:cache'] as $tep => $lenh) {
             $muc[] = file_exists(base_path("bootstrap/cache/{$tep}.php"))
                 ? [ucfirst($tep).' cache', 'có', '—']
                 : [ucfirst($tep).' cache', 'chưa', "chạy thật thì: php artisan {$lenh}"];
         }
 
-        /* ---------- Ảnh ---------- */
-
         $manifest = storage_path('app/public/'.\App\Services\Media\ResponsiveImage::MANIFEST);
 
         $muc[] = file_exists($manifest)
             ? ['Ảnh WebP', 'đã sinh', sprintf('%d ảnh', count((array) json_decode((string) file_get_contents($manifest), true)))]
             : ['Ảnh WebP', 'CHƯA SINH', 'chạy: php artisan anh:toi-uu'];
-
-        /* ---------- Chế độ ---------- */
 
         if (config('app.debug')) {
             $muc[] = ['APP_DEBUG', 'true', 'chạy thật phải để false — bật thì mọi truy vấn đều bị ghi lại'];

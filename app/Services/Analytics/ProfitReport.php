@@ -10,37 +10,7 @@ use App\Models\Refund;
 use App\Models\StockReceiptItem;
 use Illuminate\Support\Collection;
 
-/**
- * Lãi gộp — CHỈ trên phần doanh thu có giá vốn thật.
- * ============================================================
- * GIÁ VỐN ĐẾN TỪ ĐÂU: phiếu nhập kho đã ghi sổ có điền giá
- * (`stock_receipt_items.unit_cost`). Không ước lượng bằng một tỉ lệ phần
- * trăm nghĩ ra, không lấy giá bán trừ đi một con số cho đẹp.
- *
- * ============================================================
- * BA QUY TẮC, và vì sao:
- *
- *   1. GIÁ VỐN BÌNH QUÂN GIA QUYỀN CỦA CÁC LẦN NHẬP TỚI NGÀY BÁN. Một lô
- *      nhập tuần sau không được quyết định giá vốn của hàng bán tuần này.
- *      Dòng bán TRƯỚC lần nhập có giá đầu tiên thì KHÔNG có giá vốn — hàng
- *      đó đến từ tồn kho cũ mà không ai biết đã mua bao nhiêu.
- *
- *   2. DÒNG KHÔNG CÓ GIÁ VỐN BỊ LOẠI khỏi lãi, và được ĐẾM, ĐỊNH GIÁ, NÓI
- *      RA. Tính lãi trên 20% doanh thu rồi gọi đó là "lãi của cửa hàng" là
- *      bịa. `ti_le_phu` nói con số lãi đang đứng trên bao nhiêu phần doanh
- *      thu.
- *
- *   3. DOANH THU CHƯA GỒM VAT. Giá bán đã gồm VAT (QĐ về thuế); VAT là tiền
- *      nộp nhà nước, không phải tiền của cửa hàng. Doanh thu một dòng =
- *      `line_total − discount_amount − tax_amount`. Giá vốn trên phiếu nhập
- *      được hiểu là CHƯA GỒM VAT ĐẦU VÀO — ô nhập liệu nói rõ điều đó.
- *
- * KHÔNG TÍNH "LÃI RÒNG". Hoàn tiền, bù phí ship, phí cổng thanh toán, mặt
- * bằng, nhân công đều là chi phí thật nhưng hệ thống không có đủ số liệu
- * cho hầu hết chúng. Hai khoản có số liệu (hoàn tiền, bù ship) được hiện
- * CẠNH lãi gộp để người đọc tự trừ, không gộp thành một con số trông như
- * lãi ròng.
- */
+/** Lãi gộp — CHỈ trên phần doanh thu có giá vốn thật. */
 class ProfitReport
 {
     private KhoangThoiGian $khoang;
@@ -57,14 +27,6 @@ class ProfitReport
         return $this;
     }
 
-    /**
-     * @return array{
-     *     doanh_thu: string, doanh_thu_co_gia_von: string, gia_von: string, lai_gop: string,
-     *     bien: float|null, ti_le_phu: float|null, dong_khong_gia_von: int, doanh_thu_khong_gia_von: string,
-     *     theo_san_pham: Collection, can_nhap_gia_von: Collection, hoan_tien: string,
-     *     co_phieu_nhap_co_gia: bool
-     * }
-     */
     public function baoCao(): array
     {
         $bangGia = $this->bangGiaVon();
@@ -75,24 +37,8 @@ class ProfitReport
                 ->where('orders.status', OrderStatus::Completed->value)
                 ->whereNull('orders.deleted_at')
 
-                /*
-                 * QUÀ TẶNG KHÔNG THUỘC BẢNG LÃI THEO SẢN PHẨM — doanh thu 0,
-                 * giá vốn thật: để nó ở đây thì món dùng làm quà trông như bán
-                 * lỗ. Giá vốn quà đứng thành khoản riêng — xem chiPhiQua().
-                 */
                 ->where('order_items.is_gift', false)
 
-                /*
-                 * HOA TƯƠI KHÔNG THUỘC BẢNG NÀY.
-                 *
-                 * Hoa không nhập kho theo phiếu (giá vốn hoa tính theo LÔ, ở
-                 * FlowerCostReport). Để dòng hoa lọt vào đây thì chúng luôn
-                 * "không có giá vốn": đo được trên dữ liệu thật, tỉ lệ phủ
-                 * tụt còn 36% và mục "bán chạy mà chưa có giá vốn" giục đi
-                 * lập phiếu nhập cho chính thứ không được nhập kho.
-                 *
-                 * leftJoin + NULL: dòng của sản phẩm đã xoá vẫn được tính.
-                 */
                 ->leftJoin('products', 'products.id', '=', 'order_items.product_id')
                 ->where(fn ($q) => $q
                     ->whereNull('products.product_type')
@@ -113,12 +59,6 @@ class ProfitReport
             'orders.tax_amount as thue_cua_don',
         ]);
 
-        /*
-         * ĐƠN CHƯA CÓ SỐ LIỆU THUẾ (`orders.tax_amount` NULL): đặt trước khi
-         * có tính thuế GTGT, hoặc lúc tính thuế đang tắt. Với chúng không có
-         * gì để trừ, nên "doanh thu chưa VAT" thực chất vẫn GỒM VAT. Đếm và
-         * nói ra — không để nhãn "chưa VAT" khẳng định điều không đúng.
-         */
         $chuaTachVat = '0.00';
         $soDongChuaTachVat = 0;
 
@@ -148,15 +88,6 @@ class ProfitReport
             $ten = $d->product_name . ($d->variant_name ? ' — ' . $d->variant_name : '');
             $ngay = KhoangThoiGian::diaPhuong(\Illuminate\Support\Carbon::parse($d->ngay_dat, config('app.timezone')))->toDateString();
 
-            /*
-             * DÒNG BÁN KHÔNG GHI QUY CÁCH của một sản phẩm có quy cách.
-             *
-             * Đơn cũ (lập trước khi sản phẩm có quy cách) chỉ ghi sản phẩm.
-             * Giá vốn thì lưu theo từng quy cách, nên khoá "sp:" không khớp
-             * gì và dòng đó rơi vào "chưa có giá vốn" dù hàng đã có phiếu
-             * nhập đủ. Không đoán quy cách nào đã bán — dùng BÌNH QUÂN của
-             * mọi quy cách tới ngày bán.
-             */
             $luyKe = $bangGia[$khoa]
                 ?? ($d->product_variant_id === null ? ($bangGia[$d->product_id . ':*'] ?? []) : []);
 
@@ -166,11 +97,6 @@ class ProfitReport
                 $soDongKhongGia++;
                 $khongGia = bcadd($khongGia, $tien, 2);
 
-                /*
-                 * MÓN TẮT THEO DÕI TỒN KHO không lập phiếu nhập được — biểu mẫu
-                 * nhập kho không liệt kê nó. Giục "nhập giá vốn" cho món đó là
-                 * dựng một ngõ cụt; đánh dấu để giao diện chỉ đúng việc cần làm.
-                 */
                 $canNhap[$khoa] ??= [
                     'ten' => $ten,
                     'doanh_thu' => '0.00',
@@ -229,17 +155,6 @@ class ProfitReport
         ];
     }
 
-    /**
-     * GIÁ VỐN QUÀ TẶNG trong kỳ — khoản riêng, không nằm trong lãi theo sản phẩm.
-     *
-     * Quà là sản phẩm có giá nhập: tiền hàng thật đi ra kèm đơn, doanh thu 0.
-     * Tính bằng CÙNG bảng giá vốn bình quân với hàng bán, tại ngày đặt đơn.
-     * Vật phẩm tặng riêng (không phải sản phẩm) và quà chưa có phiếu nhập có
-     * giá thì không có số — đếm và nói ra, không coi là 0đ.
-     *
-     * @param  array<string, list<array{ngay: string, sl: int, tien: string}>>  $bangGia
-     * @return array{tien: string, so_dong_chua_gia: int}
-     */
     private function chiPhiQua(array $bangGia): array
     {
         $dong = $this->khoang->apDung(
@@ -284,11 +199,6 @@ class ProfitReport
         return ['tien' => $tien, 'so_dong_chua_gia' => $chuaGia];
     }
 
-    /**
-     * Mọi lần nhập có giá, theo đơn vị kho, xếp theo ngày nhập, kèm lũy kế.
-     *
-     * @return array<string, list<array{ngay: string, sl: int, tien: string}>>
-     */
     private function bangGiaVon(): array
     {
         $bang = [];
@@ -308,22 +218,14 @@ class ProfitReport
             ])
             ->each(function ($d) use (&$bang) {
                 $khoa = $d->product_id . ':' . ($d->product_variant_id ?? '');
-                // Lần nhập đầu tiên của mặt hàng: chưa có lũy kế nào. `end()` trên
-                // một khoá chưa tồn tại là TypeError — trang Lợi nhuận sập đúng lúc
-                // cửa hàng lập phiếu nhập có giá đầu tiên.
                 $truoc = isset($bang[$khoa]) ? end($bang[$khoa]) : ['sl' => 0, 'tien' => '0.00'];
 
-                /*
-                 * Lũy kế CẢ DÒNG ÂM có giá: phiếu điều chỉnh "nhập nhầm 5 cái
-                 * @48.000" phải kéo giá vốn về đúng như chưa từng nhập nhầm.
-                 */
                 $bang[$khoa][] = [
                     'ngay' => substr((string) $d->received_at, 0, 10),
                     'sl' => $truoc['sl'] + (int) $d->quantity,
                     'tien' => bcadd($truoc['tien'], bcmul((string) $d->unit_cost, (string) $d->quantity, 2), 2),
                 ];
 
-                // Lũy kế GỘP mọi quy cách của sản phẩm — cho dòng bán không ghi quy cách.
                 if ($d->product_variant_id !== null) {
                     $gop = $d->product_id . ':*';
                     $truocGop = isset($bang[$gop]) ? end($bang[$gop]) : ['sl' => 0, 'tien' => '0.00'];
@@ -339,12 +241,6 @@ class ProfitReport
         return $bang;
     }
 
-    /**
-     * Giá vốn bình quân tại một ngày bán, hoặc null nếu trước ngày đó chưa
-     * có lần nhập nào có giá (hoặc lũy kế không dương).
-     *
-     * @param  list<array{ngay: string, sl: int, tien: string}>  $luyKe
-     */
     private function giaVonTaiNgay(array $luyKe, string $ngay): ?string
     {
         $moc = null;
@@ -364,7 +260,6 @@ class ProfitReport
         return bcdiv($moc['tien'], (string) $moc['sl'], 2);
     }
 
-    /** Hoàn tiền đã xong cho đơn đã giao trong kỳ — hiện cạnh lãi, không trừ vào. */
     private function hoanTienDonDaGiao(): string
     {
         $donGiao = $this->khoang->apDung(

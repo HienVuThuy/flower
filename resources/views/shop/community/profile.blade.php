@@ -11,13 +11,7 @@
 
         <x-site.breadcrumb :items="[['label' => 'Góc cây của bạn', 'url' => route('shop.community.index')], ['label' => $nguoi->name]]" />
 
-        {{--
-            TRANG CÁ NHÂN — chỗ xem lại toàn bộ bài của một người.
-
-            Người khác xem chỉ thấy bài ĐÃ DUYỆT. Chính chủ xem thì thấy cả bài
-            chờ duyệt, bị từ chối và bị ẩn, kèm trạng thái — cùng dữ liệu với
-            mục "Bài của tôi", chỉ khác chỗ đứng.
-        --}}
+        {{-- TRANG CÁ NHÂN — chỗ xem lại toàn bộ bài của một người. --}}
         <div class="surface-card p-4 trang-ca-nhan">
             <div class="trang-ca-nhan__dau">
                 <span class="avatar avatar--lon" aria-hidden="true">{{ mb_substr($nguoi->name, 0, 1) }}</span>
@@ -45,7 +39,6 @@
                     <dd data-so-binh-luan-nhan>{{ $thongKe['binh_luan'] }}</dd>
                 </div>
                 @if($laToi)
-                    {{-- Hai con số này chỉ chính chủ thấy: người khác không cần biết bạn đang ẩn mấy bài. --}}
                     <div>
                         <dt>Đang chờ duyệt</dt>
                         <dd data-so-cho-duyet>{{ $thongKe['cho_duyet'] }}</dd>

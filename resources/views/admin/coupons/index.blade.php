@@ -34,13 +34,6 @@
         @endforeach
     </select>
 
-    {{--
-        "Đang dùng được" KHÁC "trạng thái = đang chạy".
-
-        Mã còn trạng thái active nhưng đã qua ngày kết thúc hoặc hết lượt
-        thì khách vẫn không dùng được. Đây là ô admin cần khi khách gọi
-        kêu "mã của tôi báo lỗi".
-    --}}
     <select name="dung_duoc" class="form-select" aria-label="Lọc mã đang dùng được">
         <option value="">Tất cả</option>
         <option value="co" @selected(request('dung_duoc') === 'co')>Khách đang dùng được</option>
@@ -115,7 +108,6 @@
                                         Sửa
                                     </a>
 
-                                    {{-- Mã đã có người dùng thì không xoá được, xem CouponController::destroy --}}
                                     @if($coupon->used_count === 0)
                                         <form method="POST" action="{{ route('admin.coupons.destroy', $coupon) }}"
                                               class="d-inline"

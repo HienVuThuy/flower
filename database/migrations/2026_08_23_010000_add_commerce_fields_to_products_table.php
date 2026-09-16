@@ -6,18 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Bổ sung nền tảng cho mục 8 (Giá và tồn kho) và 4.4/13
-     * (đặc thù chăm sóc hoa/cây) trong bản thiết kế cốt lõi.
-     *
-     * care_info là JSON vì không phải sản phẩm nào cũng cần cùng
-     * bộ thuộc tính chăm sóc (bó hoa khác cây chậu) — tránh tạo
-     * hàng chục cột rỗng cho từng loại sản phẩm.
-     *
-     * track_inventory + stock_quantity chỉ áp dụng khi sản phẩm
-     * không có variant; nếu có variant, tồn kho nằm ở variant đó
-     * (xem migration product_variants).
-     */
     public function up(): void
     {
         Schema::table('products', function (Blueprint $table) {

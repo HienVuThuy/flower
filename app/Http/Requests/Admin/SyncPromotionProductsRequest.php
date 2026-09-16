@@ -6,10 +6,7 @@ use App\Enums\PromotionType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/**
- * Cập nhật danh sách sản phẩm áp dụng cho một chương trình,
- * kèm mức giảm ghi đè cho từng sản phẩm (nếu có).
- */
+/** Cập nhật danh sách sản phẩm áp dụng cho một chương trình, kèm mức giảm ghi đè cho từng sản phẩm (nếu có). */
 class SyncPromotionProductsRequest extends FormRequest
 {
     public function authorize(): bool
@@ -41,7 +38,6 @@ class SyncPromotionProductsRequest extends FormRequest
                 $type = $row['discount_type'] ?? null;
                 $value = $row['discount_value'] ?? null;
 
-                // Ghi đè phải đủ đôi: có kiểu thì phải có mức và ngược lại.
                 if ($type && ($value === null || $value === '')) {
                     $validator->errors()->add(
                         "products.{$i}.discount_value",

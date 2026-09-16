@@ -5,31 +5,9 @@ namespace App\Services\Inventory;
 use App\Models\Product;
 use App\Models\ProductVariant;
 
-/**
- * NƠI DUY NHẤT cộng hoặc trừ tồn kho theo chứng từ (phiếu nhập, kiểm kê).
- * ============================================================
- * Tách khỏi StockReceiptService khi có phiếu kiểm kê: hai loại chứng từ cần
- * đúng cùng một phép — khoá dòng, đúng chỗ giữ tồn, bỏ qua hàng không theo
- * dõi tồn — và hai bản chép sẽ lệch nhau ở đúng chỗ khó thấy nhất.
- *
- * LUẬT GIỮ NGUYÊN TỪ PHIẾU NHẬP:
- *
- *   - `increment()`, KHÔNG gán đè: giữa lúc lập chứng từ và lúc ghi sổ có
- *     thể đã có đơn trừ kho.
- *   - Sản phẩm có quy cách giữ tồn ở TỪNG QUY CÁCH.
- *   - Hàng không theo dõi tồn thì từ chối, không lặng lẽ ghi vào cột không
- *     ai đọc.
- *
- * PHẢI GỌI TRONG TRANSACTION: hàm tự khoá dòng, nhưng khoá chỉ có nghĩa khi
- * cả chứng từ nằm trong một transaction.
- */
+/** NƠI DUY NHẤT cộng hoặc trừ tồn kho theo chứng từ (phiếu nhập, kiểm kê). */
 class StockAdjuster
 {
-    /**
-     * @param  bool  $khongDuocAm  từ chối nếu tồn sau điều chỉnh < 0
-     *
-     * @throws InventoryException
-     */
     public function dieuChinh(?int $variantId, ?int $productId, int $soLuong, string $ten, bool $khongDuocAm = false): void
     {
         if ($soLuong === 0) {
@@ -78,7 +56,6 @@ class StockAdjuster
             throw new InventoryException(sprintf('Sản phẩm "%s" không còn tồn tại.', $ten));
         }
 
-        // Có quy cách thì cột trên sản phẩm không phải thứ khách mua.
         if ($sp->variants()->where('is_active', true)->exists()) {
             throw new InventoryException(sprintf(
                 'Sản phẩm "%s" có quy cách — phải chọn quy cách cụ thể.',

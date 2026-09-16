@@ -71,7 +71,6 @@
                         </td>
                         <td><span class="badge text-bg-{{ $p->status->tone() }}">{{ $p->status->label() }}</span></td>
                         <td>
-                            {{-- Người lập có thể đã bị xoá tài khoản; phiếu thì vẫn còn. --}}
                             {{ $p->createdBy?->name ?? '—' }}
                         </td>
                     </tr>

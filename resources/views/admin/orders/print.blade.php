@@ -1,22 +1,4 @@
-{{--
-    PHIẾU IN CHO MỘT ĐƠN: soạn hàng + giao hàng.
-    ============================================================
-    VÌ SAO LÀ TRANG RIÊNG, không kế thừa layouts.admin: thanh điều hướng,
-    thanh trên cùng và nút bấm của trang quản trị không có chỗ trên tờ
-    giấy. Trang này chỉ có đúng thứ được in.
-
-    HAI TỜ, HAI NGƯỜI ĐỌC:
-
-      1. PHIẾU SOẠN HÀNG — cho người cắm hoa / đóng gói. KHÔNG CÓ GIÁ:
-         người soạn hàng cần biết làm gì và giao lúc nào, không cần biết
-         khách trả bao nhiêu. Tờ này nằm trên bàn làm việc, ai đi qua
-         cũng đọc được.
-
-      2. PHIẾU GIAO HÀNG — dán lên gói hàng / đưa người giao. Có người
-         nhận, số điện thoại, địa chỉ, và SỐ TIỀN PHẢI THU. Số tiền thu là
-         con số dễ sai nhất ngoài đường: đơn đã trả MoMo mà phiếu vẫn ghi
-         thu tiền là khách bị đòi hai lần.
---}}
+{{-- PHIẾU IN CHO MỘT ĐƠN: soạn hàng + giao hàng. --}}
 @php
     $diaChi = collect([
         $order->shipping_address,
@@ -25,13 +7,6 @@
         $order->shipping_province,
     ])->filter()->implode(', ');
 
-    /*
-     * SỐ TIỀN THU HỘ: chỉ khi CHƯA thanh toán.
-     *
-     * Không suy từ hình thức thanh toán ("COD thì thu"): một đơn COD mà
-     * cửa hàng đã đánh dấu nhận tiền (khách chuyển khoản trước) thì
-     * người giao không được thu nữa. Thứ quyết định là tiền đã về chưa.
-     */
     $daTra = $order->payment_status === \App\Enums\PaymentStatus::Paid;
 
     $tien = fn ($v) => \App\Services\Shop\Money::format((string) $v);
@@ -81,7 +56,6 @@
     <a href="{{ route('admin.orders.show', $order) }}">Về đơn hàng</a>
 </div>
 
-{{-- ================= TỜ 1: SOẠN HÀNG ================= --}}
 <section class="to" aria-label="Phiếu soạn hàng">
     <div class="dau">
         <h1>Phiếu soạn hàng</h1>
@@ -113,7 +87,6 @@
                 <tr>
                     <td><span class="o-tick"></span></td>
                     <td>
-                        {{-- Người soạn hàng phải thấy đây là QUÀ cần bỏ vào kiện, không phải hàng bán thiếu giá. --}}
                         @if($item->is_gift)<strong>[Quà miễn phí]</strong> @endif{{ $item->product_name }}
                         @if($item->variant_name)
                             <div class="phu">{{ $item->variant_name }}</div>
@@ -128,7 +101,6 @@
     <p class="phu" style="margin-top:10px">Tổng {{ $order->totalQuantity() }} món.</p>
 </section>
 
-{{-- ================= TỜ 2: GIAO HÀNG ================= --}}
 <section class="to" aria-label="Phiếu giao hàng">
     <div class="dau">
         <h1>Phiếu giao hàng</h1>

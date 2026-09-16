@@ -5,23 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Nâng cấp Góc cây: nhiều ảnh / video, bình luận trả lời lồng, lưu bài, báo cáo.
- * ============================================================
- * VẪN "NHẸ": không người theo dõi, không bảng tin theo thuật toán, không nhắn
- * tin. Chỉ làm đủ những việc một bài đăng kiểu mạng xã hội cần để dùng được.
- *
- * 1. `community_post_media` thay cột `photo`: một bài nhiều ảnh / video, có thứ
- *    tự. Ảnh cũ chuyển sang bảng mới rồi mới bỏ cột — không mất ảnh nào.
- * 2. Bình luận có `parent_id` MỘT TẦNG như Facebook: trả lời một câu trả lời thì
- *    gắn vào bình luận gốc và ghi `reply_to_user_id` để hiện "trả lời Tên".
- *    Lồng vô hạn tầng thì trên điện thoại thụt lề tới hết màn hình.
- * 3. `community_post_saves`: bài khách lưu để xem lại.
- * 4. `community_reports`: báo cáo bài / bình luận cho cửa hàng xử lý. Mỗi người
- *    báo một nội dung một lần (UNIQUE) — bấm mười lần không thành mười báo cáo.
- * 5. Bài có `hidden_at`: cửa hàng ẩn bài ĐÃ DUYỆT sau báo cáo, không phải xoá —
- *    còn dấu vết, bỏ ẩn được, và tác giả thấy lý do.
- */
+/** Nâng cấp Góc cây: nhiều ảnh / video, bình luận trả lời lồng, lưu bài, báo cáo. */
 return new class extends Migration
 {
     public function up(): void
@@ -29,7 +13,7 @@ return new class extends Migration
         Schema::create('community_post_media', function (Blueprint $table) {
             $table->id();
             $table->foreignId('community_post_id')->constrained()->cascadeOnDelete();
-            $table->string('kind', 10); // image | video
+            $table->string('kind', 10);
             $table->string('path');
             $table->unsignedSmallInteger('sort_order')->default(0);
             $table->timestamps();
@@ -37,7 +21,6 @@ return new class extends Migration
             $table->index(['community_post_id', 'sort_order']);
         });
 
-        // Ảnh cũ sang bảng mới TRƯỚC khi bỏ cột.
         $bayGio = now();
         DB::table('community_posts')->whereNotNull('photo')->orderBy('id')->get(['id', 'photo'])
             ->each(fn ($p) => DB::table('community_post_media')->insert([
@@ -52,7 +35,6 @@ return new class extends Migration
         Schema::table('community_posts', function (Blueprint $table) {
             $table->timestamp('hidden_at')->nullable()->after('reject_reason');
             $table->string('hidden_reason', 200)->nullable()->after('hidden_at');
-            // Bài đã sửa sau khi đăng — hiện "đã chỉnh sửa" như mạng xã hội.
             $table->timestamp('edited_at')->nullable()->after('hidden_reason');
         });
 
@@ -77,7 +59,6 @@ return new class extends Migration
         Schema::create('community_reports', function (Blueprint $table) {
             $table->id();
             $table->foreignId('reporter_id')->constrained('users')->cascadeOnDelete();
-            // post | comment. Không dùng khoá ngoại đa hình: xoá nội dung thì dịch vụ dọn báo cáo theo.
             $table->string('target_type', 20);
             $table->unsignedBigInteger('target_id');
             $table->string('reason', 30);
@@ -108,7 +89,6 @@ return new class extends Migration
             $table->string('photo')->nullable()->after('body');
         });
 
-        // Ảnh đầu tiên quay về cột cũ.
         DB::table('community_post_media')->where('kind', 'image')->orderBy('sort_order')->get()
             ->unique('community_post_id')
             ->each(fn ($m) => DB::table('community_posts')->where('id', $m->community_post_id)->update(['photo' => $m->path]));

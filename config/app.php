@@ -67,13 +67,6 @@ return [
 
     'timezone' => 'UTC',
 
-    /*
-    | Múi giờ NGƯỜI ĐỌC — dùng để gom nhóm báo cáo theo ngày, giờ, tháng.
-    |
-    | Tách khỏi `timezone` ở trên có chủ đích: dữ liệu đã lưu theo UTC trong
-    | cột DATETIME không mang múi giờ, nên đổi `timezone` là đọc lệch mọi mốc
-    | cũ. Xem App\Services\Analytics\KhoangThoiGian.
-    */
     'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Ho_Chi_Minh'),
 
     /*

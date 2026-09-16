@@ -1,11 +1,4 @@
-/*
- * SEASONAL LAYER — base dùng chung cho mọi theme.
- * ============================================================
- * Nội dung/artwork riêng theo theme nằm ở resources/css/seasonal/*.css
- * (Layer 2) và resources/js/theme/effects/*.js (Layer 3). File này
- * chỉ định nghĩa "khung" mà theme cắm vào — không theme nào cần sửa
- * cấu trúc HTML để hoạt động.
- */
+/* SEASONAL LAYER — base dùng chung cho mọi theme. */
 
 .seasonal-canvas {
     position: fixed;
@@ -15,21 +8,6 @@
     width: 100%;
     height: 100%;
 }
-
-/* ============ THANH THÔNG BÁO CHIẾN DỊCH ============ */
-
-/*
- * Ba thông tin, ba mức nổi bật khác nhau — và thứ tự đó là cả điểm của
- * khối này:
- *
- *   __deal   con số giảm giá  -> viền bao, chữ đậm. Đây là LÝ DO để bấm.
- *   __name   tên chương trình -> chữ thường. Cho biết đây là dịp gì.
- *   __meta   còn bao lâu      -> mờ hơn. Thông tin phụ, nhưng tạo cấp bách.
- *
- * Để cả ba cùng một cỡ chữ như bản cũ thì mắt không biết đọc cái nào
- * trước, và con số giảm giá — thứ duy nhất khiến người ta bấm — chìm
- * lẫn vào một câu quảng cáo dài.
- */
 
 .announcement-bar {
     background: var(--brand-700);
@@ -56,7 +34,6 @@
     min-width: 0;
 }
 
-/* Con số giảm giá — thứ mắt phải chạm vào đầu tiên. */
 .announcement-bar__deal {
     padding: 0.1rem 0.5rem;
     border: 1px solid rgba(255, 255, 255, 0.55);
@@ -70,11 +47,6 @@
     font-weight: 500;
 }
 
-/*
- * Khung giờ áp dụng (chương trình xả hàng cuối ngày, xem QĐ-24).
- * Gạch dưới nét đứt: nó là điều kiện, không phải lời mời — trông khác
- * hẳn phần còn lại để khách không đọc lướt qua.
- */
 .announcement-bar__window {
     padding: 0.05rem 0.4rem;
     border-radius: var(--radius-sm);
@@ -128,22 +100,12 @@
     background: rgba(255, 255, 255, 0.18);
 }
 
-/*
- * Trên điện thoại: bỏ tên chương trình và khung giờ.
- *
- * Giữ lại đúng ba thứ khách cần để quyết định — mức giảm, thời gian còn
- * lại, và nút xem — nên thanh gói gọn trong hai dòng. Giữ đủ năm phần
- * thì nó xuống bốn dòng và nuốt mất phần đầu màn hình, chỗ đắt nhất của
- * trang. Tên chương trình vẫn đọc được ngay sau khi bấm vào.
- */
 @media (max-width: 575.98px) {
     .announcement-bar__name,
     .announcement-bar__window {
         display: none;
     }
 }
-
-/* ============ BANNER CHIẾN DỊCH ============ */
 
 .campaign-banner {
     position: relative;
@@ -168,10 +130,6 @@
     color: var(--accent-600);
 }
 
-/*
- * Khi chương trình có banner riêng do admin tải lên: ảnh phủ nền,
- * phủ thêm lớp gradient để chữ luôn đọc được bất kể ảnh sáng/tối.
- */
 .campaign-banner--has-image {
     color: #fff;
     min-height: 18rem;
@@ -212,18 +170,6 @@
 }
 
 
-/*
- * TRANG SỰ KIỆN (landing page của một chương trình khuyến mại)
- * ============================================================
- * Khối đầu trang mang MÀU CỦA CHÍNH SỰ KIỆN, lấy từ cột
- * promotions.theme_key qua thuộc tính data-event-theme. Nhờ vậy trang
- * Giáng sinh trông khác trang Tết mà không cần một khối CSS riêng cho
- * từng dịp — thêm chương trình mới chỉ là thêm một dòng dữ liệu.
- *
- * Chương trình không khai theme thì rơi về màu thương hiệu ở :root, vẫn
- * đẹp và vẫn đúng.
- */
-
 .event-hero {
     position: relative;
     overflow: hidden;
@@ -236,13 +182,6 @@
 .event-hero[data-event-theme="tet"]      { background: #9a3412; }
 .event-hero[data-event-theme="valentine"]{ background: #9d174d; }
 
-/*
- * Ảnh banner làm NỀN MỜ, không phải nội dung.
- *
- * Ảnh chiến dịch do admin tải lên có đủ mọi tỉ lệ và độ sáng. Đặt nó làm
- * nền rồi phủ một lớp tối lên trên là cách duy nhất bảo đảm chữ luôn đọc
- * được, dù admin tải lên ảnh trắng toát hay ảnh đen kịt.
- */
 .event-hero__bg {
     position: absolute;
     inset: 0;
@@ -250,7 +189,6 @@
     height: 100%;
     object-fit: cover;
     opacity: 0.28;
-    /* aria-hidden không cần: alt="" đã báo cho trình đọc màn hình bỏ qua. */
     pointer-events: none;
 }
 
@@ -315,8 +253,6 @@
     height: 0.9rem;
 }
 
-/* Thời gian còn lại — thứ duy nhất trong hàng này tạo cấp bách, nên nó
-   là thứ duy nhất được nổi bật. */
 .event-hero__fact--urgent {
     padding: 0.15rem 0.55rem;
     border: 1px solid rgba(255, 255, 255, 0.5);
@@ -325,7 +261,6 @@
     opacity: 1;
 }
 
-/* Breadcrumb trên nền tối phải đổi màu, nếu không nó biến mất. */
 .event-hero .breadcrumb-nav,
 .event-hero .breadcrumb-nav a {
     color: rgba(255, 255, 255, 0.8);

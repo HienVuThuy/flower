@@ -101,11 +101,6 @@
                         </div>
 
                         <div class="col-12">
-                            {{--
-                                Địa chỉ đầu tiên trong sổ luôn thành mặc định
-                                dù không tích ô này (xử lý ở controller) — nếu
-                                không, bước thanh toán không biết chọn cái nào.
-                            --}}
                             <div class="form-check">
                                 <input type="checkbox" name="is_default" value="1" id="is_default"
                                        class="form-check-input"

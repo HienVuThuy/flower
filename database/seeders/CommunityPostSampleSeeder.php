@@ -15,23 +15,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Dữ liệu mẫu cho "Góc cây của bạn".
- * ============================================================
  * ⚠️ DỮ LIỆU MẪU. Người đăng là các tài khoản mẫu (@khachmau.test, cùng bộ với
- * ReviewSampleSeeder), lời kể do soạn ra. Cửa hàng thật PHẢI xoá trước khi bán:
- *
- *     php artisan tinker --execute="App\Models\User::where('email','like','%@khachmau.test')->each->delete();"
- *
- * (xoá tài khoản kéo theo bài, ảnh, lượt thích, bình luận — cascade).
- *
- * ẢNH: chép từ ảnh sản phẩm ĐÃ CÓ trong máy (storage/app/public/products — ảnh
- * có ghi nguồn trong credits.json) sang thư mục `community/`, không lấy ảnh từ
- * website khác. Chép chứ không trỏ chung đường dẫn: admin xoá bài sẽ xoá ảnh
- * của bài, không được kéo theo ảnh sản phẩm.
- *
- * KHÔNG cộng điểm thưởng: bài mẫu ghi thẳng, không đi qua CommunityReward —
- * sổ điểm chỉ ghi điểm của việc đã thật sự xảy ra.
- *
- * Chạy lại an toàn: bài trùng người đăng + nội dung thì bỏ qua.
  */
 class CommunityPostSampleSeeder extends Seeder
 {
@@ -43,10 +27,6 @@ class CommunityPostSampleSeeder extends Seeder
         ['Vũ Khánh Linh', 'khanhlinh@khachmau.test'],
     ];
 
-    /**
-     * Bài mẫu. `anh_them` cho bài nhiều ảnh (để thấy lưới ảnh);
-     * bình luận có `tra_loi` => trả lời bình luận ngay trước nó.
-     */
     private const BAI = [
         [
             'ai' => 0, 'cay' => 'Monstera Deliciosa chậu gốm', 'anh_them' => ['Trầu bà leo cột'],
@@ -103,7 +83,6 @@ class CommunityPostSampleSeeder extends Seeder
             'loi' => 'Không có ảnh vì cây ở nhà bà ngoại: chậu trầu bà bà trồng từ một đoạn cành, giờ đã leo kín cột hiên. Ai định giâm cành thì cứ thử, trầu bà rất dễ ra rễ trong nước.',
             'ngay' => 18, 'duyet' => true, 'thich' => 2, 'binh_luan' => [],
         ],
-        // Một bài đang chờ duyệt — để trang quản trị có việc để xem, và bài này KHÔNG hiện ra ngoài.
         [
             'ai' => 3, 'cay' => 'Xương rồng bi chậu đất nung',
             'loi' => 'Chậu xương rồng bi mới mua, đang tìm chỗ nắng nhất trong nhà cho bé.',
@@ -183,16 +162,11 @@ class CommunityPostSampleSeeder extends Seeder
         $this->command?->info("Đã tạo {$taoMoi} bài Góc cây mẫu (bỏ qua bài đã có).");
     }
 
-    /**
-     * @param  list<string>  $ten
-     * @return list<Product>
-     */
     private function anhThem(array $ten): array
     {
         return Product::query()->whereIn('name', $ten)->get()->all();
     }
 
-    /** Chép ảnh sản phẩm sang community/ (một lần), rồi sinh bản WebP như ảnh khách tải lên. */
     private function chepAnh(Product $sanPham, ImageStore $anh): ?string
     {
         $nguon = (string) $sanPham->main_image;
@@ -210,7 +184,6 @@ class CommunityPostSampleSeeder extends Seeder
             try {
                 $anh->toiUu($dich);
             } catch (\Throwable) {
-                // Không có WebP thì trang vẫn dùng ảnh gốc.
             }
         }
 

@@ -17,7 +17,6 @@
 
 <div class="row g-3 mb-3">
     <div class="col-sm-6 col-lg-3">
-        {{-- Chỉ cộng khoản ĐÃ XONG — xem chú thích ở RefundController::index(). --}}
         <x-admin.kpi label="Đã hoàn (theo bộ lọc)" note="Chỉ cộng khoản đã xong, không cộng khoản chưa rõ hay thất bại.">
             <span data-da-hoan>{{ $tien($daHoan) }}</span>
         </x-admin.kpi>

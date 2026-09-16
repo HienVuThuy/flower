@@ -30,13 +30,6 @@
     placeholder="Tìm theo tên danh mục…"
     :total="$categories->total()"
 >
-    {{--
-        Tách "hoa & cây" khỏi "phụ kiện & vật tư".
-
-        Hai nhóm này đi vào hai chỗ khác nhau trên trang khách (khối gợi
-        ý cây chỉ lấy nhóm `plant`), nên khi sửa danh mục admin cần biết
-        mình đang sửa nhóm nào.
-    --}}
     <select name="kind" class="form-select" aria-label="Lọc theo nhóm">
         <option value="">Mọi nhóm</option>
         <option value="plant" @selected(request('kind') === 'plant')>Hoa &amp; cây cảnh</option>

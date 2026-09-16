@@ -10,12 +10,7 @@ use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Cảm xúc dưới bài Góc cây: thích, yêu thích, haha, wow, buồn.
- * ============================================================
- * MỘT NGƯỜI MỘT CẢM XÚC cho một bài: đổi cảm xúc là SỬA dòng đã có, nên số đếm
- * không nhân lên và điểm thưởng cho tác giả không cộng lại.
- */
+/** Cảm xúc dưới bài Góc cây: thích, yêu thích, haha, wow, buồn. */
 class CamXucTest extends TestCase
 {
     use RefreshDatabase;
@@ -44,16 +39,13 @@ class CamXucTest extends TestCase
         $bai = $this->bai(User::factory()->create());
         $u = User::factory()->create();
 
-        // Không gửi loại nào: mặc định là "Thích".
         $this->actingAs($u)->post(route('shop.community.like', $bai->id))->assertRedirect();
         $this->assertSame('thich', $this->dong($bai, $u)->reaction);
 
-        // Đổi sang "Yêu thích": vẫn MỘT dòng.
         $this->actingAs($u)->post(route('shop.community.like', $bai->id), ['cam_xuc' => 'yeu']);
         $this->assertSame('yeu', $this->dong($bai, $u)->reaction);
         $this->assertDatabaseCount('community_post_likes', 1);
 
-        // Bấm lại đúng cảm xúc đang có: bỏ hẳn.
         $this->actingAs($u)->post(route('shop.community.like', $bai->id), ['cam_xuc' => 'yeu']);
         $this->assertNull($this->dong($bai, $u));
     }
@@ -132,7 +124,6 @@ class CamXucTest extends TestCase
         $this->actingAs($u)->post(route('shop.community.comment.react', $bl->id), ['cam_xuc' => 'yeu']);
         $this->assertNull($dong());
 
-        // Cảm xúc dưới bình luận KHÔNG thưởng điểm cho ai (bình luận vốn không được thưởng).
         $this->assertSame(0, app(PointLedger::class)->soDu($nguoiBinhLuan));
     }
 

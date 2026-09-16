@@ -13,14 +13,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Báo cáo bài / bình luận Góc cây và việc xử lý của cửa hàng.
- * ============================================================
- * KHÔNG TỰ ẨN THEO SỐ BÁO CÁO: vài tài khoản cùng báo một bài là đủ gỡ bài của
- * người khác nếu ẩn tự động. Báo cáo vào hàng chờ, nhân viên có quyền duyệt đọc
- * rồi quyết: ẩn nội dung, hoặc kết luận không vi phạm. Một quyết định xử lý
- * MỌI báo cáo đang chờ của cùng nội dung.
- */
+/** Báo cáo bài / bình luận Góc cây và việc xử lý của cửa hàng. */
 class CommunityReports
 {
     public function __construct(
@@ -28,7 +21,6 @@ class CommunityReports
     ) {
     }
 
-    /** @throws CommunityException */
     public function baoCao(User $user, string $loai, int $id, CommunityReportReason $lyDo, ?string $ghiChu): CommunityReport
     {
         $noiDung = $this->noiDungDangHien($loai, $id);
@@ -68,17 +60,11 @@ class CommunityReports
         return $bao;
     }
 
-    /** Số nội dung (không phải số lượt báo) đang chờ xử lý. */
     public function soNoiDungCho(): int
     {
         return CommunityReport::pending()->distinct()->count(DB::raw("target_type || ':' || target_id"));
     }
 
-    /**
-     * Hàng chờ: mỗi nội dung một dòng, kèm số lượt và các lý do.
-     *
-     * @return Collection<int, array{loai: string, id: int, so: int, ly_do: array<string, int>, ghi_chu: list<string>, moi_nhat: string, noi_dung: CommunityPost|CommunityComment|null}>
-     */
     public function hangCho(int $gioiHan = 50): Collection
     {
         $baoCao = CommunityReport::pending()->with('reporter:id,name')->orderByDesc('created_at')->get();
@@ -105,7 +91,6 @@ class CommunityReports
             ->values();
     }
 
-    /** Ẩn nội dung bị báo cáo và đóng mọi báo cáo đang chờ của nó. */
     public function anNoiDung(User $nguoiXuLy, string $loai, int $id, string $lyDo): void
     {
         DB::transaction(function () use ($nguoiXuLy, $loai, $id, $lyDo) {
@@ -124,7 +109,6 @@ class CommunityReports
         $this->audit->log('goc-cay.an-sau-bao-cao', sprintf('Ẩn %s #%d sau báo cáo: %s', $loai === CommunityReport::BAI ? 'bài' : 'bình luận', $id, $lyDo));
     }
 
-    /** Kết luận không vi phạm. */
     public function boQua(User $nguoiXuLy, string $loai, int $id): void
     {
         $this->dong($nguoiXuLy, $loai, $id, CommunityReportStatus::BoQua);
@@ -132,7 +116,6 @@ class CommunityReports
         $this->audit->log('goc-cay.bao-cao-khong-vi-pham', sprintf('Báo cáo %s #%d: không vi phạm', $loai === CommunityReport::BAI ? 'bài' : 'bình luận', $id));
     }
 
-    /** Nội dung bị xoá thì báo cáo của nó (và của bình luận dưới bài) không còn gì để xử lý. */
     public function donCuaBai(CommunityPost $post): void
     {
         CommunityReport::where('target_type', CommunityReport::BAI)->where('target_id', $post->id)->delete();

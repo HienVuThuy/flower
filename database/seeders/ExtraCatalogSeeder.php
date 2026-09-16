@@ -13,35 +13,11 @@ use Illuminate\Database\Seeder;
 
 /**
  * DỮ LIỆU MẪU BỔ SUNG — làm đầy những danh mục đang quá mỏng.
- * ============================================================
  * ⚠️ CỬA HÀNG PHẢI RÀ LẠI TRƯỚC KHI BÁN THẬT. Giá, mô tả và quy cách ở
- * đây do dự án đặt ra để có đủ dữ liệu mà kiểm chứng giao diện, không
- * phải hàng cửa hàng đang bán.
- *
- * VÌ SAO CẦN: bốn danh mục chỉ có ĐÚNG MỘT sản phẩm (Cây để bàn, Bonsai,
- * Hoa cưới, Sen đá). Với một sản phẩm thì không kiểm được lưới hiển thị,
- * không kiểm được phân trang, không kiểm được sắp xếp theo giá — và
- * khách bấm vào danh mục thấy một món lẻ loi thì nghĩ cửa hàng sắp đóng.
- *
- * MỖI SẢN PHẨM CÓ ĐỦ THÔNG TIN, không chỉ tên và giá:
- *   - mô tả ngắn + mô tả dài
- *   - care_info đúng hồ sơ của hình thức bán (Guide §4.4)
- *   - chu kỳ tưới/bón để lịch nhắc chăm cây chạy được
- *   - nhãn vị trí đặt và mệnh (chỉ khi có căn cứ — xem PlantAdvisorSeeder)
- *
- * Sản phẩm thiếu care_info thì trang chi tiết trống một nửa và tính năng
- * nhắc lịch không có gì để chạy. Thêm hàng mà không thêm thông tin là
- * làm đầy con số chứ không làm đầy nội dung.
- *
- *     php artisan db:seed --class=ExtraCatalogSeeder
  */
 class ExtraCatalogSeeder extends Seeder
 {
-    /**
-     * @var list<array<string, mixed>>
-     */
     private const PRODUCTS = [
-        /* ============ CÂY ĐỂ BÀN (đang có 1) ============ */
         [
             'slug' => 'sen-da-nau-chau-su-mini',
             'name' => 'Sen đá nâu chậu sứ mini',
@@ -95,7 +71,6 @@ class ExtraCatalogSeeder extends Seeder
             'feng_shui' => [FengShuiElement::Kim, FengShuiElement::Tho],
         ],
 
-        /* ============ BONSAI (đang có 1) ============ */
         [
             'slug' => 'bonsai-tung-la-han-dang-truc',
             'name' => 'Bonsai tùng la hán dáng trực',
@@ -123,7 +98,6 @@ class ExtraCatalogSeeder extends Seeder
             'feng_shui' => [FengShuiElement::Moc],
         ],
 
-        /* ============ HOA CƯỚI (đang có 1) ============ */
         [
             'slug' => 'hoa-cai-ao-chu-re',
             'name' => 'Hoa cài áo chú rể',
@@ -158,7 +132,6 @@ class ExtraCatalogSeeder extends Seeder
             ],
         ],
 
-        /* ============ SEN ĐÁ & XƯƠNG RỒNG (đang có 1) ============ */
         [
             'slug' => 'xuong-rong-bi-chau-dat-nung',
             'name' => 'Xương rồng bi chậu đất nung',
@@ -212,7 +185,6 @@ class ExtraCatalogSeeder extends Seeder
             'feng_shui' => [FengShuiElement::Kim],
         ],
 
-        /* ============ HOA QUÀ TẶNG (đang có 2) ============ */
         [
             'slug' => 'hop-hoa-tulip-vang',
             'name' => 'Hộp hoa tulip vàng',
@@ -248,7 +220,6 @@ class ExtraCatalogSeeder extends Seeder
             ],
         ],
 
-        /* ============ HOA KHAI TRƯƠNG & SỰ KIỆN (đang có 1) ============ */
         [
             'slug' => 'ke-hoa-khai-truong-hai-tang',
             'name' => 'Kệ hoa khai trương hai tầng',
@@ -267,7 +238,6 @@ class ExtraCatalogSeeder extends Seeder
             ],
         ],
 
-        /* ============ HOA (đang có 6, thêm màu còn thiếu) ============ */
         [
             'slug' => 'bo-cuc-hoa-mi-trang',
             'name' => 'Bó cúc hoạ mi trắng',
@@ -303,7 +273,6 @@ class ExtraCatalogSeeder extends Seeder
             ],
         ],
 
-        /* ============ CÂY CẢNH (thêm cây chịu bóng cho phòng tắm) ============ */
         [
             'slug' => 'cay-lan-y-chau-su-trang',
             'name' => 'Cây lan ý chậu sứ trắng',
@@ -347,13 +316,6 @@ class ExtraCatalogSeeder extends Seeder
                 continue;
             }
 
-            /*
-             * `stock` = null nghĩa là HÀNG LÀM THEO ĐƠN — không quản lý
-             * tồn kho. Hoa cưới và hoa sự kiện đều thuộc nhóm này: cửa
-             * hàng làm khi có đơn, nên không có khái niệm "còn mấy cái".
-             * Đặt track_inventory = false thay vì để số 0, vì 0 nghĩa là
-             * HẾT HÀNG — hai chuyện khác hẳn nhau.
-             */
             $tracks = $spec['stock'] !== null;
 
             $product = Product::updateOrCreate(

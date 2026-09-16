@@ -12,17 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Tài khoản này KHÔNG được chạm vào dữ liệu của tài khoản kia.
- * ============================================================
- * "Tin dữ liệu ID từ request mà không kiểm" là lỗ hổng phổ biến nhất
- * trong ứng dụng web có tài khoản (IDOR). Nó không gây lỗi, không hiện
- * cảnh báo — chỉ là một khách gõ id khác vào URL và đọc được đơn hàng,
- * địa chỉ, số điện thoại của người lạ.
- *
- * MỖI BÀI Ở ĐÂY LÀ MỘT CUỘC TẤN CÔNG THẬT: đăng nhập bằng tài khoản B,
- * gửi id của tài khoản A, rồi kiểm tra dữ liệu của A có suy suyển không.
- */
+/** Tài khoản này KHÔNG được chạm vào dữ liệu của tài khoản kia. */
 class OwnershipTest extends TestCase
 {
     use RefreshDatabase;
@@ -42,8 +32,6 @@ class OwnershipTest extends TestCase
             'label' => 'home',
         ]);
     }
-
-    // ================= SỔ ĐỊA CHỈ =================
 
     #[Test]
     public function khong_sua_duoc_dia_chi_cua_nguoi_khac(): void
@@ -88,8 +76,6 @@ class OwnershipTest extends TestCase
         $this->assertFalse((bool) $diaChi->fresh()->is_default);
     }
 
-    // ================= GIỎ HÀNG =================
-
     #[Test]
     public function khong_sua_duoc_dong_gio_hang_cua_nguoi_khac(): void
     {
@@ -124,9 +110,6 @@ class OwnershipTest extends TestCase
         $this->assertNotNull($dong->fresh(), 'Dòng giỏ của người khác không được biến mất.');
     }
 
-    // ================= ĐƠN HÀNG =================
-
-    /** Đặt một đơn bằng tài khoản đang đăng nhập, trả về đơn vừa tạo. */
     private function datDon(string $ten = 'Nạn nhân'): \App\Models\Order
     {
         $product = Product::factory()->for(Category::factory())->price('300000.00')->create();
@@ -152,12 +135,9 @@ class OwnershipTest extends TestCase
     #[Test]
     public function tu_mot_phien_khac_thi_khong_xem_duoc_don_cua_nguoi_la(): void
     {
-        // Đơn hàng chứa TÊN, SỐ ĐIỆN THOẠI, ĐỊA CHỈ NHÀ. Đây là dữ liệu
-        // cá nhân, không phải "chỉ là số tiền".
         $this->actingAs(User::factory()->create());
         $don = $this->datDon();
 
-        // Trình duyệt khác = phiên khác, không có "vé" nào trong tay.
         $this->flushSession();
         $this->actingAs(User::factory()->create());
 
@@ -183,25 +163,6 @@ class OwnershipTest extends TestCase
     #[Test]
     public function dang_nhap_xoa_ve_xem_don_cua_khach_vang_lai(): void
     {
-        /*
-         * LỖ HỔNG ĐÃ ĐO ĐƯỢC — MÁY DÙNG CHUNG.
-         *
-         *   1. Khách A đặt hàng mà không đăng nhập. Mã đơn được ghi vào
-         *      session `checkout.placed` làm "vé" xem lại đơn.
-         *   2. A rời máy — khách vãng lai không có nút đăng xuất để bấm.
-         *   3. B ngồi xuống, đăng nhập bằng tài khoản của mình.
-         *   4. login() chỉ regenerate() — ĐỔI ID PHIÊN NHƯNG GIỮ DỮ LIỆU.
-         *      Vé của A còn nguyên trong phiên của B.
-         *   5. B mở /don-hang/{mã của A} và đọc được tên, số điện thoại,
-         *      địa chỉ nhà của A. Bấm huỷ cũng được.
-         *
-         * KIỂM TRỰC TIẾP CÁI VÉ, không dựng lại cả phiên khách vãng lai:
-         * giỏ của khách chưa đăng nhập nhận diện bằng session()->getId(),
-         * mà TestCase của Laravel cấp phiên mới cho mỗi request nên không
-         * dựng được luồng nhiều bước đó — xem docs/KIEM-THU.md. Thứ đang
-         * canh ở đây là "đăng nhập có xoá vé không", và câu đó trả lời
-         * được trọn vẹn mà không cần đặt đơn thật.
-         */
         $b = User::factory()->create(['password' => 'MatKhau@12345']);
 
         $this->withSession([\App\Http\Controllers\Shop\CheckoutController::PLACED_KEY => ['FP-260101-AAAA']])
@@ -213,8 +174,6 @@ class OwnershipTest extends TestCase
             'Đăng nhập phải xoá vé xem đơn của người vô danh trước đó.',
         );
     }
-
-    // ================= KHU VỰC QUẢN TRỊ =================
 
     #[Test]
     public function khach_thuong_khong_vao_duoc_khu_vuc_quan_tri(): void

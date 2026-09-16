@@ -9,14 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Một lần trả tiền lại cho khách.
- *
- * `$fillable` CỐ Ý HẸP. `status`, `completed_at`, `reference`,
- * `gateway_*` và người lập chỉ được ghi bởi RefundService, đúng lúc việc
- * tương ứng xảy ra — không có biểu mẫu nào đặt được "đã hoàn" cho một
- * khoản tiền chưa đi.
- */
+/** Một lần trả tiền lại cho khách. */
 class Refund extends Model
 {
     protected $fillable = [

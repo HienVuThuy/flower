@@ -8,13 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Tổng quan không vẽ lại biểu đồ của Phân tích.
- * ============================================================
- * Trước đây Tổng quan và Phân tích › Tổng hợp cùng vẽ "Doanh thu theo
- * ngày", cơ cấu trạng thái đơn và "Bán chạy" với cùng bộ chọn kỳ — hai
- * màn hình cùng làm một việc.
- */
+/** Tổng quan không vẽ lại biểu đồ của Phân tích. */
 class TongQuanKhongTrungTest extends TestCase
 {
     use RefreshDatabase;
@@ -55,7 +49,6 @@ class TongQuanKhongTrungTest extends TestCase
     #[Test]
     public function bieu_do_van_con_o_trang_phan_tich(): void
     {
-        // Gỡ khỏi Tổng quan chứ không gỡ khỏi hệ thống.
         $this->actingAs($this->admin())
             ->get(route('admin.analytics.index'))
             ->assertOk()

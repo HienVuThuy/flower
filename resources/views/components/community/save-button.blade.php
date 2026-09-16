@@ -1,9 +1,6 @@
 @props(['post', 'saved' => false])
 
-{{--
-    LƯU BÀI để xem lại ở mục "Đã lưu". Cùng lối với nút thích: biểu mẫu thật,
-    có JavaScript thì đổi tại chỗ.
---}}
+{{-- LƯU BÀI để xem lại ở mục "Đã lưu". --}}
 @auth
     <form method="POST" action="{{ route('shop.community.save', $post->id) }}" class="d-inline"
           data-toggle-json data-loai="luu">

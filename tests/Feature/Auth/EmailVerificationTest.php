@@ -15,16 +15,7 @@ use App\Services\Auth\EmailVerificationException;
 use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
-/**
- * Xác thực email bằng mã OTP 6 chữ số.
- * ============================================================
- * Đây là một CƠ CHẾ BẢO MẬT, nên phần được canh chừng kỹ nhất không
- * phải "đường đi đúng chạy được" mà là những đường đi SAI phải bị chặn:
- * đoán mã, dùng lại mã cũ, mã hết hạn, nhờ hệ thống gửi thư rác.
- *
- * Mail::fake() ở mọi bài — không bài kiểm tra nào được gửi thư thật ra
- * ngoài. Nội dung mã thì lấy từ đối tượng Mailable đã bị chặn lại.
- */
+/** Xác thực email bằng mã OTP 6 chữ số. */
 class EmailVerificationTest extends TestCase
 {
     use RefreshDatabase;
@@ -35,7 +26,6 @@ class EmailVerificationTest extends TestCase
         Mail::fake();
     }
 
-    /** Tài khoản chưa xác thực, đã đăng nhập. */
     private function unverified(): User
     {
         $user = User::factory()->create(['email_verified_at' => null]);
@@ -44,7 +34,6 @@ class EmailVerificationTest extends TestCase
         return $user;
     }
 
-    /** Đặt sẵn một mã đã biết, đúng cách dịch vụ vẫn lưu. */
     private function seedCode(User $user, string $code = '135790', ?string $expiresAt = null): void
     {
         EmailVerificationCode::updateOrCreate(
@@ -57,8 +46,6 @@ class EmailVerificationTest extends TestCase
             ],
         );
     }
-
-    // ================= ĐĂNG KÝ =================
 
     #[Test]
     public function dang_ky_xong_thi_chua_xac_thuc_va_duoc_dua_toi_trang_nhap_ma(): void
@@ -95,8 +82,6 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function co_so_du_lieu_chi_luu_bam_chu_khong_luu_ma_goc(): void
     {
-        // Ai đọc được cơ sở dữ liệu — bản sao lưu, log truy vấn — không
-        // được phép xác thực hộ người khác.
         $this->post('/register', [
             'name' => 'Nguyễn Văn Kiểm Thử',
             'email' => 'kiemthu@example.com',
@@ -116,8 +101,6 @@ class EmailVerificationTest extends TestCase
         $this->assertNotSame($maGoc, $luu->code_hash);
         $this->assertTrue(Hash::check($maGoc, $luu->code_hash), 'Băm phải khớp với mã đã gửi.');
     }
-
-    // ================= NHẬP MÃ =================
 
     #[Test]
     public function go_dung_ma_thi_duoc_xac_thuc_va_ma_bi_xoa(): void
@@ -139,7 +122,6 @@ class EmailVerificationTest extends TestCase
         $this->seedCode($user);
         $this->post(route('verification.confirm'), ['code' => '135790']);
 
-        // Giả lập trạng thái chưa xác thực để thử dùng lại đúng mã cũ.
         $user->forceFill(['email_verified_at' => null])->save();
 
         $this->post(route('verification.confirm'), ['code' => '135790'])
@@ -164,8 +146,6 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function go_sai_qua_nhieu_lan_thi_ma_bi_huy(): void
     {
-        // Chặn dò mã. Đếm theo TÀI KHOẢN nên đổi IP cũng không thoát —
-        // throttle theo IP là lớp thứ hai, không phải lớp chính.
         $user = $this->unverified();
         $this->seedCode($user);
 
@@ -173,7 +153,6 @@ class EmailVerificationTest extends TestCase
             $this->post(route('verification.confirm'), ['code' => '000000']);
         }
 
-        // Lần này gõ ĐÚNG mã, nhưng đã hết lượt.
         $this->post(route('verification.confirm'), ['code' => '135790'])
             ->assertSessionHasErrors('code');
 
@@ -196,7 +175,6 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function ma_bat_dau_bang_so_0_van_hop_le(): void
     {
-        // Ép sang số nguyên là mất số 0 ở đầu và mã đúng bị coi là sai.
         $user = $this->unverified();
         $this->seedCode($user, '007355');
 
@@ -215,16 +193,12 @@ class EmailVerificationTest extends TestCase
         $this->post(route('verification.confirm'), ['code' => '12ab'])
             ->assertSessionHasErrors('code');
 
-        // Không được tính là một lần đoán: nó còn chưa tới được dịch vụ.
         $this->assertSame(0, EmailVerificationCode::first()->attempts);
     }
-
-    // ================= GỬI LẠI =================
 
     #[Test]
     public function phai_cho_het_thoi_gian_moi_duoc_gui_lai_ma(): void
     {
-        // Chặn dùng hệ thống làm máy gửi thư rác vào hộp thư người khác.
         $user = $this->unverified();
         $this->post(route('verification.send'));
         Mail::assertSentCount(1);
@@ -239,7 +213,6 @@ class EmailVerificationTest extends TestCase
         $user = $this->unverified();
         $this->seedCode($user, '111111');
 
-        // Lùi thời gian để qua khỏi khoảng chờ gửi lại.
         EmailVerificationCode::where('user_id', $user->id)
             ->update(['sent_at' => now()->subMinutes(5)]);
 
@@ -255,28 +228,15 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function go_sai_ma_KHONG_duoc_dat_lai_dong_ho_cho_gui_lai(): void
     {
-        /*
-         * LỖI ĐÃ XẢY RA THẬT.
-         *
-         * Khoảng chờ gửi lại từng đo bằng `updated_at`, mà
-         * increment('attempts') cũng chạm vào cột đó. Nghĩa là mỗi lần gõ
-         * sai lại đẩy đồng hồ về 60 giây — đúng người đang cần mã mới
-         * nhất lại là người bị chặn.
-         *
-         * Đo được trước khi sửa: thư gửi 5 phút trước -> chờ 0 giây;
-         * gõ sai một lần -> chờ 59 giây.
-         */
         $user = $this->unverified();
         $this->seedCode($user);
 
-        // Thư đã gửi từ 5 phút trước: lẽ ra gửi lại được ngay.
         EmailVerificationCode::where('user_id', $user->id)
             ->update(['sent_at' => now()->subMinutes(5)]);
 
         $verifier = app(EmailVerifier::class);
         $this->assertSame(0, $verifier->secondsUntilResend($user));
 
-        // Khách gõ sai một lần.
         $this->post(route('verification.confirm'), ['code' => '000000'])
             ->assertSessionHasErrors('code');
 
@@ -290,8 +250,6 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function go_sai_thi_giu_lai_ma_vua_go_de_khach_sua_dung_cho(): void
     {
-        // Sai một chữ số trong sáu là chuyện thường. Xoá trắng ô thì họ
-        // phải nhìn lại email và gõ lại cả sáu chữ.
         $user = $this->unverified();
         $this->seedCode($user);
 
@@ -303,26 +261,11 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function trang_nhap_ma_bao_loi_bang_khoi_do_ro_rang(): void
     {
-        /*
-         * Bài này DÒ CHUỖI trong HTML vì thứ đang được canh CHÍNH LÀ câu
-         * chữ khách nhìn thấy.
-         *
-         * Trước đây lỗi chỉ là một dòng `text-danger small` nằm DƯỚI ô
-         * nhập — dễ bị bỏ qua tới mức khách tưởng nút bấm không ăn rồi
-         * bấm lại, đốt thêm một lượt thử.
-         */
         $user = $this->unverified();
         $this->seedCode($user);
 
         $this->post(route('verification.confirm'), ['code' => '000000']);
 
-        /*
-         * from(...) — BẮT BUỘC.
-         *
-         * back() dựa vào Referer. Không đặt thì trong bài kiểm tra nó rơi
-         * về '/', và ta đi soi trang chủ trong khi tưởng đang soi trang
-         * nhập mã.
-         */
         $html = $this->from(route('verification.notice'))
             ->followingRedirects()
             ->post(route('verification.confirm'), ['code' => '000000'])
@@ -331,7 +274,6 @@ class EmailVerificationTest extends TestCase
         $this->assertStringContainsString('alert alert-danger', $html);
         $this->assertStringContainsString('Mã không đúng', $html);
 
-        // Khối đỏ phải đứng TRƯỚC ô nhập trong trang.
         $this->assertLessThan(
             strpos($html, 'id="code"'),
             strpos($html, 'alert alert-danger'),
@@ -339,22 +281,11 @@ class EmailVerificationTest extends TestCase
         );
     }
 
-    // ================= CHẶN TRANG =================
-
     #[Test]
     public function chua_xac_thuc_thi_khong_vao_duoc_trang_ca_nhan(): void
     {
         $this->unverified();
 
-        /*
-         * `/yeu-thich` ĐÃ RÚT KHỎI DANH SÁCH NÀY — có chủ đích.
-         *
-         * Nút thả tim chỉ cần đăng nhập (QĐ-07), nhưng trang danh sách từng
-         * bắt xác thực: khách chưa xác thực thả tim được mà mở trang ra thì
-         * bị đuổi đi xác thực — một ngõ cụt. Yêu thích không đụng tới tiền
-         * hay dữ liệu người khác, nên theo QĐ-07: chỉ cần đăng nhập. Xem
-         * CatalogNhatQuanTest::tai_khoan_chua_xac_thuc_van_mo_duoc_trang_yeu_thich.
-         */
         foreach (['/tai-khoan', '/dia-chi', '/don-hang', '/lich-cham-cay'] as $path) {
             $this->get($path)->assertRedirect(route('verification.notice'));
         }
@@ -363,9 +294,6 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function chua_xac_thuc_van_mua_hang_binh_thuong(): void
     {
-        // Cửa hàng CHO PHÉP khách vãng lai đặt hàng. Khoá giỏ với người
-        // đã đăng ký nhưng chưa xác thực, trong khi người không có tài
-        // khoản mua thoải mái, là phạt đúng nhóm khách thân thiết hơn.
         $this->unverified();
 
         $this->get('/gio-hang')->assertOk();
@@ -398,12 +326,9 @@ class EmailVerificationTest extends TestCase
         $this->post(route('verification.confirm'), ['code' => '135790'])->assertRedirect('/login');
     }
 
-    // ================= ĐƯỜNG LIÊN KẾT CÓ CHỮ KÝ =================
-
     #[Test]
     public function lien_ket_co_chu_ky_hop_le_van_xac_thuc_duoc(): void
     {
-        // Cách mặc định của Laravel, giữ lại đúng như bài thực hành yêu cầu.
         $user = $this->unverified();
 
         $url = URL::temporarySignedRoute('verification.verify', now()->addHour(), [
@@ -419,8 +344,6 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function lien_ket_sai_chu_ky_bi_tu_choi(): void
     {
-        // Thiếu phép kiểm này thì ai đoán đúng {id} và {hash} là xác thực
-        // hộ được người khác.
         $user = $this->unverified();
 
         $this->get(route('verification.verify', [
@@ -449,21 +372,10 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function gioi_han_5_lan_go_van_dung_khi_nhieu_request_cung_luc(): void
     {
-        /*
-         * Trước khi sửa, phép kiểm "còn lượt không" và phép cộng bộ đếm
-         * là hai câu lệnh rời nhau — nhiều request cùng lúc đều đọc thấy
-         * còn lượt và đều được đoán. Giới hạn 5 lần trở thành vô nghĩa,
-         * mà nó là hàng rào duy nhất trước một mã sáu chữ số.
-         *
-         * Bài này không dựng được nhiều tiến trình, nên nó canh thứ đã
-         * sửa được: bộ đếm do CƠ SỞ DỮ LIỆU chốt, nên lần thứ sáu bị
-         * chặn dù bản ghi đang nằm trong bộ nhớ nói gì đi nữa.
-         */
         $user = User::factory()->unverified()->create();
         $verifier = app(EmailVerifier::class);
         $verifier->send($user);
 
-        // Năm lần đầu: sai mã, và bộ đếm phải nhích đúng từng lần.
         for ($i = 1; $i <= 5; $i++) {
             try {
                 $verifier->confirm($user, '000000');
@@ -479,7 +391,6 @@ class EmailVerificationTest extends TestCase
             );
         }
 
-        // Lần thứ sáu: hết lượt, và bản ghi mã bị xoá để buộc xin mã mới.
         try {
             $verifier->confirm($user, '000000');
             $this->fail('Lần thứ sáu đáng lẽ phải bị chặn.');
@@ -497,14 +408,6 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function khong_gui_hai_ma_cung_luc(): void
     {
-        /*
-         * Hai cú bấm sát nhau: chỉ một cái được đi tiếp. Nếu cả hai cùng
-         * gửi thì mã sinh sau ghi đè mã sinh trước, và khách nhập mã
-         * trong thư họ thấy trước sẽ bị báo sai — không có cách nào đoán
-         * ra vì sao.
-         *
-         * Giữ sẵn khoá ở đây thay cho "request kia đang chạy".
-         */
         $user = User::factory()->unverified()->create();
 
         $khoa = Cache::lock('gui-ma-xac-thuc:'.$user->id, 10);

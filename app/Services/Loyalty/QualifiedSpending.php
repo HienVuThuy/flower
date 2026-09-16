@@ -8,25 +8,9 @@ use App\Models\Order;
 use App\Models\Refund;
 use App\Models\User;
 
-/**
- * Chi tiêu hợp lệ — NƠI DUY NHẤT định nghĩa "khách đã thật sự mua bao nhiêu".
- * ============================================================
- * = tổng đơn ĐÃ GIAO − phí vận chuyển − phần đã hoàn tiền xong.
- *
- *   - Đơn huỷ, đơn chưa giao: không tính. Đặt rồi huỷ không phải mua.
- *   - Phí vận chuyển: không tính. Đó là tiền trả cho GHN, không phải hàng.
- *   - Hoàn tiền: trừ ra. Không trừ thì "mua rồi trả lại" là cách lên hạng.
- *
- * Điểm mua hàng (PointEarning) và hạng thành viên đọc cùng một định nghĩa:
- * hai nơi hai cách tính thì khách thấy "đơn này 32 điểm" nhưng hạng lại
- * tính đơn đó theo con số khác.
- *
- * Tiền khách bù khi đổi hàng KHÔNG tính: nó gắn với phiếu đổi chứ không với
- * giá trị hàng của đơn.
- */
+/** Chi tiêu hợp lệ — NƠI DUY NHẤT định nghĩa "khách đã thật sự mua bao nhiêu". */
 final class QualifiedSpending
 {
-    /** Tiền hàng hợp lệ của MỘT đơn (chưa xét trạng thái). */
     public static function tienHangCuaDon(Order $order): string
     {
         return bcsub(

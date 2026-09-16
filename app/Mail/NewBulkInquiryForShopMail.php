@@ -9,15 +9,9 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 
-/**
- * Báo cho CỬA HÀNG biết vừa có yêu cầu báo giá số lượng lớn.
- * ============================================================
- * Yêu cầu loại này thường là tiệc cưới, khai trương — có NGÀY CỐ ĐỊNH.
- * Để nó nằm trong trang quản trị chờ ai đó tình cờ mở ra là mất khách.
- */
+/** Báo cho CỬA HÀNG biết vừa có yêu cầu báo giá số lượng lớn. */
 class NewBulkInquiryForShopMail extends Mailable
 {
-    // Bắt buộc khi bật hàng đợi thư — xem chú thích ở OrderCancelledByCustomerMail.
     use SerializesModels;
 
     public function __construct(

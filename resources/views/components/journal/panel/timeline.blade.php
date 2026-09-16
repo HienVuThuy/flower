@@ -32,7 +32,6 @@
                         @endif
 
                         @if($entry->field('rating'))
-                            {{-- Điểm chấm của lần quan sát này (sổ Phân tích). --}}
                             · <span class="entry-rating" role="img"
                                     aria-label="Chấm {{ $entry->field('rating') }} trên 5">
                                 @for($i = 1; $i <= 5; $i++)
@@ -45,8 +44,6 @@
 
                     <div class="journal-entry__title">
                         @if($entry->sticker)
-                            {{-- Nhãn dán đứng TRƯỚC tiêu đề: nhìn lướt cả cột là
-                                 thấy ngay chuyện gì đã xảy ra, không cần đọc chữ. --}}
                             <x-journal.sticker :sticker="$entry->sticker" :size="20"
                                                class="journal-entry__sticker" />
                         @endif

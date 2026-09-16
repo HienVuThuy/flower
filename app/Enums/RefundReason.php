@@ -2,17 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Vì sao hoàn tiền.
- * ============================================================
- * KHÔNG PHẢI Ô CHỮ TỰ DO. Lý do là thứ cửa hàng cần ĐẾM: tháng này hoàn
- * bao nhiêu vì hoa héo, bao nhiêu vì giao nhầm. Gõ tay thì "hoa héo",
- * "héo", "cây bị úng" là ba dòng khác nhau và không cộng lại được. Chi
- * tiết từng vụ nằm ở ô ghi chú đi kèm.
- *
- * Mỗi lý do khai rõ đi với đơn ở trạng thái nào — hoàn "vì hàng hỏng"
- * cho một đơn chưa giao là một câu vô nghĩa.
- */
+/** Vì sao hoàn tiền. */
 enum RefundReason: string
 {
     case OrderCancelled = 'don_huy';
@@ -32,11 +22,6 @@ enum RefundReason: string
         };
     }
 
-    /**
-     * Lý do hợp với trạng thái đơn.
-     *
-     * @return list<self>
-     */
     public static function choTrangThai(OrderStatus $trangThai): array
     {
         return match ($trangThai) {

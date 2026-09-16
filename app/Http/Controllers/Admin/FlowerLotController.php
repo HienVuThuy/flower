@@ -17,18 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/**
- * Lô hoa: một lần lấy hàng.
- * ============================================================
- * KHÔNG SỬA, KHÔNG XOÁ LÔ ĐÃ ĐÓNG.
- *
- * Lô CÒN MỞ thì sửa và xoá được (lỗi gõ nhầm lúc ghi), trừ khi đã ghi
- * trả hàng cho vựa — xem FlowerLotService::capNhatLo().
- *
- * Lô đã đóng là một con số đã đi vào giá vốn của một kỳ. Sửa nó là sửa
- * lại một báo cáo đã đọc — cùng nguyên tắc với phiếu nhập đã ghi sổ và
- * phiếu hoàn tiền.
- */
+/** Lô hoa: một lần lấy hàng. */
 class FlowerLotController extends Controller
 {
     public function __construct(
@@ -62,13 +51,6 @@ class FlowerLotController extends Controller
             'nhaCungCap' => Supplier::orderBy('name')->get(['id', 'name']),
             'trangThai' => FlowerLotStatus::cases(),
 
-            /*
-             * NHẮC LÔ QUÊN ĐÓNG NGAY TRÊN DANH SÁCH.
-             *
-             * Quên đóng lô là giá vốn hoa thấp hơn sự thật và lãi gộp cao
-             * hơn sự thật — sai theo hướng dễ chịu, tức là hướng không ai
-             * tự đi tìm.
-             */
             'quenDong' => $this->service->loQuenDong(),
             'ngayNhac' => FlowerLotService::NGAY_NHAC_DONG,
         ]);
@@ -98,7 +80,6 @@ class FlowerLotController extends Controller
 
         $lo = new FlowerLot();
 
-        // `code`, `status`, `created_by` không nằm trong $fillable.
         $lo->forceFill(array_merge($data, [
             'code' => $this->service->sinhMa(),
             'supplier_id' => $ncc?->id,
@@ -114,8 +95,6 @@ class FlowerLotController extends Controller
 
     public function update(Request $request, FlowerLot $flowerLot): RedirectResponse
     {
-        // CÙNG MỘT BỘ QUY TẮC với lúc ghi: sửa mà lỏng hơn ghi là cửa sau
-        // để đưa lô 0 đồng hay số lượng âm vào sổ.
         $data = $request->validate($this->quyTac(), [], $this->tenTruong());
 
         $ncc = isset($data['supplier_id']) ? Supplier::find($data['supplier_id']) : null;
@@ -123,8 +102,6 @@ class FlowerLotController extends Controller
         try {
             $this->service->capNhatLo($flowerLot, array_merge($data, [
                 'supplier_id' => $ncc?->id,
-                // Đổi nguồn thì đổi luôn bản chụp tên — bản chụp là tên
-                // của nguồn ĐANG GẮN với lô, không phải của nguồn cũ.
                 'supplier_name' => $ncc?->name,
                 'quality' => $data['quality'] ?? null,
                 'note' => $data['note'] ?? null,
@@ -151,13 +128,6 @@ class FlowerLotController extends Controller
             ->with('success', 'Đã xoá lô ' . $flowerLot->code . '.');
     }
 
-    /**
-     * Dữ liệu cho biểu mẫu ghi / sửa lô — MỘT biểu mẫu cho cả hai.
-     *
-     * Khi sửa, loại hoa và nhà cung cấp ĐANG GẮN với lô vẫn phải có trong
-     * ô chọn dù đã ngừng dùng: thiếu nó thì ô chọn tự nhảy sang mục đầu
-     * tiên, và bấm Lưu là lặng lẽ đổi nguồn của lô.
-     */
     private function duLieuBieuMau(?FlowerLot $lo): array
     {
         return [
@@ -174,7 +144,6 @@ class FlowerLotController extends Controller
         ];
     }
 
-    /** Quy tắc cho CẢ ghi lẫn sửa — một chỗ, không hai bản để lệch nhau. */
     private function quyTac(): array
     {
         return [
@@ -182,18 +151,9 @@ class FlowerLotController extends Controller
             'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
             'purchased_at' => ['required', 'date', 'before_or_equal:today'],
 
-            /*
-             * SỐ LƯỢNG > 0 và CÓ PHẦN THẬP PHÂN.
-             *
-             * Mua theo cân thì 3,5kg là chuyện thường. Ép số nguyên là ép
-             * người dùng làm tròn, và cái làm tròn đó đi thẳng vào giá
-             * vốn mỗi đơn vị.
-             */
             'quantity' => ['required', 'numeric', 'gt:0', 'max:9999999'],
             'unit' => ['required', Rule::enum(FlowerUnit::class)],
 
-            // Tiền phải > 0: lô 0 đồng là "được cho", nói ra bằng ghi chú
-            // chứ không bằng một con số làm lệch giá bình quân.
             'total_cost' => ['required', 'numeric', 'gt:0', 'max:999999999'],
 
             'quality' => ['nullable', Rule::enum(FlowerQuality::class)],

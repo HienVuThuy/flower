@@ -1,10 +1,4 @@
-{{--
-    KHUYẾN MẠI — MỘT TRANG TỔNG HỢP, các loại ưu đãi là các tab.
-
-    Giảm giá sản phẩm, mã giảm giá, quà theo chương trình và hạng thành viên
-    đều trả lời cùng một câu "cửa hàng đang ưu đãi gì cho khách", nên đứng
-    chung một chỗ thay vì bốn mục rời trên thanh bên.
---}}
+{{-- KHUYẾN MẠI — MỘT TRANG TỔNG HỢP, các loại ưu đãi là các tab. --}}
 @php
     $cacTab = collect([
         ['admin.promotions.index', 'admin.promotions.*', 'Giảm giá sản phẩm', true],

@@ -14,24 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Vòng đời trạng thái thanh toán của đơn hàng.
- * ============================================================
- * ĐÂY LÀ CỘT NÓI VỀ TIỀN, nên sai ở đây tốn tiền thật:
- *
- *   - Đánh dấu nhầm "đã thanh toán" → cửa hàng giao hàng rồi không bao
- *     giờ đòi tiền.
- *   - Huỷ đơn khách đã trả mà không ghi nhận → cửa hàng giữ tiền của
- *     khách và không ai biết.
- *
- * BỐN LỖI ĐO ĐƯỢC TRƯỚC KHI SỬA, tất cả đều nằm ở markPaid() cũ — hàm
- * đó gán thẳng cột, không kiểm gì:
- *
- *   1. Đơn ĐÃ HUỶ vẫn đánh dấu được là đã thanh toán.
- *   2. Huỷ đơn đã trả tiền không ghi nhận gì → vẫn là "đã thanh toán".
- *   3. PaymentStatus::Refunded không nơi nào đặt — mã chết từ lúc khai.
- *   4. Bấm nhầm thì không có đường lui.
- */
+/** Vòng đời trạng thái thanh toán của đơn hàng. */
 class OrderPaymentTest extends TestCase
 {
     use RefreshDatabase;
@@ -45,7 +28,6 @@ class OrderPaymentTest extends TestCase
         return $user;
     }
 
-    /** Một đơn có thật trong bảng, đặt được trạng thái tuỳ ý. */
     private function order(OrderStatus $status, PaymentStatus $payment): Order
     {
         $product = Product::factory()->for(Category::factory())->price('300000.00')->create();
@@ -90,8 +72,6 @@ class OrderPaymentTest extends TestCase
             ]);
     }
 
-    // ================= ĐƯỜNG ĐI ĐÚNG =================
-
     #[Test]
     public function ghi_nhan_don_da_thanh_toan(): void
     {
@@ -105,14 +85,6 @@ class OrderPaymentTest extends TestCase
     #[Test]
     public function KHONG_bam_tay_da_hoan_tien_duoc_nua(): void
     {
-        /*
-         * ĐẢO LẠI QUYẾT ĐỊNH CŨ (QĐ-224).
-         *
-         * Bài này từng đòi một cú bấm đặt được "Đã hoàn tiền" cho đơn đã
-         * huỷ. Cú bấm đó không ghi hoàn bao nhiêu, bằng cách nào, mã giao
-         * dịch gì. Giờ hoàn tiền ghi ở RefundService, và "Đã hoàn tiền" tự
-         * đặt khi đã hoàn đủ — xem tests/Feature/Order/RefundTest.
-         */
         $order = $this->order(OrderStatus::Cancelled, PaymentStatus::Paid);
 
         $this->setPayment($order, PaymentStatus::Refunded)->assertSessionHas('error');
@@ -123,13 +95,6 @@ class OrderPaymentTest extends TestCase
     #[Test]
     public function go_duoc_danh_dau_khi_bam_nham_don(): void
     {
-        /*
-         * ĐƯỜNG LUI LÀ CẦN THIẾT, không phải tiện tay.
-         *
-         * Danh sách đơn hiện 20 dòng giống nhau; bấm nhầm một dòng là
-         * cửa hàng giao hàng mà không bao giờ đòi tiền. Không có đường
-         * lui thì cách duy nhất để sửa là vào thẳng cơ sở dữ liệu.
-         */
         $order = $this->order(OrderStatus::Confirmed, PaymentStatus::Paid);
 
         $this->setPayment($order, PaymentStatus::Unpaid)->assertSessionHas('success');
@@ -137,16 +102,9 @@ class OrderPaymentTest extends TestCase
         $this->assertSame(PaymentStatus::Unpaid, $order->fresh()->payment_status);
     }
 
-    // ================= ĐƯỜNG ĐI SAI PHẢI BỊ CHẶN =================
-
     #[Test]
     public function KHONG_danh_dau_thanh_toan_cho_don_da_huy(): void
     {
-        /*
-         * LỖI ĐÃ ĐO ĐƯỢC. Đơn `cancelled` vẫn nhận `paid` mà không một
-         * lời cảnh báo. Nếu khách lỡ chuyển tiền thật thì việc cần làm
-         * là HOÀN TIỀN, không phải ghi nhận đã thu.
-         */
         $order = $this->order(OrderStatus::Cancelled, PaymentStatus::Unpaid);
 
         $this->setPayment($order, PaymentStatus::Paid)->assertSessionHas('error');
@@ -157,8 +115,6 @@ class OrderPaymentTest extends TestCase
     #[Test]
     public function KHONG_hoan_tien_cho_don_khach_chua_tra(): void
     {
-        // Chưa nhận thì không có gì để hoàn. Cho phép là tạo ra một
-        // khoản hoàn tiền không có khoản thu tương ứng — sổ sách lệch.
         $order = $this->order(OrderStatus::Cancelled, PaymentStatus::Unpaid);
 
         $this->setPayment($order, PaymentStatus::Refunded)->assertSessionHas('error');
@@ -181,23 +137,14 @@ class OrderPaymentTest extends TestCase
     #[Test]
     public function dat_lai_dung_trang_thai_dang_co_thi_bao_loi(): void
     {
-        // Không phải lỗi nghiêm trọng, nhưng im lặng "thành công" thì
-        // admin tưởng vừa đổi được cái gì đó.
         $order = $this->order(OrderStatus::Confirmed, PaymentStatus::Paid);
 
         $this->setPayment($order, PaymentStatus::Paid)->assertSessionHas('error');
     }
 
-    // ================= NHẮC HOÀN TIỀN =================
-
     #[Test]
     public function trang_don_nhac_khi_da_huy_ma_khach_da_tra_tien(): void
     {
-        /*
-         * Hệ thống KHÔNG tự đặt "đã hoàn tiền" — nó không biết ai đó có
-         * thật sự chuyển khoản trả lại hay chưa. Việc của phần mềm là
-         * NHẮC cho tới khi người thật xác nhận.
-         */
         $order = $this->order(OrderStatus::Cancelled, PaymentStatus::Paid);
 
         $this->actingAs($this->admin())
@@ -217,14 +164,9 @@ class OrderPaymentTest extends TestCase
             ->assertDontSee('Cần hoàn tiền cho khách');
     }
 
-    // ================= GHI CHÚ NỘI BỘ =================
-
     #[Test]
     public function luu_duoc_ghi_chu_noi_bo(): void
     {
-        // Cột `admin_note` có từ lúc dựng bảng nhưng chưa từng có giao
-        // diện nào ghi vào — ghi chú kiểu này trước giờ nằm trong đầu
-        // người trực và mất khi đổi ca.
         $order = $this->order(OrderStatus::Confirmed, PaymentStatus::Unpaid);
 
         $this->actingAs($this->admin())
@@ -243,8 +185,6 @@ class OrderPaymentTest extends TestCase
     #[Test]
     public function khach_KHONG_nhin_thay_ghi_chu_noi_bo(): void
     {
-        // Ghi chú nội bộ hay chứa thứ không nên để khách đọc: "khách khó
-        // tính", "gọi mãi không nghe". Lọt sang trang khách là hỏng.
         $khach = User::factory()->create();
         $order = $this->order(OrderStatus::Confirmed, PaymentStatus::Unpaid);
         $order->user_id = $khach->id;

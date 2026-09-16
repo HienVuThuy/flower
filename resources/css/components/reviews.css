@@ -1,8 +1,4 @@
-/* ============================================================
-   ĐÁNH GIÁ & YÊU THÍCH
-   ============================================================ */
-
-/* ---------- Dải sao hiển thị ---------- */
+/* ĐÁNH GIÁ & YÊU THÍCH */
 
 .rating {
     display: inline-flex;
@@ -18,8 +14,6 @@
 }
 
 .rating__star {
-    /* Sao chưa đạt: cùng màu nhưng nhạt, không đổi sang xám lạnh —
-       giữ dải sao là MỘT khối thị giác, không phải hai màu rời. */
     color: color-mix(in srgb, var(--semantic-warning) 28%, transparent);
 }
 
@@ -40,12 +34,7 @@
     color: var(--ink-500);
 }
 
-/* ---------- Ô chấm sao trong form ---------- */
-
 .rating-input {
-    /* row-reverse + thứ tự 5→1 trong HTML: nhờ vậy dùng được bộ chọn
-       anh em ~ để tô cả những sao ĐỨNG TRƯỚC sao đang trỏ. CSS chỉ đi
-       xuôi được, nên phải đảo chiều bằng flex. */
     display: inline-flex;
     flex-direction: row-reverse;
     justify-content: flex-end;
@@ -53,7 +42,6 @@
 }
 
 .rating-input__radio {
-    /* Không dùng display:none — như thế bàn phím không tab tới được. */
     position: absolute;
     opacity: 0;
     width: 1px;
@@ -79,7 +67,6 @@
     transform: scale(1.08);
 }
 
-/* Viền khi di chuyển bằng bàn phím — radio ẩn nên phải vẽ lên nhãn. */
 .rating-input__radio:focus-visible + .rating-input__label {
     outline: 2px solid var(--brand-600);
     outline-offset: 2px;
@@ -95,8 +82,6 @@
         transform: none;
     }
 }
-
-/* ---------- Danh sách đánh giá ---------- */
 
 .product-reviews {
     scroll-margin-top: var(--space-xl);
@@ -164,8 +149,6 @@
     text-decoration: underline;
 }
 
-/* ---------- Nút yêu thích ---------- */
-
 .btn-wishlist {
     display: inline-flex;
     align-items: center;
@@ -205,7 +188,6 @@
     }
 }
 
-/* Góc trên phải của ảnh trong card. */
 .product-card__wish {
     position: absolute;
     top: var(--space-2xs);
@@ -217,7 +199,6 @@
     margin-bottom: var(--space-3xs);
 }
 
-/* Khối "lưu để xem sau" ở trang chi tiết. */
 .product-info__wish {
     display: flex;
     align-items: center;
@@ -230,15 +211,6 @@
     margin-bottom: var(--space-2xs);
     text-decoration: none;
 }
-
-/*
- * PHẢN HỒI CỦA CỬA HÀNG dưới một đánh giá.
- * ============================================================
- * Thụt vào và đổi nền để người đọc thấy NGAY đây là tiếng nói của bên
- * bán, không phải của một khách khác. Không phân biệt được là chỗ dễ
- * hiểu nhầm nhất trên trang đánh giá — nhất là khi cửa hàng đang trả
- * lời một lời phàn nàn.
- */
 
 .review-item__reply {
     margin-top: 0.75rem;
@@ -259,7 +231,6 @@
     color: var(--brand-600, var(--brand-500));
 }
 
-/* Trên điện thoại, lề thụt ăn mất chỗ của chữ. */
 @media (max-width: 575.98px) {
     .review-item__reply {
         margin-inline-start: 0;

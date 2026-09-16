@@ -15,11 +15,7 @@ use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Bằng chứng xã hội, khan hiếm và "sắp mất mã" — chỉ từ dữ liệu thật.
- * ============================================================
- * Bất biến chung: không đủ căn cứ thì KHÔNG in gì. Không có số bịa.
- */
+/** Bằng chứng xã hội, khan hiếm và "sắp mất mã" — chỉ từ dữ liệu thật. */
 class BangChungMuaHangTest extends TestCase
 {
     use RefreshDatabase;
@@ -47,17 +43,15 @@ class BangChungMuaHangTest extends TestCase
         ]);
     }
 
-    /* ================= ĐÃ BÁN ================= */
-
     #[Test]
     public function da_ban_chi_dem_don_DA_GIAO_trong_30_ngay(): void
     {
         $sp = $this->sp();
         $this->ban($sp, 4);
         $this->ban($sp, 2);
-        $this->ban($sp, 9, OrderStatus::Cancelled);       // huỷ: không phải đã bán
-        $this->ban($sp, 7, OrderStatus::Pending);         // chưa giao
-        $this->ban($sp, 5, OrderStatus::Completed, 45);   // quá 30 ngày
+        $this->ban($sp, 9, OrderStatus::Cancelled);
+        $this->ban($sp, 7, OrderStatus::Pending);
+        $this->ban($sp, 5, OrderStatus::Completed, 45);
 
         $this->assertSame(6, app(SocialProof::class)->banGanDay($sp));
 
@@ -77,12 +71,6 @@ class BangChungMuaHangTest extends TestCase
     #[Test]
     public function co_danh_gia_ma_chua_ban_duoc_gi_thi_van_KHONG_in_da_ban_0(): void
     {
-        /*
-         * CÓ ĐÁNH GIÁ để khối "bằng chứng" được dựng — thử phá code đã chứng
-         * minh: bài trên không có đánh giá nên cả khối không hiện, và in
-         * "Đã bán 0" bên trong vẫn không lộ ra. Đơn gắn với đánh giá là đơn
-         * ĐÃ HUỶ, nên số đã bán vẫn là 0.
-         */
         $sp = $this->sp();
         $this->ban($sp, 2, OrderStatus::Cancelled);
 
@@ -99,8 +87,6 @@ class BangChungMuaHangTest extends TestCase
             ->assertSee('product-info__proof', false)
             ->assertDontSee('Đã bán');
     }
-
-    /* ================= CHỈ CÒN ================= */
 
     #[Test]
     public function con_tu_5_tro_xuong_thi_noi_chi_con(): void
@@ -120,23 +106,15 @@ class BangChungMuaHangTest extends TestCase
         $this->get(route('shop.products.show', $lamTheoDon))
             ->assertOk()->assertDontSee('Chỉ còn');
 
-        /*
-         * KIỂM THẲNG DỊCH VỤ. Trang không dựng khối tồn kho cho hàng làm theo
-         * đơn, nên kiểm qua trang không phân biệt được — thử phá code đã chứng
-         * minh: bỏ điều kiện track_inventory mà bài vẫn xanh.
-         */
         $this->assertNull(app(SocialProof::class)->chiCon($lamTheoDon, false));
     }
 
     #[Test]
     public function co_quy_cach_thi_KHONG_gop_ton_de_noi_chi_con(): void
     {
-        // Tồn nằm ở từng quy cách — nói "chỉ còn 2" theo tồn chung là sai với quy cách khách chọn.
         $sp = $this->sp(['stock_quantity' => 2]);
         $this->assertNull(app(SocialProof::class)->chiCon($sp, true));
     }
-
-    /* ================= QUY CÁCH PHỔ BIẾN ================= */
 
     #[Test]
     public function quy_cach_ban_chay_can_du_so_lieu_va_khong_hoa(): void
@@ -149,11 +127,6 @@ class BangChungMuaHangTest extends TestCase
         $this->ban($sp, 2, quyCach: $nho->id);
         $this->assertNull($dv->quyCachBanChay($sp), 'Dưới 3 cái chưa gọi là phổ biến');
 
-        /*
-         * HOÀ Ở TRÊN NGƯỠNG. Thử phá code đã chứng minh: bản đầu của bài này
-         * hoà 2–2, dưới ngưỡng 3 — luật ngưỡng đã trả null trước khi tới luật
-         * hoà, nên bỏ hẳn luật hoà mà bài vẫn xanh.
-         */
         $this->ban($sp, 1, quyCach: $nho->id);
         $this->ban($sp, 3, quyCach: $lon->id);
         $this->assertNull($dv->quyCachBanChay($sp), 'Hoà 3–3 thì không có quán quân');
@@ -190,8 +163,6 @@ class BangChungMuaHangTest extends TestCase
         $this->assertStringNotContainsString('Phổ biến nhất', $html);
     }
 
-    /* ================= SẮP MẤT MÃ ================= */
-
     private function luuMa(User $u, Coupon $ma): void
     {
         DB::table('coupon_user')->insert([
@@ -207,8 +178,8 @@ class BangChungMuaHangTest extends TestCase
         $xa = Coupon::factory()->create(['code' => 'CONHAN30', 'name' => 'Còn hạn dài', 'ends_at' => now()->addDays(30), 'starts_at' => now()->subDay(), 'is_public' => true]);
         $gan = Coupon::factory()->create(['code' => 'SAPHET', 'name' => 'Sắp hết', 'ends_at' => now()->addHours(10), 'starts_at' => now()->subDay(), 'is_public' => true]);
 
-        $this->luuMa($u, $gan);  // lưu trước
-        $this->luuMa($u, $xa);   // lưu sau — thứ tự cũ sẽ để mã này lên đầu
+        $this->luuMa($u, $gan);
+        $this->luuMa($u, $xa);
 
         $html = $this->actingAs($u)->get(route('shop.vouchers.index'))->assertOk()->getContent();
 

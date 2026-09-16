@@ -8,11 +8,6 @@
     max-width: calc(100vw - 32px);
 }
 
-/*
- * NÚT TRÒN NHỎ, chỉ biểu tượng. Bản đầu là dải chữ "Tư vấn cây & mua sắm"
- * cố định ở góc — rộng gần 300px và che nội dung trang (nút gửi biểu mẫu,
- * số tiền cuối bảng). Tên nút vẫn đọc được qua aria-label và title.
- */
 .ai-chat__toggle {
     display: inline-flex;
     align-items: center;

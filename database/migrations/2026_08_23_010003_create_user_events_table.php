@@ -6,16 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Mục 9 & 25 Guide.docx — nền tảng "Kinh tế số" / theo dõi
-     * hành vi người dùng cho Recommendation/Analytics sau này.
-     *
-     * Một bảng generic (event_type) thay vì một bảng riêng cho
-     * mỗi loại hành vi, để khi cần thêm 'search', 'add_to_cart'...
-     * không phải tạo migration mới — chỉ thêm giá trị event_type.
-     *
-     * Hiện tại mới ghi nhận 'product_view' và 'category_view'.
-     */
     public function up(): void
     {
         Schema::create('user_events', function (Blueprint $table) {

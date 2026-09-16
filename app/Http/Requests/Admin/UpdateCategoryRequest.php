@@ -46,14 +46,6 @@ class UpdateCategoryRequest extends FormRequest
                     ->ignore($categoryId),
             ],
 
-            /*
-             * NHÓM DANH MỤC: hoa & cây, hay phụ kiện & vật tư.
-             *
-             * Thiếu ô này thì mọi danh mục tạo từ trang quản trị đều là
-             * "hoa & cây" — không tạo được danh mục cho trang /phu-kien.
-             * Để trống được (bản ghi cũ); controller hiểu trống là giữ nguyên
-             * khi sửa, là "hoa & cây" khi tạo mới.
-             */
             'kind' => [
                 'nullable',
                 Rule::enum(\App\Enums\CategoryKind::class),

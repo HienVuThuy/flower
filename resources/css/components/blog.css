@@ -1,10 +1,4 @@
-/*
- * ============================================================
- * CẨM NANG (blog) và GÓC CÂY CỦA BẠN
- * ============================================================
- */
-
-/* ---------- Thẻ bài viết ---------- */
+/* CẨM NANG (blog) và GÓC CÂY CỦA BẠN */
 
 .post-card {
     display: flex;
@@ -65,8 +59,6 @@
 .post-card__excerpt {
     font-size: 0.9rem;
     color: var(--ink-500);
-    /* Cắt ở ba dòng: thẻ trong lưới phải cao bằng nhau, và một tóm tắt
-       dài gấp đôi làm cả hàng lệch. */
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -83,8 +75,6 @@
 .post-card--compact .post-card__body {
     padding: 0.85rem 0.95rem;
 }
-
-/* ---------- Bài nổi bật ---------- */
 
 .post-feature {
     display: grid;
@@ -126,8 +116,6 @@
     margin-bottom: 0.75rem;
 }
 
-/* ---------- Trang bài ---------- */
-
 .post-header {
     margin-bottom: 1.25rem;
 }
@@ -150,13 +138,6 @@
     margin-bottom: 1.75rem;
 }
 
-/*
- * NỘI DUNG BÀI — bề rộng dòng và khoảng cách dòng đọc được.
- *
- * Cỡ chữ lớn hơn phần còn lại của trang và dòng thưa hơn: đây là chỗ
- * duy nhất người ta đọc liên tục vài phút, khác với mọi trang khác trong
- * cửa hàng vốn để quét mắt.
- */
 .post-body {
     font-size: 1.05rem;
     line-height: 1.75;
@@ -226,8 +207,6 @@
     color: var(--ink-500);
 }
 
-/* ---------- Góc cây của bạn ---------- */
-
 .community-card {
     height: 100%;
     border: 1px solid var(--border-soft);
@@ -248,9 +227,6 @@
 
 .community-card__text {
     margin-bottom: 0.5rem;
-    /* `white-space: pre-line` giữ xuống dòng khách gõ, nhưng KHÔNG giữ
-       khoảng trắng thừa — nếu không thì một người gõ mười dòng trống làm
-       vỡ cả lưới. */
     white-space: pre-line;
 }
 
@@ -385,8 +361,6 @@
         top: 1rem;
     }
 }
-
-/* ---------- Ảnh nhỏ ở trang quản trị ---------- */
 
 .admin-thumb {
     width: 100%;

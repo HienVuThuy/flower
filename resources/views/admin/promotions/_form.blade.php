@@ -1,17 +1,4 @@
 @php
-    /*
-     * $promotion CHƯA CHẮC TỒN TẠI.
-     *
-     * Trang "Tạo chương trình" không truyền biến này — cả biểu mẫu vốn
-     * dựa vào toán tử ?? để nuốt biến chưa tồn tại ($promotion->name ?? '').
-     * Cách đó chỉ đúng cho tới khi ai đó viết một biểu thức không có ??,
-     * và lúc đó trang tạo lỗi 500 trong khi trang sửa vẫn chạy — sai một
-     * nửa nên rất dễ lọt qua kiểm thử.
-     *
-     * Một dòng ở đây dựng sẵn một model rỗng, nên mọi thuộc tính đọc
-     * được và trả về null. Bẫy này đã gặp đúng hai lần (ở đây và ở
-     * admin/products/_form.blade.php) — dập tận gốc thay vì vá từng chỗ.
-     */
     $promotion = $promotion ?? new \App\Models\Promotion();
 @endphp
 
@@ -146,17 +133,6 @@
                 <x-form-error name="ends_at"/>
             </div>
 
-            {{--
-                ============ GIÁ LINH HOẠT THEO THỜI ĐIỂM ============
-
-                Hai ô trên khai KHOẢNG NGÀY ("từ 1/2 tới 14/2"). Khối này
-                khai chu kỳ LẶP LẠI bên trong khoảng đó.
-
-                Trường hợp thật của cửa hàng hoa: hoa tươi còn trên kệ lúc
-                20h tối sáng mai không bán được nữa, nên giảm 30% từ 19h là
-                thu về 70% thay vì mất trắng. Không có khối này thì chương
-                trình đó phải tạo tay lại mỗi ngày.
-            --}}
             <hr class="my-4">
 
             <p class="form-label mb-1">Giá linh hoạt theo thời điểm</p>
@@ -191,9 +167,6 @@
 
                 <div class="col-12">
                     <div class="form-text">
-                        {{-- Nói rõ khung qua nửa đêm vẫn dùng được: admin
-                             thường tưởng phải nhập ngược lại hoặc tạo hai
-                             chương trình. --}}
                         Ví dụ <strong>19:00 → 22:00</strong> cho ưu đãi xả hàng cuối ngày.
                         Khung qua nửa đêm (<strong>22:00 → 02:00</strong>) cũng hợp lệ.
                         Phải điền cả hai ô thì mới có tác dụng.

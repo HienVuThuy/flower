@@ -6,10 +6,7 @@ use App\Services\Media\VideoMetadataStripper;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Video điện thoại mang toạ độ quay trong hộp `moov` — phải bị xoá, và tệp vẫn
- * đúng cấu trúc (không đổi kích thước hộp nào).
- */
+/** Video điện thoại mang toạ độ quay trong hộp `moov` — phải bị xoá, và tệp vẫn đúng cấu trúc (không đổi kích… */
 class VideoMetadataStripperTest extends TestCase
 {
     private function hop(string $loai, string $noiDung): string
@@ -19,7 +16,6 @@ class VideoMetadataStripperTest extends TestCase
 
     private function mp4(string $toaDo): string
     {
-        // ftyp + moov{ mvhd giả, udta{ ©xyz } } + mdat chứa một chuỗi GIỐNG toạ độ (dữ liệu hình không được đụng).
         return $this->hop('ftyp', 'isom0000isomiso2')
             . $this->hop('moov', $this->hop('mvhd', str_repeat("\0", 20)) . $this->hop('udta', $this->hop("\xA9xyz", "\x00\x12\x15\xC7" . $toaDo)))
             . $this->hop('mdat', 'khung-hinh+10.7626+106.6602/khung-hinh');

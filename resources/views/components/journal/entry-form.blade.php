@@ -1,17 +1,6 @@
 @props(['journal', 'conditions'])
 
 @php
-    /*
-     * BIỂU MẪU GHI THÊM — KẾT CẤU THEO LOẠI SỔ.
-     * ============================================================
-     * Trước đây năm loại sổ dùng chung đúng một biểu mẫu, nên sổ theo dõi
-     * giá cũng hiện ô "tình trạng cây" và ô tải ảnh, còn ô để ghi GIÁ thì
-     * không có — người dùng phải tự gõ "Giá" vào một hàng chỉ số.
-     *
-     * `JournalKind::entryFields()` là chỗ DUY NHẤT quyết định ô nào hiện.
-     * Không rải `@if($journal->kind === ...)` ở đây: thêm một loại sổ mới
-     * thì phải sửa cả tệp này và chắc chắn bỏ sót một ô.
-     */
     $kind = $journal->kind;
     $tu = $kind->entryWords();
     $goiY = $kind->suggestedMetrics();
@@ -24,13 +13,6 @@
 
     <div class="mb-3">
         <label class="form-label" for="entry_date">Ngày ghi nhận <span class="text-danger">*</span></label>
-        {{--
-            MẶC ĐỊNH LÀ HÔM NAY, nhưng SỬA ĐƯỢC.
-
-            Người ta hay ghi bù: chủ nhật ngồi ghi lại cả tuần. Khoá cứng
-            vào hôm nay thì bốn lần ghi của bốn ngày dồn hết vào một ngày,
-            và biểu đồ sinh trưởng thành một cột dựng đứng. Xem QĐ-126.
-        --}}
         <input type="date" name="entry_date" id="entry_date"
                class="form-control @error('entry_date') is-invalid @enderror"
                value="{{ old('entry_date', \App\Services\Time\Gio::choONgay(now())) }}"
@@ -38,7 +20,6 @@
         <x-form-error name="entry_date"/>
     </div>
 
-    {{-- ---------- GIÁ: ô riêng, không phải một hàng chỉ số ---------- --}}
     @if($kind->hasField('price'))
         <div class="row g-2 mb-3">
             <div class="col-6">
@@ -57,8 +38,6 @@
                 <input type="text" name="place" id="place" class="form-control"
                        maxlength="120" value="{{ old('place') }}"
                        placeholder="Chợ hoa Quảng An">
-                {{-- Nơi khảo là thứ biến bảng giá từ một dãy số thành một
-                     thứ dùng được: biết chỗ nào rẻ mới đi mua được. --}}
             </div>
         </div>
     @endif
@@ -72,21 +51,10 @@
         </div>
     @endif
 
-    {{-- ---------- PHÂN TÍCH: chấm điểm + được / chưa được ---------- --}}
     @if($kind->hasField('rating'))
         <div class="mb-3">
             <span class="form-label d-block">Chấm điểm lần này</span>
 
-            {{--
-                NĂM Ô RADIO, KHÔNG PHẢI THANH TRƯỢT.
-
-                Thanh trượt cho cảm giác "chấm được 3,7 điểm" — một độ
-                chính xác không có thật khi đang chấm bằng mắt. Năm mức
-                rời rạc thì đúng với thứ người ta thật sự phân biệt được.
-
-                Cũng KHÔNG bắt buộc: có lần quan sát chỉ để ghi chép, chưa
-                muốn kết luận gì.
-            --}}
             <div class="rating-input">
                 @for($i = 1; $i <= 5; $i++)
                     <label class="rating-input__option">
@@ -144,18 +112,10 @@
         </div>
     @endif
 
-    {{-- ---------- SINH TRƯỞNG: việc chăm sóc đã làm ---------- --}}
     @if($kind->hasField('care'))
         <div class="mb-3">
             <span class="form-label d-block">Hôm nay đã làm gì</span>
 
-            {{--
-                DÙNG CHUNG TỪ VỰNG VỚI NHÃN DÁN.
-
-                "Đã tưới" ở đây và nhãn dán "Đã tưới" là cùng một khoá.
-                Nếu tách làm hai bộ thì người dùng phải khai hai lần cho
-                một việc, và hai chỗ sẽ lệch nhau.
-            --}}
             <div class="care-picker">
                 @foreach(\App\Enums\JournalSticker::forKind($kind) as $viec)
                     @if($viec->group() === 'Việc đã làm')
@@ -183,15 +143,11 @@
         </div>
     @endif
 
-    {{-- ---------- NHÃN DÁN ---------- --}}
     @if($kind->hasField('sticker') && $nhanDan)
         <div class="mb-3">
             <span class="form-label d-block">Nhãn dán</span>
 
             <div class="sticker-picker">
-                {{-- Ô "không dán" phải là một lựa chọn THẤY ĐƯỢC, không
-                     phải "bỏ trống thì không có gì": có nó thì người đã
-                     lỡ chọn mới bỏ chọn được. --}}
                 <label class="sticker-picker__option">
                     <input type="radio" name="sticker" value="" @checked(! old('sticker'))>
                     <span class="sticker-picker__box sticker-picker__box--none" title="Không dán nhãn">
@@ -217,7 +173,6 @@
         </div>
     @endif
 
-    {{-- ---------- CHỈ SỐ ---------- --}}
     @if($kind->hasField('metrics'))
         <div class="mb-3">
             <span class="form-label d-block">Chỉ số đo được</span>
@@ -227,13 +182,6 @@
                 $donViGoiY = array_values($goiY);
             @endphp
 
-            {{--
-                CHỈ SỐ — GỢI Ý SẴN, NHƯNG SỬA ĐƯỢC HẾT.
-
-                Hàng nào thiếu tên hoặc thiếu giá trị thì bị bỏ qua lúc
-                lưu — KHÔNG báo lỗi. Bắt lỗi một hàng người ta không định
-                điền là chặn họ vì một việc họ không làm. Xem QĐ-128.
-            --}}
             @for($i = 0; $i < 3; $i++)
                 <div class="metric-row">
                     <input type="text" name="metrics[{{ $i }}][name]"

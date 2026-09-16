@@ -1,35 +1,7 @@
 <?php
 
-/**
- * Lịch các dịp bán hoa trong năm.
- * ============================================================
- * DÙNG ĐỂ NHẮC, KHÔNG DÙNG ĐỂ TỰ TẠO CHƯƠNG TRÌNH.
- *
- * Công cụ chỉ đối chiếu "dịp này sắp tới, đã có chương trình nào phủ
- * chưa" rồi nhắc admin. Tự tạo chương trình khuyến mại là tự quyết định
- * giá bán — việc đó phải có người bấm nút.
- *
- * ============================================================
- * ÂM LỊCH KHÔNG CÓ NGÀY DƯƠNG CỐ ĐỊNH, VÀ ĐÂY LÀ CHỖ DỄ BỊA NHẤT.
- *
- * Tết Nguyên đán, Vu Lan, Trung thu rơi vào ngày dương khác nhau mỗi
- * năm. Viết cứng một ngày dương vào đây là ghi một dữ kiện SAI cho mọi
- * năm trừ một năm — và nó sai một cách im lặng, vì hệ thống vẫn chạy.
- *
- * PHP không có sẵn phép đổi âm–dương, và kéo về một thư viện lịch chỉ để
- * nhắc admin vài lần một năm là đổi một phụ thuộc lấy một tiện ích nhỏ.
- *
- * Nên các dịp âm lịch để `day`/`month` là null: công cụ liệt kê chúng ra
- * như một lời nhắc kèm ghi chú "ngày thay đổi theo năm", và admin tự
- * chọn ngày khi tạo chương trình. Nhắc đúng mà không có ngày thì vẫn hữu
- * ích; nhắc sai ngày thì tệ hơn không nhắc.
- */
+/** Lịch các dịp bán hoa trong năm. */
 return [
-
-    /*
-     * `weight` = mức quan trọng với một cửa hàng hoa (1 cao nhất).
-     * Dùng để xếp thứ tự khi nhiều dịp cùng tới gần.
-     */
 
     ['key' => 'tet-duong-lich', 'name' => 'Tết Dương lịch', 'day' => 1, 'month' => 1, 'weight' => 3],
 
@@ -58,8 +30,6 @@ return [
 
     ['key' => 'giang-sinh', 'name' => 'Giáng sinh', 'day' => 24, 'month' => 12, 'weight' => 2,
         'note' => 'Kèm theo nhu cầu phụ kiện trang trí.'],
-
-    /* ---------- Dịp âm lịch: KHÔNG ghi ngày dương ---------- */
 
     ['key' => 'ong-cong-ong-tao', 'name' => 'Ông Công ông Táo', 'day' => null, 'month' => null, 'weight' => 3,
         'lunar' => true, 'lunar_note' => '23 tháng Chạp'],

@@ -25,18 +25,7 @@ use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Các trang con của Phân tích: doanh thu, khách hàng, đánh giá, lợi nhuận.
- * ============================================================
- * Mỗi nhóm bài canh ĐÚNG chỗ dễ sai nhất của báo cáo đó — những chỗ mà con
- * số sai vẫn hiện ra bình thường, không có lỗi nào báo:
- *
- *   - giờ lưu là UTC, người đọc ở giờ Việt Nam;
- *   - cùng một tỉnh viết hai kiểu;
- *   - "khách mới" tính trong kỳ thay vì trên toàn lịch sử;
- *   - giỏ rỗng hoặc giỏ đang mua bị gọi là bỏ dở;
- *   - giá vốn của lô nhập SAU quyết định lãi của hàng bán TRƯỚC.
- */
+/** Các trang con của Phân tích: doanh thu, khách hàng, đánh giá, lợi nhuận. */
 class AnalyticsBreakdownTest extends TestCase
 {
     use RefreshDatabase;
@@ -64,11 +53,6 @@ class AnalyticsBreakdownTest extends TestCase
         return Product::factory()->for($cat)->price($gia)->create(['status' => 'active']);
     }
 
-    /**
-     * Một đơn với một dòng hàng. `$luc` là mốc THEO GIỜ LƯU (UTC).
-     *
-     * forceFill cho status, created_at, user_id: cố ý nằm ngoài $fillable.
-     */
     private function don(array $o = []): Order
     {
         $o += [
@@ -129,16 +113,9 @@ class AnalyticsBreakdownTest extends TestCase
         return app(AnalyticsService::class)->forPeriod($ky)->khoang();
     }
 
-    /* ================= 1. GIỜ VIỆT NAM ================= */
-
     #[Test]
     public function don_6h30_sang_gio_viet_nam_thuoc_dung_ngay_do(): void
     {
-        /*
-         * 23:30 UTC ngày 10 = 06:30 sáng ngày 11 ở Hà Nội. Gom theo DATE() của
-         * SQL thì đơn này nằm ở ngày 10 — biểu đồ doanh thu lệch một ngày cho
-         * mọi đơn đặt từ 0h tới 7h sáng.
-         */
         Carbon::setTestNow(Carbon::parse('2026-09-12 05:00:00', 'UTC'));
 
         $this->don(['luc' => Carbon::parse('2026-09-10 23:30:00', 'UTC'), 'tien' => '450000.00']);
@@ -168,15 +145,9 @@ class AnalyticsBreakdownTest extends TestCase
     #[Test]
     public function ky_7_ngay_bat_dau_tu_nua_dem_gio_viet_nam(): void
     {
-        /*
-         * Nửa đêm UTC là 7h sáng ở Hà Nội. Cắt mốc theo UTC thì đơn đặt lúc
-         * 1h sáng ngày đầu kỳ bị loại khỏi "7 ngày qua".
-         */
-        Carbon::setTestNow(Carbon::parse('2026-09-12 05:00:00', 'UTC')); // 12h trưa 12/09 giờ VN
+        Carbon::setTestNow(Carbon::parse('2026-09-12 05:00:00', 'UTC'));
 
-        // 00:30 ngày 06/09 giờ VN = 17:30 UTC ngày 05/09 — thuộc kỳ.
         $this->don(['luc' => Carbon::parse('2026-09-05 17:30:00', 'UTC'), 'tien' => '100000.00']);
-        // 23:30 ngày 05/09 giờ VN = 16:30 UTC ngày 05/09 — ngoài kỳ.
         $this->don(['luc' => Carbon::parse('2026-09-05 16:30:00', 'UTC'), 'tien' => '999000.00']);
 
         $s = app(AnalyticsService::class)->forPeriod('7')->orderStats();
@@ -187,19 +158,7 @@ class AnalyticsBreakdownTest extends TestCase
     #[Test]
     public function bay_ngay_qua_dung_la_BAY_ngay_chu_khong_phai_tam(): void
     {
-        /*
-         * LỖI ĐÃ SỬA, và nó im lặng suốt.
-         *
-         * Trước đây mốc đầu kỳ là nửa đêm của 7 ngày TRƯỚC, nên cửa sổ phủ
-         * 8 ngày lịch: đo được 06/09 00:00 đến 13/09 01:22 trong khi nhãn
-         * ghi "7 ngày qua". Không trang nào báo, mà mọi so sánh "kỳ này với
-         * kỳ trước" đều dịch theo — kỳ trước cũng dài 8 ngày, nên hai con
-         * số trông vẫn hợp lý.
-         *
-         * Hôm nay là một trong bảy ngày đó, nên mốc đầu là nửa đêm của
-         * ngày thứ 7 tính ngược lại, tức hôm nay trừ 6.
-         */
-        Carbon::setTestNow(Carbon::parse('2026-09-12 05:00:00', 'UTC')); // 12h trưa 12/09 giờ VN
+        Carbon::setTestNow(Carbon::parse('2026-09-12 05:00:00', 'UTC'));
 
         foreach ([7 => '2026-09-06', 30 => '2026-08-14'] as $soNgay => $ngayDau) {
             $kh = app(AnalyticsService::class)->forPeriod((string) $soNgay)->khoang();
@@ -209,13 +168,6 @@ class AnalyticsBreakdownTest extends TestCase
             $this->assertSame($ngayDau, $tu->toDateString(), 'Sai ngày đầu của kỳ ' . $soNgay);
             $this->assertSame('00:00:00', $tu->format('H:i:s'), 'Phải bắt đầu từ nửa đêm giờ Việt Nam');
 
-            /*
-             * Đếm theo NGÀY LỊCH, không theo số giờ chênh nhau.
-             *
-             * `diffInDays` trên hai mốc có giờ khác nhau trả về số lẻ
-             * (6,99…), cộng 1 thành 7,99 — con số đó không trả lời được
-             * câu "kỳ này gồm mấy ngày". Cắt cả hai về đầu ngày trước.
-             */
             $soNgayPhu = (int) $tu->copy()->startOfDay()
                 ->diffInDays(\App\Services\Time\Gio::hien(now())->startOfDay()) + 1;
 
@@ -226,8 +178,6 @@ class AnalyticsBreakdownTest extends TestCase
             );
         }
     }
-
-    /* ================= 2. DANH MỤC ================= */
 
     #[Test]
     public function doanh_thu_danh_muc_tru_phan_ma_giam_da_chia_ve_dong(): void
@@ -246,7 +196,6 @@ class AnalyticsBreakdownTest extends TestCase
     #[Test]
     public function ma_giam_cua_don_cu_chua_chia_ve_dong_thi_noi_ra(): void
     {
-        // Đơn cũ: mã giảm 50.000₫ ở đầu đơn, nhưng các dòng không mang phần nào.
         $this->don(['ma_giam' => '50000.00', 'giam_dong' => '0.00']);
 
         $dm = app(SalesBreakdown::class)->trong($this->kyHienTai('30'))->theoDanhMuc();
@@ -254,15 +203,9 @@ class AnalyticsBreakdownTest extends TestCase
         $this->assertSame('50000.00', $dm['ma_giam_chua_chia']);
     }
 
-    /* ================= 3. TỈNH ================= */
-
     #[Test]
     public function ha_noi_va_thanh_pho_ha_noi_la_mot_dong(): void
     {
-        /*
-         * Dữ liệu thật: "Hà Nội" 1 đơn, "Thành phố Hà Nội" 19 đơn. Gom theo chuỗi
-         * là hai dòng, và dòng lớn thấp hơn sự thật.
-         */
         $this->don(['tinh' => 'Thành phố Hà Nội', 'tien' => '200000.00']);
         $this->don(['tinh' => 'Thành phố Hà Nội', 'tien' => '200000.00']);
         $this->don(['tinh' => 'Hà Nội', 'tien' => '100000.00']);
@@ -290,15 +233,9 @@ class AnalyticsBreakdownTest extends TestCase
         $this->assertSame('200000.00', $tinh[0]['thuan']);
     }
 
-    /* ================= 4. KHÁCH MỚI / QUAY LẠI ================= */
-
     #[Test]
     public function khach_mua_tu_truoc_ky_van_la_khach_quay_lai(): void
     {
-        /*
-         * "Đơn đầu tiên" tính trên TOÀN BỘ lịch sử. Tính trong kỳ thì khách mua
-         * từ 2 tháng trước, tháng này quay lại, bị gọi là khách mới.
-         */
         $cu = User::factory()->create();
         $moi = User::factory()->create();
 
@@ -314,8 +251,6 @@ class AnalyticsBreakdownTest extends TestCase
         $this->assertSame(['don' => 1, 'doanh_thu' => '90000.00'], $k['vang_lai']);
         $this->assertSame(50.0, $k['ti_le_mua_lai']);
     }
-
-    /* ================= 5. GIỎ BỎ DỞ ================= */
 
     private function gio(?User $user, array $dong, Carbon $lanCuoi): Cart
     {
@@ -336,9 +271,9 @@ class AnalyticsBreakdownTest extends TestCase
     {
         $sp = $this->sp('Hoa', '120000.00');
 
-        Cart::create(['user_id' => User::factory()->create()->id]); // giỏ rỗng
-        $this->gio(User::factory()->create(), [[$sp, 1]], now()->subHours(2)); // đang mua
-        $this->gio(User::factory()->create(), [[$sp, 2]], now()->subDays(3)); // bỏ dở
+        Cart::create(['user_id' => User::factory()->create()->id]);
+        $this->gio(User::factory()->create(), [[$sp, 1]], now()->subHours(2));
+        $this->gio(User::factory()->create(), [[$sp, 2]], now()->subDays(3));
 
         $b = app(AbandonedCarts::class)->baoCao();
 
@@ -367,7 +302,6 @@ class AnalyticsBreakdownTest extends TestCase
 
         $this->gio(null, [[$coGia, 1], [$lienHe, 1]], now()->subDays(2));
 
-        // Đổi giá SAU khi bỏ vào giỏ: giá trị phải theo giá hôm nay.
         $coGia->forceFill(['base_price' => '250000.00'])->save();
 
         $g = app(AbandonedCarts::class)->baoCao()['gio'][0];
@@ -376,8 +310,6 @@ class AnalyticsBreakdownTest extends TestCase
         $this->assertSame(1, $g['khong_dinh_gia']);
         $this->assertTrue($g['vang_lai']);
     }
-
-    /* ================= 6. ĐÁNH GIÁ ================= */
 
     private function danhGia(Product $sp, int $sao, ?Carbon $traLoi = null): Review
     {
@@ -411,7 +343,6 @@ class AnalyticsBreakdownTest extends TestCase
         $this->danhGia($motBai, 1);
         $this->danhGia($nhieuBai, 3, now()->addHours(2));
         $this->danhGia($nhieuBai, 2, now()->addHours(4));
-        // Một bài trả lời sau 90 ngày: kéo trung bình lên hàng nghìn giờ.
         $this->danhGia($nhieuBai, 4, now()->addDays(90));
 
         $bao = app(ReviewReport::class)->trong($this->kyHienTai('30'));
@@ -419,8 +350,6 @@ class AnalyticsBreakdownTest extends TestCase
         $this->assertSame([$nhieuBai->name], $bao->sanPhamBiCheNhieu()->pluck('ten')->all());
         $this->assertEqualsWithDelta(4.0, $bao->tongQuan()['gio_tra_loi_trung_vi'], 0.1);
     }
-
-    /* ================= 7. LÃI GỘP ================= */
 
     private function phieuNhap(Product $sp, int $sl, string $gia, string $ngay): void
     {
@@ -451,11 +380,6 @@ class AnalyticsBreakdownTest extends TestCase
     #[Test]
     public function gia_von_la_binh_quan_cac_lan_nhap_TOI_NGAY_BAN(): void
     {
-        /*
-         * Lô nhập ngày 20 không được quyết định giá vốn của hàng bán ngày 15.
-         * Bán ngày 15: giá vốn = lô ngày 1 (100k). Bán ngày 25: bình quân
-         * (10×100k + 10×200k)/20 = 150k.
-         */
         Carbon::setTestNow(Carbon::parse('2026-09-28 05:00:00', 'UTC'));
 
         $sp = $this->sp();
@@ -494,9 +418,7 @@ class AnalyticsBreakdownTest extends TestCase
         $sp = $this->sp();
         $this->phieuNhap($sp, 10, '100000.00', now()->subDays(20)->toDateString());
 
-        // 300k − 30k mã giảm − 20k VAT = 250k doanh thu.
         $this->don(['sp' => $sp, 'tien' => '300000.00', 'giam_dong' => '30000.00', 'thue_dong' => '20000.00', 'thue_don' => '20000.00']);
-        // Đơn chưa có số liệu thuế: không có gì để trừ, và phải được đếm.
         $this->don(['sp' => $sp, 'tien' => '300000.00']);
 
         $l = app(ProfitReport::class)->trong($this->kyHienTai('30'))->baoCao();
@@ -504,8 +426,6 @@ class AnalyticsBreakdownTest extends TestCase
         $this->assertSame('550000.00', $l['doanh_thu']);
         $this->assertSame(1, $l['dong_chua_tach_vat']);
     }
-
-    /* ================= 8. CÁC TRANG ================= */
 
     #[Test]
     public function cac_trang_con_mo_duoc_va_tab_giu_ky_dang_chon(): void
@@ -524,10 +444,6 @@ class AnalyticsBreakdownTest extends TestCase
     #[Test]
     public function xuat_duoc_tung_bao_cao_moi_va_so_trong_tep_khop_trang(): void
     {
-        /*
-         * Tệp xuất gọi CHÍNH lớp tính mà trang admin gọi. Bài này mở trang và
-         * tệp với cùng dữ liệu, đòi cùng một con số.
-         */
         $this->don(['tinh' => 'Hà Nội', 'tien' => '120000.00']);
         $this->don(['tinh' => 'Thành phố Hà Nội', 'tien' => '180000.00']);
 

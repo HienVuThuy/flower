@@ -2,18 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Bậc phân loại sinh học: Giới → Ngành → Lớp → Bộ → Họ → Chi → Loài.
- * ============================================================
- * BẢY BẬC CHÍNH, không lấy hết mọi bậc phụ (phân họ, tông, phân loài...).
- * Bảy bậc này là thứ dạy trong trường phổ thông và là thứ người mua cây
- * có thể đọc mà không cần tra cứu. Thêm bậc phụ vào là biến một trang
- * bán hàng thành một cơ sở dữ liệu thực vật học.
- *
- * `level()` TRẢ VỀ SỐ, và đó là điểm quan trọng: thứ tự các bậc phải so
- * sánh được bằng phép toán, không bằng cách nhớ thứ tự trong enum. Nhờ
- * vậy mới kiểm được "cha phải cao bậc hơn con" ở một chỗ duy nhất.
- */
+/** Bậc phân loại sinh học: Giới → Ngành → Lớp → Bộ → Họ → Chi → Loài. */
 enum TaxonRank: string
 {
     case Kingdom = 'kingdom';
@@ -37,13 +26,6 @@ enum TaxonRank: string
         };
     }
 
-    /**
-     * Bậc này ở tầng thứ mấy — 1 là rộng nhất (Giới), 7 hẹp nhất (Loài).
-     *
-     * Dùng để kiểm ràng buộc "nút con phải hẹp hơn nút cha". Không có nó
-     * thì dữ liệu có thể sinh ra một cái Họ nằm trong một cái Chi, và
-     * cây phân loại mất hết ý nghĩa mà không có gì báo.
-     */
     public function level(): int
     {
         return match ($this) {
@@ -57,20 +39,11 @@ enum TaxonRank: string
         };
     }
 
-    /**
-     * Tên khoa học của bậc này có được VIẾT NGHIÊNG không.
-     *
-     * Quy ước quốc tế: từ bậc Chi (Genus) trở xuống thì viết nghiêng
-     * (*Monstera deliciosa*), còn Họ trở lên thì viết thẳng (Araceae).
-     * Nhỏ nhặt, nhưng đây là thứ đầu tiên người có chuyên môn nhìn vào —
-     * viết sai là mất tin cậy ngay ở dòng đầu tiên.
-     */
     public function italic(): bool
     {
         return $this->level() >= self::Genus->level();
     }
 
-    /** @return array<string, string> value => label */
     public static function options(): array
     {
         $out = [];

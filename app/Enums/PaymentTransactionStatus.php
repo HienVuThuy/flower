@@ -2,12 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Một lượt thanh toán đang ở đâu.
- *
- * Khác PaymentStatus: kia nói về TIỀN CỦA ĐƠN, đây nói về MỘT LẦN THỬ.
- * Đơn có thể còn "Chưa thanh toán" trong khi đã có ba lượt `failed`.
- */
+/** Một lượt thanh toán đang ở đâu. */
 enum PaymentTransactionStatus: string
 {
     case Pending = 'pending';

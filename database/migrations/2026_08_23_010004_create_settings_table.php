@@ -6,10 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Key-value đơn giản cho cấu hình có thể đổi realtime từ
-     * admin (vd: theme đang bật) mà không cần deploy lại code.
-     */
     public function up(): void
     {
         Schema::create('settings', function (Blueprint $table) {

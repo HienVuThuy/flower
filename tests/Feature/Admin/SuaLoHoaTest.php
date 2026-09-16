@@ -17,14 +17,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Sửa và xoá lô hoa CÒN MỞ.
- * ============================================================
- * Gõ nhầm 5.000.000 thành 50.000.000 mà không sửa được thì con số đó đi
- * thẳng vào giá vốn khi đóng lô. Nhưng lô ĐÃ ĐÓNG (tiền đã vào một kỳ) và
- * lô ĐÃ GHI TRẢ HÀNG (tiền trả lại tính theo đơn giá cũ) thì không được
- * đụng vào.
- */
+/** Sửa và xoá lô hoa CÒN MỞ. */
 class SuaLoHoaTest extends TestCase
 {
     use RefreshDatabase;
@@ -72,8 +65,6 @@ class SuaLoHoaTest extends TestCase
         ], $ghiDe);
     }
 
-    /* ================= SỬA ================= */
-
     #[Test]
     public function go_nham_tong_tien_thi_SUA_DUOC_khi_lo_con_mo(): void
     {
@@ -90,10 +81,6 @@ class SuaLoHoaTest extends TestCase
     #[Test]
     public function sua_lo_ghi_NHAT_KY_kem_gia_tri_cu(): void
     {
-        /*
-         * Sửa tiền mà không để lại dấu vết thì câu hỏi "ai đổi tổng tiền
-         * lô này từ bao nhiêu" không trả lời được.
-         */
         $lo = $this->lo();
 
         $this->actingAs($this->admin)->put(route('admin.flower-lots.update', $lo), $this->duLieu());
@@ -122,10 +109,6 @@ class SuaLoHoaTest extends TestCase
     #[Test]
     public function lo_DA_GHI_TRA_HANG_thi_KHONG_sua_duoc(): void
     {
-        /*
-         * Tiền lấy lại được tính theo đơn giá CŨ của lô. Đổi tổng tiền là
-         * tiền trả lại không còn khớp với chính lô đó.
-         */
         $lo = $this->lo();
 
         $this->actingAs($this->admin);
@@ -145,7 +128,6 @@ class SuaLoHoaTest extends TestCase
     #[Test]
     public function sua_van_kiem_tra_du_lieu_nhu_luc_ghi(): void
     {
-        // Sửa mà lỏng hơn ghi là cửa sau để đưa lô 0 đồng vào sổ.
         $lo = $this->lo();
 
         $this->actingAs($this->admin)
@@ -188,10 +170,6 @@ class SuaLoHoaTest extends TestCase
     #[Test]
     public function loai_hoa_da_ngung_van_con_trong_o_chon_khi_sua(): void
     {
-        /*
-         * Thiếu nó thì ô chọn tự nhảy sang mục đầu tiên, và bấm Lưu là
-         * lặng lẽ đổi loại hoa của lô.
-         */
         $lo = $this->lo();
         $this->loai->forceFill(['is_active' => false])->save();
 
@@ -200,8 +178,6 @@ class SuaLoHoaTest extends TestCase
             ->assertOk()
             ->assertSee('value="' . $this->loai->id . '" selected', false);
     }
-
-    /* ================= XOÁ ================= */
 
     #[Test]
     public function lo_ghi_trung_thi_XOA_DUOC_va_co_nhat_ky(): void

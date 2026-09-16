@@ -37,16 +37,6 @@
                     <div class="fw-semibold">{{ $bulkInquiry->contact_name }}</div>
                 </div>
 
-                {{--
-                    BẤM ĐƯỢC, không chỉ đọc được.
-
-                    Việc tiếp theo sau khi đọc phiếu này luôn là gọi hoặc gửi
-                    báo giá. Chép tay số điện thoại sang máy khác là chỗ gõ
-                    nhầm một chữ số và gọi nhầm người.
-
-                    `tel:` chỉ giữ chữ số và dấu +: khách gõ "0912 345 678" hay
-                    "(091) 234-5678" đều phải thành một số gọi được.
-                --}}
                 <div class="col-md-6">
                     <span class="text-muted small">Điện thoại</span>
                     <div class="fw-semibold">
@@ -58,7 +48,6 @@
                     <span class="text-muted small">Email</span>
                     <div class="fw-semibold">
                         @if($bulkInquiry->contact_email)
-                            {{-- Tiêu đề điền sẵn: khách tìm lại thư báo giá trong hộp thư theo đúng dịp họ đã hỏi. --}}
                             <a href="mailto:{{ $bulkInquiry->contact_email }}?subject={{ rawurlencode('Báo giá ' . ($bulkInquiry->occasion ?: 'đặt hoa số lượng lớn') . ' — ' . \App\Services\Shop\StoreProfile::name()) }}">{{ $bulkInquiry->contact_email }}</a>
                         @else
                             —
@@ -76,14 +65,6 @@
                     <div class="fw-semibold">{{ $bulkInquiry->occasion ?? '—' }}</div>
                 </div>
 
-                {{--
-                    CHI TIẾT SỰ KIỆN — chỉ hiện ô nào khách có điền.
-
-                    Mọi ô ở biểu mẫu đều không bắt buộc, nên phần lớn phiếu sẽ
-                    thiếu vài thứ. In đủ mười dòng với tám dấu "—" thì nhân viên
-                    phải đọc lướt qua toàn chỗ trống để tìm hai dòng có nội dung.
-                    Ẩn hẳn ô trống thì cái gì hiện ra đều là thông tin thật.
-                --}}
                 @if($bulkInquiry->event_date)
                     <div class="col-md-6">
                         <span class="text-muted small">Ngày cần hoa</span>
@@ -92,8 +73,6 @@
 
                             @php($conLai = $bulkInquiry->daysUntilEvent())
                             @if($conLai !== null)
-                                {{-- Mức gấp là thứ quyết định làm phiếu nào trước.
-                                     Ngày trần trụi bắt nhân viên tự nhẩm. --}}
                                 <span class="text-muted small">
                                     @if($conLai < 0)
                                         (đã qua {{ abs($conLai) }} ngày)

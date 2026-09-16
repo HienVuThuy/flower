@@ -26,12 +26,6 @@ class StorePromotionRequest extends FormRequest
                 : ($name !== '' ? Str::slug($name) : null),
         ]);
 
-        /*
-         * Ô `datetime-local` gửi lên GIỜ TRÊN ĐỒNG HỒ NGƯỜI GÕ, không kèm
-         * múi giờ. Cất thẳng vào cột là cất giờ Hà Nội dưới nhãn UTC:
-         * chương trình hẹn chạy 8h sáng sẽ chạy lúc 15h. Đổi ở đây, trước
-         * khi kiểm tra, để `after_or_equal:starts_at` so hai mốc cùng múi.
-         */
         $this->merge(\App\Services\Time\Gio::doiONhap($this->all(), 'starts_at', 'ends_at'));
     }
 
@@ -52,7 +46,6 @@ class StorePromotionRequest extends FormRequest
 
             'theme_key' => ['nullable', Rule::in(app(\App\Services\Theme\ThemeRegistry::class)->keys())],
 
-            // Chỉ cho chọn kiểu đã thực sự tính được giá.
             'type' => [
                 'required',
                 Rule::in(array_map(fn ($t) => $t->value, PromotionType::selectable())),
@@ -63,19 +56,9 @@ class StorePromotionRequest extends FormRequest
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
 
-            /*
-             * GIÁ LINH HOẠT — chu kỳ lặp lại bên trong khoảng ngày.
-             *
-             * KHÔNG dùng 'after:daily_start_time' cho giờ kết thúc: khung
-             * qua nửa đêm (22:00 → 02:00) là hợp lệ và rất phổ biến với
-             * ưu đãi cuối ngày. Quy tắc đó sẽ chặn đúng trường hợp cần
-             * dùng nhất. Model tự xử lý khung vòng qua nửa đêm — xem
-             * Promotion::isWithinDailyWindow().
-             */
             'daily_start_time' => ['nullable', 'date_format:H:i'],
             'daily_end_time' => ['nullable', 'date_format:H:i'],
 
-            // 1 = Thứ Hai ... 7 = Chủ Nhật (ISO-8601).
             'weekdays' => ['nullable', 'array', 'max:7'],
             'weekdays.*' => ['integer', 'between:1,7'],
 
@@ -91,7 +74,6 @@ class StorePromotionRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Giảm theo % thì không thể vượt quá 100.
             if (
                 $this->input('type') === PromotionType::Percent->value
                 && (float) $this->input('discount_value') > 100
@@ -102,14 +84,6 @@ class StorePromotionRequest extends FormRequest
                 );
             }
 
-            /*
-             * Khung giờ phải khai ĐỦ HAI ĐẦU thì mới có tác dụng.
-             *
-             * Chỉ điền một ô là cấu hình dở dang: model coi như không
-             * giới hạn và chương trình chạy cả ngày. Im lặng cho qua thì
-             * admin tưởng đã đặt khung giờ, và chỉ phát hiện khi khách
-             * mua được giá xả hàng lúc 9 giờ sáng.
-             */
             $from = $this->input('daily_start_time');
             $to = $this->input('daily_end_time');
 
@@ -121,9 +95,6 @@ class StorePromotionRequest extends FormRequest
             }
 
             if ($from && $to && $from === $to) {
-                // Bắt đầu bằng kết thúc: nếu để lọt thì
-                // isWithinDailyWindow() chỉ đúng đúng một giây trong ngày
-                // — gần như là chương trình không bao giờ chạy.
                 $validator->errors()->add(
                     'daily_end_time',
                     'Giờ kết thúc phải khác giờ bắt đầu.'

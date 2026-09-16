@@ -12,9 +12,7 @@ use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Thưởng điểm cho bài Góc cây: theo chất lượng (người duyệt chấm) và tần suất (trần mỗi tuần).
- */
+/** Thưởng điểm cho bài Góc cây: theo chất lượng (người duyệt chấm) và tần suất (trần mỗi tuần). */
 class ThuongBaiGocCayTest extends TestCase
 {
     use RefreshDatabase;
@@ -25,7 +23,6 @@ class ThuongBaiGocCayTest extends TestCase
     {
         parent::setUp();
 
-        // Thứ Hai 14/09/2026, 10:00 giờ Việt Nam.
         $this->travelTo(Carbon::parse('2026-09-14 03:00:00', 'UTC'));
 
         $this->admin = User::factory()->create();
@@ -93,7 +90,6 @@ class ThuongBaiGocCayTest extends TestCase
     {
         $u = User::factory()->create();
 
-        // Điểm chuỗi ngày KHÔNG tính vào trần bài viết.
         app(PointLedger::class)->cong($u, 5, PointReason::ChuoiNgay, 'chuoi:2026-09-14');
 
         foreach (range(1, 3) as $i) {
@@ -106,12 +102,6 @@ class ThuongBaiGocCayTest extends TestCase
         $this->assertNotNull($thu4->fresh()->approved_at, 'Vẫn được duyệt');
         $this->assertSame(65, $this->soDu($u));
 
-        /*
-         * DUYỆT LẠI MỘT BÀI ĐÃ THƯỞNG, lúc khách đã chạm trần: không được báo
-         * "đủ 3 bài" — bài này đã được thưởng rồi, trần không liên quan. Thử
-         * phá code đã chứng minh: bỏ phép kiểm "đã thưởng" mà sổ vẫn đúng
-         * (khoá UNIQUE chặn cộng lần hai), chỉ có câu báo là sai.
-         */
         $baiDau = CommunityPost::where('user_id', $u->id)->orderBy('id')->first();
         $this->actingAs($this->admin)->patch(route('admin.community.reject', $baiDau), ['reject_reason' => 'Gỡ tạm']);
         $this->duyet($baiDau)->assertSessionHas('success', fn ($m) => ! str_contains($m, 'đủ 3 bài'));
@@ -123,13 +113,11 @@ class ThuongBaiGocCayTest extends TestCase
     {
         $u = User::factory()->create();
 
-        // Chủ nhật 13/09, 20:00 Hà Nội: thưởng đủ 3 bài.
         $this->travelTo(Carbon::parse('2026-09-13 13:00:00', 'UTC'));
         foreach (range(1, 3) as $i) {
             $this->duyet($this->bai($u));
         }
 
-        // Thứ Hai 14/09, 05:00 Hà Nội = Chủ nhật 22:00 UTC. Theo lịch Việt Nam đã sang tuần mới.
         $this->travelTo(Carbon::parse('2026-09-13 22:00:00', 'UTC'));
         $this->duyet($this->bai($u));
 
@@ -146,11 +134,6 @@ class ThuongBaiGocCayTest extends TestCase
 
         $html = $this->actingAs($u)->get(route('shop.community.index', ['tab' => 'cua-toi']))->assertOk()->getContent();
 
-        /*
-         * SO THEO THUỘC TÍNH CỦA ĐÚNG BÀI, không theo chữ "điểm" ở đâu đó sau
-         * tên bài. Bản đầu dò "Bài hai … điểm</" và khớp nhầm dòng "+50 điểm"
-         * của bài một nằm ngay bên dưới (danh sách xếp bài mới lên trước).
-         */
         $this->assertStringContainsString('data-diem-bai="' . $coThuong->id . '">+50 điểm<', $html);
         $this->assertStringNotContainsString('data-diem-bai="' . $choDuyet->id . '"', $html);
         $this->assertStringContainsString('Tối đa 3 bài được thưởng mỗi tuần', $html);

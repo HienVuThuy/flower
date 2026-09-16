@@ -1,13 +1,4 @@
-{{--
-    Email xác nhận đơn hàng.
-
-    Dùng bảng và style nội tuyến, KHÔNG dùng class hay tệp CSS ngoài:
-    phần lớn ứng dụng email (Gmail, Outlook) bỏ <link>, cắt <style> ở
-    <head>, và không hỗ trợ flexbox hay grid. Đây là lý do email trông
-    "cổ" so với web — không phải cẩu thả.
-
-    Mọi con số đọc từ BẢN CHỤP trong đơn, không tính lại.
---}}
+{{-- Email xác nhận đơn hàng. --}}
 @php
     $money = fn ($v) => \App\Services\Shop\Money::format($v);
 
@@ -48,18 +39,11 @@
                 Trạng thái hiện tại: <strong>{{ $order->status->label() }}</strong>
             </p>
             <p style="margin:0; font-size:14px; color:#5d6660;">
-                {{--
-                    Câu cũ là "Cửa hàng sẽ liên hệ ... để xác nhận trước khi
-                    giao" — đúng khi thư này gửi ngay lúc khách đặt hàng.
-                    Nay thư chỉ đi SAU khi cửa hàng đã xác nhận, nên câu đó
-                    thành sai: nó hẹn một việc vừa xong rồi.
-                --}}
                 Cửa hàng sẽ liên hệ số {{ $order->recipient_phone }} khi giao hàng.
             </p>
         </td>
     </tr>
 
-    {{-- ============ SẢN PHẨM ============ --}}
     <tr>
         <td style="padding:8px 24px;">
             <h2 style="margin:0 0 8px 0; font-size:15px;">Sản phẩm</h2>
@@ -68,7 +52,6 @@
                 @foreach($order->items as $item)
                     <tr>
                         <td style="padding:8px 0; border-bottom:1px solid #eeece4;">
-                            {{-- Đọc từ bản chụp trong đơn, không từ bảng products --}}
                             {{ $item->product_name }}
                             @if($item->variant_name)
                                 <span style="color:#5d6660;">({{ $item->variant_name }})</span>
@@ -90,7 +73,6 @@
         </td>
     </tr>
 
-    {{-- ============ TIỀN ============ --}}
     <tr>
         <td style="padding:8px 24px 16px 24px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="font-size:14px;">
@@ -146,7 +128,6 @@
         </td>
     </tr>
 
-    {{-- ============ GIAO HÀNG ============ --}}
     <tr>
         <td style="padding:0 24px 16px 24px; font-size:14px;">
             <h2 style="margin:0 0 8px 0; font-size:15px;">Giao tới</h2>
@@ -168,11 +149,6 @@
 
     <tr>
         <td style="padding:16px 24px 24px 24px; border-top:1px solid #e4e2da; font-size:13px; color:#5d6660;">
-            {{--
-                Khách vãng lai không có tài khoản; email này là thứ duy nhất
-                giữ lại mã đơn. Kèm luôn đường dẫn tra cứu để họ tự xem được
-                tình trạng đơn mà không phải gọi điện.
-            --}}
             Xem tình trạng đơn:
             <a href="{{ route('shop.orders.lookup') }}" style="color:#1e231f;">{{ route('shop.orders.lookup') }}</a>
             &mdash; nhập mã <strong style="color:#1e231f;">{{ $order->order_number }}</strong>

@@ -22,35 +22,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
-/**
- * NƠI DUY NHẤT trả tiền lại cho khách.
- * ============================================================
- * BỐN LUẬT KHÔNG ĐƯỢC PHÁ:
- *
- *   1. KHÔNG HOÀN QUÁ SỐ KHÁCH ĐÃ TRẢ, kể cả khi hai người bấm cùng lúc.
- *      Khoá dòng đơn rồi mới cộng các lần hoàn cũ; kiểm bằng số đã nạp
- *      từ trước thì hai request cùng thấy "còn 300.000₫" và cùng hoàn.
- *
- *   2. LẦN HOÀN QUA MOMO ĐƯỢC GHI TRƯỚC KHI GỌI MOMO, ở trạng thái "chưa
- *      rõ kết quả". Gọi trước rồi mới ghi thì một lỗi giữa hai bước là
- *      tiền đã đi mà sổ không có dòng nào; và trong lúc chờ MoMo trả lời,
- *      số tiền đó phải đang bị giữ chỗ.
- *
- *   3. MẤT KẾT NỐI KHÔNG PHẢI LÀ THẤT BẠI. MoMo có thể đã hoàn rồi. Khoản
- *      đó ở lại "chưa rõ kết quả" cho tới khi người thật kiểm trên cổng
- *      MoMo và xác nhận; coi là thất bại thì tiền được nhả ra, admin bấm
- *      hoàn lần nữa, và khách nhận tiền hai lần.
- *
- *   4. HÀNG TRẢ VỀ CHỈ VÀO KHO KHI TIỀN ĐÃ HOÀN XONG, và chỉ phần được
- *      đánh dấu còn bán được. Chậu vỡ khách gửi về không phải hàng tồn.
- *
- * "Đã hoàn tiền" của đơn (`payment_status = refunded`) là HỆ QUẢ: đặt ở
- * đây khi tổng các lần hoàn xong bằng số khách đã trả. Không còn nút nào
- * đặt tay trạng thái đó.
- */
+/** NƠI DUY NHẤT trả tiền lại cho khách. */
 class RefundService
 {
-    /** MoMo không nhận yêu cầu hoàn dưới mức này. */
     public const MOMO_TOI_THIEU = 1000;
 
     public function __construct(
@@ -61,12 +35,6 @@ class RefundService
     ) {
     }
 
-    /**
-     * Vì sao đơn này không hoàn tiền được, hoặc null nếu được.
-     *
-     * Trả về CÂU CHỮ chứ không phải true/false: giao diện dùng đúng câu này
-     * để nói với admin, thay vì ẩn biểu mẫu mà không giải thích.
-     */
     public function lyDoKhongHoanDuoc(Order $order): ?string
     {
         if (! in_array($order->status, [OrderStatus::Cancelled, OrderStatus::Completed], true)) {
@@ -77,7 +45,6 @@ class RefundService
             return 'Đơn này đã được hoàn đủ tiền.';
         }
 
-        // Đơn trả góp vỡ giữa chừng vẫn "chưa thanh toán", nhưng tiền các kỳ đã trả là tiền thật phải hoàn.
         if ($order->payment_status !== PaymentStatus::Paid && bccomp($order->daThu(), '0', 2) <= 0) {
             return 'Khách chưa trả tiền cho đơn này nên không có gì để hoàn.';
         }
@@ -89,12 +56,6 @@ class RefundService
         return null;
     }
 
-    /**
-     * Giao dịch MoMo thành công của đơn — thứ API hoàn tiền cần.
-     *
-     * Không có nó thì không hoàn qua MoMo được: đơn COD, hoặc đơn được
-     * đánh dấu đã trả bằng tay.
-     */
     public function giaoDichMomo(Order $order): ?PaymentTransaction
     {
         return $order->transactions()
@@ -105,15 +66,6 @@ class RefundService
             ->first();
     }
 
-    /**
-     * Hoàn qua MoMo được không: cổng đã cấu hình và đơn có ĐÚNG MỘT giao dịch
-     * MoMo thành công.
-     *
-     * Đơn trả góp trả nhiều kỳ qua MoMo có nhiều giao dịch; MoMo chỉ hoàn trên
-     * từng giao dịch, không quá số tiền của giao dịch đó, còn sổ hoàn tiền
-     * không ghi hoàn trên giao dịch nào. Cho hoàn qua MoMo ở đó là mời một lần
-     * hoàn bị MoMo từ chối giữa chừng — chuyển khoản hoặc tiền mặt thì đúng.
-     */
     public function hoanQuaMomoDuoc(Order $order): bool
     {
         if (! $this->momo->configured()) {
@@ -127,11 +79,6 @@ class RefundService
             ->count() === 1;
     }
 
-    /**
-     * Cách hoàn dùng được cho đơn.
-     *
-     * @return list<RefundMethod>
-     */
     public function cachHoan(Order $order): array
     {
         $ds = [];
@@ -146,7 +93,6 @@ class RefundService
         return $ds;
     }
 
-    /** Số lượng của một dòng đơn đã trả về (không tính lần hoàn thất bại). */
     public function soDaTra(OrderItem $item): int
     {
         return (int) RefundItem::query()
@@ -155,22 +101,11 @@ class RefundService
             ->sum('quantity');
     }
 
-    /**
-     * Ghi một lần hoàn tiền, và với MoMo thì gọi luôn cổng.
-     *
-     * @param  array{amount: int|string, reason: string, method: string,
-     *               reference?: ?string, note?: ?string,
-     *               items?: array<int|string, array{quantity?: mixed, restock?: mixed}>}  $data
-     *               `items` đánh khoá theo id dòng đơn.
-     *
-     * @throws RefundException
-     */
     public function hoan(Order $order, array $data): Refund
     {
         $cach = RefundMethod::from((string) $data['method']);
         $lyDo = RefundReason::from((string) $data['reason']);
 
-        // Tiền Việt không có phần lẻ; biểu mẫu đã kiểm là số nguyên.
         $soTien = bcadd((string) (int) $data['amount'], '0', 2);
         $maGiaoDich = trim((string) ($data['reference'] ?? '')) ?: null;
 
@@ -240,8 +175,6 @@ class RefundService
             $refund->forceFill([
                 'created_by' => Auth::id(),
                 'created_by_name' => Auth::user()?->name,
-                // Mã yêu cầu gửi MoMo lấy luôn mã phiếu: đã UNIQUE, và admin
-                // tra trên cổng MoMo bằng đúng mã họ thấy trên màn hình.
                 'gateway_request_id' => $cach->tuDong() ? $ma : null,
             ])->save();
 
@@ -262,13 +195,6 @@ class RefundService
 
         $refund->refresh();
 
-        /*
-         * BÁO KHÁCH — SAU transaction, và chỉ khi tiền đã đi.
-         *
-         * Thư gửi rồi không rút lại được; dữ liệu thì cuộn lại được. Nên
-         * thứ không rút lại được đi sau cùng, cùng lý do với thư đổi trạng
-         * thái trong OrderService.
-         */
         $this->mailer->sendRefund($refund);
 
         $this->audit->log(
@@ -293,11 +219,6 @@ class RefundService
         return $refund;
     }
 
-    /**
-     * Người thật đã kiểm trên cổng MoMo: khoản "chưa rõ kết quả" ĐÃ hoàn.
-     *
-     * @throws RefundException
-     */
     public function xacNhanDaHoan(Refund $refund, string $maGiaoDich): void
     {
         $maGiaoDich = trim($maGiaoDich);
@@ -316,11 +237,6 @@ class RefundService
         $this->audit->log('don-hang.xac-nhan-hoan-tien', 'Xác nhận đã hoàn '.$refund->code, $refund->order);
     }
 
-    /**
-     * Người thật đã kiểm: khoản "chưa rõ kết quả" KHÔNG hoàn. Nhả số tiền.
-     *
-     * @throws RefundException
-     */
     public function danhDauThatBai(Refund $refund): void
     {
         DB::transaction(function () use ($refund) {
@@ -330,8 +246,6 @@ class RefundService
 
         $this->audit->log('don-hang.hoan-tien-that-bai', 'Đánh dấu không hoàn được '.$refund->code, $refund->order);
     }
-
-    /* ================= BÊN TRONG ================= */
 
     private function goiMomo(Refund $refund): void
     {
@@ -346,7 +260,6 @@ class RefundService
         );
 
         if ($ketQua === []) {
-            // Luật 3: không biết thì để nguyên "chưa rõ kết quả".
             Log::warning('Không nhận được trả lời từ MoMo khi hoàn tiền.', ['refund' => $refund->code]);
 
             return;
@@ -372,12 +285,6 @@ class RefundService
         });
     }
 
-    /**
-     * Chốt một lần hoàn: đánh dấu xong, cộng hàng còn bán được vào kho, và
-     * đặt "đã hoàn tiền" cho đơn nếu đã hoàn đủ.
-     *
-     * PHẢI GỌI TRONG TRANSACTION, với dòng đơn đã khoá.
-     */
     private function hoanTat(Refund $refund, Order $khoa, ?string $maGiaoDich): void
     {
         $refund->forceFill([
@@ -394,33 +301,18 @@ class RefundService
 
         $khoa->load('refunds');
 
-        // So với tiền ĐÃ THU THẬT (đơn trả góp vỡ chỉ thu một phần), không phải tổng đơn.
         if (bccomp($khoa->refundedAmount(), $khoa->daThu(), 2) >= 0) {
             $khoa->payment_status = PaymentStatus::Refunded;
             $khoa->save();
         }
 
-        /*
-         * TRỪ ĐIỂM của đơn đã được cộng — TRONG transaction: tiền đã hoàn
-         * xong thì điểm phải trừ cùng lúc, không để một nửa. Xem PointEarning.
-         */
         app(\App\Services\Points\PointEarning::class)->hoanTien($refund);
 
-        // Hoàn ĐỦ tiền thì trả cả điểm khách đã dùng cho đơn — cùng khoá với lúc huỷ, không trả hai lần.
         if ($khoa->payment_status === PaymentStatus::Refunded) {
             app(\App\Services\Points\PointLedger::class)->traDiemCuaDon($khoa);
         }
     }
 
-    /**
-     * Khoá đơn rồi phiếu, và đòi phiếu còn đang "chưa rõ kết quả".
-     *
-     * Hai người cùng xử lý một khoản đang chờ — một người xác nhận, một
-     * người đánh dấu thất bại — thì người thứ hai phải bị chặn, không được
-     * ghi đè kết quả của người thứ nhất.
-     *
-     * @return array{0: Order, 1: Refund}
-     */
     private function khoaPhieuDangCho(Refund $refund): array
     {
         $khoa = Order::whereKey($refund->order_id)->lockForUpdate()->firstOrFail();
@@ -437,15 +329,6 @@ class RefundService
         return [$khoa, $phieu];
     }
 
-    /**
-     * Đổi dữ liệu biểu mẫu thành các dòng hàng trả về.
-     *
-     * KHÔNG TIN id dòng đơn từ biểu mẫu: tra trong CHÍNH đơn đang khoá.
-     * Không làm vậy thì một id bịa trả được hàng của đơn người khác về kho.
-     *
-     * @param  array<int|string, array{quantity?: mixed, restock?: mixed}>  $items
-     * @return list<array{order_item_id: int, quantity: int, restock: bool}>
-     */
     private function dongTraHang(Order $khoa, array $items): array
     {
         $ket = [];
@@ -489,7 +372,6 @@ class RefundService
         return $ket;
     }
 
-    /** Mã HT-260930-A3F2. Không dùng id tự tăng: nó lộ số lần hoàn tiền. */
     private function sinhMa(): string
     {
         for ($lan = 0; $lan < 5; $lan++) {

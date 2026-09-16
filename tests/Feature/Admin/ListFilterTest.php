@@ -11,16 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Tìm kiếm và bộ lọc ở các trang danh sách của quản trị.
- * ============================================================
- * BỘ LỌC SAI KHÔNG BAO GIỜ BÁO LỖI. Nó chỉ trả về ít kết quả hơn — hoặc
- * nhiều hơn — và admin tin vào con số đó. Một ô lọc "hết hàng" gộp nhầm
- * cả hàng làm theo đơn thì mỗi lần nhập hàng lại nhập thừa.
- *
- * Vì thế mỗi bài ở đây dựng dữ liệu có CẢ thứ phải khớp lẫn thứ KHÔNG
- * được khớp, rồi đếm.
- */
+/** Tìm kiếm và bộ lọc ở các trang danh sách của quản trị. */
 class ListFilterTest extends TestCase
 {
     use RefreshDatabase;
@@ -40,8 +31,6 @@ class ListFilterTest extends TestCase
         $this->actingAs($this->admin());
     }
 
-    // ================= SẢN PHẨM =================
-
     #[Test]
     public function tim_san_pham_theo_ten_va_theo_ma(): void
     {
@@ -54,7 +43,6 @@ class ListFilterTest extends TestCase
             ->assertSee('Hộp hoa tulip vàng')
             ->assertDontSee('Sen đá nâu');
 
-        // Tìm được cả bằng mã — admin đọc mã trên đơn hàng.
         $this->get('/admin/products?q=SND02')
             ->assertSee('Sen đá nâu')
             ->assertDontSee('Hộp hoa tulip vàng');
@@ -63,8 +51,6 @@ class ListFilterTest extends TestCase
     #[Test]
     public function tim_duoc_cum_o_giua_ten_chu_khong_chi_dau_ten(): void
     {
-        // Khách gọi tới nói "tulip" chứ không đọc cả "Hộp hoa tulip vàng".
-        // Chỉ khớp đầu chuỗi thì gần như không tìm ra gì.
         $cat = Category::factory()->create();
         Product::factory()->for($cat)->create(['name' => 'Hộp hoa tulip vàng']);
 
@@ -74,14 +60,6 @@ class ListFilterTest extends TestCase
     #[Test]
     public function loc_het_hang_KHONG_gom_hang_lam_theo_don(): void
     {
-        /*
-         * ĐÂY LÀ CHỖ DỄ SAI NHẤT.
-         *
-         * Hàng làm theo đơn (hoa cưới, hoa sự kiện) có track_inventory =
-         * false và stock_quantity = 0 — nhưng nó KHÔNG hết hàng, cửa hàng
-         * làm khi có đơn. Gộp chung thì mỗi lần lọc "hết hàng" lại thấy
-         * toàn hoa cưới, và admin đi nhập thứ không cần nhập.
-         */
         $cat = Category::factory()->create();
         Product::factory()->for($cat)->stock(0)->create(['name' => 'Chậu sứ đã hết']);
         Product::factory()->for($cat)->madeToOrder()->create(['name' => 'Hoa cưới cầm tay']);
@@ -95,8 +73,6 @@ class ListFilterTest extends TestCase
     #[Test]
     public function loc_sap_het_chi_lay_hang_con_it_chu_khong_lay_hang_da_het(): void
     {
-        // Hàng đã hết cần NHẬP GẤP, hàng sắp hết chỉ cần lên kế hoạch —
-        // hai việc khác nhau nên phải là hai bộ lọc khác nhau.
         $cat = Category::factory()->create();
         Product::factory()->for($cat)->stock(3)->create(['name' => 'Sắp hết ba cái']);
         Product::factory()->for($cat)->stock(0)->create(['name' => 'Đã hết sạch']);
@@ -124,11 +100,6 @@ class ListFilterTest extends TestCase
     #[Test]
     public function loc_xong_bam_sang_trang_hai_van_giu_dieu_kien(): void
     {
-        /*
-         * Thiếu withQueryString() thì bấm sang trang 2 là mất sạch điều
-         * kiện lọc, và admin quay về danh sách đầy đủ mà không hiểu vì
-         * sao. Không lỗi, không cảnh báo.
-         */
         $cat = Category::factory()->create();
 
         for ($i = 1; $i <= 25; $i++) {
@@ -139,10 +110,6 @@ class ListFilterTest extends TestCase
 
         $html = $this->get('/admin/products?q=Tulip')->assertOk()->getContent();
 
-        /*
-         * Soi LIÊN KẾT SANG TRANG 2, không soi cả trang: chuỗi "q=" còn
-         * nằm trong ô tìm kiếm và sẽ làm bài xanh giả.
-         */
         preg_match_all('#href="[^"]*page=2[^"]*"#', $html, $links);
 
         $this->assertNotEmpty($links[0], 'Phải có liên kết sang trang 2 để kiểm.');
@@ -158,8 +125,6 @@ class ListFilterTest extends TestCase
     #[Test]
     public function loc_khong_ra_ket_qua_thi_noi_dung_cau(): void
     {
-        // "Chưa có sản phẩm nào" khi kho có 43 sản phẩm là câu SAI —
-        // admin đọc rồi tưởng mất dữ liệu.
         Product::factory()->for(Category::factory())->create(['name' => 'Có tồn tại']);
 
         $this->get('/admin/products?q=khongcothat')
@@ -176,15 +141,9 @@ class ListFilterTest extends TestCase
             ->assertSee('Chưa có sản phẩm nào');
     }
 
-    // ================= ĐƠN HÀNG =================
-
     #[Test]
     public function tim_don_theo_ma_bo_qua_dau_gach(): void
     {
-        /*
-         * Khách đọc mã qua điện thoại kiểu nào cũng phải ra: "FP 260831
-         * ABCD", "FP-260831-ABCD" hay "FP260831ABCD".
-         */
         $khach = User::factory()->create();
         $this->actingAs($khach);
 
@@ -208,8 +167,6 @@ class ListFilterTest extends TestCase
         $this->get('/admin/orders?q=Nguyễn Thị Test')->assertSee($don->order_number);
     }
 
-    // ================= NGƯỜI DÙNG =================
-
     #[Test]
     public function tim_nguoi_dung_theo_ten_va_email(): void
     {
@@ -228,8 +185,6 @@ class ListFilterTest extends TestCase
     #[Test]
     public function loc_nguoi_dung_chua_xac_thuc_email(): void
     {
-        // Khách gọi kêu "không vào được mục của tôi" — đây là chỗ nhìn
-        // đầu tiên, vì chưa xác thực thì bị chặn khỏi trang cá nhân.
         User::factory()->create(['name' => 'Chưa Xác Thực', 'email_verified_at' => null]);
         User::factory()->create(['name' => 'Đã Xác Thực']);
 
@@ -238,17 +193,9 @@ class ListFilterTest extends TestCase
             ->assertDontSee('Đã Xác Thực');
     }
 
-    // ================= MÃ GIẢM GIÁ =================
-
     #[Test]
     public function loc_ma_khach_dang_dung_duoc_khac_voi_trang_thai_dang_chay(): void
     {
-        /*
-         * Mã còn `status = active` nhưng đã QUA NGÀY KẾT THÚC thì khách
-         * vẫn không dùng được. Lọc theo trạng thái không phát hiện ra —
-         * đây đúng là lúc admin cần biết sự thật, vì khách đang gọi kêu
-         * "mã của tôi báo lỗi".
-         */
         Coupon::factory()->create(['code' => 'CONHIEULUC', 'name' => 'Mã còn hiệu lực']);
         Coupon::factory()->expired()->create(['code' => 'DAHETHAN', 'name' => 'Mã đã hết hạn']);
 

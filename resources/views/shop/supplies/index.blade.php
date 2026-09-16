@@ -14,11 +14,6 @@
                 <span class="text-label section-header__eyebrow d-block">Mua kèm</span>
                 <h1 class="text-h2 section-header__title">Phụ kiện &amp; vật tư chăm sóc</h1>
                 <p class="mb-0">
-                    {{--
-                        Nói rõ trang này là HÀNG PHỤ TRỢ và chỉ đường về hàng
-                        chính. Khách lạc vào đây khi đang tìm hoa phải có lối
-                        ra ngay, không phải bấm Back.
-                    --}}
                     Chậu, đất, phân bón và dụng cụ để cây bạn sống lâu hơn.
                     Đang tìm hoa hoặc cây?
                     <a href="{{ route('shop.products.index') }}">Xem hoa &amp; cây cảnh</a>.
@@ -26,12 +21,6 @@
             </div>
         </div>
 
-        {{--
-            HAI NHÓM, KHÁC NHAU Ở HÀNH VI MUA:
-              Phụ kiện       - đồ dùng bền, mua một lần dùng lâu
-              Vật tư chăm sóc - thứ tiêu hao, hết là mua lại
-            Xem QĐ-29.
-        --}}
         <div class="supply-filters">
             <a href="{{ route('shop.supplies.index') }}"
                class="filter-chip {{ ! request('category') ? 'is-active' : '' }}">

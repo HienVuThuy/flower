@@ -21,29 +21,12 @@
 
         <h1 class="text-h3 mb-3">Chi tiết mã giảm giá</h1>
 
-        {{--
-            THẺ VOUCHER ĐẦY ĐỦ ở đầu trang.
-
-            Hiện lại đúng cái thẻ khách vừa bấm vào, để họ chắc chắn đang
-            đọc điều kiện của ĐÚNG mã đó. Không có nó thì trang này chỉ là
-            một danh sách gạch đầu dòng trôi nổi.
-        --}}
         <x-shop.voucher-card
             :coupon="$coupon"
             :saved="$saved"
             :used-count="$usedCount"
             :show-terms-link="false" />
 
-        {{--
-            ============ DANH SÁCH ĐIỀU KHOẢN ============
-
-            MỖI MỤC CHỈ HIỆN KHI CÓ DỮ LIỆU THẬT.
-
-            Mã không giới hạn hình thức thanh toán thì KHÔNG in ra một
-            dòng "áp dụng mọi hình thức" — đó là chữ thừa. Danh sách càng
-            ngắn thì mấy điều kiện thật sự quan trọng càng dễ đọc, và cả
-            trang này tồn tại để khách đọc được chúng.
-        --}}
         <div class="voucher-terms">
 
             <h2 class="voucher-terms__heading">Hạn sử dụng mã</h2>
@@ -57,9 +40,6 @@
                 @endif
 
                 @unless($coupon->isRunning())
-                    {{-- Nói thẳng ở dòng đầu tiên. Để khách đọc hết mười
-                         dòng điều kiện rồi mới phát hiện mã đã hết hạn là
-                         phí thời gian của họ. --}}
                     <strong class="voucher-terms__expired">Mã hiện không dùng được.</strong>
                 @endunless
             </p>
@@ -126,9 +106,6 @@
                     @endforeach
                 </ul>
                 <p class="voucher-terms__note">
-                    {{-- Nói rõ hệ thống CHẶN THẬT, không chỉ ghi cho có.
-                         Điều kiện ghi trên giấy mà không ai kiểm thì lần
-                         sau khách không tin điều kiện nào nữa. --}}
                     Chọn hình thức khác ở bước thanh toán thì mã sẽ bị từ chối.
                 </p>
             @endif

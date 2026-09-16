@@ -9,17 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Chủ bài tự quản lý bài của mình: tạm ẩn, ghim, khoá bình luận, ẩn bình luận.
- * ============================================================
- * RANH GIỚI PHẢI GIỮ — mỗi việc dưới đây có một test riêng:
- *
- *   - tự ẩn KHÁC bị cửa hàng ẩn: mình bật lại được, cửa hàng ẩn thì không;
- *   - ghim chỉ đổi thứ tự TRANG CÁ NHÂN, mỗi người một bài;
- *   - khoá bình luận chặn ở SERVER, không phải chỉ giấu ô nhập;
- *   - ẩn bình luận chỉ làm được trên bài của mình, và không mở lại được bình
- *     luận do cửa hàng ẩn.
- */
+/** Chủ bài tự quản lý bài của mình: tạm ẩn, ghim, khoá bình luận, ẩn bình luận. */
 class QuanLyBaiCuaToiTest extends TestCase
 {
     use RefreshDatabase;
@@ -41,8 +31,6 @@ class QuanLyBaiCuaToiTest extends TestCase
         return $bl;
     }
 
-    // ---------------------------------------------------------------- tạm ẩn
-
     #[Test]
     public function bai_chu_tu_an_thi_bien_khoi_bang_tin_va_trang_nguoi_khac(): void
     {
@@ -59,7 +47,6 @@ class QuanLyBaiCuaToiTest extends TestCase
         $this->get(route('shop.community.index'))->assertDontSee('Bài sắp được tạm ẩn.');
         $this->get(route('shop.community.show', $bai->id))->assertNotFound();
 
-        // Người đăng nhập khác cũng vậy: ngoại lệ "xem bài mình tự ẩn" chỉ cho CHÍNH CHỦ.
         $khach = User::factory()->create();
         $this->actingAs($khach)->get(route('shop.community.show', $bai->id))->assertNotFound();
         $this->actingAs($khach)->get(route('shop.community.profile', $chu->id))
@@ -77,8 +64,6 @@ class QuanLyBaiCuaToiTest extends TestCase
             ->assertSee('Bạn đang ẩn')
             ->assertSee('Hiện lại bài');
 
-        // Trên trang cá nhân, bài đó hiện kèm nhãn trạng thái và KHÔNG mở ô bình luận
-        // — nó đang không hiện với ai, bày ô bình luận ra là nói dối.
         $this->actingAs($chu)->get(route('shop.community.profile', $chu->id))
             ->assertOk()
             ->assertSee('Bạn đang ẩn')
@@ -97,7 +82,6 @@ class QuanLyBaiCuaToiTest extends TestCase
 
         $this->actingAs($chu)->patch(route('shop.community.owner.hide', $bai->id));
 
-        // Nút của chủ bài chỉ động tới cột của chủ bài; cột cửa hàng ẩn vẫn nguyên.
         $this->assertNotNull($bai->fresh()->hidden_at);
         $this->get(route('shop.community.show', $bai->id))->assertNotFound();
     }
@@ -115,8 +99,6 @@ class QuanLyBaiCuaToiTest extends TestCase
         $this->assertNull($bai->fresh()->author_hidden_at);
     }
 
-    // ------------------------------------------------------------------ ghim
-
     #[Test]
     public function bai_ghim_nam_dau_trang_ca_nhan_va_moi_nguoi_chi_mot_bai(): void
     {
@@ -133,13 +115,11 @@ class QuanLyBaiCuaToiTest extends TestCase
             'Bài được ghim phải nằm trên bài mới hơn.',
         );
 
-        // Ghim bài khác thì bài cũ tự bỏ ghim — "ghim" mà có nhiều cái thì vô nghĩa.
         $this->actingAs($chu)->patch(route('shop.community.owner.pin', $moi->id));
 
         $this->assertNull($cu->fresh()->pinned_at);
         $this->assertNotNull($moi->fresh()->pinned_at);
 
-        // Bấm lần nữa là bỏ ghim.
         $this->actingAs($chu)->patch(route('shop.community.owner.pin', $moi->id));
         $this->assertNull($moi->fresh()->pinned_at);
     }
@@ -186,8 +166,6 @@ class QuanLyBaiCuaToiTest extends TestCase
         $this->assertNull($bai->fresh()->pinned_at);
     }
 
-    // -------------------------------------------------------- khoá bình luận
-
     #[Test]
     public function khoa_binh_luan_chan_o_server_chu_khong_chi_giau_o_nhap(): void
     {
@@ -209,7 +187,6 @@ class QuanLyBaiCuaToiTest extends TestCase
             ->assertSee('Chủ bài đã khoá bình luận')
             ->assertDontSee('Viết bình luận');
 
-        // Mở lại thì bình luận được ngay.
         $this->actingAs($chu)->patch(route('shop.community.owner.lock', $bai->id));
         $this->actingAs($khach)->post(route('shop.community.comment', $bai->id), ['body' => 'Đã mở lại rồi.']);
         $this->assertDatabaseHas('community_comments', ['body' => 'Đã mở lại rồi.']);
@@ -227,8 +204,6 @@ class QuanLyBaiCuaToiTest extends TestCase
         $this->get(route('shop.community.show', $bai->id))->assertOk()->assertSee('Bình luận từ trước khi khoá.');
     }
 
-    // -------------------------------------------------------- ẩn bình luận
-
     #[Test]
     public function chu_bai_an_binh_luan_tren_bai_cua_minh(): void
     {
@@ -242,11 +217,9 @@ class QuanLyBaiCuaToiTest extends TestCase
         $this->assertNotNull($bl->fresh()->hidden_at);
         $this->assertSame($chu->id, $bl->fresh()->hidden_by);
 
-        // Người khác không thấy nữa...
         auth()->logout();
         $this->get(route('shop.community.show', $bai->id))->assertDontSee('Bình luận khó nghe.');
 
-        // ...còn chính chủ bài vẫn thấy, kèm đường bật lại.
         $this->actingAs($chu)->get(route('shop.community.show', $bai->id))
             ->assertSee('Bình luận khó nghe.')
             ->assertSee('Bạn đang ẩn bình luận này')
@@ -285,13 +258,10 @@ class QuanLyBaiCuaToiTest extends TestCase
 
         $this->assertNull($bl->fresh()->hidden_at);
 
-        // Và nút đó cũng không được bày ra cho người ngoài bấm.
         $this->actingAs($khach)->get(route('shop.community.show', $bai->id))
             ->assertOk()
             ->assertDontSee('Ẩn khỏi bài');
     }
-
-    // ------------------------------------------------------------ lối vào
 
     #[Test]
     public function co_nut_vao_trang_ca_nhan_cua_chinh_minh(): void
@@ -304,7 +274,6 @@ class QuanLyBaiCuaToiTest extends TestCase
             ->assertSee($duong, false)
             ->assertSee('Trang cá nhân');
 
-        // Menu tài khoản ở đầu trang cũng có, để vào được từ mọi trang.
         $this->actingAs($toi)->get('/')->assertSee($duong, false);
     }
 

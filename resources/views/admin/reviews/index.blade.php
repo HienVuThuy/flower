@@ -13,7 +13,6 @@
         </div>
     </div>
 
-    {{-- Bộ lọc: giữ nguyên dạng liên kết, không cần JavaScript. --}}
     <div class="mb-3 d-flex flex-wrap gap-2">
         <a href="{{ route('admin.reviews.index') }}"
            class="btn btn-sm {{ $filter ? 'btn-outline-admin' : 'btn-primary-brand' }}">
@@ -38,13 +37,6 @@
         <input type="hidden" name="trang_thai" value="{{ request('trang_thai') }}">
     @endif
 
-    {{--
-        LỌC THEO SỐ SAO — việc admin cần nhất ở trang này.
-
-        Đánh giá 1-2 sao là lời phàn nàn cần trả lời, và chúng lẫn giữa
-        hàng chục đánh giá 5 sao. "Từ 2 sao trở xuống" gom cả hai mức đó
-        vào một lần bấm.
-    --}}
     <select name="sao" class="form-select" aria-label="Lọc theo số sao">
         <option value="">Mọi mức sao</option>
         <option value="thap" @selected(request('sao') === 'thap')>Từ 2 sao trở xuống</option>
@@ -53,10 +45,6 @@
         @endfor
     </select>
 
-    {{--
-        Ghép với ô số sao thì ra đúng hàng đợi: phàn nàn CHƯA AI TRẢ
-        LỜI. Đây là đích của dòng tương ứng ở trang tổng quan.
-    --}}
     <select name="tra_loi" class="form-select" aria-label="Lọc theo trả lời">
         <option value="">Đã trả lời hay chưa</option>
         <option value="chua" @selected(request('tra_loi') === 'chua')>Chưa trả lời</option>
@@ -129,7 +117,6 @@
                                 </td>
 
                                 <td>
-                                    {{-- Trang quản trị hiện tên đầy đủ; trang khách thì che bớt. --}}
                                     {{ $review->user?->name ?? '(tài khoản đã xoá)' }}
                                     @if($review->order_id)
                                         <div class="admin-page-subtitle">Đã mua hàng</div>
@@ -141,19 +128,6 @@
                                 <td style="max-width: 26rem;">
                                     {{ $review->comment ?: '—' }}
 
-                                    {{--
-                                        PHẢN HỒI CỦA CỬA HÀNG — công khai.
-
-                                        Trước đây admin chỉ làm được đúng
-                                        một việc với đánh giá: ẩn nó đi.
-                                        Với một đánh giá 2 sao thì đó là
-                                        lựa chọn tệ nhất — khách viết ra
-                                        vì muốn được nghe.
-
-                                        Ô nhập để ngay dưới nội dung, mở
-                                        bằng <details> nên không chiếm
-                                        chỗ khi admin chỉ đang đọc lướt.
-                                    --}}
                                     <details class="mt-2" @if($review->hasReply()) open @endif>
                                         <summary class="admin-page-subtitle" style="cursor:pointer">
                                             @if($review->hasReply())
@@ -181,8 +155,6 @@
                                                 Lưu phản hồi
                                             </button>
 
-                                            {{-- Xoá phản hồi = gửi ô trống. Không cần
-                                                 một route riêng cho việc đó. --}}
                                             @if($review->hasReply())
                                                 <span class="admin-page-subtitle ms-1">
                                                     Xoá hết chữ rồi lưu để gỡ phản hồi.

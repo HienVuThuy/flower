@@ -9,13 +9,7 @@ use App\Services\Community\PostOwner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 
-/**
- * Chủ bài tự quản lý bài của mình. Mỏng: luật nằm ở PostOwner.
- *
- * Mỗi việc là một PATCH riêng chứ không gộp một route "cập nhật bài": ba việc
- * này có ba luật khác nhau (ghim đòi bài đang hiển thị, ẩn thì không), và gộp
- * lại thì phải đọc một tham số "hành động" rồi rẽ nhánh — chỗ dễ quên kiểm.
- */
+/** Chủ bài tự quản lý bài của mình. */
 class CommunityPostOwnerController extends Controller
 {
     public function hide(int $post, PostOwner $chuBai): RedirectResponse

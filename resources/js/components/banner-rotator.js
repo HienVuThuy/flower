@@ -1,17 +1,4 @@
-/*
- * Khung banner luân phiên trên trang chủ.
- * ============================================================
- * Khác hero-carousel ở chỗ có CHẤM ĐIỀU HƯỚNG bấm được — khách quay lại
- * xem banner vừa trôi qua mà không phải chờ hết một vòng.
- *
- * Bốn điều bắt buộc:
- *  1. Tôn trọng prefers-reduced-motion — không tự đổi.
- *  2. Dừng khi tab bị ẩn, không chạy timer vô ích ở nền.
- *  3. Dừng khi con trỏ hoặc bàn phím đang ở trong khung — banner tự
- *     nhảy lúc người ta đang định bấm nút là cách nhanh nhất để họ bấm
- *     nhầm sang thứ khác.
- *  4. Không làm gì nếu chỉ có một slide.
- */
+/* Khung banner luân phiên trên trang chủ. */
 
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
@@ -69,8 +56,6 @@ function setup(root) {
         dot.addEventListener('click', () => {
             show(Number(dot.dataset.bannerDot));
 
-            // Đặt lại đồng hồ: vừa chọn tay xong mà 1 giây sau nó tự nhảy
-            // tiếp thì coi như cú bấm không có tác dụng.
             restart();
         });
     });

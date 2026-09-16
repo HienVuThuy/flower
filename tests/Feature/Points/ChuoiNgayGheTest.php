@@ -11,9 +11,7 @@ use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Chuỗi ngày ghé thăm: mỗi ngày (lịch Việt Nam) một lần, đứt thì về 1, thưởng ở mốc.
- */
+/** Chuỗi ngày ghé thăm: mỗi ngày (lịch Việt Nam) một lần, đứt thì về 1, thưởng ở mốc. */
 class ChuoiNgayGheTest extends TestCase
 {
     use RefreshDatabase;
@@ -27,7 +25,6 @@ class ChuoiNgayGheTest extends TestCase
         return $u;
     }
 
-    /** Mở trang chủ lúc $utc (giờ lưu). */
     private function ghe(User $u, string $utc): void
     {
         $this->travelTo(Carbon::parse($utc, 'UTC'));
@@ -40,13 +37,13 @@ class ChuoiNgayGheTest extends TestCase
         $u = $this->khach();
 
         $this->ghe($u, '2026-09-10 03:00:00');
-        $this->ghe($u, '2026-09-10 09:00:00');   // cùng ngày
+        $this->ghe($u, '2026-09-10 09:00:00');
         $this->assertSame(1, $u->fresh()->visit_streak);
 
         $this->ghe($u, '2026-09-11 03:00:00');
         $this->assertSame(2, $u->fresh()->visit_streak);
 
-        $this->ghe($u, '2026-09-13 03:00:00');   // bỏ ngày 12
+        $this->ghe($u, '2026-09-13 03:00:00');
         $this->assertSame(1, $u->fresh()->visit_streak);
         $this->assertSame('2026-09-13', $u->fresh()->last_visit_on->toDateString());
     }
@@ -56,7 +53,6 @@ class ChuoiNgayGheTest extends TestCase
     {
         $u = $this->khach();
 
-        // 14/09 16:50 UTC = 23:50 Hà Nội ngày 14; 17:10 UTC = 00:10 Hà Nội ngày 15 — cùng một ngày UTC.
         $this->ghe($u, '2026-09-14 16:50:00');
         $this->ghe($u, '2026-09-14 17:10:00');
 
@@ -76,7 +72,7 @@ class ChuoiNgayGheTest extends TestCase
         $this->assertSame(0, $so->soDu($u));
 
         $this->ghe($u, '2026-09-03 03:00:00');
-        $this->ghe($u, '2026-09-03 08:00:00');   // mở lại trong ngày mốc: không thưởng lần hai
+        $this->ghe($u, '2026-09-03 08:00:00');
         $this->assertSame(10, $so->soDu($u));
 
         foreach (range(4, 7) as $d) {
@@ -120,7 +116,6 @@ class ChuoiNgayGheTest extends TestCase
         $this->assertStringContainsString('data-chuoi="2"', $html);
         $this->assertStringContainsString('Còn 1 ngày nữa tới mốc 3 ngày: +10 điểm', $html);
 
-        // Hai ngày không ghé: chuỗi đã mất — không hiện "2 ngày" như thể còn.
         $this->travelTo(Carbon::parse('2026-09-13 03:00:00', 'UTC'));
         $this->assertSame(0, app(VisitStreak::class)->hienTai($u->fresh()));
     }

@@ -66,7 +66,6 @@
                             @endif
                         </p>
 
-                        {{-- Lịch trả góp tính từ tổng tiền THẬT của đơn — khách thấy trước khi bấm đặt. --}}
                         @if(! empty($lichTraGop))
                             <div class="table-responsive mt-3" data-lich-tra-gop>
                                 <table class="table table-sm align-middle mb-1">
@@ -98,11 +97,6 @@
 
                         <h2 class="text-h4 mb-3">Sản phẩm</h2>
 
-                        {{--
-                            Có ảnh và đơn giá cho từng dòng: khách phải nhận ra
-                            đúng món mình đang mua trước khi bấm đặt hàng, chứ
-                            không chỉ đọc tên. Đây là bước cuối, sai là mất đơn.
-                        --}}
                         <ul class="checkout-items checkout-items--detailed">
                             @foreach($basket->lines as $line)
                                 <li class="checkout-items__row">

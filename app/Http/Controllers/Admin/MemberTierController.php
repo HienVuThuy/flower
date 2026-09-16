@@ -10,16 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
-/**
- * Cấu hình hạng thành viên — sửa cả bộ trong một biểu mẫu.
- *
- * KHÔNG THÊM / XOÁ HẠNG ở đây: số hạng và mã hạng là thứ code và giao
- * diện dựa vào. Cửa hàng chỉnh ngưỡng, tên và quyền lợi.
- *
- * SỬA CẢ BỘ, không từng dòng: luật "ngưỡng tăng dần, hạng thấp nhất từ 0"
- * chỉ kiểm được trên cả bộ — sửa từng dòng thì có lúc giữa chừng hai hạng
- * cùng ngưỡng.
- */
+/** Cấu hình hạng thành viên — sửa cả bộ trong một biểu mẫu. */
 class MemberTierController extends Controller
 {
     use LogsAdminActivity;
@@ -43,7 +34,6 @@ class MemberTierController extends Controller
             'hang.*.name' => ['required', 'string', 'max:50'],
             'hang.*.min_spend' => ['required', 'numeric', 'min:0', 'max:999999999999'],
 
-            // Trần 50%: giảm theo hạng là ưu đãi thường trực trên MỌI đơn của khách đó.
             'hang.*.discount_percent' => ['required', 'numeric', 'min:0', 'max:50'],
             'hang.*.free_shipping_from' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'hang.*.bonus_points_percent' => ['required', 'integer', 'min:0', 'max:100'],

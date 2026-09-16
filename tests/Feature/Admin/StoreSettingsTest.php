@@ -13,17 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Admin tự sửa được nhận diện, tiền tệ và thuế.
- * ============================================================
- * Trước đây tên cửa hàng viết cứng ở 17 chỗ và định dạng tiền ở 49 chỗ.
- * Đổi được từ giao diện là mục tiêu; giữ cho nó KHÔNG TỰ MẤT là phần dễ
- * hỏng.
- *
- * Hai bài quan trọng nhất trong tệp này đều nói về việc **mất dữ liệu âm
- * thầm khi bấm Lưu** — kiểu lỗi không có thông báo nào và chỉ phát hiện
- * khi mở trang chủ ra xem.
- */
+/** Admin tự sửa được nhận diện, tiền tệ và thuế. */
 class StoreSettingsTest extends TestCase
 {
     use RefreshDatabase;
@@ -32,11 +22,6 @@ class StoreSettingsTest extends TestCase
     {
         parent::setUp();
 
-        /*
-         * Bài này tải logo lên, và trước khi có dòng này nó ghi thẳng vào
-         * thư mục storage THẬT — mỗi lần chạy để lại một tệp không ai trỏ
-         * tới. Xem chú thích dài hơn ở AutoOptimizeUploadTest.
-         */
         Storage::fake('public');
     }
 
@@ -49,7 +34,6 @@ class StoreSettingsTest extends TestCase
         return $u;
     }
 
-    /** Bộ dữ liệu tối thiểu để form Cấu hình qua được validation. */
     private function duLieu(array $ghiDe = []): array
     {
         return array_merge([
@@ -77,23 +61,12 @@ class StoreSettingsTest extends TestCase
 
         $this->assertSame('Chồi Xanh', StoreProfile::name());
 
-        // Không chỉ lưu được — phải THẬT SỰ hiện ra ở trang khách.
         $this->get('/san-pham')->assertOk()->assertSee('Chồi Xanh');
     }
 
     #[Test]
     public function luu_cau_hinh_khong_lam_mat_logo_dang_co(): void
     {
-        /*
-         * BÀI QUAN TRỌNG NHẤT TỆP NÀY.
-         *
-         * Trang Cấu hình lưu bằng một vòng lặp trên StoreProfile::FIELDS.
-         * `site_logo` là một TỆP, không phải ô chữ — để nó lọt vào vòng
-         * đó thì mỗi lần admin sửa số điện thoại rồi bấm Lưu (không tải
-         * logo mới), giá trị vắng mặt và logo bị xoá sạch.
-         *
-         * Không có thông báo nào. Chỉ phát hiện khi mở trang chủ ra xem.
-         */
         Setting::set('site_logo', 'branding/logo-cua-toi.png');
 
         $this->actingAs($this->admin())
@@ -126,11 +99,6 @@ class StoreSettingsTest extends TestCase
     #[Test]
     public function khong_nhan_logo_dinh_dang_svg(): void
     {
-        /*
-         * SVG là XML và chạy được JavaScript bên trong. Một tệp logo trở
-         * thành lỗ XSS trên MỌI trang của cửa hàng — logo hiện ở header,
-         * tức là ở mọi nơi khách đi qua.
-         */
         $this->actingAs($this->admin())
             ->put('/admin/settings', $this->duLieu([
                 'site_logo' => UploadedFile::fake()->createWithContent(
@@ -143,17 +111,9 @@ class StoreSettingsTest extends TestCase
         $this->assertNull(StoreProfile::get('site_logo'));
     }
 
-    /* ================= HOTLINE PHẢI GỌI ĐƯỢC ================= */
-
     #[Test]
     public function hotline_KHONG_phai_so_thi_khong_hien_o_dau_ca(): void
     {
-        /*
-         * Dữ liệu thật đang lưu "demo". Trước khi sửa, chữ đó nằm trong mọi
-         * email gửi khách ("Gọi demo hoặc trả lời email này") và ở chân
-         * trang cạnh biểu tượng điện thoại. Một số không gọi được còn tệ hơn
-         * không có số.
-         */
         Setting::set('site_hotline', 'demo');
 
         $this->assertNull(StoreProfile::hotline());
@@ -161,7 +121,6 @@ class StoreSettingsTest extends TestCase
         $this->get('/san-pham')->assertOk()->assertDontSee('demo');
         $this->get(route('shop.orders.lookup'))->assertOk()->assertDontSee('Gọi cho cửa hàng');
 
-        // Lặng lẽ ẩn thì không ai biết phải sửa — trang Tổng quan phải nói.
         $this->actingAs($this->admin())
             ->get('/admin/dashboard')
             ->assertSee('không phải số điện thoại');
@@ -183,7 +142,6 @@ class StoreSettingsTest extends TestCase
             ->put('/admin/settings', $this->duLieu(['site_hotline' => 'demo']))
             ->assertSessionHasErrors('site_hotline');
 
-        // Để trống vẫn lưu được: "chưa có hotline" là một tình trạng thật.
         $this->actingAs($this->admin())
             ->put('/admin/settings', $this->duLieu(['site_hotline' => '']))
             ->assertSessionHasNoErrors();
@@ -192,8 +150,6 @@ class StoreSettingsTest extends TestCase
     #[Test]
     public function ten_cua_hang_khong_duoc_de_trong(): void
     {
-        // Nó nằm ở tiêu đề mọi trang và trong sáu mẫu thư. Để trống thì
-        // khách nhận một lá thư ký tên bằng khoảng trắng.
         $this->actingAs($this->admin())
             ->put('/admin/settings', $this->duLieu(['site_name' => '']))
             ->assertSessionHasErrors('site_name');
@@ -202,11 +158,6 @@ class StoreSettingsTest extends TestCase
     #[Test]
     public function don_vi_tien_KHOA_O_VND_du_bieu_mau_gui_len_USD(): void
     {
-        /*
-         * Trước đây ô tiền tệ đổi được sang USD — nhưng chỉ đổi cách in:
-         * 500.000đ thành "$500,000.00", trong khi MoMo và GHN vẫn nhận đồng
-         * và không có tỉ giá nào. Nay khoá VND.
-         */
         $this->actingAs($this->admin())
             ->put('/admin/settings', $this->duLieu([
                 'currency_code' => 'USD',
@@ -223,7 +174,6 @@ class StoreSettingsTest extends TestCase
     #[Test]
     public function gia_tri_tien_te_cu_con_trong_bang_bi_bo_qua(): void
     {
-        // Cửa hàng từng lưu USD trước khi khoá: không được in theo giá trị cũ đó.
         Setting::set('currency_code', 'USD');
         Setting::set('currency_symbol', '$');
         Setting::set('currency_decimals', '2');
@@ -234,10 +184,6 @@ class StoreSettingsTest extends TestCase
     #[Test]
     public function thue_suat_nhap_theo_phan_tram_luu_theo_thap_phan(): void
     {
-        /*
-         * Kế toán nói "8%", không nói "0,08". Bắt admin tự quy đổi là
-         * mời một lỗi gõ nhầm GẤP 100 LẦN vào đúng con số thuế.
-         */
         $this->actingAs($this->admin())
             ->put('/admin/settings', $this->duLieu(['tax_rate_percent' => 10]))
             ->assertRedirect();
@@ -257,11 +203,6 @@ class StoreSettingsTest extends TestCase
     #[Test]
     public function trang_cau_hinh_noi_ro_vi_sao_mot_cong_thanh_toan_chua_dung_duoc(): void
     {
-        /*
-         * Trước đây không chỗ nào trong giao diện trả lời được câu "vì
-         * sao MoMo chưa hiện ra ở bước thanh toán". Người vận hành chỉ
-         * biết là nó không có.
-         */
         $this->actingAs($this->admin())
             ->get('/admin/settings')
             ->assertOk()

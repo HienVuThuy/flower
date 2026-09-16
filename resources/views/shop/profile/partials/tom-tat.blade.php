@@ -25,21 +25,6 @@
             </div>
         </dl>
 
-        {{--
-            MỌI CON SỐ Ở TRÊN PHẢI CÓ ĐƯỜNG ĐI TỚI.
-
-            Trước bản này, "Đánh giá đã viết: 4" là ngõ cụt —
-            ba con số kia bấm được, riêng nó thì không. Trang
-            Chính sách bảo mật hứa người dùng gỡ được đánh giá
-            của mình, và điều đó đúng, nhưng nút gỡ chỉ nằm
-            trên TRANG SẢN PHẨM: ai viết bốn bài cho bốn sản
-            phẩm phải nhớ ra đủ bốn rồi mở từng trang.
-
-            Ví voucher và Lịch chăm cây cũng thuộc khu tài
-            khoản và cũng đã có trang riêng, nhưng chưa được
-            nhắc tới ở đây — người dùng chỉ tới được chúng
-            qua menu, tức là phải biết trước là chúng tồn tại.
-        --}}
         <div class="profile-summary__links">
             @if(config('features.cart'))
                 <a href="{{ route('shop.orders.index') }}" class="btn btn-ghost w-100">

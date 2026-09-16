@@ -1,37 +1,6 @@
 @props(['ky', 'periods', 'route'])
 
-{{--
-    Ô chọn kỳ: mấy mốc dựng sẵn, cộng một khoảng ngày tự chọn.
-    ============================================================
-    MỘT BẢN dùng chung cho trang Tổng quan và cả năm trang con Phân tích.
-    Mỗi trang tự dựng thì chỉ cần một trang quên mang theo `tu`/`den` là
-    bấm sang tab khác lặng lẽ nhảy về "30 ngày qua" trong khi tiêu đề vẫn
-    ghi khoảng cũ.
-
-    ============================================================
-    BIỂU MẪU GET, KHÔNG PHẢI POST.
-
-    Chọn kỳ là một thao tác ĐỌC. Dùng GET thì địa chỉ kết quả chép và lưu
-    dấu trang được — "doanh thu tháng 8" thành một liên kết gửi cho kế
-    toán, và bấm Quay lại của trình duyệt hoạt động đúng.
-
-    ============================================================
-    KHÔNG CÓ JAVASCRIPT VẪN DÙNG ĐƯỢC.
-
-    Hai ô ngày và một nút Xem — không phụ thuộc script nào. Nút "Xem" chỉ
-    ẩn đi khi có JS (xem CSS `.has-js`), lúc đó đổi ngày là tự gửi.
---}}
-{{--
-    BỌC NGOÀI LÀ MỘT KHỐI THƯỜNG, không phải flex.
-
-    Lỗi đã sửa: dòng khoảng ngày từng là một mục flex với `flex: 1 0 100%`
-    nằm trong một khối co theo nội dung. Phần trăm đó giải ra theo chiều
-    rộng cuối của khối, mà khối lại đang co theo nội dung — đo được nó nở
-    thành 890px và đẩy cả trang lệch ngang 1610px trên màn 1425px.
-
-    Tách hai tầng: hàng nút là flex, dòng chữ là block bên dưới. Không có
-    phần trăm nào trong flex thì không có vòng luẩn quẩn nào.
---}}
+{{-- Ô chọn kỳ: mấy mốc dựng sẵn, cộng một khoảng ngày tự chọn. --}}
 <div class="chon-ky-boc">
 <div class="chon-ky">
 
@@ -44,13 +13,6 @@
         @endforeach
     </div>
 
-    {{--
-        DẤU HIỆU "ĐANG CHỌN" NẰM TRÊN CẢ NHÓM, không phải trên nút Xem.
-
-        Nút Xem bị ẩn khi trang có JavaScript. Đặt dấu hiệu ở đó thì lúc
-        đang xem một khoảng tự chọn, ba mốc dựng sẵn đều nhạt và không có
-        gì sáng lên — người xem không biết mình đang ở đâu.
-    --}}
     <form method="GET" action="{{ route($route) }}" data-chon-ky
           @class(['chon-ky__khoang', 'is-active' => $ky->laTuyChon()])>
         <input type="hidden" name="ky" value="{{ \App\Services\Analytics\ChonKy::TUY_CHON }}">
@@ -73,13 +35,6 @@
     </form>
 
 
-    {{--
-        NÓI RÕ KỲ NÀY LÀ TỪ NGÀY NÀO TỚI NGÀY NÀO.
-
-        "30 ngày qua" không cho biết bắt đầu hôm nào, có tính hôm nay
-        không. Hiện ngày thật thì không ai phải đoán, và nếu mốc sai thì
-        sai đó nằm ngay trên màn hình.
-    --}}
 </div>
 
     @if($ky->khoangHienThi())

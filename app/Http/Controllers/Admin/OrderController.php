@@ -31,7 +31,6 @@ class OrderController extends Controller
     {
         $status = $request->query('status');
 
-        // Chỉ nhận giá trị nằm trong enum; tham số lạ thì coi như không lọc.
         if ($status !== null && OrderStatus::tryFrom($status) === null) {
             $status = null;
         }
@@ -40,16 +39,6 @@ class OrderController extends Controller
             'orders' => Order::query()
                 ->status($status)
 
-                /*
-                 * TÌM THEO MÃ ĐƠN, SỐ ĐIỆN THOẠI HOẶC TÊN NGƯỜI NHẬN.
-                 *
-                 * Ba cột này vì đó là ba thứ khách đọc qua điện thoại khi
-                 * gọi hỏi đơn. Số điện thoại là cột hữu ích nhất: khách
-                 * nhớ số của mình, ít khi nhớ mã đơn.
-                 *
-                 * Bỏ dấu gạch trong từ khoá trước khi so mã đơn — khách
-                 * đọc "FP 260831 ABCD" hoặc "FP260831ABCD" đều phải ra.
-                 */
                 ->when($request->filled('q'), function ($query) use ($request) {
                     $tu = trim((string) $request->query('q'));
                     $ma = preg_replace('/[^A-Za-z0-9]/', '', $tu) ?? '';
@@ -69,26 +58,10 @@ class OrderController extends Controller
                     fn ($q) => $q->where('payment_status', $request->string('payment'))
                 )
 
-                /*
-                 * LỌC THEO VẬN ĐƠN.
-                 *
-                 * Đơn trả qua MoMo tự tạo vận đơn ngay sau khi thanh
-                 * toán; đơn COD thì KHÔNG — phải có người bấm. Đơn quên
-                 * bấm nằm ở "Đã xác nhận", trông y hệt đơn đang chạy, và
-                 * không có cách nào lọc ra.
-                 *
-                 * "cho-tao" dùng CHUNG scope với dòng việc ở trang Tổng
-                 * quan — xem Order::scopeAwaitingWaybill() để biết vì sao
-                 * không lọc trần "chưa có mã".
-                 *
-                 * SO VỚI CHUỖI CỐ ĐỊNH chứ không dùng filled(): tham số
-                 * lạ thì coi như không lọc, không đoán ý.
-                 */
                 ->when(
                     $request->query('van_don') === 'cho-tao',
                     fn ($q) => $q->awaitingWaybill()
                 )
-                // Dòng việc "hoàn tiền MoMo chưa rõ kết quả" ở trang Tổng quan.
                 ->when(
                     $request->query('hoan_tien') === 'chua-ro',
                     fn ($q) => $q->refundPending()
@@ -98,13 +71,6 @@ class OrderController extends Controller
                     fn ($q) => $q->whereNotNull('ghn_order_code')
                 )
 
-                /*
-                 * LỌC THEO KHOẢNG NGÀY.
-                 *
-                 * whereDate chứ không phải where: `created_at` có cả giờ,
-                 * nên `where('created_at', '<=', '2026-08-31')` bỏ sót mọi
-                 * đơn đặt trong ngày 31 — đúng ngày admin đang muốn xem.
-                 */
                 ->when(
                     $request->filled('tu_ngay'),
                     fn ($q) => $q->whereDate('created_at', '>=', $request->date('tu_ngay'))
@@ -114,8 +80,6 @@ class OrderController extends Controller
                     fn ($q) => $q->whereDate('created_at', '<=', $request->date('den_ngay'))
                 )
 
-                // withCount thay vì nạp cả quan hệ items: danh sách chỉ
-                // cần CON SỐ, nạp hết dòng đơn là N+1 vô ích.
                 ->withCount('items')
                 ->tap(fn ($q) => $this->applySort($q, $request, [
                     'ma' => 'order_number',
@@ -133,12 +97,6 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Phiếu in cho một đơn: soạn hàng (không giá) + giao hàng (có số tiền thu).
-     *
-     * Trang riêng, không kế thừa khung quản trị — xem chú thích đầu
-     * resources/views/admin/orders/print.blade.php.
-     */
     public function printSlip(Order $order): View
     {
         return view('admin.orders.print', [
@@ -151,20 +109,8 @@ class OrderController extends Controller
         $order->load('items.product', 'user', 'statusEvents.changedBy', 'invoice', 'transactions.installmentPayment', 'refunds.items.orderItem', 'refunds.createdBy', 'exchanges.items', 'installmentPlan.payments');
 
         return view('admin.orders.show', [
-            // statusEvents.changedBy nạp sẵn: dòng thời gian hiện tên người
-            // thực hiện ở mỗi mốc, không nạp thì mỗi mốc một truy vấn.
             'order' => $order,
 
-            /*
-             * HOÀN TIỀN: một câu "vì sao không hoàn được" (null nếu được),
-             * các cách hoàn dùng được, và số còn trả về được của từng dòng.
-             * Tính sẵn ở đây để view không phải biết luật nào.
-             */
-            /*
-             * ĐỔI HÀNG: cùng lối với hoàn tiền — một câu "vì sao không đổi
-             * được" (null nếu được) và số còn đổi được của từng dòng. Luật
-             * nằm trong ExchangeService, view không phải biết.
-             */
             'exchangeBlocked' => $doiHang->lyDoKhongDoiDuoc($order),
             'exchangeable' => $order->items->mapWithKeys(fn ($item) => [
                 $item->id => $doiHang->conDoiDuoc($item),
@@ -173,14 +119,6 @@ class OrderController extends Controller
                 $item->id => $doiHang->lyDoDongKhongDoiDuoc($item),
             ]),
 
-            /*
-             * HÀNG DÙNG ĐỂ ĐỔI — lọc ngay ở đây, không để người lập phiếu
-             * chọn một món rồi mới bị từ chối.
-             *
-             * Hoa tươi không đổi được nên không xuất hiện trong danh sách;
-             * dịch vụ vẫn kiểm lại lần nữa, vì danh sách chỉ là gợi ý còn
-             * dữ liệu gửi lên thì ai cũng sửa được.
-             */
             'hangDoiDuoc' => \App\Models\Product::query()
                 ->where('status', 'active')
                 ->where('product_type', '!=', \App\Enums\ProductType::Flower->value)
@@ -194,23 +132,7 @@ class OrderController extends Controller
                 $item->id => (int) $item->quantity - $refunds->soDaTra($item),
             ]),
 
-            /*
-             * Đơn đã huỷ mà khách đã trả tiền = cửa hàng đang nợ khách.
-             *
-             * Hệ thống KHÔNG tự đánh dấu "đã hoàn tiền": nó không biết
-             * ai đó có thật sự chuyển khoản trả lại hay chưa. Việc của
-             * phần mềm là nhắc; việc chuyển tiền là của con người.
-             */
             'owesRefund' => $this->orders->owesRefund($order),
-            /*
-             * CHỈ BÀY NÚT MÀ BẤM VÀO ĐƯỢC.
-             *
-             * "Đã hoàn tiền" không còn là một nút — nó là hệ quả của các lần
-             * hoàn ghi ở mục Hoàn tiền. "Gỡ đánh dấu" thì OrderService từ
-             * chối với đơn đã giao hoặc đã có khoản hoàn; bày nút ra ở đó là
-             * một nút lúc nào bấm cũng báo lỗi.
-             */
-            // Đơn trả góp: "đã thanh toán" là hệ quả của kỳ cuối, ghi từng kỳ ở khối Trả góp — không bày nút.
             'paymentTargets' => $order->payment_method === \App\Enums\PaymentMethod::TraGop ? [] : array_values(array_filter(
                 $order->payment_status->nextStates(),
                 fn ($t) => $t !== PaymentStatus::Refunded
@@ -245,28 +167,6 @@ class OrderController extends Controller
         return back()->with('success', 'Đã cập nhật trạng thái đơn hàng.');
     }
 
-    /**
-     * Đổi trạng thái thanh toán.
-     *
-     * MỘT ROUTE CHO CẢ BA THAO TÁC (ghi nhận đã trả / hoàn tiền / sửa
-     * bấm nhầm), không phải ba route. Luật chuyển trạng thái nằm trọn
-     * trong PaymentStatus + OrderService; thêm route là thêm chỗ để
-     * quên một phép kiểm.
-     */
-    /**
-     * Sửa thông tin giao hàng — khách gọi báo "em nhập nhầm số điện thoại".
-     * ============================================================
-     * CHỈ KHI ĐƠN CÒN Ở "CHỜ XÁC NHẬN" / "ĐÃ XÁC NHẬN" VÀ CHƯA CÓ VẬN ĐƠN.
-     * Đang chuẩn bị hoặc đã bàn giao GHN thì phiếu in, vận đơn đã mang
-     * thông tin cũ — sửa ở đây là hai tờ giấy nói hai địa chỉ.
-     *
-     * KHÔNG SỬA TỈNH / QUẬN / PHƯỜNG. Phí ship khách đã trả và mã địa giới
-     * GHN tính từ ba ô đó; đổi mà không tính lại là sai tiền. Chỉ sửa người
-     * nhận, số điện thoại, số nhà / đường, ngày giao và ghi chú. Đổi hẳn
-     * khu vực thì huỷ đơn để khách đặt lại.
-     *
-     * Ghi nhật ký từng ô "cũ → mới": đơn là chứng từ, sửa phải để lại dấu.
-     */
     public function updateDelivery(Request $request, Order $order): RedirectResponse
     {
         if (! self::suaDuocGiaoHang($order)) {
@@ -316,7 +216,6 @@ class OrderController extends Controller
         return back()->with('success', $doi === [] ? 'Không có gì thay đổi.' : 'Đã sửa thông tin giao hàng.');
     }
 
-    /** Một luật cho cả controller lẫn giao diện: không bày form sẽ bị từ chối. */
     public static function suaDuocGiaoHang(Order $order): bool
     {
         return in_array($order->status, [OrderStatus::Pending, OrderStatus::Confirmed], true)
@@ -344,17 +243,6 @@ class OrderController extends Controller
         });
     }
 
-    /**
-     * Ghi chú nội bộ của đơn.
-     *
-     * CHỈ CỬA HÀNG ĐỌC — khách không bao giờ thấy. Đây là chỗ ghi những
-     * thứ đơn hàng không có ô nào chứa: "đã gọi 2 lần không nghe",
-     * "khách hẹn giao sau 17h", "shipper báo nhà khoá cửa".
-     *
-     * Cột `admin_note` có từ lúc dựng bảng `orders` nhưng CHƯA TỪNG có
-     * giao diện nào ghi vào — nên mọi ghi chú kiểu này trước giờ nằm
-     * trong đầu người trực, và mất khi đổi ca.
-     */
     public function updateNote(Request $request, Order $order): RedirectResponse
     {
         $data = $request->validate([
@@ -363,23 +251,12 @@ class OrderController extends Controller
             'admin_note.max' => 'Ghi chú không được vượt quá 2000 ký tự.',
         ], ['admin_note' => 'ghi chú']);
 
-        /*
-         * Gán trực tiếp chứ không update([...]): `admin_note` cố ý nằm
-         * ngoài $fillable của Order để không request nào của KHÁCH ghi
-         * vào được. Ở đây là route quản trị, gán tay là đúng đường.
-         */
         $order->admin_note = $data['admin_note'] ?: null;
         $order->save();
 
         return back()->with('success', 'Đã lưu ghi chú.');
     }
 
-    /**
-     * Số đơn theo từng trạng thái, cho các tab lọc.
-     * Một truy vấn GROUP BY thay vì đếm riêng từng trạng thái.
-     *
-     * @return array<string, int>
-     */
     private function countsByStatus(): array
     {
         return Order::query()
@@ -389,23 +266,6 @@ class OrderController extends Controller
             ->all();
     }
 
-    /* ============ VẬN ĐƠN GIAO HÀNG NHANH ============ */
-
-    /**
-     * Bàn giao đơn cho GHN và nhận về mã vận đơn.
-     *
-     * NÚT NÀY DÀNH CHO ĐƠN CHƯA TRẢ TIỀN, và cho lúc tạo tự động hỏng.
-     *
-     * Tạo vận đơn là cam kết với GHN: họ sẽ cử người tới lấy hàng, và
-     * tính tiền cửa hàng. Với đơn COD, thứ duy nhất đứng sau lời hứa của
-     * khách là lời hứa đó — nên cửa hàng phải nhìn đơn trước khi cam
-     * kết. Làm tự động lúc khách bấm đặt nghĩa là mọi đơn đặt nhầm, hết
-     * hàng, hay huỷ sau ba phút đều thành một chuyến xe có thật.
-     *
-     * Đơn đã trả tiền qua cổng thì KHÁC: vận đơn được tạo tự động ngay
-     * khi tiền về — xem MomoController::hoanTatSauThanhToan(). Nút này
-     * vẫn giữ nguyên làm đường lui khi lần tạo tự động đó lỗi mạng.
-     */
     public function createShipment(Order $order, GHNOrderService $ghnOrders): RedirectResponse
     {
         $ketQua = $ghnOrders->create($order);
@@ -428,13 +288,6 @@ class OrderController extends Controller
             : 'Đã tạo vận đơn GHN: '.($ketQua['data']['order_code'] ?? ''));
     }
 
-    /**
-     * Huỷ vận đơn đã tạo.
-     *
-     * KHÔNG xoá mã vận đơn khỏi đơn hàng sau khi huỷ — mã đó là bằng
-     * chứng cửa hàng đã từng bàn giao và đã huỷ. Xoá đi thì đơn trông
-     * như chưa bao giờ gửi, và không đối soát được với hoá đơn GHN.
-     */
     public function cancelShipment(Order $order, GHNOrderService $ghnOrders): RedirectResponse
     {
         $ketQua = $ghnOrders->cancel($order);

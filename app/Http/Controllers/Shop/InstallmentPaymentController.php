@@ -12,12 +12,7 @@ use App\Services\Payment\PaymentException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-/**
- * Khách trả kỳ trả góp kế tiếp qua MoMo. Mỏng: luật ở InstallmentService.
- *
- * Kết quả về qua đúng callback/IPN MoMo sẵn có — chữ ký, đối chiếu số tiền,
- * chống ghi hai lần đều dùng lại, không có đường về thứ hai.
- */
+/** Khách trả kỳ trả góp kế tiếp qua MoMo. */
 class InstallmentPaymentController extends Controller
 {
     use AuthorizesOrderAccess;

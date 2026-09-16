@@ -1,44 +1,9 @@
 import { DisplaySchemeStore } from './display-scheme';
 
-/**
- * NÚT ĐỔI NỀN SÁNG / TỐI
- * ============================================================
- * TĂNG CƯỜNG, KHÔNG PHẢI ĐIỀU KIỆN. Không có tệp này thì nút vẫn là một
- * biểu mẫu POST bình thường: bấm → trang tải lại với nền mới. Ở đây chỉ
- * bỏ đi cú tải lại đó.
- *
- * VÌ SAO PHẢI CÓ JAVASCRIPT MỚI BIẾT NÊN CHUYỂN SANG ĐÂU:
- *
- * Khi người dùng để "theo hệ thống", máy chủ chỉ biết là "auto" — nó
- * KHÔNG biết máy của họ đang để sáng hay tối, vì thông tin đó chỉ có ở
- * trình duyệt. Cùng một trang HTML, người để máy sáng đang xem nền
- * sáng, người để máy tối đang xem nền tối.
- *
- * Nên giá trị gửi đi phải tính từ chế độ ĐANG THẤY, không phải từ cookie.
- */
-/*
- * ĐÃ THEO DÕI HỆ ĐIỀU HÀNH CHƯA — cờ ở phạm vi module, không phải trong hàm.
- *
- * Hàm này được gọi LẠI sau mỗi lần trang quản trị thay ruột (xem bootUi ở
- * app.js). Đăng ký lại listener của matchMedia mỗi lần là mỗi lần máy đổi
- * sáng/tối thì trang chạy nhiều lượt xử lý cho cùng một sự kiện.
- */
+/** NÚT ĐỔI NỀN SÁNG / TỐI */
 let daTheoDoiHeDieuHanh = false;
 
 export function initSchemeToggle() {
-    /*
-     * CHỈ GẮN CHO FORM CHƯA GẮN.
-     *
-     * LỖI ĐÃ ĐO ĐƯỢC: nút sáng/tối nằm ở thanh trên cùng của trang quản trị —
-     * phần KHÔNG bị thay khi điều hướng. Mỗi lần đổi trang, bootUi() gọi lại
-     * hàm này và gắn thêm một listener nữa lên đúng cái form cũ. Hai listener
-     * thì một cú bấm chạy hai lượt: lượt đầu sáng→tối, lượt sau tối→sáng, và
-     * màn hình không đổi gì. Tái hiện: mở /admin/dashboard, bấm một mục bất kỳ
-     * ở thanh bên, rồi bấm nút sáng/tối — không có gì xảy ra.
-     *
-     * Đúng luật đã ghi ở bootUi: "cái nào gắn sự kiện lên phần tử thì phải tự
-     * đánh dấu phần tử đã gắn".
-     */
     const forms = document.querySelectorAll('[data-scheme-toggle]:not([data-scheme-bound])');
 
     forms.forEach((form) => {
@@ -46,14 +11,6 @@ export function initSchemeToggle() {
 
         const input = form.querySelector('[data-scheme-value]');
 
-        /*
-         * Cập nhật giá trị NGAY khi tải trang, không đợi tới lúc bấm.
-         *
-         * Giá trị do máy chủ dựng chỉ đúng khi người dùng đã tự chọn
-         * sáng hoặc tối. Với "auto" nó có thể ngược hẳn — và nếu chỉ sửa
-         * lúc bấm thì đường không-JavaScript (biểu mẫu gửi thật) sẽ mang
-         * theo giá trị sai.
-         */
         const dongBo = () => {
             if (input) input.value = DisplaySchemeStore.doiSang();
         };
@@ -65,20 +22,10 @@ export function initSchemeToggle() {
 
             const moi = DisplaySchemeStore.doiSang();
 
-            // Đổi ngay trên màn hình, TRƯỚC khi gửi: người dùng thấy kết
-            // quả tức thì, còn việc ghi cookie chạy ngầm phía sau.
             DisplaySchemeStore.apDung(moi);
 
             if (input) input.value = moi;
 
-            /*
-             * Gửi ngầm để máy chủ ghi cookie.
-             *
-             * KHÔNG tự đặt document.cookie ở đây: đường không-JavaScript
-             * đã ghi cookie qua controller, và ghi ở hai nơi là hai bộ
-             * luật về tên cookie, hạn dùng và cờ bảo mật phải giữ đồng
-             * bộ — bộ thứ hai sẽ là bộ bị quên.
-             */
             fetch(form.action, {
                 method: 'POST',
                 headers: {
@@ -88,26 +35,12 @@ export function initSchemeToggle() {
                 body: new URLSearchParams(new FormData(form)),
                 credentials: 'same-origin',
             }).catch(() => {
-                /*
-                 * Mạng hỏng thì màn hình đã đổi rồi nhưng cookie chưa
-                 * ghi được — tải lại trang sẽ về chế độ cũ. Chấp nhận
-                 * được: đây là tuỳ chọn hiển thị, không phải dữ liệu.
-                 * Báo lỗi đỏ cho một việc như thế là phản ứng quá tay.
-                 */
             });
 
             dongBo();
         });
     });
 
-    /*
-     * THEO DÕI HỆ ĐIỀU HÀNH ĐỔI SÁNG/TỐI GIỮA CHỪNG.
-     *
-     * Chỉ có ý nghĩa với người đang để "theo hệ thống": máy tự chuyển
-     * sang chế độ tối lúc chiều muộn thì trang phải đổi theo, không bắt
-     * họ tải lại. Người đã tự chọn thì KHÔNG đụng vào — lựa chọn tay
-     * luôn thắng cài đặt máy.
-     */
     if (window.matchMedia && !daTheoDoiHeDieuHanh) {
         daTheoDoiHeDieuHanh = true;
 
@@ -116,8 +49,6 @@ export function initSchemeToggle() {
 
             DisplaySchemeStore.apDung(e.matches ? 'toi' : 'sang', { giuTuDong: true });
 
-            // Hỏi lại DOM chứ không dùng `forms` của lần gọi nào: trang quản
-            // trị thay ruột liên tục, danh sách cũ có thể đã không còn trong DOM.
             document.querySelectorAll('[data-scheme-value]').forEach((input) => {
                 input.value = DisplaySchemeStore.doiSang();
             });

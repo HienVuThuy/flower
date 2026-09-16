@@ -38,7 +38,6 @@
 
     <div class="col-lg-7">
 
-        {{-- ============ HÀNG ĐI VỀ VÀ ĐI RA ============ --}}
         <div class="admin-panel p-4 mb-3">
             <h2 class="h6 fw-bold mb-3">Khách trả về</h2>
 
@@ -107,7 +106,6 @@
 
     <div class="col-lg-5">
 
-        {{-- ============ TIỀN ============ --}}
         <div class="admin-panel p-4 mb-3">
             <h2 class="h6 fw-bold mb-3">Tiền</h2>
 
@@ -130,10 +128,6 @@
                     <strong>Cửa hàng trả lại khách {{ $tien(abs((float) $phieu->chenh_lech)) }}</strong>
                 </p>
                 @if($phieu->refund)
-                    {{--
-                        Tiền chỉ có một đường ra: phiếu này không tự trả,
-                        nó trỏ sang chứng từ hoàn tiền đã có sổ riêng.
-                    --}}
                     <p class="admin-page-subtitle small mb-0">
                         Đã lập phiếu hoàn tiền <strong>{{ $phieu->refund->code }}</strong>
                         ({{ $phieu->refund->status->label() }}).
@@ -149,7 +143,6 @@
             @endif
         </div>
 
-        {{-- ============ BƯỚC TIẾP THEO ============ --}}
         @unless($phieu->status->daXong())
             <div class="admin-panel p-4 mb-3">
                 <h2 class="h6 fw-bold mb-3">Việc tiếp theo</h2>

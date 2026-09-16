@@ -6,7 +6,6 @@
 
 @php
     $suaSo = $journal->exists;
-    // Loại sổ có thể đến từ URL (bấm từ màn hình trống) hoặc từ sổ đang sửa.
     $loaiDangChon = old('kind', request('kind', $journal->kind?->value ?? 'growth'));
     $themeDangChon = old('theme_key', $journal->theme_key?->value);
 @endphp
@@ -39,18 +38,6 @@
                 <x-form-error name="title"/>
             </div>
 
-            {{--
-                LOẠI SỔ HIỆN CẢ CÂU GIẢI THÍCH VÀ CẢ NHỮNG GÌ NÓ MANG LẠI.
-
-                Trước đây chỉ có tên và một câu mô tả, nên "Phân tích cây"
-                và "Ghi chép tự do" nghe gần như nhau — người chưa dùng bao
-                giờ sẽ chọn bừa cái đầu tiên.
-
-                Nay mỗi loại liệt kê thẳng các khối mà trang sổ sẽ có. Đó
-                là thứ khác nhau thật giữa chúng, và nó lấy từ chính
-                `JournalKind::panels()` chứ không phải một danh sách chép
-                tay — nên không bao giờ lệch với thứ hiện ra sau đó.
-            --}}
             <div class="mb-3">
                 <span class="form-label d-block">Kiểu sổ</span>
 
@@ -98,13 +85,6 @@
                 <x-form-error name="kind"/>
             </div>
 
-            {{--
-                GIAO DIỆN SỔ — bộ chọn sẵn, không phải ô chọn màu tự do.
-
-                Xem chú thích ở App\Enums\JournalTheme: cho chọn mã màu tự
-                do thì sẽ có những quyển sổ chữ xám trên nền xám không đọc
-                nổi, và không có gì trong hệ thống ngăn được.
-            --}}
             <div class="mb-3">
                 <span class="form-label d-block">Giao diện sổ</span>
 
@@ -132,17 +112,6 @@
                 <x-form-error name="theme_key"/>
             </div>
 
-            {{--
-                ẢNH BÌA — không bắt buộc, và nói rõ là không bắt buộc.
-
-                Cột `cover_image` đã có từ migration đầu nhưng chưa bao giờ
-                có đường nào điền vào — một cột chết trong lược đồ. Hoặc
-                nối vào, hoặc bỏ đi; để nguyên là thứ tệ nhất, vì lần sửa
-                sau sẽ có người tưởng nó đang hoạt động.
-
-                Bộ giao diện ở trên đã đủ để mỗi quyển sổ trông khác nhau,
-                nên ảnh bìa là thêm chứ không phải thiếu-thì-xấu.
-            --}}
             <div class="mb-3">
                 <label class="form-label" for="cover_image">Ảnh bìa sổ</label>
 
@@ -185,14 +154,6 @@
                             </option>
                         @endforeach
                     </select>
-                    {{--
-                        CHỈ LIỆT KÊ CÂY ĐÃ MUA, không phải cả cửa hàng.
-
-                        Cho gắn vào bất kỳ sản phẩm nào thì trang sổ trở
-                        thành một cách dò xem cửa hàng bán gì — và tệ hơn,
-                        một cách dựng dữ liệu giả về việc mình đã mua.
-                        Xem QĐ-129.
-                    --}}
                     <p class="form-text">
                         @if($products->isEmpty())
                             Bạn chưa mua cây nào ở đây. Sổ vẫn dùng bình thường mà không cần gắn.
@@ -213,22 +174,6 @@
                 </div>
             </div>
 
-            {{--
-                SỔ NÀY SẼ HOẠT ĐỘNG THẾ NÀO — đổi theo kiểu sổ đang chọn.
-                ============================================================
-                ẨN/HIỆN BẰNG CÁCH NÂNG CẤP DẦN.
-
-                Máy chủ vẽ ra ĐỦ CẢ NĂM khối; `data-for-kinds` chỉ là gợi ý
-                cho script. Không có JavaScript thì cả năm cùng hiện — dài
-                hơn nhưng đọc vẫn đúng, và không mất ô nhập nào. Có script
-                thì chỉ còn khối của kiểu sổ đang chọn.
-
-                Nội dung mỗi khối LẤY TỪ ENUM, không chép tay: `entryFields()`
-                và `suggestedMetrics()` là cùng nguồn mà biểu mẫu ghi thêm sẽ
-                dùng sau này. Chép tay thì mô tả ở đây và thứ hiện ra thật sẽ
-                lệch nhau ngay lần sửa đầu tiên, và người dùng phát hiện bằng
-                cách chọn nhầm kiểu sổ.
-            --}}
             @foreach($kinds as $kind)
                 @php
                     $oNhap = [
@@ -262,15 +207,6 @@
                         Nút ghi có tên <em>“{{ $kind->entryWords()['add'] }}”</em>.
                     </p>
 
-                    {{--
-                        CHỈ NÓI VỀ CHỈ SỐ KHI BIỂU MẪU THẬT SỰ CÓ Ô CHỈ SỐ.
-
-                        Bản đầu hiện dòng này cho mọi kiểu sổ, nên sổ Theo
-                        dõi giá quảng cáo "chỉ số điền sẵn: Giá (₫)" trong
-                        khi biểu mẫu của nó không có hàng chỉ số nào — nó
-                        có một ô nhập giá riêng. Đúng loại lời hứa hão mà
-                        cả khối này sinh ra để tránh.
-                    --}}
                     @if($kind->hasField('metrics') && $kind->suggestedMetrics())
                         <p class="text-body-sm">
                             Chỉ số điền sẵn:
@@ -304,13 +240,6 @@
                 </div>
             @endforeach
 
-            {{--
-                MỤC TIÊU — nhóm riêng, không bắt buộc.
-
-                Chỉ thật sự có nghĩa với ba kiểu sổ. Sổ theo dõi giá và sổ
-                phân tích không có "đích" nào để tiến tới, nên khối này ở
-                đó chỉ là chỗ nhắc người ta rằng mình chưa điền gì.
-            --}}
             <fieldset class="journal-form-block mb-3 p-3 rounded"
                       data-for-kinds="goal growth free">
                 <legend class="form-label float-none w-auto px-2">Mục tiêu (không bắt buộc)</legend>
@@ -360,14 +289,6 @@
         </form>
 
         @if($suaSo)
-            {{--
-                XOÁ TÁCH HẲN KHỎI BIỂU MẪU CHÍNH.
-
-                Nút xoá nằm cạnh nút Lưu là công thức để có người bấm nhầm.
-                Đặt ra ngoài, ở một khối riêng, kèm câu nói rõ hậu quả — và
-                nhắc rằng LƯU TRỮ mới là thứ họ đang muốn trong hầu hết
-                trường hợp. Xem QĐ-130.
-            --}}
             <div class="surface-card p-4 mt-4">
                 <h2 class="text-h4 mb-2">Xoá sổ này</h2>
                 <p class="text-body-sm">

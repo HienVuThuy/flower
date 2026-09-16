@@ -7,44 +7,11 @@ use App\Models\Order;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
-/**
- * Giỏ hàng bỏ dở: khách đã chọn hàng mà không đặt.
- * ============================================================
- * ĐỊNH NGHĨA, và vì sao mỗi vế cần:
- *
- *   1. Giỏ CÒN HÀNG. Giỏ rỗng không bỏ dở gì cả — bảng `carts` có 47 dòng
- *      nhưng chỉ 3 giỏ còn hàng; đếm cả 47 là bảo cửa hàng mất 47 khách.
- *
- *   2. KHÔNG ĐỘNG TỚI QUÁ 24 GIỜ, tính theo lần sửa gần nhất của GIỎ HOẶC
- *      BẤT KỲ DÒNG NÀO. Người vừa bỏ hàng vào giỏ 10 phút trước đang mua,
- *      không phải đang bỏ.
- *
- *   3. KHÁCH CÓ TÀI KHOẢN mà đã đặt một đơn SAU lần động tới cuối thì không
- *      tính: họ đã mua, phần còn trong giỏ là món họ chọn không mua.
- *      Khách vãng lai không nối được giỏ với đơn (đơn không lưu phiên),
- *      nên KHÔNG loại được — nói ra trên giao diện.
- *
- * GIÁ TRỊ TÍNH THEO GIÁ HIỆN TẠI, qua CartItem::unitPrice() — cùng hàm trang
- * giỏ hàng dùng. Giỏ không chụp giá lúc bỏ vào; con số này trả lời "nếu họ
- * quay lại mua bây giờ thì được bao nhiêu", và giao diện gọi đúng tên như vậy.
- *
- * KHÔNG THEO KỲ ĐANG CHỌN: đây là tình trạng HIỆN TẠI, không phải chuyện đã
- * xảy ra trong một khoảng. Chia theo độ lâu thay vì theo kỳ.
- */
+/** Giỏ hàng bỏ dở: khách đã chọn hàng mà không đặt. */
 class AbandonedCarts
 {
     public const BO_SAU_GIO = 24;
 
-    /**
-     * @return array{
-     *     gio: Collection<int, array{khach: string, email: ?string, vang_lai: bool, so_mon: int,
-     *                                 gia_tri: string, khong_dinh_gia: int, lan_cuoi: Carbon, so_ngay: int,
-     *                                 mat_hang: list<string>}>,
-     *     tong_gia_tri: string, so_gio: int, so_mon: int, vang_lai: int,
-     *     theo_do_lau: array<string, int>,
-     *     theo_san_pham: Collection<int, array{ten: string, so_gio: int, so_luong: int}>
-     * }
-     */
     public function baoCao(): array
     {
         $moc = now()->subHours(self::BO_SAU_GIO);
@@ -106,11 +73,6 @@ class AbandonedCarts
 
             $matHang[] = $item->product->name . ($item->variant ? ' — ' . $item->variant->name : '');
 
-            /*
-             * GIÁ LIÊN HỆ: sản phẩm không có giá niêm yết (hoa sự kiện, cây cỡ
-             * lớn). Không cộng như 0₫ — đếm riêng để giao diện nói "chưa tính
-             * được N món".
-             */
             $coGiaRieng = $item->variant && $item->variant->price !== null;
 
             if (! $coGiaRieng && $item->product->price()->finalPrice === null) {
@@ -135,7 +97,6 @@ class AbandonedCarts
         ];
     }
 
-    /** Sản phẩm nằm lại trong nhiều giỏ bỏ dở nhất. */
     private function theoSanPham(Collection $gio): Collection
     {
         return $gio

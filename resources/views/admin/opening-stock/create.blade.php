@@ -14,12 +14,6 @@
 
 <x-admin.nhom-tab ten="nhap-kho" />
 
-{{--
-    NÓI TRƯỚC HAI ĐIỀU DỄ HIỂU NHẦM NHẤT, ngay trên biểu mẫu.
-
-    Cả hai đều là thứ mà nếu hiểu sai thì hỏng số liệu chứ không chỉ khó
-    dùng: một bên nhân đôi tồn kho, một bên biến "chưa biết" thành "biết sai".
---}}
 <div class="admin-panel p-4 mb-3">
     <h2 class="h6 fw-bold mb-2">Hai điều cần biết trước khi khai</h2>
     <ul class="mb-0 ps-3 admin-page-subtitle">
@@ -96,8 +90,6 @@
                                             @endif
                                         </td>
                                         <td>
-                                            {{-- Số lượng điền sẵn bằng tồn hiện tại, nhưng vẫn
-                                                 sửa được: có khi đếm lại thấy khác. --}}
                                             <label class="visually-hidden" for="sl-{{ $sp->id }}">
                                                 Số lượng của {{ $sp->name }}
                                             </label>
@@ -144,8 +136,6 @@
                                max="{{ \App\Services\Time\Gio::choONgay(now()) }}">
                         <x-form-error name="received_at" />
                         <div class="form-text">
-                            {{-- Ngày này quyết định từ mốc nào trở đi doanh thu có giá vốn:
-                                 luật tính lãi lấy bình quân các lần nhập TỚI NGÀY BÁN. --}}
                             Đơn bán <strong>trước</strong> ngày này vẫn không có giá vốn.
                             Nên chọn ngày bắt đầu thật sự dùng hệ thống, đừng chọn hôm nay
                             nếu cửa hàng đã bán từ trước.

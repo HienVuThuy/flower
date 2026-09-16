@@ -2,13 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Vòng đời một đơn hàng.
- *
- * Chỉ đi tiến, không nhảy lung tung: mỗi trạng thái khai rõ những
- * trạng thái kế tiếp hợp lệ ở canTransitionTo(). Nhờ vậy admin không
- * thể bấm nhầm từ "Đã giao" về "Chờ xác nhận".
- */
+/** Vòng đời một đơn hàng. */
 enum OrderStatus: string
 {
     case Pending = 'pending';
@@ -30,7 +24,6 @@ enum OrderStatus: string
         };
     }
 
-    /** Màu badge — dùng chung cho cả admin lẫn trang khách. */
     public function badge(): string
     {
         return match ($this) {
@@ -42,20 +35,6 @@ enum OrderStatus: string
         };
     }
 
-    /**
-     * Màu trong biểu đồ — THANG THỨ TỰ, không phải bộ màu danh mục.
-     *
-     * Chờ xác nhận → Đã xác nhận → Đang chuẩn bị → Đang giao → Đã giao
-     * là một dãy CÓ TRƯỚC CÓ SAU. Tô mỗi bước một màu khác hệ là vứt bỏ
-     * đúng thông tin quan trọng nhất của dãy đó: thứ tự.
-     *
-     * "Đã huỷ" KHÔNG nằm trong dãy — nó là kết cục xấu, không phải bước
-     * thứ sáu. Dùng màu trạng thái riêng, và luôn kèm nhãn chữ.
-     *
-     * Ở ENUM chứ không ở Blade: trang Phân tích và trang Tổng quan cùng
-     * vẽ biểu đồ này. Chép bảng màu sang màn hình thứ hai là hai màn
-     * hình sẽ lệch màu ngay lần đầu có người sửa một bên.
-     */
     public function vizColor(): string
     {
         return match ($this) {
@@ -68,7 +47,6 @@ enum OrderStatus: string
         };
     }
 
-    /** @return array<int, self> */
     public function nextStates(): array
     {
         return match ($this) {
@@ -76,7 +54,6 @@ enum OrderStatus: string
             self::Confirmed => [self::Preparing, self::Cancelled],
             self::Preparing => [self::Shipping, self::Cancelled],
             self::Shipping => [self::Completed, self::Cancelled],
-            // Hai trạng thái kết thúc: không đi tiếp được nữa.
             self::Completed, self::Cancelled => [],
         };
     }
@@ -86,21 +63,6 @@ enum OrderStatus: string
         return in_array($target, $this->nextStates(), strict: true);
     }
 
-    /**
-     * Trạng thái này có đáng gửi email cho khách không.
-     *
-     * KHÔNG gửi đủ sáu trạng thái. "Chờ xác nhận" đã có email lúc đặt
-     * hàng rồi; "Đang chuẩn bị" là việc nội bộ của cửa hàng, khách không
-     * làm gì với thông tin đó. Gửi mọi bước là biến hộp thư của khách
-     * thành nơi nhận thông báo rác, và rác thì người ta bỏ qua — kể cả
-     * cái quan trọng.
-     *
-     * Bốn mốc còn lại đều có việc để khách làm hoặc cần biết:
-     *   Đã xác nhận  — yên tâm là cửa hàng đã nhận đơn
-     *   Đang giao    — cần có mặt để nhận hàng
-     *   Đã giao      — đối chiếu, và là lúc mời đánh giá
-     *   Đã huỷ       — biết ngay, nhất là khi không phải họ huỷ
-     */
     public function notifiesCustomer(): bool
     {
         return in_array($this, [
@@ -111,7 +73,6 @@ enum OrderStatus: string
         ], strict: true);
     }
 
-    /** Câu tiêu đề trong email báo đổi trạng thái. */
     public function customerHeadline(): string
     {
         return match ($this) {
@@ -123,7 +84,6 @@ enum OrderStatus: string
         };
     }
 
-    /** Phần giải thích, cho khách biết tiếp theo là gì. */
     public function customerMessage(): string
     {
         return match ($this) {
@@ -143,16 +103,11 @@ enum OrderStatus: string
         };
     }
 
-    /** Đơn đã chốt xong hay chưa — dùng để khoá sửa và để thống kê. */
     public function isFinal(): bool
     {
         return in_array($this, [self::Completed, self::Cancelled], strict: true);
     }
 
-    /**
-     * Đơn còn "sống": đã trừ kho và vẫn đang chờ xử lý.
-     * Huỷ đơn ở các trạng thái này thì phải HOÀN kho.
-     */
     public function holdsStock(): bool
     {
         return ! $this->isFinal();

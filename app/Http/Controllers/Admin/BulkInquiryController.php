@@ -16,10 +16,6 @@ class BulkInquiryController extends Controller
     {
         $inquiries = BulkOrderInquiry::query()
             ->with('product')
-            /*
-             * Tìm theo tên, số điện thoại hoặc email người gửi — ba thứ
-             * admin có khi gọi lại để báo giá.
-             */
             ->when($request->filled('q'), function ($query) use ($request) {
                 $tu = trim((string) $request->query('q'));
 

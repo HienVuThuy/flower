@@ -2,13 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Phiếu kiểm kê đã điều chỉnh kho hay chưa.
- *
- * Cùng hai trạng thái với phiếu nhập, cùng ranh giới: kho đã đổi theo phiếu
- * hay chưa. Phiếu đã ghi sổ không sửa, không xoá — đếm nhầm thì lập phiếu
- * kiểm kê mới.
- */
+/** Phiếu kiểm kê đã điều chỉnh kho hay chưa. */
 enum StockCountStatus: string
 {
     case Draft = 'draft';

@@ -2,12 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Loại chi phí vận hành.
- *
- * Danh sách đóng chứ không phải ô chữ tự do: báo cáo gom theo loại, và
- * "Lương", "lương NV", "tiền lương" là ba dòng của cùng một khoản.
- */
+/** Loại chi phí vận hành. */
 enum ExpenseCategory: string
 {
     case Luong = 'luong';
@@ -38,7 +33,6 @@ enum ExpenseCategory: string
     public function hint(): string
     {
         return match ($this) {
-            // Chỗ dễ ghi trùng nhất: hàng để BÁN đã nằm ở phiếu nhập / lô hoa.
             self::VatTu => 'Túi, giấy gói, ruy băng, xốp… KHÔNG ghi hàng để bán — đã ở phiếu nhập và lô hoa.',
             self::VanChuyen => 'Xe ôm, grab tự thuê. Cước GHN đã có trong đơn — không ghi lại.',
             self::ThietBi => 'Tủ lạnh giữ hoa, máy in, kéo… mua một lần.',
@@ -46,7 +40,6 @@ enum ExpenseCategory: string
         };
     }
 
-    /** @return list<string> */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

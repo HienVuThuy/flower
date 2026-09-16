@@ -1,19 +1,6 @@
 @props(['pattern'])
 
 @php
-    /*
-     * HOA VĂN NỀN CỦA SỔ — SVG lặp, vẽ bằng currentColor.
-     * ============================================================
-     * KHÔNG DÙNG ẢNH NỀN. Một tệp PNG hoa văn phải tải thêm, mờ nét trên
-     * màn hình mật độ cao, và có đúng một màu — nên nền tối là hỏng.
-     *
-     * SVG lặp thì nhẹ hơn ảnh, nét ở mọi độ phân giải, và ăn theo màu của
-     * bộ giao diện sổ nên nền sáng hay tối đều đúng.
-     *
-     * `aria-hidden` và `pointer-events: none` (ở CSS): đây thuần tuý là
-     * trang trí. Trình đọc màn hình không có gì để đọc ở đây, và nó không
-     * được chắn chuột của các nút bên dưới.
-     */
 @endphp
 
 <svg class="journal-pattern" aria-hidden="true" focusable="false"

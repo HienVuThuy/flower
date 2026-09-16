@@ -11,19 +11,7 @@
 
         <div class="section-header">
             <div>
-                {{--
-                    NHÃN NHỎ CHỈ HIỆN KHI NÓ NÓI THÊM ĐƯỢC GÌ ĐÓ.
-
-                    Trước đây trang thường hiện nhãn "Sản phẩm", ngay dưới
-                    breadcrumb cũng viết "Sản phẩm" và ngay trên tiêu đề
-                    "Tất cả sản phẩm" — ba lần cùng một từ trong khoảng
-                    60px chiều cao.
-
-                    Khi đang xem một chương trình khuyến mại thì nhãn có
-                    việc thật: tiêu đề lúc đó là TÊN chương trình, và nhãn
-                    là thứ duy nhất cho biết đây là một đợt khuyến mại chứ
-                    không phải một danh mục.
-                --}}
+                {{-- NHÃN NHỎ CHỈ HIỆN KHI NÓ NÓI THÊM ĐƯỢC GÌ ĐÓ. --}}
                 @if($activePromotion)
                     <span class="text-label section-header__eyebrow d-block">Chương trình khuyến mại</span>
                 @endif
@@ -45,18 +33,6 @@
             </div>
         </div>
 
-        {{--
-            LỐI VÀO "CHỌN CÂY THEO NHU CẦU".
-            ============================================================
-            "Chọn cây" nay là cửa vào có hướng dẫn cho chính trang này
-            (QĐ-172), nên nó rời khỏi thanh điều hướng — và lối vào phải
-            xuất hiện ở đây, đúng chỗ khách đang bối rối.
-
-            CHỈ HIỆN KHI CHƯA LỌC GÌ. Người đã chọn bộ lọc là người biết
-            mình muốn gì; mời họ đi trả lời câu hỏi là mời họ quay lại
-            điểm xuất phát. Cũng ẩn khi đang xem một chương trình khuyến
-            mại hoặc đang tìm kiếm — lúc đó họ tới đây có mục đích rõ.
-        --}}
         @if(! request()->hasAny($moiThamSoLoc))
             <a href="{{ route('shop.advisor.index') }}" class="advisor-invite">
                 <x-site.icon name="sliders" class="advisor-invite__icon" />
@@ -102,14 +78,6 @@
                 @if($products->isEmpty())
                     <x-site.empty-state
                         title="Không tìm thấy sản phẩm phù hợp"
-                        {{--
-                            Nói rõ ĐÃ THỬ ĐẾN ĐÂU rồi mới trống.
-                            Khách gõ sai chính tả thường tưởng lỗi ở mình
-                            và gõ lại y nguyên. Câu này cho biết hệ thống
-                            đã tự dò lỗi gõ giúp rồi, vấn đề nằm ở chỗ cửa
-                            hàng không có mặt hàng đó — hai việc rất khác
-                            nhau về hành động tiếp theo.
-                        --}}
                         :text="$search->isNotEmpty()
                             ? 'Đã thử cả cách viết không dấu và các lỗi gõ gần giống nhưng vẫn không có kết quả. Cửa hàng có thể chưa bán mặt hàng này.'
                             : 'Thử từ khóa khác, hoặc xem danh mục và sản phẩm nổi bật.'"

@@ -2,18 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Chất lượng lô hoa khi nhận.
- * ============================================================
- * VÌ SAO CẦN, dù nó là đánh giá cảm tính.
- *
- * Câu hỏi thật của người đi lấy hàng không phải "ở đâu rẻ nhất" mà là "ở
- * đâu ĐÁNG TIỀN NHẤT". Một vựa rẻ hơn 10% nhưng hoa hay dập thì đắt
- * hơn, chỉ là cái đắt đó không nằm trên hoá đơn.
- *
- * Ba mức thôi. Thang 10 điểm nghe khoa học hơn nhưng không ai chấm nổi
- * ổn định, và một thang không ổn định thì so sánh trên nó là vô nghĩa.
- */
+/** Chất lượng lô hoa khi nhận. */
 enum FlowerQuality: string
 {
     case Tot = 'tot';

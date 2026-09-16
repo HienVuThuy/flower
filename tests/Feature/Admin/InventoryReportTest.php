@@ -14,35 +14,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Báo cáo tồn kho.
- * ============================================================
- * Cột `stock_quantity` một mình KHÔNG trả lời được câu hỏi nào. "Còn 5"
- * là nhiều hay ít phụ thuộc hoàn toàn vào tốc độ bán: 5 chậu sen đá bán
- * 3 cái/ngày là sắp hết, 5 bình gốm bán 1 cái/tháng là thừa.
- *
- * Bất biến được canh ở đây:
- *
- *   1. Xếp "sắp hết" theo SỐ NGÀY CÒN BÁN ĐƯỢC, không theo số lượng.
- *   2. Chưa bán được cái nào -> `cover` NULL, không phải một số lớn.
- *   3. Đơn vị kho là (sản phẩm, quy cách), không phải sản phẩm.
- *   4. Chỉ đếm đơn ĐÃ GIAO.
- *   5. Hết hàng mà đã ẩn thì không tính là "đang mất đơn".
- *   6. Không bịa giá vốn — giá trị tồn kho là theo GIÁ BÁN.
- */
+/** Báo cáo tồn kho. */
 class InventoryReportTest extends TestCase
 {
     use RefreshDatabase;
 
-    /*
-     * MẶC ĐỊNH 'active' — từ vựng THẬT của dự án.
-     *
-     * Bản đầu để 'published', một giá trị không tồn tại ở đâu trong mã
-     * nguồn. Nó khớp với hằng số cũng sai bên InventoryReport, nên cả 12
-     * bài kiểm thử đều xanh trong khi trên dữ liệu thật mục "đang mất
-     * đơn" vĩnh viễn rỗng. Bài kiểm thử chỉ có giá trị khi nó nói cùng
-     * một ngôn ngữ với phần còn lại của ứng dụng.
-     */
     private function hang(string $ten, int $ton, string $gia = '100000.00', string $trangThai = 'active'): Product
     {
         return Product::factory()
@@ -57,7 +33,6 @@ class InventoryReportTest extends TestCase
             ]);
     }
 
-    /** Ghi thẳng một đơn ĐÃ GIAO với số lượng cho trước. */
     private function daBan(Product $p, int $soLuong, ?ProductVariant $v = null, int $ngayTruoc = 1): void
     {
         $order = Order::create([
@@ -75,19 +50,6 @@ class InventoryReportTest extends TestCase
             'grand_total' => '0',
         ]);
 
-        /*
-         * `status` VÀ `created_at` phải đi qua forceFill.
-         *
-         * Cả hai CỐ Ý không nằm trong $fillable của Order: trạng thái đơn
-         * chỉ được đổi qua OrderService::changeStatus() (nơi có luật
-         * chuyển trạng thái, hoàn kho, gửi thư), còn mốc tạo thì không ai
-         * được phép gán tay.
-         *
-         * Bản đầu bài này truyền 'status' thẳng vào Order::create() —
-         * Eloquent bỏ qua trong im lặng, đơn ở lại 'pending', và báo cáo
-         * đếm được 0 sản phẩm đã bán. Bảo vệ đang làm đúng việc của nó;
-         * bài kiểm thử mới là thứ sai.
-         */
         $order->forceFill([
             'status' => OrderStatus::Completed->value,
             'created_at' => now()->subDays($ngayTruoc),
@@ -109,39 +71,16 @@ class InventoryReportTest extends TestCase
         return app(InventoryReport::class)->trongVong($ngay);
     }
 
-    /* ================= 1. XẾP THEO NGÀY, KHÔNG THEO SỐ LƯỢNG ================= */
-
     #[Test]
     public function sap_het_xep_theo_so_ngay_con_ban_duoc_chu_khong_theo_so_luong(): void
     {
-        /*
-         * BÀI QUAN TRỌNG NHẤT.
-         *
-         * "Bán chậm" còn 4 cái, "Bán nhanh" còn 10 cái. Xếp theo số
-         * lượng thì "Bán chậm" lên đầu — sai hẳn: nó còn đủ bán 60 ngày,
-         * còn "Bán nhanh" chỉ còn 1 ngày là hết.
-         */
-        /*
-         * BA MÓN, chọn số có chủ ý để phân biệt được hai cách xếp:
-         *
-         *   Gấp        tồn 20, bán 20/ngày  -> còn  1 ngày
-         *   Đủ dùng    tồn  2, bán 0.2/ngày -> còn 10 ngày
-         *   Thừa       tồn  4, bán 0.07/ngày-> còn 60 ngày (ngoài ngưỡng)
-         *
-         * Xếp theo SỐ LƯỢNG thì "Đủ dùng" (tồn 2) lên đầu — sai.
-         * Xếp theo SỐ NGÀY thì "Gấp" lên đầu — đúng.
-         *
-         * Bản đầu bài này chỉ có hai món và món kia bị lọc mất, nên chỉ
-         * còn một dòng: xếp kiểu nào cũng ra cùng kết quả và bài không đo
-         * phép xếp. Đã kiểm bằng cách đổi sang sortBy('stock').
-         */
         $gap = $this->hang('Gấp', 20);
         $duDung = $this->hang('Đủ dùng', 2);
         $thua = $this->hang('Thừa', 4);
 
-        $this->daBan($gap, 600);      // 20 cái/ngày
-        $this->daBan($duDung, 6);     // 0.2 cái/ngày
-        $this->daBan($thua, 2);       // ~0.067 cái/ngày
+        $this->daBan($gap, 600);
+        $this->daBan($duDung, 6);
+        $this->daBan($thua, 2);
 
         $ds = $this->bao()->sapHet(nguong: 14);
 
@@ -151,19 +90,12 @@ class InventoryReportTest extends TestCase
             'Đang xếp theo số lượng thay vì theo số ngày còn bán được.',
         );
 
-        // "Thừa" còn tới ~60 ngày nên KHÔNG thuộc nhóm sắp hết.
         $this->assertNotContains('Thừa', $ds->pluck('name')->all());
     }
 
     #[Test]
     public function chua_ban_duoc_cai_nao_thi_cover_la_NULL_chu_khong_phai_so_lon(): void
     {
-        /*
-         * Mẫu số bằng 0. Trả về một số rất lớn thì hàng chết vốn lại
-         * đứng đầu bảng "còn nhiều nhất" — đúng chỗ nó không nên đứng.
-         * Và "vô hạn ngày" là câu vô nghĩa: không bán được thì không có
-         * ngày nào để đếm.
-         */
         $this->hang('Không ai mua', 7);
 
         $dong = $this->bao()->rows()->firstWhere('name', 'Không ai mua');
@@ -175,24 +107,15 @@ class InventoryReportTest extends TestCase
     #[Test]
     public function hang_chua_ban_duoc_KHONG_nam_trong_muc_sap_het(): void
     {
-        // Nó thuộc mục "tiền nằm im", một vấn đề khác hẳn: mục sắp hết
-        // giục NHẬP THÊM, mục kia gợi ý XẢ BỚT.
         $this->hang('Không ai mua', 1);
 
         $this->assertTrue($this->bao()->sapHet()->isEmpty());
         $this->assertSame('Không ai mua', $this->bao()->chetVon()->first()['name']);
     }
 
-    /* ================= 2. ĐƠN VỊ KHO LÀ (SẢN PHẨM, QUY CÁCH) ================= */
-
     #[Test]
     public function moi_quy_cach_la_mot_dong_kho_rieng(): void
     {
-        /*
-         * Gom về một dòng thì báo cáo nói "còn 12" trong khi chậu sứ đã
-         * hết sạch và khách không mua được — đúng thứ báo cáo này sinh ra
-         * để phát hiện.
-         */
         $p = $this->hang('Lưỡi hổ mini', 0);
 
         foreach ([['Chậu sứ', 0], ['Chậu gốm', 12]] as [$ten, $ton]) {
@@ -215,11 +138,6 @@ class InventoryReportTest extends TestCase
     #[Test]
     public function hang_KHONG_theo_doi_ton_thi_khong_nam_trong_bao_cao(): void
     {
-        /*
-         * Với chúng, "còn bao nhiêu" không phải một câu hỏi có nghĩa —
-         * cửa hàng cố ý khai là bán không giới hạn. Đưa vào thì bảng
-         * "hết hàng" đầy những món không bao giờ hết.
-         */
         $this->hang('Có theo dõi', 5);
 
         Product::factory()
@@ -233,15 +151,9 @@ class InventoryReportTest extends TestCase
         $this->assertNotContains('Không theo dõi', $ten);
     }
 
-    /* ================= 3. CHỈ ĐƠN ĐÃ GIAO ================= */
-
     #[Test]
     public function don_chua_giao_KHONG_tinh_vao_toc_do_ban(): void
     {
-        /*
-         * Đơn đang xử lý có thể bị huỷ. Tính vào tốc độ bán thì báo cáo
-         * giục nhập hàng cho những đơn chưa chắc có thật.
-         */
         $p = $this->hang('Cây thử', 10);
 
         $order = Order::create([
@@ -280,8 +192,6 @@ class InventoryReportTest extends TestCase
         $this->assertSame(300, $this->bao(90)->rows()->firstWhere('name', 'Cây thử')['sold']);
     }
 
-    /* ================= 4. HẾT HÀNG = ĐANG MẤT ĐƠN ================= */
-
     #[Test]
     public function het_hang_ma_van_bay_ban_thi_vao_muc_dang_mat_don(): void
     {
@@ -294,27 +204,15 @@ class InventoryReportTest extends TestCase
     #[Test]
     public function het_hang_nhung_DA_AN_thi_khong_tinh_la_mat_don(): void
     {
-        /*
-         * Hết hàng của một sản phẩm đã ẩn thì không sao — khách không
-         * bấm vào được. Đưa vào danh sách "phải xử lý hôm nay" là làm
-         * loãng chính danh sách đó.
-         */
         $this->hang('Hết và đã ẩn', 0, trangThai: 'draft');
 
         $this->assertTrue($this->bao()->daHet()->isEmpty());
         $this->assertSame(0, $this->bao()->tongQuan()['out']);
     }
 
-    /* ================= 5. GIÁ TRỊ THEO GIÁ BÁN ================= */
-
     #[Test]
     public function gia_tri_ton_kho_tinh_theo_gia_ban(): void
     {
-        /*
-         * Cơ sở dữ liệu KHÔNG có giá vốn. Con số này là theo giá bán, và
-         * giao diện phải nói thẳng ra như vậy — gọi nó là "vốn tồn kho"
-         * là nói sai một con số kế toán sẽ được dùng để ra quyết định.
-         */
         $this->hang('Cây A', 4, '250000.00');
         $this->hang('Cây B', 2, '100000.00');
 

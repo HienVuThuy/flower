@@ -1,12 +1,6 @@
 @props(['target'])
 
-{{--
-    BẢNG BIỂU TƯỢNG CẢM XÚC cho ô soạn bài / bình luận.
-
-    Emoji là NỘI DUNG khách gõ, không phải icon giao diện (icon giao diện vẫn
-    là SVG). <details> nên mở được không cần JavaScript; JS chỉ lo việc chèn
-    vào đúng vị trí con trỏ — không có JS thì khách vẫn gõ emoji bằng bàn phím.
---}}
+{{-- BẢNG BIỂU TƯỢNG CẢM XÚC cho ô soạn bài / bình luận. --}}
 @php
     $nhom = [
         'Cây & hoa' => ['🌱', '🌿', '🍀', '🪴', '🌵', '🌴', '🌳', '🌸', '🌼', '🌻', '🌹', '🌷', '💐', '🍃', '🍂'],

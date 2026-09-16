@@ -42,7 +42,6 @@ class StockCountItem extends Model
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
-    /** Đếm được trừ hệ thống lúc lập phiếu. Âm = thiếu hàng. */
     public function chenhLech(): int
     {
         return $this->counted_quantity - $this->system_quantity;

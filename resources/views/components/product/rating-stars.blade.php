@@ -4,17 +4,7 @@
     'showEmpty' => false,
 ])
 
-{{--
-    Dải sao đánh giá.
-
-    Dùng icon SVG trong sprite (Bootstrap Icons, MIT) chứ không dùng ký tự
-    emoji ★ — emoji hiển thị khác nhau trên từng hệ điều hành và không
-    nhận màu của giao diện.
-
-    value = null nghĩa là CHƯA CÓ đánh giá nào. Mặc định không hiện gì:
-    một dải 5 sao rỗng trông như "sản phẩm bị chấm 0 sao", trong khi sự
-    thật chỉ là chưa ai viết.
---}}
+{{-- Dải sao đánh giá. --}}
 
 @php
     $avg = $value === null ? null : (float) $value;

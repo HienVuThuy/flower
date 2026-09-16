@@ -11,12 +11,7 @@
 
         <div class="section-header">
             <div>
-                {{--
-                    BỎ nhãn "Danh mục": breadcrumb ngay trên đã viết
-                    "Danh mục" và tiêu đề ngay dưới viết "Tất cả danh
-                    mục". Một nhãn chỉ chép lại chữ bên cạnh thì nó không
-                    phải nhãn, nó là tiếng ồn.
-                --}}
+                {{-- BỎ nhãn "Danh mục": breadcrumb ngay trên đã viết "Danh mục" và tiêu đề ngay dưới viết "Tất cả danh mục". --}}
                 <h1 class="text-h1 section-header__title">Tất cả danh mục</h1>
             </div>
         </div>

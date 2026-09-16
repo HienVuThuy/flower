@@ -1,13 +1,6 @@
 @props(['product', 'reviews', 'reviewableOrder'])
 
-{{--
-    Khối đánh giá ở trang chi tiết sản phẩm.
-
-    Form CHỈ hiện khi $reviewableOrder khác null — biến đó do
-    Review::pendingOrderFor() trả về, đúng hàm mà ReviewController dùng để
-    chặn. Một nguồn sự thật, nên không có chuyện nút hiện ra rồi bấm vào
-    lại báo "bạn không có quyền".
---}}
+{{-- Khối đánh giá ở trang chi tiết sản phẩm. --}}
 
 <div class="product-reviews" id="danh-gia">
 
@@ -21,7 +14,6 @@
         @endif
     </div>
 
-    {{-- ============ FORM VIẾT ĐÁNH GIÁ ============ --}}
     @if($reviewableOrder)
 
         <form method="POST"
@@ -37,11 +29,6 @@
             <fieldset class="mb-3">
                 <legend class="text-label mb-2">Bạn chấm mấy sao?</legend>
 
-                {{--
-                    Radio thật, không phải div bấm bằng JavaScript: bàn phím
-                    dùng được, và tắt JS vẫn gửi được đánh giá.
-                    Thứ tự 5→1 để CSS ~ tô các sao đứng trước khi rê chuột.
-                --}}
                 <div class="rating-input @error('rating') is-invalid @enderror">
                     @foreach([5, 4, 3, 2, 1] as $star)
                         <input type="radio"
@@ -87,7 +74,6 @@
 
     @endif
 
-    {{-- ============ DANH SÁCH ĐÁNH GIÁ ============ --}}
     @if($reviews->isEmpty())
 
         <p class="text-caption mb-0">
@@ -104,11 +90,6 @@
                         <div>
                             <span class="review-item__author">{{ $review->authorName() }}</span>
 
-                            {{--
-                                Nhãn này chỉ xuất hiện được khi có order_id,
-                                mà order_id chỉ được ghi khi đơn đã giao —
-                                nên nó không thể là lời quảng cáo suông.
-                            --}}
                             @if($review->order_id)
                                 <span class="review-item__verified">
                                     <x-site.icon name="check-circle" /> Đã mua hàng
@@ -127,17 +108,6 @@
                         <p class="review-item__body mb-0">{{ $review->comment }}</p>
                     @endif
 
-                    {{--
-                        PHẢN HỒI CỦA CỬA HÀNG.
-
-                        Thụt vào và đổi nền để người đọc thấy ngay đây là
-                        tiếng nói của bên bán, không phải của một khách
-                        khác. Không phân biệt được là chỗ dễ hiểu nhầm
-                        nhất trên trang đánh giá.
-
-                        Một lời xin lỗi công khai kèm cách xử lý cứu được
-                        nhiều khách hơn là giấu lời phàn nàn đi.
-                    --}}
                     @if($review->hasReply())
                         <div class="review-item__reply">
                             <div class="review-item__reply-head">

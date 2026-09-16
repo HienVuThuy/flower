@@ -1,11 +1,4 @@
-{{--
-    TRẢ GÓP CỦA ĐƠN (quản trị) — lịch, điều kiện đã chụp lúc tạo, và nút ghi
-    kỳ khách trả tại cửa hàng. Chỉ kỳ chưa trả sớm nhất có nút: dịch vụ cũng
-    chặn ghi nhảy kỳ, nút chỉ không bày ra thứ bấm vào báo lỗi.
-
-    DANH SÁCH, KHÔNG PHẢI BẢNG: khối nằm ở cột hẹp bên phải; bảng bốn cột ở đó
-    bị cắt cột tình trạng và phải cuộn ngang — đo được trên trang thật.
---}}
+{{-- TRẢ GÓP CỦA ĐƠN (quản trị) — lịch, điều kiện đã chụp lúc tạo, và nút ghi kỳ khách trả tại cửa hàng. --}}
 @if($order->installmentPlan)
     @php
         $keHoach = $order->installmentPlan;

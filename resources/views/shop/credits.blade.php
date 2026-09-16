@@ -56,8 +56,6 @@
                                     <tr>
                                         <td>
                                             @if($item['pageUrl'])
-                                                {{-- rel="noopener" bắt buộc với target="_blank":
-                                                     thiếu nó thì trang đích truy được window.opener. --}}
                                                 <a href="{{ $item['pageUrl'] }}" target="_blank" rel="noopener nofollow">
                                                     {{ $item['title'] }}
                                                 </a>

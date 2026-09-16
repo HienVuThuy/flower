@@ -8,7 +8,6 @@
         @endif
         <span class="text-muted">&times; {{ $qua->quantity }}</span>
 
-        {{-- Quà theo chương trình thì nói tên chương trình; quà kèm sản phẩm đã nằm dưới món của nó. --}}
         @if($qua->gift_campaign_id && $qua->promotion_name)
             <span class="text-muted d-block small">{{ $qua->promotion_name }}</span>
         @endif

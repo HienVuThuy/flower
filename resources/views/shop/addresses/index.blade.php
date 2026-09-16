@@ -70,10 +70,6 @@
 
                             <a href="{{ route('shop.addresses.edit', $address) }}" class="btn btn-ghost btn-sm">Sửa</a>
 
-                            {{--
-                                Xoá là thao tác không lấy lại được nên hỏi
-                                xác nhận trước. Không dùng link GET để xoá.
-                            --}}
                             <form method="POST" action="{{ route('shop.addresses.destroy', $address) }}"
                                   onsubmit="return confirm('Xoá địa chỉ này khỏi sổ?');">
                                 @csrf

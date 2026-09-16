@@ -1,13 +1,4 @@
-/*
- * Dựng trang xem thử artwork theme ở ĐÚNG kích thước hiển thị thật và
- * trên ĐÚNG màu nền của từng theme.
- *
- *     node tools/preview-theme-artwork.mjs [thư-mục-xuất]
- *
- * Vì sao cần: artwork trước đây được viết toạ độ mà không nhìn kết
- * quả, nên ra sai hình. Trang này để soi bằng mắt trước khi build.
- * Kích thước và toạ độ dưới đây phải khớp resources/css/seasonal/*.css
- */
+/* Dựng trang xem thử artwork theme ở ĐÚNG kích thước hiển thị thật và trên ĐÚNG màu nền của từng theme. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -58,7 +49,6 @@ for (const theme of THEMES) {
     html += `<div class="hero" style="background:${theme.bg}">`;
 
     for (const item of theme.items) {
-        // Nhúng base64 để ảnh chụp không phụ thuộc đường dẫn tương đối.
         const data = fs.readFileSync(path.join(IMG, item.file)).toString('base64');
         html +=
             `<div class="d" style="width:${item.w}px;height:${item.h}px;${item.css};` +

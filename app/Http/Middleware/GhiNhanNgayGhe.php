@@ -8,13 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Ghi nhận khách ghé cửa hàng hôm nay — cho chuỗi ngày ghé thăm.
- *
- * Chỉ trang GET mở bằng trình duyệt: gửi biểu mẫu, gọi JSON (ô gợi ý tìm
- * kiếm gọi theo từng phím gõ) và trang quản trị không phải "ghé thăm".
- * Xem VisitStreak.
- */
+/** Ghi nhận khách ghé cửa hàng hôm nay — cho chuỗi ngày ghé thăm. */
 class GhiNhanNgayGhe
 {
     public function handle(Request $request, Closure $next): Response

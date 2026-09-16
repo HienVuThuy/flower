@@ -16,20 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/**
- * Sổ thu chi: chi phí vận hành, và lãi ròng ước tính theo tháng.
- * ============================================================
- * LÀM TRONG WEB, KHÔNG PHẢI Ở BẢNG TÍNH RIÊNG — vì phần "thu" đã nằm sẵn ở
- * đây. Ghi chi phí ở Excel thì mỗi tháng phải chép tay doanh thu, tiền nhập
- * hàng, tiền hoàn từ web sang, và hai nơi lệch nhau ngay tháng đầu tiên.
- *
- * Quyền `tai-chinh`: lương từng người và lãi ròng là thứ nhạy cảm nhất của
- * cửa hàng.
- *
- * CÓ NÚT XOÁ, khác nhà cung cấp: không có chứng từ nào trỏ tới một khoản
- * chi, và một khoản ghi nhầm mà không xoá được thì làm sai lãi ròng mãi.
- * Mọi lần thêm, sửa, xoá đều vào nhật ký — kèm số tiền.
- */
+/** Sổ thu chi: chi phí vận hành, và lãi ròng ước tính theo tháng. */
 class ExpenseController extends Controller
 {
     use LogsAdminActivity;
@@ -66,7 +53,6 @@ class ExpenseController extends Controller
     {
         $thang = $this->thang($request->query('thang'));
 
-        // Tháng đang xem là tháng hiện tại thì điền hôm nay; tháng cũ thì điền ngày cuối tháng đó.
         $ngay = $thang === $this->thangHienTai()
             ? now(Gio::mui())->toDateString()
             : Carbon::createFromFormat('!Y-m', $thang, Gio::mui())->endOfMonth()->toDateString();
@@ -121,7 +107,6 @@ class ExpenseController extends Controller
     {
         $thang = $expense->spent_on->format('Y-m');
 
-        // Ghi nhật ký TRƯỚC khi xoá: xoá rồi thì không còn gì để kể.
         $this->audit()->log('expense.deleted', 'Xoá chi phí: ' . $expense->description, $expense, [
             'so_tien' => (string) $expense->amount,
             'loai' => $expense->category->value,
@@ -135,16 +120,6 @@ class ExpenseController extends Controller
             ->with('success', 'Đã xoá khoản chi.');
     }
 
-    /**
-     * Chép các khoản CỐ ĐỊNH của tháng trước sang tháng đang xem.
-     * ============================================================
-     * Người bấm, không phải bộ lập lịch: lương tháng này có thể khác tháng
-     * trước. Chép xong thì từng dòng vẫn sửa được trước khi tin nó.
-     *
-     * CHẠY LẠI KHÔNG NHÂN ĐÔI: một khoản cố định đã có trong tháng này (cùng
-     * loại, cùng mô tả) thì bỏ qua. Bấm hai lần — hoặc hai người cùng bấm —
-     * mà ra hai dòng lương là trừ lương hai lần khỏi lãi ròng.
-     */
     public function copyFixed(Request $request): RedirectResponse
     {
         $thang = $this->thang($request->input('thang'));
@@ -154,7 +129,6 @@ class ExpenseController extends Controller
             $chep = 0;
 
             foreach ($this->coDinhChuaChep($thang, khoa: true) as $cu) {
-                // Cùng ngày trong tháng; tháng ngắn hơn thì lấy ngày cuối (31/01 → 28/02).
                 $ngay = $dauThang->copy()->day(min($cu->spent_on->day, $dauThang->daysInMonth));
 
                 $moi = $cu->replicate(['created_by', 'created_by_name', 'created_at', 'updated_at']);
@@ -181,11 +155,6 @@ class ExpenseController extends Controller
                 : 'Không có khoản cố định nào cần chép.');
     }
 
-    /**
-     * Khoản cố định của tháng TRƯỚC chưa có bản tương ứng trong tháng này.
-     *
-     * @return \Illuminate\Support\Collection<int, Expense>
-     */
     private function coDinhChuaChep(string $thang, bool $khoa = false): \Illuminate\Support\Collection
     {
         $dauThang = Carbon::createFromFormat('!Y-m', $thang, Gio::mui());
@@ -212,16 +181,9 @@ class ExpenseController extends Controller
         )->values();
     }
 
-    /** @return array<string, mixed> */
     private function duLieu(Request $request): array
     {
         $data = $request->validate([
-            /*
-             * KHÔNG QUÁ CUỐI THÁNG HIỆN TẠI. Lương trả ngày 25 thì ghi trước
-             * được trong tháng; ghi cho tháng sau là một kế hoạch, không phải
-             * một khoản đã chi — và nó sẽ nằm sẵn trong lãi ròng tháng sau
-             * trước khi tháng đó bắt đầu.
-             */
             'spent_on' => ['required', 'date_format:Y-m-d', 'before_or_equal:' . now(Gio::mui())->endOfMonth()->toDateString()],
             'category' => ['required', Rule::enum(ExpenseCategory::class)],
             'description' => ['required', 'string', 'max:200'],
@@ -242,10 +204,8 @@ class ExpenseController extends Controller
 
         $data['description'] = trim($data['description']);
 
-        // Tiền đồng: không có số lẻ. Làm tròn ở đây một lần, không để mỗi báo cáo tự làm tròn một kiểu.
         $data['amount'] = bcadd(number_format((float) $data['amount'], 0, '.', ''), '0', 2);
 
-        // Ô đánh dấu bỏ tích thì không gửi gì — phải đặt lại, không thì không tắt được.
         $data['is_fixed'] = $request->boolean('is_fixed');
 
         return $data;
@@ -256,7 +216,6 @@ class ExpenseController extends Controller
         return now(Gio::mui())->format('Y-m');
     }
 
-    /** Tháng hợp lệ từ tham số; sai dạng hoặc ở tương lai thì về tháng hiện tại. */
     private function thang(mixed $gt): string
     {
         if (! is_string($gt) || ! preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $gt)) {

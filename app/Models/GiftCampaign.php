@@ -7,12 +7,7 @@ use App\Enums\PromotionStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Một chương trình quà tặng. Xem migration create_gift_tables.
- *
- * `used_count` KHÔNG nằm trong $fillable: chỉ tăng khi đơn có quà được tạo,
- * giảm khi đơn đó bị huỷ — cùng luật với lượt mã giảm giá.
- */
+/** Một chương trình quà tặng. */
 class GiftCampaign extends Model
 {
     protected $fillable = [
@@ -64,7 +59,6 @@ class GiftCampaign extends Model
         return $this->belongsTo(MemberTier::class, 'min_member_tier_id');
     }
 
-    /** Đang chạy: bật, trong thời gian, còn suất. Chưa xét điều kiện của từng đơn. */
     public function isRunning(): bool
     {
         if ($this->status !== PromotionStatus::Active) {
@@ -82,7 +76,6 @@ class GiftCampaign extends Model
         return $this->total_limit === null || $this->used_count < $this->total_limit;
     }
 
-    /** Còn bao nhiêu suất; null = không giới hạn. */
     public function conSuat(): ?int
     {
         return $this->total_limit === null ? null : max(0, $this->total_limit - $this->used_count);

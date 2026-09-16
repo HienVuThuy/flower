@@ -1,13 +1,4 @@
-{{--
-    HOÀN TIỀN của một đơn.
-    ============================================================
-    Biến cần có: $order (đã nạp refunds.items.orderItem, refunds.createdBy),
-    $refundBlocked, $refundMethods, $refundReasons, $returnable.
-
-    Trước đây chỗ này là MỘT NÚT "Đã hoàn tiền": đổi trạng thái, không ghi
-    hoàn bao nhiêu, bằng cách nào, mã giao dịch gì, và chỉ dùng được cho
-    đơn đã huỷ — đơn đã giao mà hoa héo thì không hoàn được bằng cách nào.
---}}
+{{-- HOÀN TIỀN của một đơn. --}}
 
 @php
     $tien = fn ($v) => \App\Services\Shop\Money::format((string) $v);
@@ -33,14 +24,6 @@
     @endif
 
     @if($order->invoice && ($order->refunds->isNotEmpty() || $refundBlocked === null))
-        {{--
-            HỆ THỐNG KHÔNG TỰ LẬP HOÁ ĐƠN ĐIỀU CHỈNH.
-
-            Đơn có dữ liệu hoá đơn GTGT mà trả lại tiền thì hoá đơn đã
-            xuất phải được điều chỉnh hoặc thay thế theo quy định. Phần mềm
-            này chỉ lưu dữ liệu hoá đơn, không phát hành hoá đơn điện tử —
-            im lặng ở đây là để người ta tưởng sổ sách tự khớp.
-        --}}
         <div class="alert alert-warning py-2 px-3 small">
             Đơn này có yêu cầu xuất hoá đơn GTGT ({{ $order->invoice->invoice_number }}).
             Hoàn tiền thì hoá đơn đã xuất cần được điều chỉnh bên phần mềm hoá đơn điện tử; hệ thống này không tự làm.
@@ -89,11 +72,6 @@
                     @endif
 
                     @if($r->status === \App\Enums\RefundStatus::Pending)
-                        {{--
-                            CHƯA RÕ KẾT QUẢ: MoMo không trả lời. Tiền có thể đã
-                            đi. Người thật kiểm trên cổng MoMo rồi chọn một
-                            trong hai — không có nút "hoàn lại lần nữa".
-                        --}}
                         <div class="alert alert-warning py-2 px-2 mt-2 mb-0">
                             Không nhận được trả lời từ MoMo. Tìm mã <strong>{{ $r->code }}</strong> trên cổng MoMo:
 
@@ -123,20 +101,15 @@
     @if($refundBlocked !== null)
         <p class="admin-page-subtitle mb-0">{{ $refundBlocked }}</p>
     @elseif(! auth()->user()?->can('tai-chinh'))
-        {{-- Hoàn tiền mặt / chuyển khoản hoàn tất NGAY — đó là việc tiền, thuộc quyền tài chính. --}}
         <p class="admin-page-subtitle mb-0">Ghi hoàn tiền thuộc quyền tài chính.</p>
     @else
         <form method="POST" action="{{ route('admin.orders.refunds.store', $order) }}"
               onsubmit="return confirm('Ghi hoàn tiền cho đơn {{ $order->order_number }}? Khoản hoàn đã ghi không xoá được.');">
             @csrf
 
-            {{-- MỘT CỘT: khối này nằm ở cột phải hẹp (4/12); chia đôi thì ô chọn
-                 "Chuyển khoản ngân hàng" bị cắt còn "Chuyển khoả". --}}
             <div class="row g-2">
                 <div class="col-12">
                     <label class="form-label small mb-1" for="refund-amount">Số tiền hoàn (₫)</label>
-                    {{-- Điền sẵn SỐ CÒN HOÀN ĐƯỢC — trường hợp hay gặp nhất
-                         là hoàn đủ cho đơn đã huỷ. Hoàn một phần thì sửa. --}}
                     <input type="number" id="refund-amount" name="amount" step="1" min="1"
                            max="{{ (int) $conHoan }}"
                            value="{{ old('amount', (int) $conHoan) }}"
@@ -177,14 +150,6 @@
             </div>
 
             @if($order->status === \App\Enums\OrderStatus::Completed)
-                {{--
-                    HÀNG TRẢ VỀ — chỉ cho đơn đã giao.
-
-                    "Cộng lại vào kho" tách riêng khỏi số lượng: chậu vỡ
-                    khách gửi về vẫn là hàng trả về, nhưng không bán lại
-                    được. Để trống cả bảng nếu khách không gửi hàng về
-                    (hoa héo thường chỉ gửi ảnh).
-                --}}
                 <div class="mt-3">
                     <p class="small fw-bold mb-1">Hàng khách gửi trả về (nếu có)</p>
 
@@ -199,11 +164,6 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                {{--
-                                    QUÀ TRẢ KÈM: bảng "trả r món chính → n quà" dựng theo luật của
-                                    từng món quà (GiftReturnCalculator). Nhập số món chính là ô quà
-                                    tự điền — CHỈ ĐIỀN SẴN, người lập phiếu sửa được.
-                                --}}
                                 @php $quaTraKem = app(\App\Services\Gift\GiftReturnCalculator::class)->bangTraKem($order); @endphp
                                 @foreach($order->items as $item)
                                     @php $con = max(0, $returnable[$item->id] ?? 0); @endphp

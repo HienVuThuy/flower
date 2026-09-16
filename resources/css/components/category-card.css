@@ -1,8 +1,4 @@
-/*
- * CATEGORY CARD — ảnh full-bleed + overlay, khác product-card
- * (product-card ưu tiên hiển thị giá nên tách ảnh khỏi phần chữ;
- * category-card không có giá nên chữ đặt đè lên ảnh hợp lý hơn).
- */
+/* CATEGORY CARD — ảnh full-bleed + overlay, khác product-card (product-card ưu tiên hiển thị giá nên tách ảnh… */
 
 .category-card {
     position: relative;

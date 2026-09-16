@@ -1,11 +1,4 @@
-{{--
-    MỘT KHỐI trong phần mô tả chi tiết.
-
-    Biến: $i (chỉ số dòng, hoặc '__INDEX__' cho mẫu JavaScript), $khoi (mảng).
-
-    Chỉ số nằm trong tên trường (`blocks[0][body]`) chứ không phải một ô "thứ
-    tự" riêng: thứ tự hiện ra là thứ tự các dòng gửi lên, xem ProductBlockService.
---}}
+{{-- MỘT KHỐI trong phần mô tả chi tiết. --}}
 @php
     $kind = $khoi['kind'] ?? 'text';
     $laAnh = $kind === 'image';
@@ -16,8 +9,6 @@
     <input type="hidden" name="blocks[{{ $i }}][kind]" value="{{ $kind }}">
 
     @if(! empty($khoi['id']))
-        {{-- Giữ id để sửa đúng khối cũ thay vì xoá rồi tạo lại (tạo lại là mất
-             tệp ảnh đang dùng). --}}
         <input type="hidden" name="blocks[{{ $i }}][id]" value="{{ $khoi['id'] }}">
     @endif
 
@@ -28,8 +19,6 @@
         </span>
 
         <span class="block-row__tools">
-            {{-- Đổi thứ tự bằng hai nút, không kéo thả: kéo thả không dùng được
-                 bằng bàn phím, và trên điện thoại thì tranh chấp với cuộn trang. --}}
             <button type="button" class="btn btn-ghost btn-sm" data-block-up aria-label="Đưa khối lên trên">↑</button>
             <button type="button" class="btn btn-ghost btn-sm" data-block-down aria-label="Đưa khối xuống dưới">↓</button>
             <button type="button" class="btn btn-ghost btn-sm text-danger" data-block-remove aria-label="Xoá khối">✕</button>

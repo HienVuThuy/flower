@@ -16,9 +16,7 @@ use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Sổ điểm thưởng: cộng một lần, không âm, voucher đổi được là của riêng.
- */
+/** Sổ điểm thưởng: cộng một lần, không âm, voucher đổi được là của riêng. */
 class SoDiemThuongTest extends TestCase
 {
     use RefreshDatabase;
@@ -27,8 +25,6 @@ class SoDiemThuongTest extends TestCase
     {
         return app(PointLedger::class);
     }
-
-    /* ================= CỘNG ================= */
 
     #[Test]
     public function mot_viec_chi_cong_mot_lan(): void
@@ -39,7 +35,6 @@ class SoDiemThuongTest extends TestCase
         $this->assertFalse($this->so()->cong($u, 50, PointReason::DangBai, 'bai:7'), 'Duyệt lại cùng bài không cộng thêm');
         $this->assertTrue($this->so()->cong($u, 30, PointReason::DangBai, 'bai:8'));
 
-        // Cùng khoá nhưng KHÁCH KHÁC — là việc khác.
         $khac = User::factory()->create();
         $this->assertTrue($this->so()->cong($khac, 50, PointReason::DangBai, 'bai:7'));
 
@@ -53,8 +48,6 @@ class SoDiemThuongTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->so()->cong(User::factory()->create(), -100, PointReason::DangBai, 'bai:1');
     }
-
-    /* ================= ĐỔI ================= */
 
     #[Test]
     public function doi_voucher_tru_diem_va_ma_vao_vi_cua_rieng_nguoi_doi(): void
@@ -106,8 +99,6 @@ class SoDiemThuongTest extends TestCase
         $this->so()->doiVoucher($u, 'giam-20k');
     }
 
-    /* ================= MÃ CÓ CHỦ ================= */
-
     #[Test]
     public function nguoi_khac_va_khach_vang_lai_khong_dung_duoc_ma_co_chu(): void
     {
@@ -117,11 +108,9 @@ class SoDiemThuongTest extends TestCase
 
         $dv = app(CouponService::class);
 
-        // Chủ dùng được.
         Auth::login($chu);
         $this->assertSame($ma->id, $dv->resolve($ma->code, '200000.00')->id);
 
-        // Người khác biết mã: báo "không tồn tại", y như mã gõ bừa.
         Auth::login(User::factory()->create());
         try {
             $dv->resolve($ma->code, '200000.00');
@@ -130,7 +119,6 @@ class SoDiemThuongTest extends TestCase
             $this->assertSame('Mã giảm giá không tồn tại.', $e->getMessage());
         }
 
-        // Khách vãng lai.
         Auth::logout();
         $this->expectException(CouponException::class);
         $dv->resolve($ma->code, '200000.00');
@@ -148,8 +136,6 @@ class SoDiemThuongTest extends TestCase
         $this->assertDatabaseMissing('coupons', ['id' => $ma->id]);
         $this->assertDatabaseMissing('point_transactions', ['user_id' => $chu->id]);
     }
-
-    /* ================= TRANG ================= */
 
     #[Test]
     public function trang_diem_thuong_hien_so_du_khoa_goi_chua_du_va_doi_duoc(): void

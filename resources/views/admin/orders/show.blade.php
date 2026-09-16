@@ -18,8 +18,6 @@
         </div>
 
         <div class="d-flex gap-2">
-            {{-- Mở tab mới: trang in không có khung quản trị, và người dùng
-                 in xong vẫn cần trang đơn còn nguyên để làm tiếp. --}}
             <a href="{{ route('admin.orders.print', $order) }}" target="_blank" rel="noopener"
                class="btn btn-outline-admin">In phiếu</a>
             <a href="{{ route('admin.orders.index') }}" class="btn btn-outline-admin">Về danh sách</a>
@@ -30,16 +28,6 @@
 
         <div class="col-lg-7">
 
-            {{--
-                ============ CẢNH BÁO RỦI RO ============
-
-                Đặt Ở ĐẦU TRANG, trên cả danh sách sản phẩm: nhân viên mở
-                đơn ra là để bắt đầu làm hàng. Cảnh báo nằm dưới cùng thì
-                họ đọc sau khi hoa đã cắt — lúc đó biết cũng không cứu được.
-
-                Liệt kê TỪNG dấu hiệu kèm điểm. Một con số 60 trần trụi
-                không cho nhân viên biết phải hỏi gì khi gọi xác nhận.
-            --}}
             @if($order->needsRiskReview())
                 <div class="risk-panel mb-3">
                     <p class="risk-panel__title">
@@ -53,11 +41,6 @@
                     </ul>
 
                     <p class="risk-panel__note mb-0">
-                        {{--
-                            Nói rõ hệ thống KHÔNG tự quyết. Không có câu này thì
-                            nhân viên dễ coi con số như một phán quyết và từ chối
-                            đơn của khách thật.
-                        --}}
                         Đây chỉ là gợi ý dựa trên dữ liệu sẵn có — hệ thống không tự huỷ đơn nào.
                         Gọi điện xác nhận trước khi cắt hoa là đủ để loại phần lớn rủi ro.
                     </p>
@@ -82,7 +65,6 @@
                             @foreach($order->items as $item)
                                 <tr>
                                     <td>
-                                        {{-- Tên đọc từ BẢN CHỤP trong đơn, không từ bảng products --}}
                                         <div class="fw-bold">{{ $item->product_name }}</div>
 
                                         @if($item->variant_name)
@@ -94,7 +76,6 @@
                                         @endif
 
                                         @if($item->is_gift)
-                                            {{-- Dòng quà: nhắc người soạn hàng bỏ quà vào kiện. --}}
                                             <div class="admin-page-subtitle" data-dong-qua-admin="{{ $item->id }}">
                                                 <span class="badge text-bg-success">Quà miễn phí</span>
                                                 @if($item->gift_campaign_id)
@@ -107,7 +88,6 @@
                                             <div class="admin-page-subtitle">KM: {{ $item->promotion_name }}</div>
                                         @endif
 
-                                        {{-- Quà là vật phẩm tặng riêng thì không có sản phẩm — không phải "đã bị xoá". --}}
                                         @if($item->product_id === null && ! $item->is_gift)
                                             <div class="admin-page-subtitle">Sản phẩm đã bị xoá khỏi cửa hàng</div>
                                         @endif
@@ -167,7 +147,6 @@
                     @endif
                 </dl>
 
-                {{-- Sửa khi khách gọi báo nhập nhầm. Luật ở OrderController::suaDuocGiaoHang(). --}}
                 @if(\App\Http\Controllers\Admin\OrderController::suaDuocGiaoHang($order))
                     <details class="mt-3" @if($errors->hasAny(['recipient_name', 'recipient_phone', 'shipping_address', 'delivery_date', 'delivery_note'])) open @endif>
                         <summary class="small">Sửa thông tin giao hàng</summary>
@@ -243,26 +222,6 @@
                     <div><dt>Phí giao hàng</dt><dd><x-site.money :amount="(float) $order->shipping_fee" /></dd></div>
                     <div><dt>Tổng cộng</dt><dd class="fw-bold"><x-site.money :amount="(float) $order->grand_total" /></dd></div>
 
-                    {{--
-                        THUẾ GTGT — CHI TIẾT ĐẦY ĐỦ Ở TRANG QUẢN TRỊ.
-
-                        Giá niêm yết đã bao gồm VAT, nên con số này KHÔNG
-                        cộng vào tổng: nó là phần thuế NẰM TRONG tổng ở
-                        dòng trên. Đó là lý do nó thụt vào và ghi rõ "đã
-                        gồm trong tổng" — không có dòng chú thích đó thì
-                        người đọc sẽ cộng nhầm và thấy đơn lệch.
-
-                        Đơn cũ đặt trước khi hệ thống tính thuế có
-                        tax_amount = NULL, và khi ấy KHÔNG hiện gì cả.
-                        Hiện "0₫" là nói rằng đơn đó miễn thuế — sai hẳn
-                        với "không có số liệu".
-
-                        BẢNG TÁCH THEO MỨC là thứ hoá đơn GTGT bắt buộc
-                        phải ghi: 5.000.000₫ chịu 8% và 2.000.000₫ chịu
-                        10% là hai dòng khác nhau, không phải một dòng
-                        "thuế hỗn hợp". Từ khi mỗi sản phẩm có nhóm thuế
-                        riêng, một đơn có thể mang nhiều mức cùng lúc.
-                    --}}
                     @if($order->tax_amount !== null)
                         <div class="admin-money__tax">
                             <dt>
@@ -308,24 +267,8 @@
                     </div>
                 </dl>
 
-                {{--
-                    HOÁ ĐƠN GTGT — CÙNG MỘT KHỐI VỚI TRANG CỦA KHÁCH.
-
-                    Nhân viên và khách phải đọc đúng một bộ thông tin:
-                    lệch nhau ở đây là hai bên tranh cãi về mã số thuế
-                    trong lúc hàng đã giao. Xem x-order.invoice-card.
-                --}}
                 <x-order.invoice-card :invoice="$order->invoice" />
 
-                {{--
-                    ĐƠN ĐÃ HUỶ MÀ KHÁCH ĐÃ TRẢ TIỀN = CỬA HÀNG ĐANG NỢ KHÁCH.
-
-                    Hệ thống KHÔNG tự đặt "đã hoàn tiền": nó không biết ai
-                    đó có thật sự chuyển khoản trả lại hay chưa. Việc của
-                    phần mềm là NHẮC cho đến khi người thật xác nhận đã
-                    chuyển; tự đánh dấu là xoá mất khoản nợ trên giấy tờ
-                    trong khi tiền vẫn nằm ở cửa hàng.
-                --}}
                 @if($owesRefund)
                     <div class="alert alert-warning py-2 px-3 mb-3">
                         <strong>Cần hoàn tiền cho khách.</strong>
@@ -336,17 +279,7 @@
                     </div>
                 @endif
 
-                {{--
-                    Nút dựng từ PaymentStatus::nextStates() chứ không gõ tay.
-
-                    Bản trước chỉ có một nút "Đánh dấu đã thanh toán" và
-                    KHÔNG có đường lui: bấm nhầm đơn là cửa hàng giao hàng
-                    rồi không bao giờ đòi tiền, mà không sửa được. Cũng
-                    không có cách nào ghi nhận đã hoàn tiền, nên trạng thái
-                    "Đã hoàn tiền" là mã chết suốt từ lúc khai enum.
-                --}}
                 @if($paymentTargets && ! auth()->user()?->can('tai-chinh'))
-                    {{-- Không bày nút bấm vào ra 403: nói rõ việc này thuộc quyền tài chính. --}}
                     <p class="admin-page-subtitle mb-0">Ghi nhận thanh toán thuộc quyền tài chính.</p>
                 @elseif($paymentTargets)
                     <div class="d-flex flex-wrap gap-2">
@@ -383,17 +316,6 @@
 
             @include('admin.orders._doi-hang')
 
-            {{--
-                GHI CHÚ NỘI BỘ — chỉ cửa hàng đọc, khách không bao giờ thấy.
-
-                Chỗ ghi những thứ đơn hàng không có ô nào chứa: "đã gọi 2
-                lần không nghe", "khách hẹn giao sau 17h", "shipper báo
-                nhà khoá cửa".
-
-                Cột `admin_note` có từ lúc dựng bảng `orders` nhưng chưa
-                từng có giao diện nào ghi vào — nên mọi ghi chú kiểu này
-                trước giờ nằm trong đầu người trực, và mất khi đổi ca.
-            --}}
             <div class="admin-panel mb-3">
 
                 <h2 class="h6 fw-bold mb-1">Ghi chú nội bộ</h2>
@@ -436,19 +358,12 @@
 
                 @if(empty($next))
 
-                    {{-- Trạng thái kết thúc: không còn bước nào đi tiếp --}}
                     <p class="admin-page-subtitle mb-0">
                         Đơn đã ở trạng thái cuối, không thể chuyển tiếp.
                     </p>
 
                 @else
 
-                    {{--
-                        Chỉ hiện những trạng thái HỢP LỆ kế tiếp. Danh sách
-                        do OrderStatus quyết định, và OrderService kiểm tra
-                        lại lần nữa ở phía máy chủ — sửa HTML cũng không
-                        nhảy cóc được.
-                    --}}
                     <form method="POST" action="{{ route('admin.orders.update-status', $order) }}">
                         @csrf
                         @method('PATCH')
@@ -479,30 +394,6 @@
 
                 @endif
 
-                {{--
-                    LỊCH SỬ ĐI KÈM Ô ĐỔI TRẠNG THÁI, không nằm ở panel khác.
-
-                    Trước khi bấm chuyển tiếp, câu hỏi tự nhiên là "đơn
-                    này đã đi tới đâu, ai vừa động vào". Đặt lịch sử ở
-                    một khối khác thì người dùng phải nhớ nó trong đầu
-                    trong lúc thao tác — mà đó chính là lúc dễ bấm nhầm.
-
-                    showActor bật: ở khu quản trị, "ai làm" chính là câu
-                    hỏi. Trang của khách thì không, xem component.
-                --}}
-                {{--
-                    VẬN ĐƠN GIAO HÀNG NHANH.
-
-                    Đặt ngay dưới ô đổi trạng thái vì hai việc đi liền
-                    nhau trong thực tế: gói xong hàng → chuyển sang "Đang
-                    giao" → bàn giao cho GHN.
-
-                    KHÔNG tự tạo vận đơn lúc khách đặt. Tạo vận đơn là
-                    cam kết với GHN — họ cử người tới lấy hàng và tính
-                    tiền cửa hàng. Làm tự động nghĩa là mọi đơn đặt nhầm,
-                    đơn hết hàng, đơn khách huỷ sau ba phút đều thành một
-                    chuyến xe có thật.
-                --}}
                 <hr class="my-3">
 
                 <h3 class="h6 fw-bold mb-3">Vận đơn GHN</h3>
@@ -518,18 +409,8 @@
                         Trạng thái GHN: {{ $order->shipping_status }}
                     </p>
 
-                    {{--
-                        Hiện CƯỚC GHN THẬT bên cạnh phí thu của khách.
-
-                        Hai con số này khác nhau mỗi khi cửa hàng miễn phí
-                        giao cho đơn lớn: `shipping_fee` là tiền THU của
-                        khách, `ghn_total_fee` là tiền TRẢ cho GHN. Chỉ
-                        hiện một con số thì không ai biết tháng này bù lỗ
-                        bao nhiêu tiền ship.
-                    --}}
                     <p class="admin-page-subtitle mb-3">
                         @if($order->ghn_total_fee === null)
-                            {{-- NULL là "GHN không báo cước", KHÁC 0₫. --}}
                             Cước GHN: chưa có số liệu
                         @else
                             Cước GHN: <x-site.money :amount="$order->ghn_total_fee" />
@@ -537,12 +418,6 @@
                         &middot; thu của khách: <x-site.money :amount="(float) $order->shipping_fee" />
 
                         @if($order->ghn_fee_payer === \App\Enums\GhnFeePayer::Buyer)
-                            {{--
-                                VẬN ĐƠN NGƯỜI NHẬN TRẢ CƯỚC: không có khoản "cửa
-                                hàng bù" nào, vì cửa hàng không trả GHN. Ngược lại,
-                                người nhận có thể đã bị thu phí ship hai lần — nói
-                                ra để nhân viên biết mà kiểm tra với khách.
-                            --}}
                             <span class="d-block text-danger mt-1">
                                 Vận đơn này người nhận trả cước cho GHN, trong khi khách đã trả phí ship cho cửa hàng.
                                 Kiểm tra xem shipper có thu thêm của khách không.
@@ -565,12 +440,6 @@
 
                 @elseif(! $order->to_district_id)
 
-                    {{--
-                        Đơn đặt TRƯỚC khi bật tính cước GHN không có mã
-                        quận/phường, nên không tạo vận đơn tự động được.
-                        Nói thẳng lý do thay vì hiện một cái nút bấm vào
-                        chỉ báo lỗi.
-                    --}}
                     <p class="admin-page-subtitle mb-0">
                         Đơn này không có mã địa giới GHN (đặt trước khi bật tính cước GHN),
                         nên phải tạo vận đơn thủ công trên trang của GHN.
@@ -579,7 +448,6 @@
                 @else
 
                     @if(! in_array($order->status, [\App\Enums\OrderStatus::Confirmed, \App\Enums\OrderStatus::Preparing], true))
-                        {{-- Cùng luật với GHNOrderService::create(): không bày nút sẽ bị từ chối. --}}
                         <p class="admin-page-subtitle mb-0">
                             Chỉ bàn giao cho GHN khi đơn "Đã xác nhận" hoặc "Đang chuẩn bị".
                         </p>

@@ -12,10 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Thông báo trong trang: có người bình luận bài của bạn, trả lời bình luận của
- * bạn, và cửa hàng duyệt / từ chối / ẩn bài của bạn.
- */
+/** Thông báo trong trang: có người bình luận bài của bạn, trả lời bình luận của bạn, và cửa hàng duyệt / từ… */
 class ThongBaoTest extends TestCase
 {
     use RefreshDatabase;
@@ -39,7 +36,6 @@ class ThongBaoTest extends TestCase
         return $u;
     }
 
-    /** @return \Illuminate\Support\Collection<int, UserNotification> */
     private function cua(User $u)
     {
         return UserNotification::where('user_id', $u->id)->latest('id')->get();
@@ -60,7 +56,6 @@ class ThongBaoTest extends TestCase
         $this->assertSame($bai->id, $tb->community_post_id);
         $this->assertNull($tb->read_at);
 
-        // Tự bình luận bài của mình: không tự báo cho mình.
         $this->actingAs($tacGia)->post(route('shop.community.comment', $bai->id), ['body' => 'Cảm ơn mọi người.']);
         $this->assertCount(1, $this->cua($tacGia));
     }
@@ -76,7 +71,6 @@ class ThongBaoTest extends TestCase
         $this->actingAs($a)->post(route('shop.community.comment', $bai->id), ['body' => 'Bình luận gốc của A.']);
         $goc = CommunityComment::sole();
 
-        // B trả lời A: tác giả bài và A cùng được báo, mỗi người một cái.
         $this->actingAs($b)->post(route('shop.community.comment', $bai->id), ['body' => 'B trả lời A.', 'tra_loi' => $goc->id]);
 
         $this->assertCount(2, $this->cua($tacGia), 'Chủ bài: một cho bình luận gốc, một cho câu trả lời');
@@ -84,7 +78,6 @@ class ThongBaoTest extends TestCase
         $this->assertSame(NotificationType::TraLoi, $cuaA->type);
         $this->assertSame($b->id, $cuaA->actor_id);
 
-        // A trả lời chính câu trả lời của B: B được báo, A không tự nhận.
         $traLoiB = CommunityComment::where('body', 'B trả lời A.')->sole();
         $this->actingAs($a)->post(route('shop.community.comment', $bai->id), ['body' => 'A nói lại.', 'tra_loi' => $traLoiB->id]);
 
@@ -95,11 +88,6 @@ class ThongBaoTest extends TestCase
     #[Test]
     public function mot_viec_chi_mot_thong_bao_cho_moi_nguoi(): void
     {
-        /*
-         * Tác giả bài tự bình luận, rồi người khác trả lời đúng bình luận đó:
-         * tác giả vừa là chủ bài vừa là chủ bình luận gốc — vẫn chỉ nhận MỘT
-         * thông báo, không phải hai cái cho cùng một câu trả lời.
-         */
         $tacGia = User::factory()->create();
         $bai = $this->bai($tacGia);
 
@@ -167,7 +155,6 @@ class ThongBaoTest extends TestCase
         $tb = $this->cua($tacGia)->sole();
         $this->actingAs($tacGia)->get(route('shop.notifications.index'))->assertOk()->assertSee('đã bình luận bài của bạn');
 
-        // Bấm vào: đánh dấu đã đọc rồi đi tới đúng bình luận.
         $this->actingAs($tacGia)->get(route('shop.notifications.open', $tb->id))
             ->assertRedirect(route('shop.community.show', $bai->id) . '#binh-luan-' . $tb->community_comment_id);
 

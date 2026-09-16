@@ -2,15 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Tình trạng một kế hoạch trả góp.
- *
- *     đang trả ──► đã trả đủ          (trả hết các kỳ: đơn "đã thanh toán", được giao)
- *         ├──────► vỡ                  (quá hạn một kỳ vượt số ngày ân hạn: huỷ đơn, hoàn tiền đã trả)
- *         └──────► đã huỷ              (đơn bị huỷ vì lý do khác: khách hoặc cửa hàng huỷ)
- *
- * Ba trạng thái sau là điểm cuối. Chỉ "vỡ" làm giảm điểm tín dụng.
- */
+/** Tình trạng một kế hoạch trả góp. */
 enum InstallmentStatus: string
 {
     case DangTra = 'dang_tra';

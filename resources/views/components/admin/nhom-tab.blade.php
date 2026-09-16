@@ -1,18 +1,6 @@
 @props(['ten'])
 
-{{--
-    HÀNG TAB GỘP NHỮNG TRANG CÙNG MỘT VIỆC.
-    ============================================================
-    VÌ SAO: thanh bên từng có mười một mục chỉ riêng nhóm Cửa hàng — Tồn
-    đầu kỳ, Trả hàng nhà cung cấp, Loại hoa, Chuyên mục cẩm nang… mỗi cái
-    một dòng. Chúng đều là việc PHỤ của một trang chính, và người dùng tìm
-    chúng ở chính trang đó chứ không đi dò thanh bên.
-
-    Thanh bên giữ trang chính; các trang phụ thành tab ngay trên trang.
-
-    MỘT CHỖ KHAI BÁO cho mọi nhóm: thêm một trang vào nhóm là thêm một dòng
-    ở đây, không phải đi sửa từng trang trong nhóm.
---}}
+{{-- HÀNG TAB GỘP NHỮNG TRANG CÙNG MỘT VIỆC. --}}
 @php
     $nhomTab = [
         'nhap-kho' => [

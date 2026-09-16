@@ -12,29 +12,7 @@ use Illuminate\Support\Facades\Route;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Phân quyền: nhân viên vào được gì, và KHÔNG vào được gì.
- * ============================================================
- * TRƯỚC BẢN NÀY chỉ có admin/khách: ai vào được trang quản trị thì vào
- * được TẤT CẢ — giá vốn, lãi gộp, phân quyền, cấu hình cửa hàng. Một cửa
- * hàng thật có người chỉ xử lý đơn và nhập kho; đưa cho họ tài khoản
- * admin nghĩa là đưa luôn quyền đổi giá và xem lãi.
- *
- * ============================================================
- * BÀI QUAN TRỌNG NHẤT Ở ĐÂY LÀ BÀI ĐẦU TIÊN.
- *
- * Không phải "nhân viên bị chặn ở trang X" — mà là **mọi đường dẫn quản
- * trị đều có khai quyền**. Quên một dòng route là dòng đó mở cho mọi
- * nhân viên, và không có gì báo: trang vẫn chạy, vẫn đẹp, chỉ là ai cũng
- * vào được.
- *
- * ============================================================
- * ẨN Ở THANH ĐIỀU HƯỚNG KHÔNG PHẢI LÀ KHOÁ.
- *
- * Một mục bị `@can` ẩn đi mà đường dẫn vẫn mở là thứ NGUY HIỂM HƠN không
- * khoá gì: nhìn vào thì tin là đã khoá. Nên mỗi khu vực đều có hai phép
- * kiểm — không thấy mục, VÀ gõ thẳng địa chỉ vẫn bị chặn.
- */
+/** Phân quyền: nhân viên vào được gì, và KHÔNG vào được gì. */
 class PhanQuyenTest extends TestCase
 {
     use RefreshDatabase;
@@ -47,8 +25,6 @@ class PhanQuyenTest extends TestCase
 
         return $u;
     }
-
-    /* ================= KHÔNG ĐƯỜNG DẪN NÀO BỊ BỎ QUÊN ================= */
 
     #[Test]
     public function moi_duong_dan_quan_tri_deu_khai_quyen(): void
@@ -80,11 +56,6 @@ class PhanQuyenTest extends TestCase
     #[Test]
     public function ten_quyen_go_nham_thi_no_ngay_chu_khong_lang_le_cho_qua(): void
     {
-        /*
-         * Gõ nhầm `quyen:tai-chinh2` mà middleware lặng lẽ cho qua thì cả
-         * khu vực đó mất bảo vệ và không có gì báo. Hỏng lúc chạy thử còn
-         * hơn mở cửa lúc chạy thật.
-         */
         $mw = new \App\Http\Middleware\CoQuyen();
 
         $req = \Illuminate\Http\Request::create('/admin/thu');
@@ -95,9 +66,6 @@ class PhanQuyenTest extends TestCase
         $mw->handle($req, fn () => new \Illuminate\Http\Response(), 'khong-co-that');
     }
 
-    /* ================= NHÂN VIÊN BỊ CHẶN Ở ĐÂU ================= */
-
-    /** @return list<array{0: string, 1: string}> */
     public static function khuCam(): array
     {
         return [
@@ -129,18 +97,6 @@ class PhanQuyenTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        /*
-         * SO VỚI ĐỊA CHỈ DO CHÍNH route() DỰNG RA.
-         *
-         * Bản đầu của bài này viết tay `href="http://localhost/admin/users"`.
-         * Máy chủ thật in ra `http://localhost:8000/...`, nên năm phép
-         * khẳng định "không chứa" KHÔNG BAO GIỜ ĐỎ ĐƯỢC — chúng chỉ trang
-         * trí. Phép đột biến (bỏ @can quanh mục Người dùng) đi qua sạch sẽ
-         * và chỉ bị lộ nhờ chạy đột biến.
-         *
-         * Dựng từ route() thì đổi APP_URL bao nhiêu lần bài vẫn đo đúng
-         * thứ nó nói là đang đo.
-         */
         foreach ([
             'admin.users.index',
             'admin.settings.edit',
@@ -155,7 +111,6 @@ class PhanQuyenTest extends TestCase
             );
         }
 
-        // Và những mục vào được thì vẫn còn — không ẩn nhầm cả thanh.
         foreach (['admin.orders.index', 'admin.inventory.index', 'admin.reviews.index'] as $ten) {
             $this->assertStringContainsString(
                 'href="' . route($ten) . '"',
@@ -165,15 +120,9 @@ class PhanQuyenTest extends TestCase
         }
     }
 
-    /* ================= NHÂN VIÊN LÀM ĐƯỢC GÌ ================= */
-
     #[Test]
     public function nhan_vien_van_xu_ly_duoc_don_kho_danh_gia_va_bao_cao(): void
     {
-        /*
-         * Phân quyền mà khoá luôn việc của người ta thì họ quay lại xin
-         * tài khoản admin, và cả hệ thống quyền thành vô nghĩa.
-         */
         $nv = $this->nguoi(UserRole::Staff);
 
         foreach ([
@@ -205,26 +154,16 @@ class PhanQuyenTest extends TestCase
     #[Test]
     public function khach_van_khong_vao_duoc_trang_quan_tri(): void
     {
-        // Khách vãng lai: bị đẩy về trang đăng nhập. Kiểm TRƯỚC khi
-        // actingAs, vì actingAs giữ nguyên cho mọi yêu cầu sau đó.
         $this->get('/admin/dashboard')->assertRedirect();
 
-        // Đã đăng nhập nhưng là khách mua hàng: 403, không phải chuyển hướng.
         $this->actingAs($this->nguoi(UserRole::Customer))
             ->get('/admin/dashboard')
             ->assertForbidden();
     }
 
-    /* ================= KHÔNG TỰ NÂNG QUYỀN ================= */
-
     #[Test]
     public function nhan_vien_khong_tu_nang_minh_len_chu_cua_hang(): void
     {
-        /*
-         * Đây là lỗ hổng đắt nhất nếu quên: ai sửa được phân quyền thì tự
-         * cho mình mọi quyền còn lại, và mọi lớp khoá khác thành trang
-         * trí.
-         */
         $nv = $this->nguoi(UserRole::Staff);
 
         $this->actingAs($nv)
@@ -241,24 +180,16 @@ class PhanQuyenTest extends TestCase
 
         $nv = $this->nguoi(UserRole::Staff);
 
-        // Không mở được trang sửa...
         $this->actingAs($nv)
             ->get('/admin/products/' . $sp->id . '/edit')
             ->assertForbidden();
 
-        // ...và gửi thẳng biểu mẫu cũng không được.
-        //
-        // Phải kiểm cả hai: chặn trang sửa mà quên chặn đường LƯU là khoá
-        // cái cửa còn để ngỏ cái cửa sổ — người gửi chỉ cần một dòng
-        // lệnh, không cần mở trang nào.
         $this->actingAs($nv)
             ->put('/admin/products/' . $sp->id, ['name' => 'Đổi trộm', 'price' => '1000.00'])
             ->assertForbidden();
 
         $this->assertNotSame('Đổi trộm', $sp->fresh()->name);
     }
-
-    /* ================= BẢNG QUYỀN ================= */
 
     #[Test]
     public function bang_quyen_noi_dung_su_that_ve_tung_vai_tro(): void
@@ -277,7 +208,6 @@ class PhanQuyenTest extends TestCase
 
         $this->assertSame([], UserRole::Customer->quyen());
 
-        // Vai trò gán được cho tài khoản quản trị: chủ cửa hàng và nhân viên.
         $this->assertSame([UserRole::Admin, UserRole::Staff], UserRole::nhanSu());
     }
 }

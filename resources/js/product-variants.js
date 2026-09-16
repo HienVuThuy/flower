@@ -7,10 +7,7 @@ function initProductVariants() {
         return;
     }
 
-    /*
-     * Tránh khởi tạo cùng một Variant Manager
-     * nhiều lần.
-     */
+    /* Tránh khởi tạo cùng một Variant Manager nhiều lần. */
     if (container.dataset.initialized === 'true') {
         return;
     }
@@ -42,11 +39,6 @@ function initProductVariants() {
     );
 
 
-    /*
-     * ============================
-     * Lấy các row đang hiển thị
-     * ============================
-     */
     const getRows = () => {
         return [
             ...list.querySelectorAll(
@@ -56,11 +48,6 @@ function initProductVariants() {
     };
 
 
-    /*
-     * ============================
-     * Cập nhật trạng thái empty
-     * ============================
-     */
     const updateEmptyState = () => {
 
         const rows = getRows();
@@ -95,11 +82,6 @@ function initProductVariants() {
     };
 
 
-    /*
-     * ============================
-     * Đánh số Variant
-     * ============================
-     */
     const renumberRows = () => {
 
         const rows = getRows();
@@ -108,10 +90,6 @@ function initProductVariants() {
 
         rows.forEach((row) => {
 
-            /*
-             * Row đã bị ẩn do xóa Variant cũ
-             * thì bỏ qua.
-             */
             if (
                 row.classList.contains('d-none')
             ) {
@@ -149,11 +127,6 @@ function initProductVariants() {
     };
 
 
-    /*
-     * ============================
-     * Thêm Variant
-     * ============================
-     */
     const addRow = () => {
 
         const index = nextIndex++;
@@ -165,11 +138,6 @@ function initProductVariants() {
                     index
                 );
 
-        /*
-         * Nếu đang có trạng thái
-         * "Chưa có biến thể"
-         * thì ẩn nó.
-         */
         const emptyState =
             container.querySelector(
                 '[data-empty-variant]'
@@ -182,9 +150,6 @@ function initProductVariants() {
             );
         }
 
-        /*
-         * Thêm Variant mới.
-         */
         list.insertAdjacentHTML(
             'beforeend',
             html
@@ -194,10 +159,6 @@ function initProductVariants() {
 
         updateEmptyState();
 
-        /*
-         * Focus vào ô tên Variant
-         * để thao tác thuận tiện hơn.
-         */
         const rows = getRows();
 
         const newRow =
@@ -217,11 +178,6 @@ function initProductVariants() {
     };
 
 
-    /*
-     * ============================
-     * Xóa Variant
-     * ============================
-     */
     const removeRow = (button) => {
 
         const row =
@@ -244,20 +200,6 @@ function initProductVariants() {
             );
 
 
-        /*
-         * ============================
-         * Variant đã tồn tại DB
-         * ============================
-         *
-         * Không xóa HTML ngay.
-         *
-         * Chỉ đánh dấu:
-         *
-         * _delete = 1
-         *
-         * Sau khi Submit Product,
-         * ProductController sẽ xóa DB.
-         */
         if (
             existingId &&
             existingId.value &&
@@ -278,13 +220,6 @@ function initProductVariants() {
         }
 
 
-        /*
-         * ============================
-         * Variant mới chưa lưu DB
-         * ============================
-         *
-         * Xóa trực tiếp khỏi DOM.
-         */
         row.remove();
 
         renumberRows();
@@ -293,11 +228,6 @@ function initProductVariants() {
     };
 
 
-    /*
-     * ============================
-     * Nút + Thêm biến thể
-     * ============================
-     */
     addButton.addEventListener(
         'click',
         function (event) {
@@ -309,14 +239,6 @@ function initProductVariants() {
     );
 
 
-    /*
-     * ============================
-     * Nút Xóa Variant
-     * ============================
-     *
-     * Dùng event delegation vì các
-     * Variant mới được thêm bằng JS.
-     */
     container.addEventListener(
         'click',
         function (event) {
@@ -339,27 +261,12 @@ function initProductVariants() {
     );
 
 
-    /*
-     * Khởi tạo trạng thái ban đầu.
-     */
     renumberRows();
 
     updateEmptyState();
 }
 
 
-/*
- * ================================
- * Khởi chạy an toàn
- * ================================
- *
- * Nếu DOM chưa load:
- * chờ DOMContentLoaded.
- *
- * Nếu module được load sau khi DOM
- * đã sẵn sàng:
- * chạy ngay.
- */
 if (
     document.readyState === 'loading'
 ) {

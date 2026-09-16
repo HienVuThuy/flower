@@ -1,11 +1,4 @@
-{{--
-    Email báo đơn hàng đổi trạng thái.
-
-    Bảng + style nội tuyến, KHÔNG dùng class hay tệp CSS ngoài — Gmail và
-    Outlook bỏ <link> và cắt <style> ở <head>.
-
-    Mọi con số đọc từ BẢN CHỤP trong đơn, không tính lại.
---}}
+{{-- Email báo đơn hàng đổi trạng thái. --}}
 @php
     $status = $order->status;
 
@@ -16,10 +9,6 @@
         $order->shipping_province,
     ])->filter()->implode(', ');
 
-    /*
-     * Màu viền theo ý nghĩa của trạng thái. Chỉ dùng ba màu: đã huỷ là
-     * tin xấu, đã giao là kết thúc tốt, còn lại là đang tiến triển.
-     */
     $accent = match ($status->value) {
         'cancelled' => '#8a2e2e',
         'completed' => '#2f6b3f',
@@ -37,7 +26,6 @@
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px; margin:0 auto; background:#ffffff; border:1px solid #e4e2da; border-radius:8px;">
 
-    {{-- Dải màu trên cùng thay cho ảnh: ảnh trong email hay bị chặn. --}}
     <tr>
         <td style="height:4px; background:{{ $accent }}; border-radius:8px 8px 0 0; font-size:0; line-height:0;">&nbsp;</td>
     </tr>
@@ -69,7 +57,6 @@
         </td>
     </tr>
 
-    {{-- ============ SẢN PHẨM ============ --}}
     <tr>
         <td style="padding:0 24px 8px 24px;">
             <h2 style="margin:0 0 8px 0; font-size:15px;">Sản phẩm</h2>
@@ -78,7 +65,6 @@
                 @foreach($order->items as $item)
                     <tr>
                         <td style="padding:8px 0; border-bottom:1px solid #eeece4;">
-                            {{-- Đọc từ bản chụp trong đơn, không từ bảng products --}}
                             {{ $item->product_name }}
                             @if($item->variant_name)
                                 <span style="color:#5d6660;">({{ $item->variant_name }})</span>
@@ -105,7 +91,6 @@
         </td>
     </tr>
 
-    {{-- Địa chỉ giao chỉ còn ý nghĩa khi đơn chưa huỷ. --}}
     @if($status->value !== 'cancelled')
         <tr>
             <td style="padding:16px 24px; font-size:14px; line-height:1.6;">

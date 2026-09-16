@@ -8,17 +8,6 @@
         trên điện thoại ban đêm và nền sáng trên máy tính ban ngày.
     </p>
 
-    {{--
-        BA LỰA CHỌN, khác với nút hai trạng thái trên thanh
-        header. Chỗ này người ta vào để chỉnh tuỳ chọn, nên
-        "Theo hệ thống" mới có nghĩa; trên thanh header thì
-        một cái nút bấm ba lần mới về chỗ cũ là không đoán
-        nổi.
-
-        Ba nút gửi cùng một biểu mẫu bằng thuộc tính `value`
-        của chính nút bấm — không cần radio ẩn, không cần
-        JavaScript, và trình duyệt chỉ gửi đúng nút được bấm.
-    --}}
     <form action="{{ route('shop.display-scheme') }}" method="POST"
           class="d-flex flex-wrap gap-2">
         @csrf
@@ -35,10 +24,6 @@
     </form>
 
     <p class="text-caption mt-3 mb-0">
-        {{--
-            Nói thẳng cái đánh đổi, thay vì để người dùng
-            tự phát hiện bằng cách thấy nó không hoạt động.
-        --}}
         &ldquo;Theo hệ thống&rdquo; đọc cài đặt sáng/tối của máy bạn, nên cần JavaScript.
         Tắt JavaScript thì hãy chọn thẳng Nền sáng hoặc Nền tối &mdash; hai lựa chọn đó
         do máy chủ xử lý và luôn hoạt động.

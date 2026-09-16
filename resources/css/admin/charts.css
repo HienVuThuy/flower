@@ -1,54 +1,22 @@
-/* ============================================================
-   BIỂU ĐỒ TRANG QUẢN TRỊ
-   ============================================================
-   VẼ BẰNG SVG DỰNG SẴN Ở MÁY CHỦ, không dùng thư viện biểu đồ.
-
-   Một thư viện như Chart.js là ~200KB JavaScript tải về chỉ để vẽ bốn
-   hình, và nó vẽ sau khi trang đã hiện — người xem thấy khoảng trống
-   rồi mới thấy biểu đồ nhảy vào. SVG do Blade dựng thì có sẵn trong
-   HTML đầu tiên, in ra giấy được, và đọc được cả khi JavaScript hỏng.
-
-   ============================================================
-   MÀU ĐÃ ĐƯỢC KIỂM BẰNG MÁY, KHÔNG CHỌN BẰNG MẮT.
-
-   Bộ màu dưới đây chạy qua bộ kiểm sáu phép của bảng màu tham chiếu
-   (validate_palette.js) và đạt cả sáu:
-
-     - hai màu chuỗi (xanh dương / cam):  ΔE mù màu 24.7, thường 33.6
-     - thang thứ tự 5 bước cho phễu:      độ sáng đơn điệu, mỗi bước
-                                          cách nhau >= 0.06, đầu nhạt
-                                          vẫn đạt 2.06:1 trên nền sáng
-
-   ĐỪNG ĐỔI MÀU BẰNG MẮT. Hai màu trông "khác nhau rõ" với người nhìn
-   bình thường có thể trùng hệt nhau với người mù màu đỏ-lục — khoảng
-   8% nam giới. Đổi thì chạy lại bộ kiểm.
-   ============================================================ */
+/* BIỂU ĐỒ TRANG QUẢN TRỊ */
 
 .viz {
-    /* Nền để bộ kiểm đo tương phản — phải khớp --admin-surface. */
     --viz-surface: #ffffff;
     --viz-grid: color-mix(in srgb, var(--admin-ink) 12%, transparent);
     --viz-ink: var(--admin-ink);
     --viz-ink-muted: var(--admin-ink-muted);
 
-    /* Hai màu chuỗi, dùng ĐÚNG THỨ TỰ này. Thứ tự chính là cơ chế an
-       toàn với mù màu, không phải chuyện thẩm mỹ. */
     --viz-1: #2a78d6;
     --viz-2: #eb6834;
 
-    /* Thang thứ tự cho phễu và các bước có trước có sau. */
     --viz-step-1: #86b6ef;
     --viz-step-2: #5598e7;
     --viz-step-3: #2a78d6;
     --viz-step-4: #1c5cab;
     --viz-step-5: #104281;
 
-    /* Màu trạng thái — DÙNG RIÊNG, không bao giờ làm "chuỗi thứ ba".
-       Đi kèm nhãn chữ, không bao giờ để màu tự nói. */
     --viz-huy: #d03b3b;
 
-    /* Thang ĐỘ LỚN cho bản đồ nhiệt: ít → nhiều = nhạt → đậm trên nền
-       sáng. Cùng năm màu của thang thứ tự (đã qua bộ kiểm), khác vai trò. */
     --viz-heat-1: var(--viz-step-1);
     --viz-heat-2: var(--viz-step-2);
     --viz-heat-3: var(--viz-step-3);
@@ -67,9 +35,6 @@
     --viz-step-4: #3987e5;
     --viz-step-5: #184f95;
 
-    /* NỀN TỐI ĐẢO CHIỀU: "nhiều" phải là thứ nổi nhất, và trên nền tối thứ
-       nổi nhất là màu SÁNG. Dùng lại đúng năm màu tối đã qua bộ kiểm, chỉ
-       đổi thứ tự. */
     --viz-heat-1: #184f95;
     --viz-heat-2: #3987e5;
     --viz-heat-3: #6da7ec;
@@ -84,9 +49,6 @@
     overflow: visible;
 }
 
-/* Lưới và trục là ĐƯỜNG TÓC, một sắc độ so với nền. Lưới đậm thì mắt
-   đọc lưới trước dữ liệu. Nét liền, không đứt: nét đứt đọc như "dự
-   báo" hay "ngưỡng" trong khi nó chỉ là lưới. */
 .viz__grid {
     stroke: var(--viz-grid);
     stroke-width: 1;
@@ -99,7 +61,6 @@
     font-family: inherit;
 }
 
-/* Nét mảnh: 2px. Dày hơn thì đường che mất chính chỗ nó đi qua. */
 .viz__line {
     fill: none;
     stroke-width: 2;
@@ -112,12 +73,6 @@
     opacity: 0.12;
 }
 
-/*
- * ĐIỂM CHẠM TO HƠN DẤU VẼ.
- *
- * Dấu tròn 3px thì gần như không rê chuột trúng. Ô chạm trong suốt rộng
- * cả cột lo việc bắt chuột; dấu tròn chỉ lo việc nhìn.
- */
 .viz__hit {
     fill: transparent;
     cursor: crosshair;
@@ -138,30 +93,11 @@
     outline-offset: -2px;
 }
 
-/* ---------- CỘT NGANG ---------- */
-
-/*
- * NGANG chứ không dọc: tên sản phẩm tiếng Việt dài, và nhãn dọc thì
- * phải xoay chữ — thứ không ai đọc thoải mái.
- *
- * Bo 4px ở ĐẦU MÚT DỮ LIỆU, chân cột vẫn vuông và dính trục: bo cả hai
- * đầu làm cột trông như tách khỏi vạch 0.
- */
 .viz-bars {
     display: grid;
     gap: var(--space-2xs);
 }
 
-/*
- * HAI TẦNG MẶC ĐỊNH: tên + số ở trên, thanh ở dưới, rộng hết khung.
- *
- * Bản đầu đặt ba cột trên một hàng (tên 11rem | thanh | số). Trong khung
- * hẹp — biểu đồ nằm ở cột 5/12 hay 6/12 — tên chiếm 176px, con số tiền
- * chiếm phần còn lại, và thanh chỉ còn 92px. Thanh là thứ duy nhất để SO
- * ĐỘ LỚN; bóp nó lại là bóp đúng việc của biểu đồ.
- *
- * Chỉ khi KHUNG CỦA CHÍNH BIỂU ĐỒ đủ rộng mới dàn ba cột (xem @container).
- */
 .viz-bars__row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -186,8 +122,6 @@
 }
 
 .viz-bars__name {
-    /* min-width: 0 để tên dài co được — ô lưới mặc định min-width: auto,
-       và khi ấy nó đẩy cả hàng tràn ngang. */
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -204,14 +138,6 @@
 }
 
 .viz-bars__fill {
-    /*
-     * display: block BẮT BUỘC.
-     *
-     * Phần tử là <span>, mặc định `inline` — và phần tử inline bỏ qua
-     * width/height. Thiếu dòng này, đo trên trang thật: thanh 0×0px ở MỌI
-     * biểu đồ cột của trang quản trị, từ lúc dựng tới lúc phát hiện. Biểu
-     * đồ vẫn "hiện" vì còn tên và con số, nên không ai thấy thiếu thanh.
-     */
     display: block;
     height: 100%;
     background: var(--viz-1);
@@ -226,24 +152,10 @@
     white-space: nowrap;
 }
 
-/* ---------- BÁNH VÒNG ---------- */
-
 .viz-card {
     container: viz-card / inline-size;
 }
 
-/*
- * HÌNH TRÒN VÀ CHÚ GIẢI: XẾP CHỒNG, chỉ đặt cạnh nhau khi KHUNG đủ rộng.
- *
- * Bản đầu đặt cạnh nhau theo bề rộng MÀN HÌNH (@media). Nhưng biểu đồ
- * nằm trong cột 5/12, nên trên màn máy tính khung chỉ còn 231px: hình
- * chiếm 136px, chú giải còn 79px, và tên đo được 0-15px. "Đã xác nhận",
- * "Đang chuẩn bị", "Đã giao" cùng hiện thành "Đ." — ba nhãn y hệt nhau,
- * tức là chú giải mất đúng việc duy nhất của nó.
- *
- * @container đo KHUNG CỦA CHÍNH BIỂU ĐỒ, nên cùng một component đặt ở
- * cột rộng hay cột hẹp đều tự chọn đúng.
- */
 .viz-donut {
     display: grid;
     grid-template-columns: 1fr;
@@ -268,12 +180,6 @@
     }
 }
 
-/*
- * KHE 2px GIỮA CÁC MIẾNG, bằng màu nền — không phải viền.
- *
- * Viền vẽ quanh miếng thì mỗi miếng có một đường bao và hình đọc như
- * một tấm ghép; khe bằng màu nền thì chúng chỉ đơn giản không chạm nhau.
- */
 .viz-donut__seg {
     stroke: var(--viz-surface);
     stroke-width: 2;
@@ -296,13 +202,6 @@
     text-anchor: middle;
 }
 
-/*
- * CHÚ GIẢI LUÔN CÓ khi từ 2 chuỗi trở lên, và mang cả CON SỐ.
- *
- * Chấm màu đứng cạnh chữ; chữ dùng token màu chữ, không nhuộm theo màu
- * chuỗi. Màu nhuộm chữ thì người mù màu mất luôn nhãn — thứ duy nhất
- * còn lại để phân biệt.
- */
 .viz-legend {
     display: grid;
     gap: 0.15rem;
@@ -326,13 +225,6 @@
 .viz-legend__name {
     min-width: 0;
 
-    /*
-     * XUỐNG DÒNG, KHÔNG CẮT BẰNG DẤU BA CHẤM.
-     *
-     * Tên trong chú giải là kênh nhận diện duy nhất ngoài màu. Cắt nó đi
-     * thì người mù màu, và cả người không mù màu khi hai nhãn cùng bắt
-     * đầu bằng "Đ", không còn cách nào biết miếng nào là miếng nào.
-     */
     overflow-wrap: anywhere;
     color: var(--viz-ink);
 }
@@ -341,8 +233,6 @@
     color: var(--viz-ink-muted);
     font-variant-numeric: tabular-nums;
 }
-
-/* ---------- KHUNG BIỂU ĐỒ ---------- */
 
 .viz-card__head {
     display: flex;
@@ -366,13 +256,6 @@
     color: var(--viz-ink-muted);
 }
 
-/*
- * BẢNG SỐ ĐI KÈM — bắt buộc, không phải tuỳ chọn.
- *
- * Ba màu trong bộ này nằm dưới 3:1 so với nền sáng. Luật đền bù của
- * bảng màu tham chiếu: khi đó phải có nhãn hiện rõ HOẶC một bảng số.
- * Bảng còn phục vụ trình đọc màn hình và việc chép số đi chỗ khác.
- */
 .viz-table {
     width: 100%;
     font-size: 0.8125rem;
@@ -399,8 +282,6 @@
     margin-top: var(--space-2xs);
 }
 
-
-/* ============ BẢN ĐỒ NHIỆT ============ */
 
 .viz-heat {
     overflow-x: auto;
@@ -431,7 +312,6 @@
     border-radius: 2px;
 }
 
-/* Ô 0: không tô màu thang — "không có đơn" khác "có một đơn". */
 .viz-heat__cell--0 { background: transparent; box-shadow: inset 0 0 0 1px var(--viz-grid); }
 .viz-heat__cell--1 { background: var(--viz-heat-1); }
 .viz-heat__cell--2 { background: var(--viz-heat-2); }

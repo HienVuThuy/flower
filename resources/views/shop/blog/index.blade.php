@@ -28,13 +28,6 @@
             </div>
         </div>
 
-        {{--
-            LỌC CHUYÊN MỤC BẰNG ĐƯỜNG DẪN, không bằng JavaScript.
-
-            Gửi link cho nhau được, nút Back chạy đúng, Google đọc được
-            từng chuyên mục như một trang riêng — thứ cuối cùng mới là lý
-            do quan trọng nhất với một khu vực sinh ra để làm SEO.
-        --}}
         @if($categories->isNotEmpty())
             <div class="filter-chip-group mb-4">
                 <a href="{{ route('shop.blog.index') }}"
@@ -58,7 +51,6 @@
                 text="Cẩm nang đang được viết. Quay lại sau nhé." />
         @else
 
-            {{-- ---------- BÀI NỔI BẬT ---------- --}}
             @if($noiBat)
                 <a href="{{ route('shop.blog.show', $noiBat) }}" class="post-feature">
                     @if($noiBat->cover_image)
@@ -85,7 +77,6 @@
                 </a>
             @endif
 
-            {{-- ---------- DANH SÁCH ---------- --}}
             <div class="row g-4">
                 @foreach($posts as $post)
                     <div class="col-md-6 col-lg-4">

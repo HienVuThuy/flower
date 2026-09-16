@@ -1,13 +1,6 @@
 @props(['transactions'])
 
-{{--
-    NHẬT KÝ TỪNG LƯỢT THANH TOÁN — chỉ ở trang quản trị.
-
-    Đây là chỗ trả lời câu "khách bảo đã bị trừ tiền mà đơn chưa ghi
-    nhận": mỗi lần thử là một dòng, kèm mã giao dịch MoMo cấp và câu MoMo
-    trả về. Không có bảng này thì chỉ còn cột `payment_status` của đơn —
-    một chữ duy nhất, không nói được đã thử mấy lần và hỏng ở đâu.
---}}
+{{-- NHẬT KÝ TỪNG LƯỢT THANH TOÁN — chỉ ở trang quản trị. --}}
 
 @if($transactions->isNotEmpty())
     <div class="admin-panel p-4 mb-4">

@@ -1,16 +1,6 @@
 @props(['product'])
 
 @php
-    /*
-        Hiển thị đúng bộ thông tin chăm sóc của HÌNH THỨC BÁN.
-
-        Guide mục 4.4: cây chậu cần ánh sáng/đất/phân bón..., còn bó hoa
-        cần hướng dẫn giữ tươi. Trước đây component này in cứng 7 ô của
-        cây chậu nên bó hoa không bao giờ hiện được thông tin của mình.
-
-        Nhãn và biểu tượng lấy từ CareProfile — cùng một nguồn với form
-        quản trị, không chép lại.
-    */
     $profile = $product->careProfile();
     $entries = $product->careEntries();
     $fields = $profile->fields();
@@ -26,7 +16,6 @@
             @php $field = $fields[$key] ?? null; @endphp
             @continue(! $field)
 
-            {{-- Ghi chú dài để riêng ở dưới, không nhét vào lưới ô nhỏ --}}
             @continue($field['input'] === 'textarea')
 
             <div class="care-guide__item">

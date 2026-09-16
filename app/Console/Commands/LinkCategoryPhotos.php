@@ -6,17 +6,7 @@ use App\Models\Category;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Gán ảnh đã tải bằng tools/fetch-category-photos.mjs vào cột
- * categories.image.
- *
- * TÁCH RIÊNG khỏi script tải ảnh vì hai việc khác nhau: script Node chỉ
- * biết tệp, còn việc ghi vào cơ sở dữ liệu phải đi qua Eloquent để không
- * lách qua $fillable và các quy tắc của model.
- *
- * MẶC ĐỊNH KHÔNG GHI ĐÈ ảnh danh mục đã có — ảnh do cửa hàng tự tải lên
- * bao giờ cũng đúng hơn ảnh stock tải về. Muốn ghi đè thì --force.
- */
+/** Gán ảnh đã tải bằng tools/fetch-category-photos.mjs vào cột categories.image. */
 class LinkCategoryPhotos extends Command
 {
     protected $signature = 'categories:link-photos
@@ -64,13 +54,6 @@ class LinkCategoryPhotos extends Command
                 continue;
             }
 
-            /*
-             * Kiểm tra tệp CÓ THẬT trước khi ghi vào cơ sở dữ liệu.
-             *
-             * credits.json là thứ script Node ghi ra; tệp ảnh có thể đã bị
-             * xoá tay sau đó. Ghi bừa một đường dẫn chết thì thẻ danh mục
-             * hiện ô ảnh vỡ — tệ hơn hẳn hình lá giữ chỗ.
-             */
             if (! $disk->exists($file)) {
                 $this->warn(" Bỏ qua '{$slug}': không thấy tệp {$file}.");
                 $missing++;

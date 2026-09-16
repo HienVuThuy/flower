@@ -5,10 +5,6 @@
 @section('content')
 
 @php
-    /*
-     * Số lớn nhất trong biểu đồ ngày — dùng làm mốc 100% chiều cao cột.
-     * Tính ở đây một lần thay vì gọi max() trong vòng lặp.
-     */
     $peak = max(1, $daily->max('total'));
 @endphp
 
@@ -17,32 +13,12 @@
     'moTa' => 'Mọi con số dưới đây đếm trực tiếp từ cơ sở dữ liệu. Chưa có dữ liệu thì hiện là chưa có, không ước lượng.',
 ])
 
-{{--
-    ============================================================
-    PHẦN A — TIỀN VÀ ĐƠN HÀNG
-    ============================================================
-    Đặt TRÊN CÙNG, có chủ ý. Đây là câu hỏi người mở trang này hỏi
-    trước: cửa hàng bán được bao nhiêu, và đang lên hay đang xuống.
-    Phễu chuyển đổi và hành vi là để GIẢI THÍCH con số đó, nên chúng
-    đứng sau.
---}}
 <h2 class="admin-section-title">A. Tiền và đơn hàng</h2>
 
 <div class="row g-3 mb-4">
 
     <div class="col-lg-7">
         <div class="admin-panel p-4 h-100">
-            {{--
-                HAI PHÉP ĐO KHÁC ĐƠN VỊ THÌ VẼ HAI BIỂU ĐỒ, tuyệt đối
-                không chồng lên một khung với hai trục dọc.
-
-                Trục kép là cách dễ nhất để nói dối bằng biểu đồ: kéo
-                giãn một trục là hai đường cắt nhau ở bất cứ đâu người
-                vẽ muốn, và người đọc không có cách nào biết.
-
-                Hai biểu đồ chồng dọc, DÙNG CHUNG trục ngày, thì so sánh
-                vẫn dễ mà không có chỗ nào để bóp méo.
-            --}}
             <x-admin.chart.line
                 :points="$revenueDaily->map(fn ($d) => ['label' => $d['label'], 'value' => $d['revenue']])"
                 title="Doanh thu theo ngày"
@@ -62,14 +38,6 @@
     <div class="col-lg-5">
         <div class="admin-panel p-4 h-100 d-flex flex-column gap-3">
             @php
-                /*
-                 * Bảng màu trạng thái nằm ở OrderStatus::vizColor().
-                 *
-                 * Trang Tổng quan vẽ đúng biểu đồ này. Chép bảng màu
-                 * sang đó là hai màn hình lệch màu ngay lần đầu có người
-                 * sửa một bên — và không ai phát hiện, vì cả hai đều
-                 * trông bình thường khi nhìn riêng.
-                 */
             @endphp
 
             <x-admin.chart.donut
@@ -128,13 +96,6 @@
     </div>
 </div>
 
-{{--
-    ============================================================
-    PHẦN B — VẬN CHUYỂN: THU CỦA KHÁCH SO VỚI TRẢ GHN
-    ============================================================
-    Đặt ngay sau phần tiền vì nó LÀ tiền: mỗi đồng cửa hàng bù ship là
-    một đồng trừ thẳng vào doanh thu ở trên, mà doanh thu không cho thấy.
---}}
 <h2 class="admin-section-title">B. Vận chuyển: phí thu của khách so với cước trả GHN</h2>
 
 @php
@@ -145,12 +106,6 @@
 <div class="admin-panel p-4 mb-4">
 
     @if($ghnSandbox)
-        {{--
-            NÓI TRƯỚC khi đưa ra bất kỳ con số nào.
-
-            Cổng thử của GHN dùng bảng giá thử. Không có dòng này thì một
-            con số "cửa hàng bù 14.900₫" đọc ra như tiền thật đã chi.
-        --}}
         <div class="alert alert-warning py-2 px-3 small">
             Đang nối <strong>cổng thử</strong> của GHN: cước dưới đây là cước thử, không phải tiền cửa hàng thật sự trả.
         </div>
@@ -159,13 +114,6 @@
     @if($shipping['van_don'] === 0)
         <p class="analytics-empty mb-0">Chưa có vận đơn GHN nào cho các đơn đặt trong kỳ này.</p>
     @elseif($shipping['tinh_duoc'] === 0)
-        {{--
-            CÓ VẬN ĐƠN MÀ KHÔNG TÍNH ĐƯỢC CÁI NÀO — nói rõ vì sao.
-
-            In ba ô "thu 0₫ / trả 0₫ / bù 0₫" ở đây là nói "cửa hàng không
-            bù đồng nào", một câu hoàn toàn khác với "không có số liệu để
-            biết".
-        --}}
         <p class="analytics-empty mb-2">
             Có {{ $shipping['van_don'] }} vận đơn trong kỳ nhưng chưa vận đơn nào tính được khoản bù.
         </p>
@@ -184,13 +132,6 @@
             </div>
             <div class="col-12 col-sm-4">
                 @php $bu = bccomp($shipping['chenh'], '0', 2); @endphp
-                {{--
-                    NÓI BẰNG CHỮ chiều của chênh lệch.
-
-                    Một con số âm hay dương trần trụi bắt người đọc nhớ quy
-                    ước "trả trừ thu". Viết "cửa hàng bù" hay "thu dư" thì
-                    không ai đọc ngược được.
-                --}}
                 <x-admin.kpi :label="$bu > 0 ? 'Cửa hàng bù ship' : ($bu < 0 ? 'Phí ship thu dư' : 'Chênh lệch')"
                              note="Cước trả GHN trừ phí thu của khách.">
                     <span class="{{ $bu > 0 ? 'text-danger' : '' }}">
@@ -201,12 +142,6 @@
         </div>
     @endif
 
-    {{--
-        NÓI ĐÃ LOẠI NHỮNG GÌ, và vì sao.
-
-        Tổng trên chỉ đúng cho những vận đơn còn lại. Không liệt kê phần
-        bị loại thì "bù 30.000₫" đọc như con số của cả kỳ.
-    --}}
     @if($loai['nguoi_nhan_tra'] + $loai['da_huy'] + $loai['thieu_cuoc'] > 0 || $shipping['hoan_hang'] > 0)
         <ul class="admin-page-subtitle small mb-0 ps-3">
             @if($loai['nguoi_nhan_tra'] > 0)
@@ -246,14 +181,11 @@
                 <tbody>
                     @foreach($shippingMonths as $m)
                         <tr>
-                            {{-- '!' đặt ngày về 1: thiếu nó thì createFromFormat lấy NGÀY HÔM NAY
-                                 cho phần không khai, và vào ngày 31 thì "2026-02" tràn sang tháng 3. --}}
                             <td>{{ \Illuminate\Support\Carbon::createFromFormat('!Y-m', $m['thang'])->format('m/Y') }}</td>
                             <td class="text-end">{{ $m['don'] }}</td>
                             <td class="text-end">{{ $tien($m['thu']) }}</td>
                             <td class="text-end">{{ $tien($m['tra']) }}</td>
                             <td class="text-end {{ bccomp($m['chenh'], '0', 2) > 0 ? 'text-danger' : '' }}">
-                                {{-- Âm nghĩa là THU DƯ: in có dấu trừ để cột cộng lại đúng. --}}
                                 {{ $tien($m['chenh']) }}
                             </td>
                         </tr>
@@ -303,7 +235,6 @@
 
 <h2 class="admin-section-title">C. Hành vi khách hàng</h2>
 
-{{-- ============ 1. PHỄU CHUYỂN ĐỔI ============ --}}
 <div class="admin-panel p-4 mb-4">
 
     <h2 class="h6 fw-bold mb-1">Phễu chuyển đổi</h2>
@@ -328,7 +259,6 @@
                     </div>
                 @endif
 
-                {{-- $previous là null với kỳ "Toàn bộ" — component tự ẩn. --}}
                 <x-admin.trend :now="$value" :before="$previous['funnel'][$key] ?? null" />
             </div>
         @endforeach
@@ -346,7 +276,6 @@
 
 <div class="row g-4 mb-4">
 
-    {{-- ============ 2. ĐƠN HÀNG & DOANH THU ============ --}}
     <div class="col-lg-6">
         <div class="admin-panel p-4 h-100">
 
@@ -357,11 +286,6 @@
             </p>
 
             @if($orderStats['total'] === 0)
-                {{--
-                    KHÔNG bịa số khi chưa có đơn. Nói thẳng, và giải thích
-                    vì sao phễu bên trên vẫn có số ở bước "Đặt hàng":
-                    hai khối đọc hai nguồn khác nhau.
-                --}}
                 <div class="analytics-empty">
                     <p class="mb-2"><strong>Chưa có đơn hàng nào trong kỳ này.</strong></p>
                     <p class="mb-0 admin-page-subtitle">
@@ -386,8 +310,6 @@
                     <div class="stat-list__row">
                         <dt>
                             Đã huỷ
-                            {{-- invert: đơn huỷ TĂNG là tin xấu, phải hiện màu cảnh báo
-                                 chứ không phải màu xanh như mọi chỉ số khác. --}}
                             <x-admin.trend :now="$orderStats['cancelled']" :before="$previous['orders']['cancelled'] ?? null" :invert="true" />
                         </dt>
                         <dd>{{ number_format($orderStats['cancelled']) }}</dd>
@@ -406,11 +328,6 @@
                             @endif
                         </dd>
                     </div>
-                    {{--
-                        DÒNG TỔNG LÀ DOANH THU THUẦN — cùng con số trang Tổng
-                        quan đưa lên đầu. Hai trang đưa hai con số khác nhau
-                        lên vị trí nổi bật nhất là đúng lỗi đã sửa ở QĐ-218.
-                    --}}
                     <div class="stat-list__row stat-list__row--total">
                         <dt>
                             Doanh thu thuần
@@ -422,7 +339,6 @@
                         <dt>Giá trị đơn trung bình</dt>
                         <dd>
                             @if($orderStats['average'] === null)
-                                {{-- null khác 0: chưa có đơn đã giao nào để tính. --}}
                                 <span class="admin-page-subtitle">chưa tính được</span>
                             @else
                                 <x-site.money :amount="$orderStats['average']" />
@@ -435,7 +351,6 @@
         </div>
     </div>
 
-    {{-- ============ 3. TỔNG LƯỢT THEO LOẠI SỰ KIỆN ============ --}}
     <div class="col-lg-6">
         <div class="admin-panel p-4 h-100">
 
@@ -464,7 +379,6 @@
 
 </div>
 
-{{-- ============ 4. HOẠT ĐỘNG 14 NGÀY ============ --}}
 <div class="admin-panel p-4 mb-4">
 
     <h2 class="h6 fw-bold mb-1">Hoạt động 14 ngày gần nhất</h2>
@@ -473,11 +387,6 @@
         nhìn nhầm thành chuỗi ngày liền mạch.
     </p>
 
-    {{--
-        Biểu đồ vẽ bằng CSS thuần, không nạp thư viện đồ thị nào: dữ liệu
-        chỉ có 14 cột, thêm một thư viện vài trăm KB cho việc này là không
-        đáng, và mỗi thư viện là một thứ phải bảo trì về sau.
-    --}}
     <div class="bar-chart" role="img"
          aria-label="Biểu đồ số sự kiện mỗi ngày trong 14 ngày gần nhất">
         @foreach($daily as $day)
@@ -492,7 +401,6 @@
 
 </div>
 
-{{-- ============ 5. SẢN PHẨM ĐƯỢC QUAN TÂM ============ --}}
 <div class="row g-4 mb-4">
 
     @foreach([
@@ -519,7 +427,6 @@
                                             {{ $row['product']->name }}
                                         </a>
                                     @else
-                                        {{-- Nhật ký còn, sản phẩm đã bị xoá. --}}
                                         <span class="admin-page-subtitle">(sản phẩm đã xoá)</span>
                                     @endif
                                 </span>
@@ -538,7 +445,6 @@
 
 </div>
 
-{{-- ============ 6. DANH MỤC, TỪ KHOÁ, BÁN CHẠY ============ --}}
 <div class="row g-4">
 
     <div class="col-lg-4">

@@ -46,8 +46,6 @@
                                         Sửa
                                     </button>
 
-                                    {{-- Nút xoá chỉ hiện khi xoá được: bấm rồi mới nhận lỗi là dựng một ngõ cụt.
-                                         (int): SQLite có thể trả số đếm dạng chuỗi "0", và "0" === 0 là sai. --}}
                                     @if((int) $cm->posts_count === 0)
                                         <form method="POST" action="{{ route('admin.blog-categories.destroy', $cm) }}" class="d-inline"
                                               onsubmit="return confirm('Xoá chuyên mục {{ $cm->name }}?');">

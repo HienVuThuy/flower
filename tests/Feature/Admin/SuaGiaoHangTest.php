@@ -12,9 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Sửa thông tin giao hàng của đơn khi khách gọi báo nhập nhầm.
- */
+/** Sửa thông tin giao hàng của đơn khi khách gọi báo nhập nhầm. */
 class SuaGiaoHangTest extends TestCase
 {
     use RefreshDatabase;
@@ -79,7 +77,6 @@ class SuaGiaoHangTest extends TestCase
     #[Test]
     public function KHONG_sua_duoc_tinh_va_phi_ship(): void
     {
-        // Phí ship và mã GHN tính từ khu vực: ô tỉnh gửi lên bị bỏ qua.
         $don = $this->don(OrderStatus::Pending);
 
         $this->actingAs($this->nguoi())

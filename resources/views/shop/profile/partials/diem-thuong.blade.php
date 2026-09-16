@@ -11,7 +11,6 @@
         <span class="text-caption">điểm</span>
     </p>
 
-    {{-- CHUỖI NGÀY GHÉ THĂM — nói mốc kế tiếp, không nói "sắp mất" khi chưa có gì để mất. --}}
     @php $mocTiep = \App\Services\Points\VisitStreak::mocTiepTheo($diem['chuoi']); @endphp
     <div class="points-offer mb-4" data-chuoi="{{ $diem['chuoi'] }}">
         @if($diem['chuoi'] > 0)
@@ -51,13 +50,11 @@
     </div>
 
     @if($diem['so_du'] < 0)
-        {{-- Nói vì sao âm, không để khách tưởng hệ thống lỗi. --}}
         <p class="text-caption mb-4" data-so-du-am>
             Số dư đang âm vì một đơn được hoàn tiền sau khi điểm của đơn đó đã được dùng. Tích thêm điểm để đổi được ưu đãi.
         </p>
     @endif
 
-    {{-- CÁCH KIẾM ĐIỂM — đọc từ đúng các hằng số đang tính, không ghi tay. --}}
     @php
         $kiem = \App\Services\Points\PointEarning::class;
         $baiViet = \App\Services\Points\CommunityReward::class;

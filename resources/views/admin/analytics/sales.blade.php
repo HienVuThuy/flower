@@ -13,7 +13,6 @@
     $tien = fn ($v) => \App\Services\Shop\Money::format((string) $v);
 @endphp
 
-{{-- ============ 1. DANH MỤC ============ --}}
 <h2 class="admin-section-title">1. Theo danh mục</h2>
 
 <div class="row g-3 mb-4">
@@ -72,12 +71,6 @@
                 </div>
             @endif
 
-            {{--
-                NÓI RÕ VÌ SAO TỔNG NÀY KHÁC DOANH THU Ở TRANG TỔNG HỢP.
-
-                Không nói thì người đọc đặt hai con số cạnh nhau, thấy lệch,
-                và kết luận một trong hai trang tính sai.
-            --}}
             <p class="admin-page-subtitle small mb-0">
                 Tổng tiền hàng <strong>không bằng</strong> doanh thu ở trang Tổng hợp: ở đây chưa gồm phí ship
                 (không thuộc danh mục nào) và chưa trừ hoàn tiền (hoàn tiền ghi theo đơn, không theo từng món).
@@ -91,7 +84,6 @@
     </div>
 </div>
 
-{{-- ============ 2. TỈNH ============ --}}
 <h2 class="admin-section-title">2. Theo tỉnh/thành nhận hàng</h2>
 
 <div class="row g-3 mb-4">
@@ -153,7 +145,6 @@
     </div>
 </div>
 
-{{-- ============ 3. KHUNG GIỜ ============ --}}
 <h2 class="admin-section-title">3. Khách đặt hàng vào lúc nào</h2>
 
 <div class="admin-panel p-4 mb-4">
@@ -174,7 +165,6 @@
         unit="đơn" />
 
     @if($khungGio['tong'] > 0)
-        {{-- Nhãn trực tiếp có chọn lọc: chỉ nói đỉnh, không in số lên từng ô. --}}
         <p class="admin-page-subtitle small mt-2 mb-0">
             {{ $khungGio['tong'] }} đơn.
             Giờ đông nhất: <strong>{{ implode(', ', array_map(fn ($h) => $h . 'h–' . ($h + 1) . 'h', $gioDong)) }}</strong>

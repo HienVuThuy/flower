@@ -1,8 +1,4 @@
-/*
- * THEME: noel — Layer 1 (màu sắc/identity).
- * Layer 2: resources/css/seasonal/noel.css.
- * Layer 3: resources/js/theme/effects/noel-effect.js (tuyết rơi).
- */
+/* THEME: noel — Layer 1 (màu sắc/identity). */
 
 [data-theme="noel"] {
     --brand-50:  #eaf0ec;

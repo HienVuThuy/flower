@@ -20,13 +20,6 @@
             </div>
         </div>
 
-        {{--
-            BẮT ĐẦU BẰNG BẬC NGÀNH, KHÔNG ĐỔ CẢ CÂY RA MÀN HÌNH.
-
-            Toàn bộ cây có mấy chục nút. Ba cái Ngành là ba lựa chọn đọc
-            hết trong ba giây; đổ hết ra là bắt người ta đọc một danh
-            sách dài chỉ để tìm chỗ bắt đầu.
-        --}}
         @foreach($goc as $gioi)
             <div class="taxon-kingdom">
                 <p class="taxon-kingdom__label">
@@ -55,16 +48,6 @@
             </div>
         @endforeach
 
-        {{--
-            LỐI TẮT TỚI BẬC HỌ.
-
-            Ngành và Lớp quá rộng (gần như mọi cây bán ở đây đều là "Hạt
-            kín"), Chi và Loài quá hẹp (thường chỉ một sản phẩm). Họ là
-            bậc mà câu "cho tôi xem cây cùng nhóm" bắt đầu có nghĩa.
-
-            Xếp theo SỐ HÀNG chứ không theo bảng chữ cái: người mua quan
-            tâm nhóm nào có nhiều thứ để chọn.
-        --}}
         @if($ho->isNotEmpty())
             <div class="section-header mt-5">
                 <div>

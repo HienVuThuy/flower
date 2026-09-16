@@ -56,9 +56,6 @@
                         <tr>
                             <td>
                                 <span class="fw-bold">{{ $r->code }}</span>
-                                {{-- NÓI RÕ LOẠI PHIẾU. Phiếu trả hàng (số âm) và phiếu tồn
-                                     đầu kỳ nằm chung danh sách; không có nhãn thì một dòng
-                                     "−2 cái, 0đ" trông như phiếu nhập hỏng. --}}
                                 @if($r->kind !== \App\Enums\StockReceiptKind::NhapMoi)
                                     <span class="d-block admin-page-subtitle small">{{ $r->kind->label() }}</span>
                                 @endif
@@ -70,9 +67,6 @@
                             <td>
                                 {{ $tien($r->totalCost()) }}
                                 @if($r->hasUnpricedItems())
-                                    {{-- NÓI RA CHỖ THIẾU. Tổng tiền bỏ qua dòng
-                                         chưa điền giá; im lặng thì con số đọc ra
-                                         như đã đủ. --}}
                                     <span class="text-muted small">· có dòng chưa điền giá</span>
                                 @endif
                             </td>

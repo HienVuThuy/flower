@@ -1,17 +1,6 @@
 @props(['journal'])
 
 @php
-    /*
-     * ƯU VÀ NHƯỢC GOM LẠI — khối của sổ Phân tích.
-     * ============================================================
-     * Người ghi sổ phân tích viết "ưu" và "nhược" rải qua nhiều lần quan
-     * sát, cách nhau hàng tuần. Gom lại hai cột thì đọc một lượt là ra
-     * kết luận — thứ mà cuộn dòng thời gian không cho được.
-     *
-     * GIỮ NGÀY BÊN CẠNH TỪNG Ý. Một nhược điểm ghi hồi tháng trước có thể
-     * đã tự hết; bỏ ngày đi thì cả hai cột trông như đang cùng đúng ở
-     * hiện tại.
-     */
     $uu = collect();
     $nhuoc = collect();
 

@@ -1,12 +1,6 @@
 @props(['comment', 'camXuc' => null, 'count' => 0, 'tomTat' => []])
 
-{{--
-    CẢM XÚC DƯỚI MỘT BÌNH LUẬN — bản nhỏ của nút dưới bài.
-
-    Cùng cách làm: biểu mẫu thật (chạy không cần JavaScript), bảng chọn trong
-    <details> mở được bằng chuột, phím và chạm; có JavaScript thì rê chuột vào
-    là bảng tự hiện và bấm không tải lại trang.
---}}
+{{-- CẢM XÚC DƯỚI MỘT BÌNH LUẬN — bản nhỏ của nút dưới bài. --}}
 @php
     $hienTai = $camXuc ? \App\Enums\CommunityReaction::tryFrom($camXuc) : null;
 @endphp
@@ -45,7 +39,6 @@
     </span>
 @endauth
 
-{{-- Tổng cảm xúc của bình luận: ẩn hẳn khi chưa có ai bày tỏ, để dòng công cụ không rối. --}}
 <span class="cam-xuc-tomtat cam-xuc-tomtat--nho" data-tom-tat-thich @if($count < 1) hidden @endif>
     @foreach(collect($tomTat)->take(3) as $ct)
         @php($cx = \App\Enums\CommunityReaction::tryFrom($ct['loai']))

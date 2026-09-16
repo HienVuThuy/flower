@@ -2,25 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Các khu vực của trang quản trị, dùng để phân quyền.
- * ============================================================
- * VÌ SAO CHIA THEO KHU VỰC, không theo từng nút.
- *
- * Quyền cho từng hành động ("được sửa giá nhưng không được sửa tên") nghe
- * thì mịn, nhưng trong thực tế không ai cấu hình nổi và cũng không ai
- * kiểm lại được là mình đã cấu hình đúng chưa. Một danh sách tám khu vực
- * thì đọc hết trong mười giây, và câu hỏi "nhân viên này thấy được gì"
- * trả lời được bằng mắt.
- *
- * ============================================================
- * ĐÂY LÀ DANH SÁCH DUY NHẤT.
- *
- * Cùng một nơi cho: middleware chặn đường dẫn, thanh điều hướng ẩn mục,
- * và trang phân quyền. Khai ở hai chỗ thì sớm muộn thanh điều hướng ẩn
- * một mục mà đường dẫn vẫn vào được — tức là **trông như đã khoá trong
- * khi chưa khoá**, thứ nguy hiểm hơn hẳn việc không khoá gì.
- */
+/** Các khu vực của trang quản trị, dùng để phân quyền. */
 enum Quyen: string
 {
     case DonHang = 'don-hang';
@@ -51,16 +33,6 @@ enum Quyen: string
         return match ($this) {
             self::DonHang => 'Xem và xử lý đơn, tạo vận đơn, trả lời yêu cầu số lượng lớn.',
             self::SanPham => 'Thêm, sửa, ẩn sản phẩm và danh mục — gồm cả GIÁ BÁN.',
-            /*
-             * SỬA LẠI CHO ĐÚNG: khu kho CÓ thấy giá nhập.
-             *
-             * Câu cũ ghi "không thấy giá vốn" — sai, vì chính biểu mẫu
-             * nhập kho có ô đơn giá, và người đi lấy hàng là người gõ con
-             * số đó. Mô tả sai ở bảng quyền còn tệ hơn không mô tả: chủ
-             * cửa hàng đọc nó rồi tin là đã che, trong khi chưa che.
-             *
-             * Thứ khu kho KHÔNG thấy là lãi gộp — giá bán trừ giá vốn.
-             */
             self::Kho => 'Nhập kho, kiểm kê, xem tồn, lô hoa và GIÁ NHẬP. Không thấy lãi gộp.',
             self::KhuyenMai => 'Đặt và dừng chương trình giảm giá.',
             self::DanhGia => 'Duyệt, ẩn, trả lời đánh giá và bài đăng.',

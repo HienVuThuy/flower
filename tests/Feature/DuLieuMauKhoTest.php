@@ -30,23 +30,13 @@ use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Dữ liệu mẫu kho phải KHỚP với đơn hàng đã có.
- * ============================================================
- * Bất biến quan trọng nhất, cho từng mặt hàng:
- *
- *   tồn đầu kỳ + nhập − trả NCC − đã bán − hàng đổi gửi đi
- *            + hàng đổi nhận về bán lại được  =  tồn hiện tại
- *
- * và TỒN HIỆN TẠI KHÔNG ĐỔI sau khi chạy.
- */
+/** Dữ liệu mẫu kho phải KHỚP với đơn hàng đã có. */
 class DuLieuMauKhoTest extends TestCase
 {
     use RefreshDatabase;
 
     private User $admin;
 
-    /** @var array<string, Product> */
     private array $sp = [];
 
     protected function setUp(): void
@@ -65,12 +55,6 @@ class DuLieuMauKhoTest extends TestCase
             'kim' => ['Kim ngân thử', ProductType::Plant, '320000.00', 10, true],
             'lan' => ['Lan hồ điệp thử', ProductType::Plant, '650000.00', 8, true],
             'chau' => ['Chậu sứ thử', ProductType::Other, '120000.00', 30, true],
-            /*
-             * HOA CÓ BẬT THEO DÕI TỒN — giống dữ liệu thật (tulip, baby,
-             * hộp hồng đều có tồn). Thử phá code đã chứng minh: để hoa
-             * không theo dõi tồn thì đưa cả hoa vào phiếu nhập mà bài vẫn
-             * xanh, vì danh sách đơn vị kho vốn đã bỏ chúng.
-             */
             'hong' => ['Hộp hoa hồng thử', ProductType::Flower, '690000.00', 14, true],
             'dao' => ['Cành đào thử', ProductType::Flower, '950000.00', 0, false],
         ] as $ma => [$ten, $loai, $gia, $ton, $theoDoi]) {
@@ -171,7 +155,6 @@ class DuLieuMauKhoTest extends TestCase
                 ->where('order_items.product_id', $p->id)
                 ->sum('exchange_items.quantity');
 
-            // Dòng phiếu trả NCC lưu số ÂM, nên cộng thẳng.
             $tinh = $phieu(StockReceiptKind::TonDauKy) + $phieu(StockReceiptKind::NhapMoi) + $phieu(StockReceiptKind::TraNcc)
                 - $daBan - $guiDi + $nhanVe;
 
@@ -209,12 +192,6 @@ class DuLieuMauKhoTest extends TestCase
         $this->assertSame(6, Supplier::count());
         $this->assertSame(6, Supplier::where('email', DuLieuMauKhoSeeder::EMAIL)->count());
 
-        /*
-         * CÙNG MỘT LOẠI HOA, LÔ ĐÃ ĐÓNG, TỪ HAI NGUỒN — đó mới là thứ trang
-         * Thu mua cần để so. Thử phá code đã chứng minh: đếm "có hai nhà
-         * cung cấp trong mọi lô" thì bài vẫn xanh khi mọi lô đóng chỉ một
-         * nguồn, vì hai lô đang mở ở cuối kịch bản đã khác nguồn.
-         */
         $coLoaiHaiNguon = FlowerLot::query()->daDong()
             ->selectRaw('flower_kind_id, unit, count(distinct supplier_id) as so_nguon')
             ->groupBy('flower_kind_id', 'unit')

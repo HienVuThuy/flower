@@ -1,9 +1,6 @@
 import { BaseEffect } from './base-effect.js';
 
-/**
- * Cánh hoa hồng rơi — rất thưa và chậm, chỉ gợi không khí,
- * không biến giao diện thành "confetti trái tim".
- */
+/** Cánh hoa hồng rơi — rất thưa và chậm, chỉ gợi không khí, không biến giao diện thành "confetti trái tim". */
 export class ValentineEffect extends BaseEffect {
     constructor() {
         super();

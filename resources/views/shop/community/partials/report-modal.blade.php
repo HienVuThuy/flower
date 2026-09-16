@@ -1,11 +1,4 @@
-{{--
-    BÁO CÁO BÀI / BÌNH LUẬN.
-
-    Một hộp thoại dùng chung cho cả trang; JS điền loại và id của nội dung vừa
-    bấm (resources/js/community.js). Cửa hàng KHÔNG tự ẩn theo số lượt báo —
-    vài tài khoản cùng báo là đủ gỡ bài của người khác. Báo cáo vào hàng chờ
-    để người có quyền duyệt đọc rồi quyết.
---}}
+{{-- BÁO CÁO BÀI / BÌNH LUẬN. --}}
 @auth
     <div class="modal fade" id="hop-bao-cao" tabindex="-1" aria-labelledby="hop-bao-cao-tieu-de" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">

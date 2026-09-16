@@ -2,21 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * DẠNG SỐNG của cây — thân gỗ, thân leo, thân thảo...
- * ============================================================
- * Đây là cách phân loại thực vật học theo HÌNH THÁI, và cũng là cách
- * người Việt vẫn nói khi hỏi mua cây: "cây thân gỗ", "cây leo", "cây bụi".
- *
- * KHÁC `SellingForm`: `SellingForm` là hình thức BÁN (bó, chậu, giỏ,
- * hộp) — cùng một cây có thể bán ở mấy hình thức. `GrowthForm` là bản
- * chất của cây và không đổi theo cách đóng gói.
- *
- * VÌ SAO KHÁCH QUAN TÂM: dạng sống quyết định cây sẽ chiếm chỗ như thế
- * nào trong nhà. Cây leo cần giá đỡ hoặc chỗ treo; cây thân gỗ mười năm
- * sau vẫn ở đó và to hơn; cây thân thảo thì lụi theo mùa. Đó là những
- * điều không đọc được từ ảnh sản phẩm.
- */
+/** DẠNG SỐNG của cây — thân gỗ, thân leo, thân thảo... */
 enum GrowthForm: string
 {
     case Tree = 'tree';
@@ -46,7 +32,6 @@ enum GrowthForm: string
         };
     }
 
-    /** Ý nghĩa thực tế với người mua — xem chú thích đầu tệp. */
     public function hint(): string
     {
         return match ($this) {
@@ -63,7 +48,6 @@ enum GrowthForm: string
         };
     }
 
-    /** @return array<string, string> value => label */
     public static function options(): array
     {
         $out = [];

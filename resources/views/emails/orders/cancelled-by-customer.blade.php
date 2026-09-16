@@ -1,10 +1,4 @@
-{{--
-    Thư NỘI BỘ gửi cửa hàng khi khách tự huỷ đơn.
-
-    Ngắn và khô có chủ đích: người đọc là nhân viên đang xử lý đơn, họ
-    cần biết ngay đơn nào và có phải dừng việc gì không, không cần lời
-    chào hay trang trí.
---}}
+{{-- Thư NỘI BỘ gửi cửa hàng khi khách tự huỷ đơn. --}}
 @php
     $address = collect([
         $order->shipping_address,
@@ -90,10 +84,6 @@
 
     <tr>
         <td style="padding:12px 24px 20px 24px; border-top:1px solid #e4e2da; font-size:13px; color:#5d6660;">
-            {{--
-                Nhắc việc cụ thể, không nói chung chung: hoa đã cắt thì
-                không hoàn lại được, đây là thiệt hại thật cần xử lý.
-            --}}
             Tồn kho đã được hoàn tự động. Nếu đã cắt hoa hoặc đã hẹn shipper,
             hãy kiểm tra và xử lý riêng — hệ thống không tự làm việc đó.
             Bấm <strong>Trả lời</strong> để liên hệ thẳng với khách.

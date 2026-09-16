@@ -1,15 +1,6 @@
 @props(['journal'])
 
 @php
-    /*
-     * BẢNG KHẢO GIÁ — thay cho dòng thời gian ở sổ Theo dõi giá.
-     * ============================================================
-     * Dòng thời gian kiểu thẻ hợp với sổ sinh trưởng, nơi mỗi lần ghi là
-     * một đoạn kể có ảnh. Ở đây mỗi lần ghi là BA CON SỐ, và thứ người ta
-     * làm với các con số là so chúng với nhau theo cột.
-     *
-     * Một bảng làm được việc đó; mười cái thẻ xếp dọc thì không.
-     */
     $tk = $journal->priceStats();
     $thapNhat = $tk['low'] ?? null;
 @endphp
@@ -46,8 +37,6 @@
                                 @if(is_numeric($gia))
                                     <x-site.money :amount="$gia" />
                                     @if($thapNhat !== null && (float) $gia <= $thapNhat)
-                                        {{-- Đánh dấu mức thấp nhất ngay trong bảng: đó là
-                                             dòng người ta tìm khi mở bảng này ra. --}}
                                         <span class="badge-lowest">thấp nhất</span>
                                     @endif
                                 @else

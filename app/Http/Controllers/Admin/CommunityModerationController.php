@@ -17,22 +17,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/**
- * Duyệt bài "Góc cây của bạn" và xử lý báo cáo.
- * ============================================================
- * DUYỆT TRƯỚC KHI HIỆN, KHÔNG DUYỆT SAU — bài người lạ đăng lên trang bán hàng.
- *
- * DUYỆT LÀ LÚC THƯỞNG ĐIỂM — xem CommunityReward. Người duyệt vừa đọc bài,
- * nên cũng là người chấm "bài nổi bật".
- *
- * BÌNH LUẬN hiện ngay nên cửa hàng xử lý SAU: tab "Bình luận" (mới nhất trước,
- * ẩn / bỏ ẩn một chạm) và tab "Báo cáo" (khách báo bài / bình luận vi phạm).
- */
+/** Duyệt bài "Góc cây của bạn" và xử lý báo cáo. */
 class CommunityModerationController extends Controller
 {
     public function index(Request $request, CommunityReward $thuong, CommunityReports $baoCao): View
     {
-        // Mặc định mở ở việc cần làm: có báo cáo thì báo cáo trước, không thì bài chờ duyệt.
         $soBaoCao = $baoCao->soNoiDungCho();
         $loc = $request->query('loc', $soBaoCao > 0 ? 'bao-cao' : 'cho-duyet');
 
@@ -81,10 +70,6 @@ class CommunityModerationController extends Controller
 
     public function approve(Request $request, CommunityPost $post, CommunityReward $thuong): RedirectResponse
     {
-        /*
-         * Duyệt thì XOÁ dấu từ chối: một bài từng bị từ chối rồi được duyệt lại
-         * không được mang cả hai dấu. Một trạng thái phải là một trạng thái.
-         */
         $post->approved_at = now();
         $post->rejected_at = null;
         $post->reject_reason = null;
@@ -92,7 +77,6 @@ class CommunityModerationController extends Controller
 
         $diem = $thuong->thuong($post, $request->boolean('noi_bat'));
 
-        // Người đăng phải biết bài đã lên — trước đây phải tự vào mục "Bài của tôi" xem.
         app(NotificationCenter::class)->baiDuocDuyet($post);
 
         $thongBao = 'Đã duyệt bài của ' . $post->user?->name . '.';
@@ -100,7 +84,6 @@ class CommunityModerationController extends Controller
         if ($diem > 0) {
             $thongBao .= ' Cộng ' . $diem . ' điểm cho khách.';
         } elseif ($diem === 0) {
-            // Nói ra để người duyệt không tưởng nút "nổi bật" bị hỏng.
             $thongBao .= ' Không cộng điểm: khách đã được thưởng đủ ' . CommunityReward::TOI_DA_MOI_TUAN . ' bài trong tuần này.';
         }
 
@@ -110,7 +93,6 @@ class CommunityModerationController extends Controller
     public function reject(Request $request, CommunityPost $post): RedirectResponse
     {
         $data = $request->validate([
-            // LÝ DO BẮT BUỘC: từ chối im lặng thì khách đăng lại y hệt.
             'reject_reason' => ['required', 'string', 'max:200'],
         ], [], ['reject_reason' => 'lý do']);
 
@@ -124,7 +106,6 @@ class CommunityModerationController extends Controller
         return back()->with('success', 'Đã từ chối bài.');
     }
 
-    /** Ẩn / bỏ ẩn một bài đã đăng. Ẩn cần lý do — tác giả đọc được. */
     public function toggleHidden(Request $request, CommunityPost $post): RedirectResponse
     {
         if ($post->hidden_at !== null) {
@@ -141,7 +122,6 @@ class CommunityModerationController extends Controller
         return back()->with('success', 'Đã ẩn bài.');
     }
 
-    /** Ẩn / bỏ ẩn một bình luận. Ẩn chứ không xoá: còn dấu vết đã xử lý. */
     public function toggleComment(CommunityComment $comment): RedirectResponse
     {
         $comment->hidden_at = $comment->hidden_at === null ? now() : null;
@@ -150,7 +130,6 @@ class CommunityModerationController extends Controller
         return back()->with('success', $comment->hidden_at ? 'Đã ẩn bình luận.' : 'Đã hiện lại bình luận.');
     }
 
-    /** Xử lý báo cáo: ẩn nội dung, hoặc kết luận không vi phạm. */
     public function handleReport(Request $request, CommunityReports $baoCao): RedirectResponse
     {
         $data = $request->validate([
@@ -173,10 +152,6 @@ class CommunityModerationController extends Controller
 
     public function destroy(CommunityPost $post, CommunityMediaStore $kho, CommunityReports $baoCao): RedirectResponse
     {
-        /*
-         * XOÁ THẬT, kèm ảnh / video: bài ở đây là nội dung cá nhân của khách —
-         * admin xoá thường là vì nó KHÔNG NÊN tồn tại trên máy chủ.
-         */
         DB::transaction(function () use ($post, $kho, $baoCao) {
             $kho->xoaCuaBai($post);
             $baoCao->donCuaBai($post);

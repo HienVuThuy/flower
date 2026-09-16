@@ -5,10 +5,6 @@
 @section('content')
 
 @php
-    /*
-     * Yêu cầu thêm đang tick: khách vừa tick (lỗi kiểm dữ liệu quay lại),
-     * hoặc ô của nó đang có giá trị cũ.
-     */
     $daTick = fn (string $ma, array $truong) => in_array($ma, array_map('strval', (array) old('them', [])), true)
         || collect($truong)->contains(fn ($t) => filled(old($t)));
 @endphp
@@ -67,18 +63,6 @@
                             <x-form-error name="occasion"/>
                         </div>
 
-                        {{--
-                            YÊU CẦU THÊM — TICK THÌ MỚI HIỆN Ô NHẬP.
-
-                            Trước đây mọi ô bày sẵn: khách hỏi "Kim tiền chậu sứ" cũng
-                            thấy "Tông màu mong muốn", "Loại hoa ưa thích" và không hiểu
-                            mình phải điền gì. Giờ khách chỉ mở những gì mình cần; điều
-                            không có trong danh sách thì ghi ở mục Yêu cầu chi tiết.
-
-                            Ẩn/hiện bằng CSS thuần (:has) — không cần JavaScript. Máy chủ
-                            BỎ giá trị của ô không tick (StoreBulkOrderInquiryRequest), nên
-                            ô đã gõ rồi bỏ tick không lọt vào phiếu.
-                        --}}
                         <div class="mb-3">
                             <span class="text-label d-block mb-1">2. Yêu cầu thêm</span>
                             <p class="text-caption mb-2">
@@ -132,11 +116,6 @@
                                     </div>
                                 </div>
 
-                                {{--
-                                    NGÂN SÁCH LÀ MỘT KHOẢNG, không phải một con số: khách sự kiện
-                                    hiếm khi biết chính xác, nhưng gần như luôn biết "khoảng 5 đến
-                                    10 triệu".
-                                --}}
                                 <div class="bulk-them">
                                     <label class="bulk-them__toggle">
                                         <input type="checkbox" name="them[]" value="ngan_sach" @checked($daTick('ngan_sach', ['budget_min', 'budget_max']))>
@@ -222,12 +201,6 @@
                                 <x-form-error name="company_name"/>
                             </div>
 
-                            {{--
-                                CÁCH LIÊN HỆ LẠI — nghe nhỏ nhưng là chỗ hỏng thật:
-                                nhân viên gọi cho một khách doanh nghiệp đang họp cả
-                                ngày thì không ai nghe máy, phiếu treo ba hôm, và
-                                khách nghĩ cửa hàng bỏ quên mình.
-                            --}}
                             <div class="col-12">
                                 <span class="form-label d-block mb-2">Bạn muốn được liên hệ lại bằng cách nào?</span>
 

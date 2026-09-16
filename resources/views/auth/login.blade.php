@@ -42,7 +42,6 @@
                 <x-form-error name="password" />
             </div>
 
-            {{-- Lối vào màn hình quên mật khẩu, đặt ngay cạnh ô mật khẩu. --}}
             <p class="text-caption text-end mb-3">
                 <a href="{{ route('password.request') }}">Quên mật khẩu?</a>
             </p>

@@ -9,9 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Số điện thoại và email ở trang yêu cầu báo giá bấm được.
- */
+/** Số điện thoại và email ở trang yêu cầu báo giá bấm được. */
 class LienHeBaoGiaTest extends TestCase
 {
     use RefreshDatabase;
@@ -35,7 +33,6 @@ class LienHeBaoGiaTest extends TestCase
     #[Test]
     public function so_dien_thoai_thanh_lien_ket_goi_chi_con_chu_so(): void
     {
-        // Khách gõ có khoảng trắng và gạch nối; số gọi được thì không có.
         $this->trang()
             ->assertOk()
             ->assertSee('href="tel:0912345678"', false);

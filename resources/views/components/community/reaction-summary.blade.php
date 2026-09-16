@@ -1,9 +1,6 @@
 @props(['tomTat' => [], 'count' => 0])
 
-{{--
-    Mấy biểu tượng cảm xúc nhiều nhất + tổng số, như dòng tóm tắt dưới bài của
-    mạng xã hội. JavaScript dựng lại chính khối này sau khi bấm (community.js).
---}}
+{{-- Mấy biểu tượng cảm xúc nhiều nhất + tổng số, như dòng tóm tắt dưới bài của mạng xã hội. --}}
 <span class="cam-xuc-tomtat" data-tom-tat-thich>
     @foreach(collect($tomTat)->take(3) as $ct)
         @php($cx = \App\Enums\CommunityReaction::tryFrom($ct['loai']))

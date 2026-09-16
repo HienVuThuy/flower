@@ -19,7 +19,6 @@
     </div>
 
     <div class="d-flex gap-2">
-        {{-- Xoá mềm mà không có chỗ khôi phục thì thành xoá một chiều với người dùng. --}}
         @if($thungRac)
             <a href="{{ route('admin.products.index') }}" class="btn btn-outline-admin">Về danh sách đang dùng</a>
         @else
@@ -38,13 +37,6 @@
 
 </div>
 
-{{--
-    THANH TÌM KIẾM + LỌC.
-
-    Bốn điều kiện, chọn theo việc admin thật sự làm mỗi ngày: tìm nhanh
-    một sản phẩm khách vừa hỏi qua điện thoại, xem danh mục nào còn
-    thiếu hàng, và lọc ra thứ sắp hết để nhập thêm.
---}}
 <x-admin.filter-bar
     :action="route('admin.products.index')"
     placeholder="Tìm theo tên hoặc mã sản phẩm…"
@@ -73,10 +65,6 @@
     </select>
 </x-admin.filter-bar>
 
-{{--
-    Thanh thao tác đặt TRÊN bảng, ngoài panel: nó dính lên đầu khi cuộn,
-    và nằm trong panel thì bị viền panel cắt mất một phần.
---}}
 <x-admin.bulk-bar
     :action="route('admin.products.bulk')"
     :viec="[
@@ -100,28 +88,12 @@
 
                 <tr>
                     <th style="width: 2.5rem;">
-                        {{--
-                            Ô "chọn tất cả" chỉ có tác dụng khi có
-                            JavaScript, nên nhãn nói rõ phạm vi: nó chọn
-                            các dòng ĐANG HIỆN, không phải toàn bộ kho.
-                            Sau khi lọc "sắp hết hàng" thì đó đúng là
-                            điều người dùng muốn.
-                        --}}
                         <input type="checkbox" class="admin-check"
                                form="bulk-form" data-bulk-all
                                aria-label="Chọn tất cả dòng đang hiện">
                     </th>
                     <th>Ảnh</th>
 
-                    {{--
-                        CHỈ NHỮNG CỘT THẬT SỰ ĐƯỢC DÙNG ĐỂ SẮP.
-
-                        "Danh mục" và "Hình thức" đã có bộ lọc riêng —
-                        sắp theo chúng chỉ gom các hàng cùng loại lại
-                        gần nhau, đúng bằng việc lọc nhưng kém rõ hơn.
-                        Cho sắp mọi cột là làm loãng: hàng tiêu đề đầy
-                        liên kết và không cột nào nổi lên nữa.
-                    --}}
                     <x-admin.sort-header khoa="ten" nhan="Sản phẩm" />
                     <th>Danh mục</th>
                     <th>Hình thức</th>
@@ -183,7 +155,6 @@
                     </td>
 
                     <td>
-                        {{-- Nhãn lấy từ enum; trước đây khối này chép tay lại cả 10 dòng. --}}
                         {{ $product->selling_form?->label() ?? '—' }}
                     </td>
 
@@ -217,18 +188,6 @@
 
                     <td>
 
-                        {{--
-                            TỒN KHO — cột mới, đi cùng khả năng sắp xếp.
-
-                            Sắp theo một cột không hiện trên bảng thì
-                            thứ tự trông như ngẫu nhiên: admin bấm "Tồn
-                            kho" rồi nhìn một danh sách xáo trộn mà
-                            không thấy con số nào giải thích.
-
-                            Hàng LÀM THEO ĐƠN không có tồn kho để nói —
-                            hiện số 0 ở đó là sai, vì nó không hề hết
-                            hàng. Xem thêm ghi chú ở bộ lọc kho.
-                        --}}
                         @if($product->track_inventory)
                             <span class="{{ $product->stock_quantity <= 0 ? 'text-danger fw-semibold' : '' }}">
                                 {{ number_format((int) $product->stock_quantity, 0, ',', '.') }}
@@ -273,7 +232,6 @@
                     <td class="text-end">
 
                         @if($product->trashed())
-                        {{-- Sản phẩm trong thùng rác: không Xem/Sửa được (route bỏ qua bản ghi đã xoá). --}}
                         <div class="d-inline-flex flex-wrap justify-content-end gap-2">
                             <form action="{{ route('admin.products.restore', $product->id) }}" method="POST">
                                 @csrf

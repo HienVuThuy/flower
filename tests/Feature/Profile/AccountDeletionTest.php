@@ -16,19 +16,7 @@ use Illuminate\Support\Facades\URL;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Xoá tài khoản theo yêu cầu của chính chủ.
- * ============================================================
- * Thao tác KHÔNG CÓ ĐƯỜNG LÙI duy nhất mà khách tự làm được. Nên phần
- * lớn các bài ở đây canh những đường PHẢI BỊ CHẶN, và canh việc ba bước
- * không bị gộp lại:
- *
- *   1. bấm nút          → gửi thư, KHÔNG xoá gì
- *   2. bấm liên kết     → mở trang xác nhận, KHÔNG xoá gì
- *   3. gõ đúng một dòng → mới thật sự xoá
- *
- * Gộp bất kỳ hai bước nào cũng mất một lớp bảo vệ.
- */
+/** Xoá tài khoản theo yêu cầu của chính chủ. */
 class AccountDeletionTest extends TestCase
 {
     use RefreshDatabase;
@@ -38,7 +26,6 @@ class AccountDeletionTest extends TestCase
         return User::factory()->create();
     }
 
-    /** Liên kết đã ký, đúng như liên kết trong thư. */
     private function lienKet(User $user): string
     {
         return URL::temporarySignedRoute(
@@ -48,7 +35,6 @@ class AccountDeletionTest extends TestCase
         );
     }
 
-    /** Địa chỉ POST xoá thật, mang theo cùng bộ tham số đã ký. */
     private function duongXoa(User $user): string
     {
         $signed = URL::temporarySignedRoute(
@@ -59,10 +45,6 @@ class AccountDeletionTest extends TestCase
 
         return $signed;
     }
-
-    // ================================================================
-    // Bước 1 — gửi thư
-    // ================================================================
 
     #[Test]
     public function buoc_mot_chi_gui_thu_va_KHONG_xoa_gi(): void
@@ -78,18 +60,12 @@ class AccountDeletionTest extends TestCase
         Mail::assertSent(AccountDeletionMail::class);
 
         $this->assertDatabaseHas('users', ['id' => $user->id]);
-        // Gửi thư xong vẫn phải còn đăng nhập — bước 1 không đụng gì tới phiên.
         $this->assertAuthenticatedAs($user);
     }
 
     #[Test]
     public function thu_gui_toi_dung_email_cua_tai_khoan(): void
     {
-        /*
-         * Địa chỉ lấy từ tài khoản đang đăng nhập, KHÔNG từ biểu mẫu.
-         * Nhận email từ request thì màn hình này thành công cụ gửi thư
-         * tới địa chỉ bất kỳ, ký tên cửa hàng.
-         */
         Mail::fake();
 
         $user = $this->khach();
@@ -103,10 +79,6 @@ class AccountDeletionTest extends TestCase
             fn ($mail) => $mail->hasTo($user->email),
         );
     }
-
-    // ================================================================
-    // Bước 2 — trang xác nhận
-    // ================================================================
 
     #[Test]
     public function lien_ket_khong_ky_bi_tu_choi(): void
@@ -137,13 +109,6 @@ class AccountDeletionTest extends TestCase
     #[Test]
     public function mo_trang_xac_nhan_KHONG_xoa_gi(): void
     {
-        /*
-         * BÀI QUAN TRỌNG NHẤT của bước 2.
-         *
-         * Nếu bản thân liên kết xoá được thì phần xem trước liên kết của
-         * Gmail, phần quét virus của doanh nghiệp, hay một cú bấm nhầm
-         * cũng xoá được tài khoản.
-         */
         $user = $this->khach();
 
         $this->actingAs($user)
@@ -157,12 +122,6 @@ class AccountDeletionTest extends TestCase
     #[Test]
     public function khong_dung_lien_ket_cua_nguoi_khac(): void
     {
-        /*
-         * Chữ ký chứng minh liên kết do máy chủ phát ra, KHÔNG chứng
-         * minh người đang cầm nó là chủ tài khoản: liên kết bị chuyển
-         * tiếp, dán vào nhóm chat, hay lọt vào lịch sử trình duyệt máy
-         * chung đều vẫn còn chữ ký hợp lệ.
-         */
         $nanNhan = $this->khach();
         $keKhac = $this->khach();
 
@@ -172,10 +131,6 @@ class AccountDeletionTest extends TestCase
 
         $this->assertDatabaseHas('users', ['id' => $nanNhan->id]);
     }
-
-    // ================================================================
-    // Bước 3 — xoá thật
-    // ================================================================
 
     #[Test]
     public function go_dung_dong_xac_nhan_thi_tai_khoan_bi_xoa(): void
@@ -193,8 +148,6 @@ class AccountDeletionTest extends TestCase
     #[Test]
     public function go_sai_dong_xac_nhan_thi_khong_xoa(): void
     {
-        // Bắt gõ một dòng là để buộc người dùng dừng lại và đọc. Nếu gõ
-        // sai mà vẫn xoá thì cả bước đó chỉ là trang trí.
         $user = $this->khach();
 
         $this->actingAs($user)
@@ -218,18 +171,9 @@ class AccountDeletionTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $user->id]);
     }
 
-    // ================================================================
-    // Dữ liệu nào đi, dữ liệu nào ở lại
-    // ================================================================
-
     #[Test]
     public function don_hang_o_lai_nhung_mat_chu(): void
     {
-        /*
-         * Đã hứa trong trang Chính sách bảo mật: đơn hàng đã hoàn tất là
-         * chứng từ mua bán, cửa hàng phải giữ để đối soát, nhưng không
-         * còn gắn với tài khoản nào.
-         */
         $user = $this->khach();
 
         $order = Order::create([
@@ -263,13 +207,6 @@ class AccountDeletionTest extends TestCase
     #[Test]
     public function con_don_dang_do_thi_chua_cho_xoa(): void
     {
-        /*
-         * Đơn đang chờ xác nhận hay đang giao là việc CHƯA XONG giữa hai
-         * bên: khách còn có thể cần huỷ, cửa hàng còn có thể cần liên hệ.
-         * Xoá lúc này là khách mất hẳn chỗ theo dõi đơn của mình.
-         *
-         * Chặn TẠM THỜI, không chặn vĩnh viễn — xong đơn là xoá được.
-         */
         Mail::fake();
 
         $user = $this->khach();
@@ -291,12 +228,10 @@ class AccountDeletionTest extends TestCase
         $order->status = OrderStatus::Shipping;
         $order->save();
 
-        // Chặn ngay từ bước 1: không gửi thư cho một việc sẽ bị từ chối.
         $this->actingAs($user)->post('/tai-khoan/xoa/yeu-cau')->assertRedirect();
 
         Mail::assertNothingSent();
 
-        // Và chặn cả ở bước cuối, phòng khi ai đó giữ sẵn một liên kết cũ.
         $this->delete($this->duongXoa($user), ['xac_nhan' => AccountDeleter::CAU_XAC_NHAN]);
 
         $this->assertDatabaseHas('users', ['id' => $user->id]);
@@ -305,8 +240,6 @@ class AccountDeletionTest extends TestCase
     #[Test]
     public function quan_tri_vien_duy_nhat_khong_tu_xoa_duoc(): void
     {
-        // Cùng luật với trang quản lý người dùng: xoá nốt admin dùng
-        // được cuối cùng là cửa hàng mất hẳn đường vào khu quản trị.
         $admin = User::factory()->create();
         $admin->role = UserRole::Admin;
         $admin->save();
@@ -343,11 +276,6 @@ class AccountDeletionTest extends TestCase
     #[Test]
     public function moi_phien_dang_nhap_deu_bi_huy(): void
     {
-        /*
-         * Không dọn bảng `sessions` thì phiên trên máy khác vẫn trỏ tới
-         * một user_id không còn tồn tại — và trang tiếp theo họ mở sẽ đổ
-         * lỗi thay vì đưa họ về trang chủ.
-         */
         $user = $this->khach();
 
         \Illuminate\Support\Facades\DB::table('sessions')->insert([

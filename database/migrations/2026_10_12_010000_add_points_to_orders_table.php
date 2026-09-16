@@ -4,13 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Điểm thưởng dùng để trừ tiền đơn hàng — CHỤP vào đơn.
- *
- * Cùng lý do với `coupon_code` / `coupon_discount`: đổi tỉ giá điểm sau
- * này không được làm đơn cũ tự đổi số tiền đã giảm, và huỷ đơn phải biết
- * đúng bao nhiêu điểm cần trả lại.
- */
+/** Điểm thưởng dùng để trừ tiền đơn hàng — CHỤP vào đơn. */
 return new class extends Migration
 {
     public function up(): void

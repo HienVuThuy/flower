@@ -12,28 +12,7 @@ use App\Models\Order;
 use App\Models\OrderStatusEvent;
 use App\Models\User;
 
-/**
- * Điểm tín dụng — MỨC TIN CẬY THANH TOÁN, không phải tiền.
- * ============================================================
- * KHÔNG tiêu được, KHÔNG đổi quà, KHÔNG thay hạng thành viên (hạng theo chi
- * tiêu) hay điểm thưởng (tiêu được). Nó chỉ trả lời một câu: khách này có
- * trả tiền đúng như đã hứa không — và câu đó quyết định trả góp được mấy
- * kỳ, trả trước bao nhiêu (xem InstallmentPolicy).
- *
- * TÍNH LẠI MỖI LẦN TỪ LỊCH SỬ, không lưu một con số: không có cột nào để
- * sửa tay, và mọi thay đổi đều giải thích được bằng một sự việc đã xảy ra.
- *
- *   Cơ bản                                   50
- *   Đơn đã giao và đã thanh toán             +2 mỗi đơn, tối đa +20
- *   Kỳ trả góp trả đúng hạn                  +3 mỗi kỳ, tối đa +30
- *   Kỳ trả góp trả trễ                       −5 mỗi kỳ
- *   Kế hoạch trả góp vỡ (quá hạn bị huỷ)     −30 mỗi lần
- *   Đơn COD huỷ khi đang giao (không nhận)   −10 mỗi đơn
- *   Kẹp trong 0..100.
- *
- * Phần cộng có trần, phần trừ thì không: mua nhiều không được phép che một
- * lần bỏ trả góp.
- */
+/** Điểm tín dụng — MỨC TIN CẬY THANH TOÁN, không phải tiền. */
 class CreditScore
 {
     public const CO_BAN = 50;
@@ -52,9 +31,6 @@ class CreditScore
 
     public const TU_CHOI_NHAN = -10;
 
-    /**
-     * @return array{diem: int, yeu_to: list<array{ma: string, nhan: string, so_lan: int, diem: int}>}
-     */
     public function cua(User $user): array
     {
         $donTot = Order::query()

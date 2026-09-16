@@ -10,13 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
-/**
- * Đổi điểm thưởng lấy voucher. Xem PointLedger.
- *
- * Chỉ nhận MÃ GÓI từ biểu mẫu — số điểm, số tiền giảm, hạn dùng đều đọc
- * từ PointLedger::GOI trên máy chủ. Nhận số tiền từ trình duyệt là cho
- * khách tự viết voucher cho mình.
- */
+/** Đổi điểm thưởng lấy voucher. */
 class PointController extends Controller
 {
     public function redeem(Request $request, PointLedger $ledger): RedirectResponse

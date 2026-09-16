@@ -5,13 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Mã OTP xác thực email đang còn hiệu lực của một tài khoản.
- *
- * Model này CỐ Ý mỏng: mọi luật (sinh mã, đối chiếu, đếm lần sai, thời
- * gian chờ gửi lại) nằm ở App\Services\Auth\EmailVerifier. Rải luật ra
- * model thì sẽ có hai nơi cùng trả lời "mã này còn dùng được không".
- */
+/** Mã OTP xác thực email đang còn hiệu lực của một tài khoản. */
 class EmailVerificationCode extends Model
 {
     protected $fillable = [

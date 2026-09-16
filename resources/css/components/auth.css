@@ -1,6 +1,4 @@
-/*
- * AUTH — clean, focused, không phân tâm.
- */
+/* AUTH — clean, focused, không phân tâm. */
 
 .auth-shell {
     min-height: calc(100vh - 140px);
@@ -24,12 +22,6 @@
     color: var(--brand-500);
 }
 
-/*
- * Ô NHẬP MÃ OTP.
- *
- * To, giãn chữ, phông đều nét: khách đọc mã trên điện thoại rồi gõ lại
- * trên máy tính, nên không được để họ nhầm 0 với O hay 1 với l.
- */
 .otp-input {
     font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
     font-size: 1.6rem;
@@ -37,17 +29,9 @@
     letter-spacing: 0.5em;
     text-align: center;
 
-    /* letter-spacing đẩy chữ lệch sang trái vì khoảng cách được thêm cả
-       sau ký tự cuối; bù lại bằng đúng chừng đó lề trái. */
     text-indent: 0.5em;
 }
 
-/*
- * Nút trông như link, dùng trong câu văn.
- *
- * PHẢI LÀ <button> vì nó gửi biểu mẫu (đăng xuất) chứ không dẫn đi đâu.
- * Dùng <a> cho một hành động là nói dối trình đọc màn hình.
- */
 .btn-link-inline {
     padding: 0;
     border: 0;
@@ -58,19 +42,6 @@
     cursor: pointer;
 }
 
-/*
- * THANH MỤC CỦA TRANG HỒ SƠ
- * ============================================================
- * Xem resources/views/shop/profile/edit.blade.php.
- *
- * LÀ LIÊN KẾT, KHÔNG PHẢI TAB JAVASCRIPT — mỗi mục một địa chỉ riêng,
- * nên gửi được cho người khác, lưu được dấu trang, và bấm Back ra đúng
- * mục vừa xem.
- *
- * CUỘN NGANG ĐƯỢC trên màn hình hẹp thay vì xuống dòng. Ba mục xuống
- * thành hai hàng làm thanh điều hướng cao gấp đôi và đẩy nội dung
- * xuống — đúng cái mà cả thay đổi này sinh ra để tránh.
- */
 .profile-tabs {
     display: flex;
     gap: var(--space-2xs);
@@ -78,8 +49,6 @@
     overflow-x: auto;
     border-bottom: 1px solid var(--border-soft);
 
-    /* Ẩn thanh cuộn ngang: nó chỉ chiếm chỗ, và ba mục thì luôn thấy
-       được là còn mục bên phải. */
     scrollbar-width: none;
 }
 
@@ -96,11 +65,6 @@
     font-size: var(--text-body-sm);
     font-weight: 600;
 
-    /*
-     * Gạch chân bằng viền dưới TRONG SUỐT ngay từ đầu, không phải thêm
-     * viền khi active. Thêm viền lúc active làm mục đó cao hơn 2px so
-     * với các mục khác, và cả hàng nhích lên mỗi lần đổi mục.
-     */
     border-bottom: 2px solid transparent;
     margin-bottom: -1px;
     transition: color var(--duration-fast) var(--ease-standard);

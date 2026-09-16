@@ -36,13 +36,6 @@
     </div>
 
     <div class="admin-panel mb-3">
-        {{--
-            "HỆ THỐNG ĐANG GHI" CHỈ ĐỂ THAM KHẢO.
-
-            Con số dùng để tính chênh lệch được máy chủ đọc lại lúc bấm lưu, không
-            lấy từ trang này — trang có thể đã mở từ một tiếng trước, và một con
-            số gửi lên từ trình duyệt thì ai cũng sửa được.
-        --}}
         <div class="table-responsive">
             <table class="table table-sm align-middle mb-0">
                 <thead>

@@ -2,25 +2,8 @@
     'invoice' => null,
 ])
 
-{{--
-    DỮ LIỆU HOÁ ĐƠN GTGT CỦA MỘT ĐƠN.
-    ============================================================
-    MỘT BẢN DUY NHẤT, dùng ở cả trang đơn hàng của khách và trang quản
-    trị. Hai bản chép tay sẽ lệch nhau, và lệch ở đây nghĩa là khách và
-    nhân viên đọc hai bộ thông tin hoá đơn khác nhau cho cùng một đơn.
-
-    ============================================================
-    ⚠️ NÓI THẲNG RA ĐÂY CHƯA PHẢI HOÁ ĐƠN ĐÃ PHÁT HÀNH.
-
-    Hoá đơn điện tử hợp lệ phải được phát hành theo quy trình và định
-    dạng của quy định về hoá đơn điện tử, thường qua một nhà cung cấp
-    dịch vụ. Cửa hàng chưa tích hợp bước đó.
-
-    Để giao diện trông như đã có hoá đơn là loại nói dối tệ nhất: khách
-    yên tâm không đòi nữa, rồi tới kỳ quyết toán mới phát hiện không có
-    chứng từ nào. Vì thế trạng thái luôn hiện ra, và câu giải thích của
-    nó (InvoiceStatus::hint()) đi kèm chứ không ẩn sau một dấu hỏi.
---}}
+{{-- DỮ LIỆU HOÁ ĐƠN GTGT CỦA MỘT ĐƠN. --}}
+{{-- ⚠️ NÓI THẲNG RA ĐÂY CHƯA PHẢI HOÁ ĐƠN ĐÃ PHÁT HÀNH. --}}
 
 @if($invoice)
     <div class="invoice-card">
@@ -48,7 +31,6 @@
                 <dd>{{ $invoice->buyer_name }}</dd>
             </div>
 
-            {{-- Cá nhân không có mã số thuế: KHÔNG hiện dòng trống. --}}
             @if($invoice->buyer_tax_code)
                 <div>
                     <dt>Mã số thuế</dt>
@@ -70,15 +52,6 @@
                 </div>
             @endif
 
-            {{--
-                BA CON SỐ HOÁ ĐƠN BẮT BUỘC PHẢI GHI: tiền hàng chưa thuế,
-                tiền thuế, và tổng tiền thanh toán đã có thuế.
-
-                `subtotal` ở đây là số CHƯA thuế — khác `orders.subtotal`
-                (đã gồm thuế, vì giá niêm yết đã gồm thuế). Nhãn phải nói
-                rõ điều đó, nếu không người đọc sẽ tưởng hai trang đang
-                mâu thuẫn nhau.
-            --}}
             <div>
                 <dt>Tiền hàng chưa thuế</dt>
                 <dd><x-site.money :amount="(float) $invoice->subtotal" /></dd>

@@ -19,26 +19,7 @@ use App\Services\Loyalty\MemberTierResolver;
 use App\Services\Shop\Money;
 use Illuminate\Support\Collection;
 
-/**
- * Đơn / giỏ này được tặng gì — NƠI DUY NHẤT tính quà.
- * ============================================================
- * QUÀ LÀ QUYỀN ĐƯỢC SUY RA từ hàng trong giỏ, không phải một món hàng khách
- * tự thêm hay xoá. Không lưu vào giỏ: mỗi lần hỏi là tính lại từ số lượng
- * hiện tại — giảm Sen đá ×3 → ×1 thì quà tự về ×1, xoá Sen đá thì quà mất.
- * Không có trạng thái "sản phẩm ×1, quà ×3" nào tồn tại được.
- *
- * HAI NGUỒN QUÀ:
- *
- *   - QUÀ KÈM SẢN PHẨM (product_gifts): quà mặc định của món hàng hoặc của
- *     một quy cách. ⌊mua ÷ N⌋ × M, kẹp theo "tối đa mỗi đơn", rồi theo tồn
- *     kho quà với luật riêng của món quà (tặng phần còn lại / không tặng).
- *     KHÔNG liên quan mã giảm giá, chương trình, sale hay giảm theo hạng.
- *
- *   - QUÀ THEO CHƯƠNG TRÌNH (gift_campaigns, tab Khuyến mại): giới hạn suất,
- *     thời gian, hạng, đơn đầu tiên, đơn từ X đồng. Một bộ mỗi đơn.
- *
- * Giỏ hàng, trang thanh toán và OrderService cùng hỏi ở đây.
- */
+/** Đơn / giỏ này được tặng gì — NƠI DUY NHẤT tính quà. */
 class GiftResolver
 {
     public function __construct(
@@ -46,9 +27,6 @@ class GiftResolver
     ) {
     }
 
-    /**
-     * @return Collection<int, array{nguon: string, campaign: ?GiftCampaign, product_gift: ?ProductGift, item: GiftItem, quantity: int, for_product_id: ?int, for_variant_id: ?int, dong_cha: ?string}>
-     */
     public function choGio(CheckoutBasket $basket, ?User $user): Collection
     {
         if ($basket->isEmpty()) {
@@ -60,12 +38,6 @@ class GiftResolver
             ->values();
     }
 
-    /**
-     * Quà kèm sản phẩm xếp theo DÒNG HÀNG đã sinh ra nó — để giỏ hàng hiện quà
-     * ngay dưới món. Khoá dòng: "product_id:variant_id" (quy cách trống = '').
-     *
-     * @return array<string, list<array{item: GiftItem, quantity: int, product_gift: ProductGift}>>
-     */
     public function theoDong(CheckoutBasket $basket): array
     {
         $ket = [];
@@ -82,11 +54,6 @@ class GiftResolver
         return $productId . ':' . ($variantId ?? '');
     }
 
-    /**
-     * Quà mặc định đang tặng của một sản phẩm — để trang sản phẩm nói trước.
-     *
-     * @return Collection<int, ProductGift>
-     */
     public function choSanPham(Product $product): Collection
     {
         return ProductGift::query()
@@ -101,9 +68,6 @@ class GiftResolver
             ->values();
     }
 
-    /**
-     * Vì sao đơn này không nhận được quà của CHƯƠNG TRÌNH; null = nhận được.
-     */
     public function lyDoKhong(GiftCampaign $ct, CheckoutBasket $basket, ?User $user, ?MemberTier $hangKhach = null): ?string
     {
         if (! $ct->isRunning()) {
@@ -139,7 +103,6 @@ class GiftResolver
                 return 'Đăng nhập để nhận quà này.';
             }
 
-            // "Đơn đầu tiên" = chưa có đơn nào không bị huỷ. Đơn huỷ không tính là đã mua.
             if ($ct->first_order_only && Order::query()
                 ->where('user_id', $user->id)
                 ->where('status', '!=', OrderStatus::Cancelled->value)
@@ -155,7 +118,6 @@ class GiftResolver
         return null;
     }
 
-    /** Số lần khách đã nhận quà của chương trình — đếm từ đơn không bị huỷ. */
     public function daNhan(GiftCampaign $ct, User $user): int
     {
         return OrderItem::query()
@@ -190,7 +152,6 @@ class GiftResolver
                     return null;
                 }
 
-                // Quà "mọi quy cách" cộng số lượng của mọi quy cách; quà theo quy cách chỉ đếm đúng quy cách đó.
                 $khop = $dongs->filter(fn ($l) => $pg->apDungCho((int) $l->product->id, $l->variant?->id));
 
                 if ($khop->isEmpty()) {

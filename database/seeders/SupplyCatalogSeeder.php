@@ -11,51 +11,9 @@ use App\Models\Product;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
-/**
- * TOÀN BỘ hàng phụ trợ: chậu, vật tư, đồ phủ gốc, đồ trang trí.
- * ============================================================
- * NƠI DUY NHẤT khai nhóm hàng không phải cây. Trước đây phần này nằm lẫn
- * trong PlantAdvisorSeeder — một seeder tên là "tư vấn chọn cây" mà lại
- * quyết định cửa hàng có những danh mục phụ kiện nào. Ai đi tìm "vì sao
- * chậu sứ nằm ở danh mục này" sẽ không nghĩ tới việc mở tệp đó ra.
- *
- * ============================================================
- * VÌ SAO CHIA LẠI THÀNH BỐN NHÓM.
- *
- * Cũ chỉ có hai: "Phụ kiện" và "Vật tư chăm sóc", và ranh giới giữa
- * chúng là BỀN hay TIÊU HAO. Ranh giới đó sai với cách khách đi mua:
- *
- *   - Bình tưới và kéo cắt cành nằm ở "Phụ kiện" cùng với chậu sứ, dù
- *     chúng là DỤNG CỤ CHĂM CÂY chứ không phải đồ đi kèm chậu.
- *   - Người mua cây về trồng thì tìm đá, sỏi, rêu để phủ mặt chậu cho
- *     đỡ trống — cửa hàng KHÔNG có nhóm nào cho thứ đó.
- *   - Người mua cây làm quà dịp Noel hay Tết thì tìm quả cầu, nơ, đồ
- *     treo — cũng không có nhóm nào.
- *
- * Bốn nhóm mới chia theo VIỆC KHÁCH ĐANG LÀM, không theo tuổi thọ món
- * hàng:
- *
- *   | Nhóm                  | Khách đang làm gì                    |
- *   |-----------------------|--------------------------------------|
- *   | Vật tư chăm sóc       | nuôi cây sống                        |
- *   | Chậu & đế lót         | đựng cây                             |
- *   | Phủ gốc & tiểu cảnh   | làm mặt chậu đẹp lên                 |
- *   | Phụ kiện trang trí    | trang trí theo dịp                   |
- *
- * "Phụ kiện" GIỮ NGUYÊN SLUG `phu-kien` nhưng đổi nghĩa thành đồ trang
- * trí — đúng nghĩa mà người Việt hiểu khi nghe "phụ kiện". Đổi slug thì
- * mọi liên kết đã chia sẻ đều gãy, mà cái tên thì vẫn hợp.
- */
+/** TOÀN BỘ hàng phụ trợ: chậu, vật tư, đồ phủ gốc, đồ trang trí. */
 class SupplyCatalogSeeder extends Seeder
 {
-    /**
-     * Bốn danh mục hàng phụ trợ.
-     *
-     * `sort_order` từ 90 trở lên: khách vào cửa hàng hoa để tìm hoa
-     * trước, mấy nhóm này xếp cuối trang Danh mục.
-     *
-     * @var array<string, array{name: string, desc: string, sort: int}>
-     */
     private const CATEGORIES = [
         'vat-tu-cham-soc' => [
             'name' => 'Vật tư & dụng cụ chăm sóc',
@@ -79,27 +37,10 @@ class SupplyCatalogSeeder extends Seeder
         ],
     ];
 
-    /**
-     * Hàng phụ trợ, gom theo danh mục.
-     *
-     * `for` = hình thức bán mà món này dùng kèm — nguồn của gợi ý "mua
-     * kèm". Xem PlantAdvisor::accessoriesFor(): phụ kiện tự khai mình
-     * hợp với loại hàng nào, nhờ vậy cây nhập về sau này cũng tự có gợi
-     * ý mà không ai phải nối tay từng cặp.
-     *
-     * @return array<string, list<array<string, mixed>>>
-     */
     private function hang(): array
     {
         return [
 
-            /* ============================================================
-             * VẬT TƯ & DỤNG CỤ — nuôi cây sống
-             * ============================================================
-             * Bình tưới và kéo cắt cành CHUYỂN TỪ "Phụ kiện" SANG ĐÂY.
-             * Chúng là dụng cụ chăm cây, không phải đồ đi kèm chậu — và
-             * người đi tìm bình tưới sẽ tìm ở nhóm chăm sóc.
-             */
             'vat-tu-cham-soc' => [
                 ['name' => 'Đất trồng trộn sẵn 5kg', 'code' => 'VT-DAT-5KG', 'price' => 55000,
                     'short' => 'Đất thịt trộn xơ dừa và trấu hun, tơi và thoát nước tốt.',
@@ -124,9 +65,6 @@ class SupplyCatalogSeeder extends Seeder
                     'for' => ['pot', 'original', 'bouquet', 'basket', 'box', 'arrangement']],
             ],
 
-            /* ============================================================
-             * CHẬU & ĐẾ LÓT — đựng cây
-             * ============================================================ */
             'chau-va-de-lot' => [
                 ['name' => 'Chậu sứ trắng cỡ vừa', 'code' => 'CH-SU-TRANG-M', 'price' => 120000,
                     'short' => 'Chậu sứ men trắng, đường kính 18cm, có lỗ thoát nước.',
@@ -139,20 +77,6 @@ class SupplyCatalogSeeder extends Seeder
                     'for' => ['bouquet', 'branch']],
             ],
 
-            /* ============================================================
-             * PHỦ GỐC & TIỂU CẢNH — nhóm MỚI
-             * ============================================================
-             * Mua một chậu cây về thì mặt đất trơ ra một khoảng nâu, và
-             * gần như ai cũng đi tìm thứ lấp nó: đá trắng, sỏi màu, rêu,
-             * hoặc một loại cỏ nhỏ phủ kín gốc.
-             *
-             * Trước đây cửa hàng không có nhóm nào cho việc đó, nên
-             * khách mua cây xong phải đi chỗ khác — và món kèm thì bao
-             * giờ cũng dễ bán hơn món chính.
-             *
-             * `for` chỉ gồm 'pot' và 'original': đá phủ gốc không dùng
-             * được cho một bó hoa.
-             */
             'phu-goc-tieu-canh' => [
                 ['name' => 'Đá trắng phủ mặt chậu 1kg', 'code' => 'PG-DA-TRANG', 'price' => 40000,
                     'short' => 'Đá cuội trắng cỡ 1–2cm, rải kín mặt đất cho gọn và sạch.',
@@ -171,21 +95,6 @@ class SupplyCatalogSeeder extends Seeder
                     'for' => ['pot', 'original']],
             ],
 
-            /* ============================================================
-             * PHỤ KIỆN TRANG TRÍ — nhóm được ĐỔI NGHĨA
-             * ============================================================
-             * "Phụ kiện" cũ chứa chậu, đĩa lót, bình tưới, kéo — toàn đồ
-             * dùng. Nhưng khi người Việt nói "phụ kiện" cho một chậu cây
-             * thì họ nghĩ tới đồ trang trí: quả cầu Giáng sinh, nơ, đồ
-             * treo ngày Tết.
-             *
-             * Danh mục giữ nguyên slug, đổi tên và đổi hàng bên trong.
-             *
-             * `status` để 'active' quanh năm — cửa hàng bán trước dịp
-             * chứ không đợi tới đúng ngày. Muốn ẩn ngoài mùa thì đó là
-             * quyết định của admin ở trang quản trị, không phải thứ
-             * seeder áp đặt.
-             */
             'phu-kien' => [
                 ['name' => 'Bộ 6 quả cầu Giáng sinh treo cây', 'code' => 'TT-CAU-NOEL', 'price' => 65000,
                     'short' => 'Quả cầu nhựa đỏ và vàng đồng, đường kính 4cm, có móc treo sẵn.',
@@ -211,11 +120,6 @@ class SupplyCatalogSeeder extends Seeder
         $cat = [];
 
         foreach (self::CATEGORIES as $slug => $spec) {
-            /*
-             * updateOrCreate chứ không firstOrCreate: "Phụ kiện" đã tồn
-             * tại và cần ĐỔI TÊN thành "Phụ kiện trang trí". firstOrCreate
-             * sẽ bỏ qua và cửa hàng giữ nguyên cái tên gây hiểu nhầm.
-             */
             $cat[$slug] = Category::updateOrCreate(
                 ['slug' => $slug],
                 [
@@ -236,12 +140,6 @@ class SupplyCatalogSeeder extends Seeder
                 $product = Product::withTrashed()->where('slug', Str::slug($item['name']))->first();
 
                 if ($product) {
-                    /*
-                     * ĐÃ CÓ: chỉ sửa danh mục và mã, KHÔNG đụng giá hay
-                     * mô tả. Admin có thể đã chỉnh giá ở trang quản trị,
-                     * và một lần chạy seeder không được phép cuốn mất
-                     * việc đó.
-                     */
                     if ($product->category_id !== $cat[$slug]->id) {
                         $product->category_id = $cat[$slug]->id;
                         $product->product_code = $item['code'];
@@ -256,14 +154,6 @@ class SupplyCatalogSeeder extends Seeder
                         'product_code' => $item['code'],
                         'short_description' => $item['short'],
                         'product_type' => ProductType::Other,
-                        /*
-                         * Hình thức bán 'other'.
-                         *
-                         * QUAN TRỌNG: gán 'pot' thì chậu sứ rỗng sẽ tự
-                         * gợi ý chính nó làm phụ kiện cho nó —
-                         * accessoriesFor() tra theo hình thức bán của
-                         * sản phẩm đang xem.
-                         */
                         'selling_form' => SellingForm::Other,
                         'base_price' => $item['price'],
                         'status' => 'active',
@@ -273,7 +163,6 @@ class SupplyCatalogSeeder extends Seeder
                     $them++;
                 }
 
-                // Nhãn "dùng kèm loại hàng nào" — nguồn của gợi ý mua kèm.
                 $product->syncTraits(TraitType::AccessoryFor, $item['for']);
             }
         }

@@ -5,13 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Một dòng của phiếu đổi hàng — đi về hoặc đi ra.
- *
- * `unit_price` và `ten_hang` là BẢN CHỤP. Giá và tên sản phẩm đổi theo
- * thời gian; phiếu lập tháng trước phải đọc được đúng thứ đã thoả thuận,
- * không phải thứ hôm nay đang bán.
- */
+/** Một dòng của phiếu đổi hàng — đi về hoặc đi ra. */
 class ExchangeItem extends Model
 {
     public const TRA_VE = 'tra_ve';
@@ -58,7 +52,6 @@ class ExchangeItem extends Model
         return $this->chieu === self::TRA_VE;
     }
 
-    /** Thành tiền của dòng này. */
     public function thanhTien(): string
     {
         return bcmul((string) $this->unit_price, (string) $this->quantity, 2);

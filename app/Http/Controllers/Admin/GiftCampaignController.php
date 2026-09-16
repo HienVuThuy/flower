@@ -15,16 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/**
- * Quà theo CHƯƠNG TRÌNH — một tab của trang Khuyến mại.
- * ============================================================
- * Chỉ loại "chương trình" (giới hạn suất, thời gian, hạng, đơn đầu tiên).
- * Quà mặc định của từng sản phẩm là ProductGiftController — hai thứ khác
- * nhau với người bán: một bên là sự kiện, một bên là thuộc tính sản phẩm.
- *
- * XOÁ chỉ khi chưa phát suất nào; đã phát thì chuyển "Kết thúc" — đơn cũ
- * phải còn nói được quà đến từ chương trình nào.
- */
+/** Quà theo CHƯƠNG TRÌNH — một tab của trang Khuyến mại. */
 class GiftCampaignController extends Controller
 {
     use LogsAdminActivity;
@@ -91,10 +82,8 @@ class GiftCampaignController extends Controller
         ]);
     }
 
-    /** @return array<string, mixed> */
     private function duLieu(Request $request, ?GiftCampaign $dangSua = null): array
     {
-        // Ô giờ `datetime-local` là giờ Việt Nam — đổi về giờ lưu trước khi kiểm (xem Gio::doiONhap).
         $request->merge(Gio::doiONhap($request->all(), 'starts_at', 'ends_at'));
 
         $data = $request->validate([

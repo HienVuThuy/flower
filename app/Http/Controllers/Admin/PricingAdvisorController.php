@@ -9,23 +9,9 @@ use App\Services\Promotion\OccasionCalendar;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/**
- * Trang "Đề xuất giá & ưu đãi" của admin.
- * ============================================================
- * Controller mỏng có chủ đích, cùng lý do như `AnalyticsController`: mọi
- * phép đếm nằm ở `DemandSignals`, mọi phán đoán nằm ở `PricingAdvisor`,
- * mọi việc đối chiếu lịch nằm ở `OccasionCalendar`. Ở đây chỉ nhận tham
- * số và giao việc.
- */
+/** Trang "Đề xuất giá & ưu đãi" của admin. */
 class PricingAdvisorController extends Controller
 {
-    /**
-     * Các cửa sổ quan sát cho admin chọn.
-     *
-     * KHÔNG cho nhập số ngày tuỳ ý qua URL: mỗi cửa sổ là một truy vấn
-     * quét bảng sự kiện, và một tham số mở là lời mời cho ai đó gõ 99999
-     * rồi trang treo.
-     */
     public const WINDOWS = [
         7 => '7 ngày',
         30 => '30 ngày',

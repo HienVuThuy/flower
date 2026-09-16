@@ -25,7 +25,6 @@ class OrderController extends Controller
     ) {
     }
 
-    /** Lịch sử đơn — chỉ dành cho khách đã đăng nhập. */
     public function index(): View
     {
         return view('shop.orders.index', [
@@ -45,22 +44,6 @@ class OrderController extends Controller
         ]);
     }
 
-    /**
-     * Khách tự huỷ đơn.
-     *
-     * HAI CỬA phải qua, và cả hai đều cần thiết:
-     *
-     *  1. authorizeOrderAccess() — đúng người. Thiếu bước này thì đổi mã trên
-     *     URL là huỷ được đơn của người lạ.
-     *
-     *  2. isCancellableByCustomer() — đúng lúc. Không dùng isCancellable()
-     *     vì hàm đó rộng hơn, dành cho admin (xem ghi chú trong Order).
-     *
-     * Việc đổi trạng thái, hoàn kho và trả lại lượt mã giảm giá đều do
-     * OrderService::changeStatus() lo, trong một transaction — ở đây
-     * KHÔNG tự sửa cột status, nếu không sẽ có hai nơi cùng biết cách
-     * huỷ đơn và sớm muộn lệch nhau.
-     */
     public function cancel(OrderCancelRequest $request, Order $order): RedirectResponse
     {
         $this->authorizeOrderAccess($order);
@@ -73,11 +56,6 @@ class OrderController extends Controller
             ));
         }
 
-        /*
-         * Ghi rõ đây là khách tự huỷ. Admin đọc lý do trong trang quản trị
-         * cần phân biệt được với đơn do chính cửa hàng huỷ — hai chuyện có
-         * ý nghĩa kinh doanh hoàn toàn khác nhau.
-         */
         $reason = trim((string) $request->validated('reason'));
 
         $reason = $reason === ''
@@ -87,21 +65,9 @@ class OrderController extends Controller
         try {
             $this->orders->changeStatus($order, OrderStatus::Cancelled, $reason);
         } catch (OrderException $e) {
-            /*
-             * Vào được tới đây nghĩa là trạng thái đã đổi giữa lúc khách
-             * mở trang và lúc bấm nút — ví dụ cửa hàng vừa chuyển sang
-             * "Đang chuẩn bị". Báo cho khách chứ không đổ trang lỗi.
-             */
             return back()->with('error', $e->getMessage());
         }
 
-        /*
-         * Báo cho cửa hàng — chỉ ở ĐÂY, không đặt trong changeStatus().
-         *
-         * changeStatus() dùng chung cho cả admin huỷ lẫn khách huỷ. Đặt
-         * vào đó thì cửa hàng tự huỷ cũng tự gửi thư báo cho chính mình.
-         * Phân biệt "ai huỷ" chỉ có ở tầng controller.
-         */
         $this->mailer->notifyShopOfCancellation($order);
 
         Log::info('Khách tự huỷ đơn hàng.', [

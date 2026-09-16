@@ -1,16 +1,7 @@
-{{--
-    MỘT BÌNH LUẬN và các câu trả lời của nó.
-
-    Trả lời thụt vào MỘT tầng — nhìn là biết ai đang nói với ai. Trả lời một
-    câu trả lời vẫn nằm ở tầng này, kèm "trả lời Tên" (xem CommunityComment):
-    lồng vô hạn tầng thì trên điện thoại thụt tới hết màn hình.
-
-    Biểu mẫu trả lời / sửa nằm trong <details> nên mở được không cần JavaScript.
---}}
+{{-- MỘT BÌNH LUẬN và các câu trả lời của nó. --}}
 @php
     $laCuaToi = auth()->id() === $bl->user_id;
     $laChuBai = auth()->check() && auth()->id() === (int) $post->user_id;
-    // Bình luận đã ẩn chỉ lọt tới đây khi CHÍNH CHỦ BÀI xem (xem CommunityController::show).
     $blDaAn = $bl->hidden_at !== null;
     $choPhepTraLoi = ($coTheBinhLuan ?? false) && ! $post->khoaBinhLuan() && ! $blDaAn;
     $cacTraLoi = $traLoi ?? [];
@@ -96,10 +87,6 @@
                                 data-bs-toggle="modal" data-bs-target="#hop-bao-cao">Báo cáo</button>
                     @endif
 
-                    {{--
-                        CHỦ BÀI dọn bình luận trên bài của mình: ẩn khỏi mắt người khác,
-                        bật lại được. Không phải "gỡ" — gỡ là việc của người viết ra nó.
-                    --}}
                     @if($laChuBai)
                         <form method="POST" action="{{ route('shop.community.owner.comment-hide', $bl->id) }}">
                             @csrf

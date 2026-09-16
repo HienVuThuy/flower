@@ -1,15 +1,4 @@
-{{--
-    NỘI DUNG HƯỚNG DẪN của từng nhu cầu.
-
-    Để trong Blade chứ không trong cơ sở dữ liệu: đây là bài viết có cấu
-    trúc (dẫn nhập + các bước + lưu ý), không phải dữ liệu để lọc hay
-    đếm. Nhét vào bảng thì admin sửa được cái tên nhưng không sửa được
-    cái quan trọng, còn người đọc mã phải mở hai chỗ mới hiểu một trang.
-
-    Mỗi nhu cầu một khối @case, cùng một khuôn: đoạn dẫn nhập rồi danh
-    sách các bước. Khuôn giống nhau nên khách đọc trang thứ hai đã biết
-    tìm gì ở đâu.
---}}
+{{-- NỘI DUNG HƯỚNG DẪN của từng nhu cầu. --}}
 @switch($intent)
 
     @case(\App\Enums\ShoppingIntent::Gift)

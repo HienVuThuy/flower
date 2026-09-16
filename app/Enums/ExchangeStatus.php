@@ -2,15 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Phiếu đổi hàng đang ở bước nào.
- * ============================================================
- * BA BƯỚC THẬT, không phải ba cái nhãn.
- *
- * Mỗi bước ứng với một việc đã xảy ra ngoài đời: hàng cũ đã quay về, và
- * hàng mới đã đi cùng tiền đã thu xong. Không có bước "đang xử lý" — nó
- * không nói gì cho ai cả, và người ta sẽ để phiếu nằm ở đó mãi.
- */
+/** Phiếu đổi hàng đang ở bước nào. */
 enum ExchangeStatus: string
 {
     case ChoNhan = 'cho_nhan';
@@ -38,7 +30,6 @@ enum ExchangeStatus: string
         };
     }
 
-    /** Màu nhãn ở giao diện quản trị. */
     public function tone(): string
     {
         return match ($this) {

@@ -1,13 +1,4 @@
-{{--
-    HỘP THOẠI ĐĂNG BÀI.
-
-    Trước đây biểu mẫu chiếm nguyên cột phải của trang, đẩy bảng tin xuống còn
-    hai phần ba màn hình. Đưa vào hộp thoại thì bảng tin rộng ra, mà đăng bài
-    vẫn là một cú bấm.
-
-    Có lỗi kiểm dữ liệu thì JS mở lại hộp (data-mo-lai) để khách thấy lỗi ngay
-    tại ô vừa nhập, không phải tự bấm mở rồi gõ lại từ đầu.
---}}
+{{-- HỘP THOẠI ĐĂNG BÀI. --}}
 <div class="modal fade" id="hop-dang-bai" tabindex="-1" aria-labelledby="hop-dang-bai-tieu-de" aria-hidden="true"
      @if($errors->any() && old('_form') === 'dang-bai') data-mo-lai @endif>
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">

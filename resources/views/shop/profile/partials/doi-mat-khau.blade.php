@@ -19,10 +19,6 @@
                 autocomplete="current-password"
                 bag="password"
             />
-            {{-- x-form.password-input chỉ tô viền đỏ, KHÔNG in
-                 lý do. Thiếu dòng này thì mật khẩu không đạt
-                 quy tắc chỉ khiến biểu mẫu quay về trống trơn
-                 mà không nói vì sao. --}}
             <x-form-error name="current_password" bag="password" />
         </div>
 
@@ -54,23 +50,6 @@
         </button>
     </form>
 
-    {{--
-        ĐƯỜNG THOÁT CHO NGƯỜI KHÔNG NHỚ MẬT KHẨU CŨ.
-
-        Biểu mẫu trên bắt nhập mật khẩu hiện tại, và đó là
-        đúng: thiếu phép kiểm ấy thì ai mượn được máy đang
-        mở sẵn cũng chiếm được tài khoản.
-
-        Nhưng người đăng nhập bằng "ghi nhớ đăng nhập" từ
-        nhiều tháng trước hoàn toàn có thể KHÔNG CÒN NHỚ
-        mật khẩu cũ. Khi ấy họ mắc kẹt: đang đăng nhập mà
-        không đổi được mật khẩu.
-
-        Trang "Quên mật khẩu" nằm sau middleware `guest`
-        nên phải đăng xuất thật mới vào được — không ai
-        đoán ra bước đó. Nút này gửi đúng liên kết ấy về
-        email của chính họ, không cần đăng xuất.
-    --}}
     <hr class="my-4">
 
     <p class="text-caption mb-2">

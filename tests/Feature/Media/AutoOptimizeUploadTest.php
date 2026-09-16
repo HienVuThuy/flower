@@ -12,21 +12,7 @@ use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Ảnh admin tải lên phải được tối ưu NGAY, không chờ ai gõ lệnh.
- * ============================================================
- * TRẠNG THÁI TRƯỚC KHI SỬA: việc sinh bản WebP chỉ nằm trong lệnh
- * `php artisan anh:toi-uu` chạy tay. Admin thêm sản phẩm và tải ảnh lên
- * thì ảnh đó được lưu nguyên bản JPEG — không bản WebP, không có trong
- * manifest.
- *
- * Và KHÔNG CÓ GÌ HỎNG NHÌN THẤY ĐƯỢC: `<x-site.image>` không tìm thấy
- * bản tối ưu thì dùng thẳng ảnh gốc, trang vẫn hiện bình thường. Ảnh đó
- * chỉ đơn giản là nặng gấp mấy lần những ảnh khác, mãi mãi.
- *
- * Đó là lý do phải có bài kiểm thử này chứ không thể "để ý là biết":
- * kiểu hỏng này không có biểu hiện nào trên màn hình.
- */
+/** Ảnh admin tải lên phải được tối ưu NGAY, không chờ ai gõ lệnh. */
 class AutoOptimizeUploadTest extends TestCase
 {
     use RefreshDatabase;
@@ -39,30 +25,11 @@ class AutoOptimizeUploadTest extends TestCase
             $this->markTestSkipped('Máy chạy kiểm thử chưa bật GD/WebP.');
         }
 
-        /*
-         * ĐĨA GIẢ — BẮT BUỘC.
-         *
-         * Bài này gọi `ImageStore::luu()` bốn lần, và trước khi có dòng
-         * này chúng ghi thẳng vào `storage/app/public/products/` THẬT.
-         * Mỗi lần chạy bộ kiểm thử là thêm vài tệp ảnh tên băm mà không
-         * bản ghi nào trỏ tới — rác tích lại trong chính thư mục được
-         * đưa lên kho lưu trữ.
-         *
-         * Đã phải dọn tay hai lần trước khi commit mới nhận ra quy luật.
-         *
-         * `Storage::fake` vẫn là một đĩa cục bộ thật trong thư mục tạm,
-         * nên GD, getimagesize() và imagewebp() chạy y hệt — bài kiểm thử
-         * không mất tính chân thực, chỉ đổi chỗ ghi.
-         */
         Storage::fake('public');
     }
 
-    /** Ảnh JPEG thật, đủ rộng để sinh được cả hai cỡ. */
     private function anhThat(string $ten = 'thu.jpg'): UploadedFile
     {
-        // UploadedFile::fake()->image() dựng ảnh THẬT bằng GD, không
-        // phải tệp rỗng — cần đúng như vậy vì ImageOptimizer đọc kích
-        // thước bằng getimagesize().
         return UploadedFile::fake()->image($ten, 1200, 900);
     }
 
@@ -85,12 +52,6 @@ class AutoOptimizeUploadTest extends TestCase
     #[Test]
     public function anh_moi_vao_manifest_ngay_de_trang_dung_duoc_ban_webp(): void
     {
-        /*
-         * Sinh ra tệp WebP thôi CHƯA ĐỦ. Giao diện đọc manifest để dựng
-         * srcset; ảnh có bản WebP mà không có trong manifest thì vẫn bị
-         * phục vụ bằng ảnh gốc — hỏng đúng như cũ, chỉ tốn thêm chỗ trên
-         * đĩa.
-         */
         $path = app(ImageStore::class)->luu($this->anhThat(), 'products');
 
         $srcset = app(ResponsiveImage::class)->webpSrcset($path);
@@ -103,9 +64,6 @@ class AutoOptimizeUploadTest extends TestCase
     #[Test]
     public function admin_them_danh_muc_kem_anh_thi_anh_do_duoc_toi_uu(): void
     {
-        // Đi qua ĐÚNG đường HTTP mà admin dùng, không gọi thẳng service:
-        // lỗi cần bắt là "controller quên gọi", và gọi thẳng service thì
-        // không bao giờ bắt được lỗi đó.
         $admin = User::factory()->create();
         $admin->role = \App\Enums\UserRole::Admin;
         $admin->save();
@@ -132,11 +90,6 @@ class AutoOptimizeUploadTest extends TestCase
     #[Test]
     public function xoa_anh_thi_don_luon_ban_webp_va_muc_trong_manifest(): void
     {
-        /*
-         * Đi cùng cặp với việc sinh. Không dọn thì thư mục `rp/` giữ lại
-         * bản WebP của những ảnh không còn ai dùng, và manifest phình ra
-         * với những đường dẫn trỏ vào hư không.
-         */
         $store = app(ImageStore::class);
         $path = $store->luu($this->anhThat(), 'products');
 
@@ -155,14 +108,6 @@ class AutoOptimizeUploadTest extends TestCase
     #[Test]
     public function toi_uu_hong_thi_anh_goc_van_phai_luu_duoc(): void
     {
-        /*
-         * Thiếu GD, ảnh lạ, hết chỗ trên đĩa — đều có thể xảy ra. Nhưng
-         * ảnh gốc thì đã lưu xong, và giao diện tự lùi về dùng ảnh gốc.
-         * Ném lỗi ra ngoài ở đây là làm hỏng cả việc tạo sản phẩm chỉ vì
-         * một bước làm-cho-nhẹ-hơn.
-         *
-         * Giả lập bằng một tệp mang đuôi ảnh nhưng ruột không phải ảnh.
-         */
         $rac = UploadedFile::fake()->createWithContent('hong.jpg', 'day khong phai anh');
 
         $path = app(ImageStore::class)->luu($rac, 'products');

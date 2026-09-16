@@ -1,7 +1,4 @@
-{{--
-    LUẬT CỦA MỘT MÓN QUÀ — dùng chung cho khối "Thêm quà" và "Sửa" từng dòng.
-    Biến: $pg (ProductGift, có thể mới), $quyCachSanPham, $ma (tiền tố id cho ô).
---}}
+{{-- LUẬT CỦA MỘT MÓN QUÀ — dùng chung cho khối "Thêm quà" và "Sửa" từng dòng. --}}
 <div class="row g-3">
     @if($quyCachSanPham->isNotEmpty())
         <div class="col-md-6">

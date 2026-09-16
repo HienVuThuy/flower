@@ -23,14 +23,6 @@
                 <p class="mb-0"><a href="{{ route('shop.credits') }}">Nguồn ảnh</a></p>
             </div>
 
-            {{--
-                CỘT "CỬA HÀNG" — các trang nội dung tĩnh.
-
-                Danh sách lấy từ PageController::all() chứ không gõ tay
-                năm dòng: thêm một trang ở đó là chân trang tự có, không
-                phải nhớ sửa thêm chỗ này. Gõ tay là sớm muộn có một
-                trang tồn tại mà không ai tìm thấy đường vào.
-            --}}
             <div class="col-6 col-md-2">
                 <div class="site-footer__heading">Cửa hàng</div>
                 @foreach(\App\Http\Controllers\Shop\PageController::all() as $slug => $label)
@@ -42,8 +34,6 @@
 
             <div class="col-md-3">
                 <div class="site-footer__heading">Liên hệ</div>
-                {{-- Không phải số gọi được thì không bày biểu tượng điện thoại
-                     cạnh một chữ vô nghĩa. Xem StoreProfile::hotline(). --}}
                 @if($hotline = \App\Services\Shop\StoreProfile::hotline())
                     <p class="mb-1">
                         <x-site.icon name="telephone" />

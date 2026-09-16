@@ -8,15 +8,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
-/**
- * Chặn truy cập theo vai trò, dùng chung cho mọi vai trò
- * hiện có và sau này (không cần viết middleware riêng
- * cho từng role mới).
- *
- * Đăng ký alias trong bootstrap/app.php và dùng như:
- *   ->middleware('role:admin')
- *   ->middleware('role:admin,staff')
- */
+/** Chặn truy cập theo vai trò, dùng chung cho mọi vai trò hiện có và sau này (không cần viết middleware riêng… */
 class EnsureUserHasRole
 {
     public function handle(Request $request, Closure $next, string ...$roles): Response

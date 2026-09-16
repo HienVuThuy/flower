@@ -16,18 +16,7 @@ use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Video sản phẩm và mô tả chi tiết theo khối.
- * ============================================================
- * HAI CHỖ NGUY HIỂM NHẤT, và phần lớn bài ở đây canh chúng:
- *
- *   1. LINK VIDEO. Nhận nguyên chuỗi người dùng dán rồi đổ vào <iframe src>
- *      là một lỗ chèn mã. Chỉ mã video được lấy ra; địa chỉ nhúng do máy chủ
- *      dựng lại.
- *
- *   2. CHỮ TRONG KHỐI. Đi qua cùng bộ lọc HTML với mô tả cũ — không có ngoại
- *      lệ "admin thì tin được".
- */
+/** Video sản phẩm và mô tả chi tiết theo khối. */
 class ProductMediaTest extends TestCase
 {
     use RefreshDatabase;
@@ -74,8 +63,6 @@ class ProductMediaTest extends TestCase
         return UploadedFile::fake()->image('khoi.jpg', 800, 600);
     }
 
-    /* ================= 1. VIDEO ================= */
-
     #[Test]
     public function link_youtube_duoc_dung_lai_thanh_dia_chi_nhung_khong_luu_nguyen_chuoi(): void
     {
@@ -115,10 +102,6 @@ class ProductMediaTest extends TestCase
         $this->assertNotNull($video->path);
         Storage::disk('public')->assertExists($video->path);
 
-        /*
-         * Đổi tên `shell.php` thành `clip.mp4` không lọt: luật dùng `mimetypes`
-         * đọc NỘI DUNG tệp, không chỉ nhìn đuôi.
-         */
         $this->tao([
             'slug' => 'sp-gia-danh',
             'video_files' => [UploadedFile::fake()->create('clip.mp4', 10, 'application/x-php')],
@@ -128,10 +111,6 @@ class ProductMediaTest extends TestCase
     #[Test]
     public function video_khong_lot_vao_thu_vien_anh(): void
     {
-        /*
-         * `images()` phải chỉ còn ảnh: gallery ở trang khách đọc `path` của từng
-         * dòng, mà video dạng link có `path` là null — lọt vào là một ô ảnh vỡ.
-         */
         $this->tao([
             'gallery' => [$this->anh()],
             'video_urls' => ['https://vimeo.com/123456789'],
@@ -160,8 +139,6 @@ class ProductMediaTest extends TestCase
         $this->assertSame(0, $sp->fresh()->videos()->count());
     }
 
-    /* ================= 2. KHỐI MÔ TẢ ================= */
-
     #[Test]
     public function khoi_giu_dung_thu_tu_chu_anh_chu(): void
     {
@@ -183,7 +160,6 @@ class ProductMediaTest extends TestCase
     #[Test]
     public function khoi_chu_de_trong_va_khoi_anh_khong_co_anh_bi_bo(): void
     {
-        // Người dùng bấm "thêm khối" rồi đổi ý: đừng lưu một khối rỗng.
         $this->tao([
             'blocks' => [
                 ['kind' => 'text', 'body' => '   '],
@@ -215,10 +191,6 @@ class ProductMediaTest extends TestCase
     #[Test]
     public function bo_mot_khoi_khoi_bieu_mau_thi_xoa_ca_ban_ghi_lan_tep_anh(): void
     {
-        /*
-         * Biểu mẫu là toàn bộ sự thật. Không xoá tệp theo thì mỗi lần admin bỏ
-         * một khối ảnh là một tệp ở lại đĩa mà không bản ghi nào trỏ tới.
-         */
         $this->tao([
             'blocks' => [
                 ['kind' => 'text', 'body' => 'Giữ lại'],
@@ -239,8 +211,6 @@ class ProductMediaTest extends TestCase
         $this->assertSame(1, ProductBlock::count());
         Storage::disk('public')->assertMissing($anhCu);
     }
-
-    /* ================= 3. TRANG KHÁCH ================= */
 
     #[Test]
     public function trang_khach_hien_khoi_dung_thu_tu_va_KHONG_nap_san_trinh_phat(): void
@@ -263,29 +233,14 @@ class ProductMediaTest extends TestCase
         );
         $this->assertLessThan(strpos($html, 'Phần dưới ảnh'), strpos($html, 'Chú thích ảnh'));
 
-        /*
-         * KHÔNG có <iframe> nào trong HTML đầu tiên: trình phát của YouTube chỉ
-         * được dựng khi khách BẤM. Nhúng sẵn là kéo ~1MB JavaScript của bên thứ
-         * ba và gắn thẻ theo dõi cho cả người chỉ lướt qua.
-         */
         $this->assertStringNotContainsString('<iframe', $html);
 
-        // Nhưng vẫn phải có đường xem cho người tắt JavaScript.
         $this->assertStringContainsString('https://www.youtube.com/watch?v=dQw4w9WgXcQ', $html);
     }
-
-    /* ================= 4. TRANG QUẢN TRỊ ================= */
 
     #[Test]
     public function o_so_luong_ton_bi_khoa_khi_tat_quan_ly_ton_kho(): void
     {
-        /*
-         * Ô số tồn chỉ có nghĩa khi có quản lý tồn kho. Để gõ được lúc đang tắt
-         * là mời người dùng điền một con số hệ thống không dùng tới.
-         *
-         * readonly chứ không disabled — ô disabled không được gửi lên, bật lại
-         * quản lý tồn là con số cũ biến mất.
-         */
         $tat = Product::factory()->for(Category::factory())->create(['track_inventory' => false, 'stock_quantity' => 7]);
         $bat = Product::factory()->for(Category::factory())->create(['track_inventory' => true, 'stock_quantity' => 7]);
 

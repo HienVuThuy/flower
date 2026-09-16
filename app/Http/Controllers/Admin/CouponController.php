@@ -23,10 +23,6 @@ class CouponController extends Controller
     {
         return view('admin.coupons.index', [
             'coupons' => Coupon::query()
-                /*
-                 * Tìm theo MÃ hoặc TÊN chương trình. Mã là thứ khách đọc
-                 * qua điện thoại khi kêu "mã của tôi không dùng được".
-                 */
                 ->when($request->filled('q'), function ($query) use ($request) {
                     $tu = trim((string) $request->query('q'));
 
@@ -41,23 +37,10 @@ class CouponController extends Controller
                     fn ($q) => $q->where('status', $request->string('status'))
                 )
 
-                /*
-                 * "Đang dùng được" khác với "trạng thái = active".
-                 *
-                 * Mã có status active nhưng đã qua ngày kết thúc, hoặc
-                 * hết lượt, thì khách vẫn không dùng được. usableNow()
-                 * là nơi DUY NHẤT biết luật đó — lọc bằng nó thay vì tự
-                 * viết lại điều kiện ngày tháng ở đây.
-                 */
                 ->when($request->query('dung_duoc') === 'co', fn ($q) => $q->usableNow())
 
                 ->tap(fn ($q) => $this->applySort($q, $request, [
                     'ma' => 'code',
-                    /*
-                     * "Mã nào được dùng nhiều nhất" là câu hỏi để quyết
-                     * định có chạy lại chương trình hay không — trước
-                     * đây phải lật từng trang mà đọc.
-                     */
                     'luot-dung' => 'used_count',
                     'het-han' => 'ends_at',
                     'trang-thai' => 'status',
@@ -102,11 +85,6 @@ class CouponController extends Controller
 
     public function destroy(Coupon $coupon): RedirectResponse
     {
-        /*
-         * Mã đã có người dùng thì KHÔNG xoá, chỉ cho kết thúc.
-         * Xoá đi sẽ làm cột coupon_id của các đơn cũ thành null; đơn vẫn
-         * giữ được coupon_code nhưng mất đường dẫn ngược về chương trình.
-         */
         if ($coupon->used_count > 0) {
             return back()->with(
                 'error',
@@ -114,7 +92,6 @@ class CouponController extends Controller
             );
         }
 
-        // Ghi trước khi xoá, để dòng nhật ký còn giữ đúng khoá chính.
         $this->logCrud('coupon.deleted', $coupon, 'mã giảm giá', $coupon->code);
 
         $coupon->delete();

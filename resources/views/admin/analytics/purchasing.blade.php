@@ -15,12 +15,6 @@
     $pt = fn ($v) => $v === null ? '—' : number_format($v, 1, ',', '.') . '%';
 @endphp
 
-{{--
-    NÓI CÁCH ĐỌC TRƯỚC KHI ĐƯA SỐ.
-
-    Hai cột giá đứng cạnh nhau là cả luận điểm của trang. Người đọc lướt
-    chỉ nhìn cột quen mắt ("đơn giá") nếu không được bảo cột kia là gì.
---}}
 <div class="admin-panel p-4 mb-3">
     <h2 class="h6 fw-bold mb-2">Cách đọc</h2>
     <ul class="mb-0 ps-3 admin-page-subtitle">
@@ -69,13 +63,6 @@
                     </span>
                 </div>
 
-                {{--
-                    CHỈ NÓI KHI HAI CÂU TRẢ LỜI KHÁC NHAU.
-
-                    Một nguồn, hoặc rẻ nhất cũng là đáng tiền nhất, thì in
-                    câu này ra là nói một câu rỗng — và người đọc sẽ học
-                    cách bỏ qua nó, đúng lúc nó có điều đáng nói.
-                --}}
                 @if($g['khac_nhau'])
                     <p class="purchasing-callout mb-3">
                         Rẻ nhất trên hoá đơn là <strong>{{ $g['re_nhat'] }}</strong>,
@@ -123,7 +110,6 @@
                                     <td class="text-end text-nowrap">{{ $pt($n['ti_le_tra']) }}</td>
                                     <td class="text-end text-nowrap fw-bold">
                                         @if($n['gia_dung_duoc'] === null)
-                                            {{-- null KHÁC 0: không còn gì dùng được thì không có giá để nói. --}}
                                             <span class="admin-page-subtitle fw-normal">chưa tính được</span>
                                         @else
                                             {{ $tien($n['gia_dung_duoc']) }}
@@ -164,7 +150,6 @@
                                             @if($t['doi'] === null)
                                                 —
                                             @else
-                                                {{-- Giá nhập TĂNG là tin xấu cho cửa hàng: dấu và chữ nói rõ, không chỉ màu. --}}
                                                 <span class="{{ $t['doi'] > 0 ? 'text-danger' : ($t['doi'] < 0 ? 'text-success' : '') }}">
                                                     {{ $t['doi'] > 0 ? 'tăng' : ($t['doi'] < 0 ? 'giảm' : 'giữ') }}
                                                     {{ number_format(abs($t['doi']), 1, ',', '.') }}%

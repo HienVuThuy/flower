@@ -19,36 +19,7 @@ use App\Models\StockReceipt;
 use App\Services\Analytics\InventoryReport;
 use App\Services\Inventory\FlowerLotService;
 
-/**
- * HÀNG ĐỢI VIỆC của trang quản trị.
- * ============================================================
- * Đây là thứ đầu tiên admin nhìn thấy khi mở trang, và nó phải trả lời
- * đúng một câu: HÔM NAY PHẢI LÀM GÌ.
- *
- * Bản trước, chỗ này là bốn con số — bao nhiêu danh mục, bao nhiêu sản
- * phẩm, bao nhiêu khách. Không con số nào nói cho ai biết phải làm gì;
- * chúng gần như không đổi từ ngày này sang ngày khác, và người ta học
- * cách lướt qua.
- *
- * ============================================================
- * BA LUẬT CỦA MỘT HÀNG ĐỢI ĐÁNG TIN:
- *
- *   1. MỖI MỤC PHẢI CÓ NGƯỜI ĐỘNG TAY ĐƯỢC. "42 sản phẩm" không phải
- *      việc. "2 đơn chưa có vận đơn" thì có.
- *
- *   2. MỖI MỤC DẪN THẲNG TỚI DANH SÁCH ĐÃ LỌC SẴN. Hiện con số rồi bắt
- *      admin tự đi lọc lại là bỏ dở việc giữa chừng.
- *
- *   3. SỐ 0 THÌ BIẾN MẤT. Một danh sách toàn "0 đơn chờ xác nhận" là
- *      danh sách không ai đọc, và đọc mãi thành quen bỏ qua — kể cả hôm
- *      con số khác 0.
- *
- * ============================================================
- * VÌ SAO LÀ MỘT LỚP RIÊNG chứ không nằm trong controller: cùng một câu
- * hỏi "còn việc gì" sẽ được hỏi ở nhiều chỗ (trang tổng quan, huy hiệu
- * trên thanh điều hướng, sau này là thông báo). Định nghĩa nằm hai nơi
- * là hai nơi đó sẽ lệch nhau, và không ai biết nơi nào đúng.
- */
+/** HÀNG ĐỢI VIỆC của trang quản trị. */
 class WorkQueue
 {
     public function __construct(
@@ -56,31 +27,11 @@ class WorkQueue
     ) {
     }
 
-    /**
-     * Mọi việc đang chờ, đã bỏ mục bằng 0, XẾP THEO MỨC GẤP.
-     *
-     * @return list<array{label: string, count: int, url: string, tone: string, hint: string}>
-     */
     public function items(): array
     {
-        /*
-         * MỘT LẦN ĐỌC KHO CHO CẢ HAI MỤC.
-         *
-         * `tongQuan()` và `sapHet()` đều gọi `rows()`, mà `rows()` quét
-         * toàn bộ sản phẩm cùng quy cách. Gọi hai lần là làm hai lần
-         * cùng một việc cho một trang.
-         */
         $tongQuanKho = $this->kho->trongVong(30)->tongQuan();
 
         $viec = [
-            /*
-             * ĐƠN ĐÃ HUỶ MÀ KHÁCH ĐÃ TRẢ TIỀN = CỬA HÀNG ĐANG NỢ KHÁCH.
-             *
-             * Đứng đầu vì đây là việc duy nhất trong cả danh sách liên
-             * quan tới TIỀN CỦA NGƯỜI KHÁC. Mọi mục còn lại chậm một
-             * ngày thì cửa hàng thiệt; mục này chậm một ngày thì khách
-             * thiệt.
-             */
             [
                 'label' => 'đơn đã huỷ cần hoàn tiền cho khách',
                 'count' => Order::query()
@@ -92,13 +43,6 @@ class WorkQueue
                 'hint' => 'Khách đã trả tiền cho đơn không còn nữa. Hệ thống không tự chuyển tiền lại.',
             ],
 
-            /*
-             * HOÀN QUA MOMO MÀ KHÔNG RÕ KẾT QUẢ — ngang hàng với nợ khách.
-             *
-             * Tiền có thể đã về ví khách, có thể chưa. Để lâu thì hoặc
-             * khách gọi hỏi, hoặc có người thấy "còn hoàn được" và hoàn
-             * thêm lần nữa.
-             */
             [
                 'label' => 'đơn có khoản hoàn tiền MoMo chưa rõ kết quả',
                 'count' => Order::refundPending()->count(),
@@ -115,14 +59,6 @@ class WorkQueue
                 'hint' => 'Khách đã đặt và đang đợi cửa hàng nhận đơn.',
             ],
 
-            /*
-             * ĐÃ NHẬN ĐƠN NHƯNG CHƯA CÓ VẬN ĐƠN — đơn đứng im.
-             *
-             * Đơn trả qua MoMo tự tạo vận đơn ngay sau khi thanh toán;
-             * đơn COD thì KHÔNG — phải có người bấm. Trước đây không màn
-             * hình nào hiện ra khoảng trống đó: đơn nằm ở "Đã xác nhận",
-             * trông như đang chạy, mà thực tế chưa ai gọi shipper.
-             */
             [
                 'label' => 'đơn đã nhận nhưng chưa có vận đơn',
                 'count' => Order::awaitingWaybill()->count(),
@@ -131,20 +67,6 @@ class WorkQueue
                 'hint' => 'Đơn COD không tự tạo vận đơn. Chưa tạo thì hàng chưa đi.',
             ],
 
-            /*
-             * HẾT HÀNG MÀ VẪN BÀY BÁN = ĐANG MẤT ĐƠN NGAY LÚC NÀY.
-             *
-             * Đếm bằng InventoryReport chứ KHÔNG bằng
-             * `products.stock_quantity <= 0`. Hai lý do:
-             *
-             *   - Sản phẩm có quy cách giữ tồn ở TỪNG QUY CÁCH; cột trên
-             *     bảng sản phẩm không phải thứ khách mua. Đếm ở đó là bỏ
-             *     sót đúng những món đang hết.
-             *   - Hết hàng của một sản phẩm ĐÃ ẨN thì không mất đơn nào.
-             *
-             * Dùng chung một hàm với trang Tồn kho để hai màn hình không
-             * bao giờ nói hai con số khác nhau cho cùng một câu hỏi.
-             */
             [
                 'label' => 'mặt hàng đã hết nhưng vẫn đang bày bán',
                 'count' => $tongQuanKho['out'],
@@ -161,14 +83,6 @@ class WorkQueue
                 'hint' => 'Tính theo tốc độ bán 30 ngày qua, không theo số lượng còn lại.',
             ],
 
-            /*
-             * PHIẾU NHẬP CÒN NHÁP = HÀNG ĐÃ VỀ NHƯNG KHO CHƯA CỘNG.
-             *
-             * Lập phiếu KHÔNG cộng vào kho — phải bấm "Ghi sổ". Người
-             * lập bị gọi đi giữa chừng là phiếu nằm mãi ở nháp, tồn kho
-             * hiển thị thiếu, và trang Tồn kho giục nhập thêm đúng món
-             * đang chất trong kho.
-             */
             [
                 'label' => 'phiếu nhập còn nháp, chưa cộng vào kho',
                 'count' => StockReceipt::where('status', StockReceiptStatus::Draft)->count(),
@@ -177,12 +91,6 @@ class WorkQueue
                 'hint' => 'Hàng đã nhận nhưng tồn kho chưa được cộng thêm.',
             ],
 
-            /*
-             * PHIẾU KIỂM KÊ CÒN NHÁP = ĐÃ ĐẾM MÀ SỔ CHƯA ĐỔI.
-             *
-             * Để lâu thì càng nhiều đơn bán ra giữa lúc đếm và lúc ghi sổ, và
-             * tới lúc ghi có thể bị từ chối vì tồn thành số âm.
-             */
             [
                 'label' => 'phiếu kiểm kê còn nháp, chưa điều chỉnh kho',
                 'count' => StockCount::where('status', StockCountStatus::Draft)->count(),
@@ -191,16 +99,6 @@ class WorkQueue
                 'hint' => 'Đã đếm hàng thật nhưng tồn trên hệ thống vẫn là số cũ.',
             ],
 
-            /*
-             * LÔ HOA QUÊN ĐÓNG = GIÁ VỐN HOA THẤP HƠN SỰ THẬT.
-             *
-             * Trước đây chỉ trang Lợi nhuận và trang Lô hoa đếm số này —
-             * tức là chỉ ai CỐ Ý đi xem mới thấy. Sai theo hướng làm lãi
-             * đẹp lên là hướng không ai tự đi tìm, nên nó phải nằm ở đây.
-             *
-             * Đếm bằng CHÍNH hàm mà trang Lô hoa dùng để nhắc: hai định
-             * nghĩa "quên đóng" thì hai trang báo hai con số.
-             */
             [
                 'label' => 'lô hoa mở quá ' . FlowerLotService::NGAY_NHAC_DONG . ' ngày, có thể đã dùng hết mà quên đóng',
                 'count' => app(FlowerLotService::class)->loQuenDong()->count(),
@@ -209,13 +107,6 @@ class WorkQueue
                 'hint' => 'Chưa đóng thì tiền lô chưa vào giá vốn — lãi gộp hoa đang cao hơn sự thật.',
             ],
 
-            /*
-             * ĐỔI HÀNG DỞ DANG — HAI MỤC, vì là hai việc của hai người.
-             *
-             * Chờ nhận: đang đợi KHÁCH gửi hàng về, cửa hàng chỉ cần theo
-             * dõi. Đã nhận: hàng trả đã nằm ở cửa hàng mà khách chưa có
-             * hàng đổi — đó là việc của CỬA HÀNG, và khách đang đợi.
-             */
             [
                 'label' => 'phiếu đổi hàng đã nhận hàng trả nhưng chưa hoàn tất',
                 'count' => Exchange::where('status', ExchangeStatus::DaNhan)->count(),
@@ -232,13 +123,6 @@ class WorkQueue
                 'hint' => 'Theo dõi để nhắc khách nếu để lâu.',
             ],
 
-            /*
-             * ĐÁNH GIÁ THẤP CHƯA TRẢ LỜI.
-             *
-             * Một lời phàn nàn không ai trả lời nằm công khai trên trang
-             * sản phẩm. Đánh giá 5 sao không cần trả lời gấp; 1-2 sao thì
-             * có, và chúng lẫn giữa hàng chục đánh giá tốt.
-             */
             [
                 'label' => 'đánh giá 1-2 sao chưa được trả lời',
                 'count' => Review::query()
@@ -267,14 +151,6 @@ class WorkQueue
             ],
         ];
 
-        /*
-         * HOTLINE LƯU SAI — việc cấu hình, nhưng khách chịu hậu quả.
-         *
-         * StoreProfile::hotline() lặng lẽ bỏ qua giá trị không phải số, để
-         * email không in "Gọi demo". Lặng lẽ nghĩa là không ai biết phải
-         * sửa, nên nói ra ở đây. Để trống thì không nhắc: "chưa có hotline"
-         * là một tình trạng thật, không phải lỗi nhập.
-         */
         $hotlineLuu = trim((string) \App\Services\Shop\StoreProfile::get('site_hotline'));
 
         $viec[] = [

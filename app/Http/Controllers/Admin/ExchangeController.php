@@ -11,18 +11,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/**
- * Phiếu đổi hàng ở khu quản trị.
- * ============================================================
- * CONTROLLER MỎNG, DỊCH VỤ DÀY.
- *
- * Mọi luật — hạn 7 ngày, hoa tươi không đổi, ai chịu phí ship, giá lấy ở
- * đâu, kho cộng trừ lúc nào — nằm trong ExchangeService. Ở đây chỉ nhận
- * dữ liệu, gọi, và dịch lỗi thành câu cho admin đọc.
- *
- * Viết luật ở controller thì luật đó chỉ đúng khi đi qua biểu mẫu này;
- * một lệnh artisan hay một job sau này sẽ đi vòng qua nó.
- */
+/** Phiếu đổi hàng ở khu quản trị. */
 class ExchangeController extends Controller
 {
     public function __construct(
@@ -68,13 +57,6 @@ class ExchangeController extends Controller
 
     public function store(Request $request, Order $order): RedirectResponse
     {
-        /*
-         * KIỂM DỮ LIỆU GỬI LÊN TRƯỚC, rồi mới tới luật nghiệp vụ.
-         *
-         * Hai tầng khác nhau: tầng này chặn thứ không phải số, không có
-         * trong danh sách, vượt giới hạn kích thước. Tầng kia mới hỏi
-         * "món này còn đổi được không".
-         */
         $request->validate([
             'reason' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\ExchangeReason::class)],
             'note' => ['nullable', 'string', 'max:1000'],

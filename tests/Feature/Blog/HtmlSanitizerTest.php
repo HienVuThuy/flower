@@ -7,18 +7,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Làm sạch HTML của bài Cẩm nang.
- * ============================================================
- * Bài viết là CHỖ DUY NHẤT trong dự án in HTML thô ra trang. Mọi nơi
- * khác đều escape. Nên lớp này là ranh giới, và bài kiểm thử phải bắn
- * vào nó bằng payload thật chứ không bằng ví dụ cho có.
- *
- * Danh sách bên dưới lấy từ những biến thể XSS hay gặp: thẻ script trần,
- * thuộc tính `on*`, `javascript:` trong href, `data:` chứa cả một trang,
- * SVG có onload, và thẻ được viết hoa hay có khoảng trắng lạ để lách
- * phép so chuỗi.
- */
+/** Làm sạch HTML của bài Cẩm nang. */
 class HtmlSanitizerTest extends TestCase
 {
     private function sach(string $html): string
@@ -26,7 +15,6 @@ class HtmlSanitizerTest extends TestCase
         return app(HtmlSanitizer::class)->lamSach($html);
     }
 
-    /** @return array<string, array{0: string}> */
     public static function payloadXss(): array
     {
         return [
@@ -65,11 +53,6 @@ class HtmlSanitizerTest extends TestCase
     #[Test]
     public function noi_dung_script_khong_duoc_in_ra_thanh_chu(): void
     {
-        /*
-         * Gỡ thẻ mà GIỮ nội dung là đúng với `<div>` (giữ lại chữ bên
-         * trong), nhưng SAI với `<script>`: nội dung của nó CHÍNH LÀ mã.
-         * Giữ lại thì `alert(1)` hiện ra giữa bài như một câu văn.
-         */
         $ket = $this->sach('<p>Trước</p><script>alert("xin chao")</script><p>Sau</p>');
 
         $this->assertStringNotContainsString('alert', $ket);
@@ -80,10 +63,6 @@ class HtmlSanitizerTest extends TestCase
     #[Test]
     public function the_khong_cho_phep_bi_go_nhung_GIU_LAI_chu_ben_trong(): void
     {
-        /*
-         * Xoá cả cụm thì một thẻ `<div>` bọc ngoài — thứ mọi trình soạn
-         * thảo đều sinh ra — làm bay sạch bài viết.
-         */
         $ket = $this->sach('<div><section><p>Nội dung quan trọng</p></section></div>');
 
         $this->assertStringNotContainsString('<div', $ket);
@@ -110,13 +89,6 @@ class HtmlSanitizerTest extends TestCase
     #[Test]
     public function tieng_viet_co_dau_khong_bi_hong(): void
     {
-        /*
-         * BẪY QUEN THUỘC CỦA DOMDocument.
-         *
-         * `loadHTML` mặc định đoán bảng mã là ISO-8859-1, nên tiếng Việt
-         * có dấu biến thành ký tự lạ. Nó hỏng LẶNG LẼ — chữ vẫn hiện, chỉ
-         * sai dấu, nên rất dễ lọt qua nếu không có bài này.
-         */
         $ket = $this->sach('<p>Cây lưỡi hổ chịu bóng tốt, để ở góc phòng vẫn xanh.</p>');
 
         $this->assertStringContainsString('Cây lưỡi hổ chịu bóng tốt', $ket);
@@ -135,7 +107,6 @@ class HtmlSanitizerTest extends TestCase
     #[Test]
     public function href_data_bi_go(): void
     {
-        // `data:` cho phép nhúng cả một trang HTML vào link.
         $ket = $this->sach('<a href="data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==">Xem</a>');
 
         $this->assertStringNotContainsStringIgnoringCase('data:text/html', $ket);
@@ -154,11 +125,6 @@ class HtmlSanitizerTest extends TestCase
     #[Test]
     public function link_ra_ngoai_co_noopener(): void
     {
-        /*
-         * Thiếu `noopener` thì trang đích đọc được `window.opener` và đổi
-         * được địa chỉ tab gốc sang một trang giả — kiểu tấn công
-         * "tabnabbing".
-         */
         $ket = $this->sach('<a href="https://vi.du">Ngoài</a>');
 
         $this->assertStringContainsString('noopener', $ket);
@@ -168,10 +134,6 @@ class HtmlSanitizerTest extends TestCase
     #[Test]
     public function the_img_bi_go_vi_anh_phai_di_qua_o_tai_len(): void
     {
-        /*
-         * Cho dán thẻ `<img>` tự do thì admin dán link ảnh ngoài — vừa
-         * hotlink (điều dự án cấm), vừa bỏ qua bước TƯỚC METADATA.
-         */
         $ket = $this->sach('<p>Xem ảnh:</p><img src="https://noi-khac.vi.du/anh.jpg">');
 
         $this->assertStringNotContainsString('<img', $ket);
@@ -189,12 +151,6 @@ class HtmlSanitizerTest extends TestCase
     #[Test]
     public function lam_sach_hai_lan_cho_ket_qua_giong_nhau(): void
     {
-        /*
-         * Tính bất biến (idempotent). Nếu chạy hai lần ra kết quả khác
-         * nhau thì mỗi lần admin sửa lại bài, nội dung lại biến dạng một
-         * chút — và sau vài lần sửa thì bài hỏng dần mà không ai chỉ ra
-         * được lần nào làm hỏng.
-         */
         $doc = '<h2>Tiêu đề</h2><p>Chữ <a href="https://vi.du">link ngoài</a> và <strong>đậm</strong>.</p>';
 
         $lan1 = $this->sach($doc);

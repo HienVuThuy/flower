@@ -12,13 +12,7 @@ use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Banner, thanh thông báo và băng chuyền chỉ quảng cáo chương trình ĐANG CHẠY THẬT.
- * ============================================================
- * Lỗi đã sửa: ActivePromotionProvider chỉ lọc trạng thái và khoảng ngày.
- * "Giờ vàng 19:00–21:00" hiện trên mọi trang lúc 3 giờ chiều, trong khi
- * giá lúc đó chưa giảm. 14/09/2026 08:00 UTC = 15:00 ở Hà Nội.
- */
+/** Banner, thanh thông báo và băng chuyền chỉ quảng cáo chương trình ĐANG CHẠY THẬT. */
 class BannerKhuyenMaiDangChayTest extends TestCase
 {
     use RefreshDatabase;
@@ -43,7 +37,6 @@ class BannerKhuyenMaiDangChayTest extends TestCase
 
     private function nhaCungCapMoi(): ActivePromotionProvider
     {
-        // Singleton nhớ kết quả trong một request — mỗi phép đo cần bản mới.
         $this->app->forgetInstance(ActivePromotionProvider::class);
 
         return app(ActivePromotionProvider::class);
@@ -57,7 +50,6 @@ class BannerKhuyenMaiDangChayTest extends TestCase
 
         $this->assertNull($this->nhaCungCapMoi()->featured());
 
-        // 19:30 ở Hà Nội: trong khung.
         $this->travelTo(Carbon::parse('2026-09-14 12:30:00', 'UTC'));
         $this->assertSame('Giờ vàng', $this->nhaCungCapMoi()->featured()?->name);
     }
@@ -65,7 +57,6 @@ class BannerKhuyenMaiDangChayTest extends TestCase
     #[Test]
     public function chuong_trinh_uu_tien_cao_ngoai_gio_nhuong_cho_chuong_trinh_dang_chay(): void
     {
-        // Bản cũ lấy cái ưu tiên cao nhất rồi mới xét — thanh thông báo trống dù có chương trình đang chạy.
         $this->travelTo(Carbon::parse('2026-09-14 08:00:00', 'UTC'));
         $this->km('Giờ vàng', ['daily_start_time' => '19:00:00', 'daily_end_time' => '21:00:00', 'priority' => 10]);
         $this->km('Tuần lễ sen đá', ['priority' => 1]);
@@ -107,11 +98,6 @@ class BannerKhuyenMaiDangChayTest extends TestCase
     #[Test]
     public function chuong_trinh_KHONG_gan_san_pham_nao_khong_len_banner(): void
     {
-        /*
-         * Không có sản phẩm thì nút "Xem 0 sản phẩm ưu đãi" dẫn tới trang
-         * rỗng. Thử phá code đã chứng minh bài trước không canh chỗ này: mọi
-         * chương trình trong các bài khác đều có sản phẩm.
-         */
         $this->travelTo(Carbon::parse('2026-09-14 08:00:00', 'UTC'));
 
         $rong = new Promotion();

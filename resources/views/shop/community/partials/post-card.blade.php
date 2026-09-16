@@ -1,18 +1,8 @@
-{{--
-    MỘT BÀI TRÊN BẢNG TIN.
-
-    Thứ tự đọc: ai đăng → bài viết gì → ảnh / video → cây gắn kèm → số lượt →
-    hành động → vài bình luận gần nhất → ô bình luận. Đúng thứ tự người ta đọc
-    một bài trên mạng xã hội, nên không phải học lại.
-
-    Menu "⋯" là <details> chứ không phải dropdown JavaScript: lưu bài, sao chép
-    liên kết, sửa / xoá bài của mình, báo cáo bài người khác.
---}}
+{{-- MỘT BÀI TRÊN BẢNG TIN. --}}
 @php
     $laCuaToi = auth()->id() === $post->user_id;
     $camXucBai = ($camXucCuaToi ?? [])[$post->id] ?? null;
     $daLuuBai = in_array($post->id, $daLuu ?? [], true);
-    // Bài chủ tự ẩn cũng coi như không hiện: chỉ mình họ thấy, kèm nhãn trạng thái.
     $dangHien = $post->isApproved() && ! $post->isHidden() && ! $post->tuAn();
     $binhLuanXemTruoc = $post->relationLoaded('comments') ? $post->comments->sortBy('created_at') : collect();
 @endphp
@@ -96,13 +86,11 @@
         </details>
     </header>
 
-    {{-- Chữ người lạ gửi lên: LUÔN escape. --}}
     @if(trim((string) $post->body) !== '')
         <p class="gc-bai__text">{{ $post->body }}</p>
     @endif
 
     @if($post->isRejected() && $post->reject_reason)
-        {{-- Lý do hiện lại cho chính người đăng: từ chối im lặng thì họ đăng lại y hệt. --}}
         <p class="gc-bai__note">Lý do không được duyệt: {{ $post->reject_reason }}</p>
     @endif
 
@@ -163,7 +151,6 @@
 
         @auth
             @if($post->khoaBinhLuan())
-                {{-- Chủ bài đã khoá: nói rõ tại chỗ thay vì để ô trống gửi lên rồi báo lỗi. --}}
                 <p class="text-caption mb-0" data-khong-binh-luan>
                     <x-site.icon name="lock" /> Chủ bài đã khoá bình luận cho bài này.
                 </p>

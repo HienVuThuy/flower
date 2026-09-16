@@ -1,11 +1,6 @@
 @props(['title' => 'Cam kết của cửa hàng'])
 
 @php
-    /*
-        Danh sách do admin tự nhập trong Cài đặt.
-        Chưa nhập gì thì component KHÔNG in ra gì cả — không có khung
-        rỗng, không có câu mẫu. Xem app/Services/Shop/ServiceCommitments.
-    */
     $items = \App\Services\Shop\ServiceCommitments::all();
 @endphp
 

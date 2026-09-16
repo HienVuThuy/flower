@@ -1,10 +1,4 @@
-/*
- * GIỎ HÀNG & THANH TOÁN
- * ============================================================
- * Dùng lại token và các lớp nút sẵn có, không tạo hệ màu riêng.
- */
-
-/* ============ DÒNG TRONG GIỎ ============ */
+/* GIỎ HÀNG & THANH TOÁN */
 
 .cart-lines {
     display: flex;
@@ -83,10 +77,6 @@
     color: var(--semantic-danger);
 }
 
-/*
- * Dưới 768px xếp dọc: năm cột chen nhau trên điện thoại làm ô số lượng
- * bị bóp còn vài chục pixel.
- */
 @media (max-width: 767.98px) {
     .cart-line {
         grid-template-columns: 64px 1fr auto;
@@ -110,8 +100,6 @@
         text-align: right;
     }
 }
-
-/* ============ TÓM TẮT ĐƠN ============ */
 
 .order-summary {
     position: sticky;
@@ -165,18 +153,6 @@
     margin-bottom: var(--space-sm);
 }
 
-/* ============ BA BƯỚC THANH TOÁN ============ */
-
-/*
- * THANH BƯỚC THANH TOÁN.
- *
- * Ba bước chia đều bề ngang và có ĐƯỜNG NỐI giữa các bước, thay vì ba
- * cụm chữ đứng cạnh nhau như trước. Đường nối là thứ nói cho khách biết
- * đây là một hành trình có trước có sau, chứ không phải ba lựa chọn.
- *
- * Đường kẻ vẽ bằng ::before của từng mục và nằm DƯỚI vòng tròn số
- * (z-index), nên không cần thêm phần tử rỗng nào trong HTML.
- */
 .checkout-steps {
     display: flex;
     list-style: none;
@@ -197,7 +173,6 @@
     font-size: var(--text-body-sm);
 }
 
-/* Đường nối: chạy ngang qua tâm vòng tròn. */
 .checkout-steps__item::before {
     content: "";
     position: absolute;
@@ -209,7 +184,6 @@
     z-index: 0;
 }
 
-/* Nửa đường ở hai đầu — không để đường thò ra ngoài bước đầu/cuối. */
 .checkout-steps__item:first-child::before {
     left: 50%;
     width: 50%;
@@ -219,7 +193,6 @@
     width: 50%;
 }
 
-/* Đoạn dẫn tới bước đã xong thì tô màu thương hiệu. */
 .checkout-steps__item.is-done::before,
 .checkout-steps__item.is-current::before {
     background: var(--brand-400);
@@ -274,16 +247,12 @@
     }
 }
 
-/* Màn hình hẹp: giấu chữ, chỉ còn vòng tròn — ba nhãn tiếng Việt dài
-   xếp cạnh nhau ở 360px sẽ vỡ thành nhiều dòng lệch nhau. */
 @media (max-width: 575.98px) {
     .checkout-steps__label {
         font-size: 0.7rem;
         max-width: 6rem;
     }
 }
-
-/* ============ KHUNG FORM THANH TOÁN ============ */
 
 .checkout-panel {
     padding: var(--space-md);
@@ -348,8 +317,6 @@
     border-bottom: 0;
 }
 
-/* ============ CHỌN HÌNH THỨC THANH TOÁN ============ */
-
 .payment-options {
     display: flex;
     flex-direction: column;
@@ -370,7 +337,6 @@
     border-color: var(--border-strong);
 }
 
-/* Lựa chọn chưa dùng được (trả góp khi chưa đủ điều kiện): vẫn đọc được lý do, không bấm được. */
 .payment-option--disabled {
     cursor: not-allowed;
     background: var(--surface-muted, transparent);
@@ -380,14 +346,6 @@
     color: var(--text-muted);
 }
 
-/*
- * CHI TIẾT CỦA TỪNG HÌNH THỨC CHỈ HIỆN KHI ĐÃ CHỌN HÌNH THỨC ĐÓ.
- *
- * "Trả bằng cách nào" (QR / thẻ) là câu hỏi của MoMo; số kỳ là câu hỏi của trả
- * góp. Bày cả hai khi khách đang chọn COD là hỏi họ những thứ không liên quan.
- * CSS thuần như khối hoá đơn: trình duyệt không hiểu :has() thì hiện cả —
- * dài hơn nhưng vẫn dùng được. Máy chủ chỉ đọc ô của hình thức đã chọn.
- */
 .checkout-step__body:not(:has(input[name="payment_method"][value="momo"]:checked)) .momo-flow {
     display: none;
 }
@@ -396,10 +354,6 @@
     display: none;
 }
 
-/*
- * :has() cho phép tô sáng cả ô khi radio bên trong được chọn mà không
- * cần thêm một dòng JavaScript nào.
- */
 .payment-option:has(input:checked) {
     border-color: var(--brand-500);
     background: var(--brand-100);
@@ -418,8 +372,6 @@
     font-size: var(--text-caption);
     color: var(--ink-500);
 }
-
-/* ============ ĐƠN HÀNG ============ */
 
 .order-success {
     text-align: center;
@@ -486,8 +438,6 @@
     white-space: nowrap;
 }
 
-/* ============ BADGE SỐ LƯỢNG TRÊN ICON GIỎ ============ */
-
 .btn-icon--cart {
     position: relative;
 }
@@ -508,15 +458,9 @@
     text-align: center;
 }
 
-/*
- * Hai nút mua hàng nay nằm trong form riêng. display:contents để form
- * không tự tạo một hộp mới phá bố cục hàng ngang của cụm nút.
- */
 .product-actions__form {
     display: contents;
 }
-
-/* ============ NHÃN TRẠNG THÁI ============ */
 
 .status-pill {
     display: inline-block;
@@ -525,19 +469,6 @@
     font-size: var(--text-caption);
     font-weight: 700;
 
-    /*
-     * NHÃN TRẠNG THÁI KHÔNG BAO GIỜ XUỐNG DÒNG.
-     *
-     * Nó là một viên thuốc bo tròn — chữ ngắt làm hai dòng bên trong thì
-     * hình bo tròn phình ra thành một khối méo, và bảng bị đội cao lên
-     * theo ô cao nhất.
-     *
-     * Đo được ở bảng Mã giảm giá và Đánh giá: "Đang diễn ra" trong ô
-     * rộng 98px thành viên thuốc CAO 43px (một dòng chỉ cần ~22px).
-     *
-     * Chữ dài hơn ô thì để nó tràn ra ngoài — ô trạng thái luôn là ô
-     * cuối cùng đáng bị co, và bảng đã có `overflow-x: auto` để cuộn.
-     */
     white-space: nowrap;
 }
 
@@ -548,7 +479,6 @@
 .status-pill--danger { background: #fbe6e4; color: #8f2018; }
 .status-pill--secondary { background: #eceeed; color: #55605a; }
 
-/* Số lượng món trong dòng "Tạm tính" — phụ, không cạnh tranh với nhãn */
 .order-summary__count {
     color: var(--ink-500);
     font-size: var(--text-caption);
@@ -558,7 +488,6 @@
     color: var(--accent-600);
 }
 
-/* Nhấn phần khách tiết kiệm được — thông tin tích cực, tách khỏi bảng số */
 .order-summary__saved {
     margin-bottom: var(--space-2xs);
     padding: 0.5rem 0.75rem;
@@ -568,9 +497,6 @@
     font-size: var(--text-body-sm);
 }
 
-/* ============ DÒNG HÀNG Ở BƯỚC XÁC NHẬN ============
- * Có ảnh và đơn giá để khách nhận ra đúng món trước khi đặt.
- */
 .checkout-items--detailed .checkout-items__row {
     display: grid;
     grid-template-columns: 56px 1fr auto;
@@ -624,8 +550,6 @@
     white-space: nowrap;
 }
 
-/* ============ SỔ ĐỊA CHỈ ============ */
-
 .address-picker {
     display: flex;
     flex-direction: column;
@@ -651,7 +575,6 @@
     border-color: var(--border-strong);
 }
 
-/* Cùng cách làm với ô chọn hình thức thanh toán: :has() thay cho JS. */
 .address-option:has(input:checked) {
     border-color: var(--brand-500);
     background: var(--brand-100);
@@ -720,7 +643,6 @@
     align-items: center;
 }
 
-/* Chọn loại địa chỉ: nhà riêng / văn phòng */
 .address-label-option {
     padding: 0.35rem 0.9rem;
     border: 1px solid var(--border-soft);
@@ -735,8 +657,6 @@
     color: var(--brand-700);
     font-weight: 600;
 }
-
-/* ============ Ô NHẬP MÃ GIẢM GIÁ ============ */
 
 .coupon-box__input {
     display: flex;
@@ -768,7 +688,6 @@
     font-size: var(--text-body-sm);
 }
 
-/* Mã dài không được đẩy nút "Bỏ mã" ra khỏi khung. */
 .coupon-box__applied-code strong {
     overflow-wrap: anywhere;
 }
@@ -779,13 +698,6 @@
     color: var(--ink-500);
 }
 
-/*
- * Nút trông như link.
- *
- * PHẢI LÀ <button>, không phải <a>: nó gửi biểu mẫu (bật lại tự chọn mã)
- * chứ không dẫn đi đâu. Dùng thẻ <a> cho một hành động là nói dối trình
- * đọc màn hình và làm hỏng cả việc mở bằng chuột giữa.
- */
 .btn-link-inline {
     padding: 0;
     border: 0;
@@ -802,14 +714,11 @@
     color: var(--ink-500);
 }
 
-/* Khối huỷ đơn nằm cuối cột trạng thái, tách khỏi các nút điều hướng. */
 .order-cancel {
     margin-bottom: var(--space-sm);
     padding-top: var(--space-sm);
     border-top: 1px solid var(--border-soft);
 }
-
-/* ============ TÓM TẮT HỒ SƠ TÀI KHOẢN ============ */
 
 .profile-summary {
     margin: 0 0 var(--space-sm) 0;
@@ -845,8 +754,6 @@
     border-top: 1px solid var(--border-soft);
 }
 
-/* ============ QUÀ TẶNG KÈM ============ */
-
 .order-summary__gifts {
     margin-top: var(--space-sm);
     padding: var(--space-sm);
@@ -863,7 +770,6 @@
     font-size: 0.9rem;
 }
 
-/* Quà kèm trên trang sản phẩm — "Mua 1 mặt hàng – nhận quà miễn phí". */
 .product-gifts {
     padding: var(--space-sm);
     border: 1px dashed var(--border-soft);
@@ -884,7 +790,6 @@
     color: var(--ink-500);
 }
 
-/* Quà kèm dưới từng dòng giỏ hàng. */
 .cart-line__gifts {
     margin-top: var(--space-2xs);
     font-size: 0.85rem;
@@ -921,8 +826,6 @@
     background: var(--surface-alt);
     color: var(--ink-500);
 }
-
-/* ============ ĐIỂM THƯỞNG ============ */
 
 .points-balance {
     display: flex;
@@ -981,8 +884,6 @@
     color: var(--ink-500);
 }
 
-/* ============ BẢNG GHI CÔNG ẢNH ============ */
-
 .credits-table {
     width: 100%;
     border-collapse: collapse;
@@ -1007,24 +908,12 @@
     border-bottom: 0;
 }
 
-/* Nơi ảnh được dùng — phụ chú, không tranh chỗ với tiêu đề ảnh. */
 .credits-table__use {
     display: block;
     font-size: var(--text-caption);
     color: var(--ink-500);
 }
 
-
-/*
- * THIẾT BỊ ĐANG ĐĂNG NHẬP (trang Hồ sơ tài khoản)
- * ============================================================
- * Danh sách phiên đăng nhập. Mỗi dòng: mô tả thiết bị + IP + lần hoạt
- * động cuối, và nút đăng xuất cho mọi thiết bị TRỪ thiết bị đang dùng.
- *
- * Thiết bị hiện tại được tô nền riêng chứ không chỉ gắn nhãn chữ. Đây là
- * màn hình người ta vào khi đang lo lắng, nên "cái nào là mình" phải nhận
- * ra được bằng mắt trước khi kịp đọc.
- */
 
 .session-list {
     list-style: none;
@@ -1081,11 +970,6 @@
     color: var(--ink-500);
 }
 
-/*
- * Trên màn hình hẹp cho xuống hai dòng.
- * Chuỗi "IP ... · hoạt động lúc ..." dài hơn nửa màn hình điện thoại,
- * để cùng hàng với nút thì nút bị bóp còn vài chục pixel.
- */
 @media (max-width: 420px) {
     .session-list__item {
         flex-direction: column;
@@ -1093,16 +977,6 @@
     }
 }
 
-
-/*
- * LỊCH CHĂM CÂY
- * ============================================================
- * Danh sách việc cần làm, sắp theo mức cấp bách (quá hạn lên đầu). Mỗi
- * dòng: biểu tượng việc, tên cây, thời hạn, và hai nút.
- *
- * Dòng đã TẮT làm nhạt nhưng vẫn hiện đủ — ẩn đi thì khách không có
- * đường bật lại, mà đó đúng là thứ họ sẽ cần khi mua lại cây đó.
- */
 
 .care-list {
     display: flex;
@@ -1150,8 +1024,6 @@
     color: var(--ink-500);
 }
 
-/* Quá hạn và đến hạn hôm nay là VIỆC ĐANG TRỄ, không phải thông tin
-   tham khảo — phải bắt mắt hơn phần còn lại của dòng. */
 .care-item__late {
     color: var(--semantic-danger);
     font-weight: 700;
@@ -1179,14 +1051,6 @@
     }
 }
 
-
-/*
- * CHỌN MÓN TRONG GIỎ ĐỂ THANH TOÁN
- * ============================================================
- * Thanh điều khiển đặt TRÊN danh sách hàng, không phải dưới: nó nói cho
- * khách biết luật chơi ("chỉ món được tích mới thanh toán") trước khi họ
- * bắt đầu tích, chứ không phải sau.
- */
 
 .cart-select {
     display: flex;
@@ -1217,21 +1081,6 @@
     margin-inline-start: auto;
 }
 
-/*
- * ĐANG GỬI — làm mờ CẢ KHỐI GIỎ, không chỉ hàng nút chọn.
- *
- * Từ khi trang giỏ sửa được mà không tải lại (resources/js/cart-live.js),
- * mọi thao tác đều làm đổi những con số ở khối tính tiền bên phải. Chỉ
- * làm mờ hàng ô đánh dấu thì phần tiền vẫn hiện rõ ràng con số CŨ trong
- * lúc máy chủ đang tính con số mới — nhìn như đã xong nhưng sai.
- *
- * `pointer-events: none` để cú bấm thứ hai trong lúc chờ không vào được;
- * cart-live.js cũng khoá ở phía JavaScript, đây là lớp thứ hai cho
- * trường hợp khối bị thay ngay giữa lúc bấm.
- *
- * Chuyển màu nhanh (120ms) chứ không tức thì: nháy đục rồi trong lại
- * ngay khi mạng nhanh trông như trang bị giật.
- */
 [data-cart-live].is-sending {
     opacity: 0.6;
     pointer-events: none;
@@ -1241,29 +1090,13 @@
 .cart-line__pick {
     display: flex;
     align-items: center;
-    /* Đặt trước ảnh sản phẩm, không chiếm chiều cao riêng. */
     flex: 0 0 auto;
 }
 
-/*
- * Dòng KHÔNG được chọn: làm mờ nhưng vẫn đọc được.
- *
- * Đây là hàng khách CỐ Ý để lại, không phải hàng bị lỗi. Làm mờ quá tay
- * hoặc gạch ngang sẽ đọc như "món này có vấn đề". Mức 0.55 đủ để phân
- * biệt ngay bằng mắt mà vẫn xem được tên và giá.
- */
 .cart-line.is-unselected {
     opacity: 0.55;
 }
 
-
-/*
- * DANH SÁCH TỪNG MÓN TRONG TÓM TẮT ĐƠN
- * ============================================================
- * Chỉ hiện ở bước thanh toán (xem prop `itemized`). Mỗi dòng ghi đủ tên,
- * số lượng, đơn giá và thành tiền — chỉ ghi thành tiền thì khách không
- * kiểm tra được đơn giá có đúng với giá đã thấy trên trang sản phẩm.
- */
 
 .order-summary__items {
     list-style: none;
@@ -1297,8 +1130,6 @@
 }
 
 .order-summary__item-variant {
-    /* Quy cách đi liền tên nhưng nhạt hơn: nó bổ nghĩa cho tên, không
-       phải một dòng riêng. */
     color: var(--ink-500);
     font-weight: 400;
 }
@@ -1319,16 +1150,6 @@
 }
 
 
-/*
- * TRANG THÔNG TIN & THANH TOÁN
- * ============================================================
- * Ba khối có đánh số ở cột trái, mã giảm giá + bảng tiền ở cột phải.
- *
- * Trước khi chia khối, cột trái là một biểu mẫu liền mạch cao 1184px với
- * bốn tiêu đề trôi nổi — khách cuộn qua mà không biết còn bao nhiêu việc
- * nữa mới xong. Số thứ tự trả lời đúng câu đó.
- */
-
 .checkout-step {
     padding: var(--space-sm) var(--space-md) var(--space-md);
     margin-bottom: var(--space-sm);
@@ -1347,11 +1168,6 @@
     color: var(--ink-900);
 }
 
-/*
- * Số thứ tự trong vòng tròn. Dùng thẻ <span> có sẵn chứ không dùng
- * CSS counter: counter đếm theo thứ tự xuất hiện trong DOM, mà khối địa
- * chỉ có thể ẩn/hiện tuỳ khách đã đăng nhập hay chưa — số sẽ nhảy.
- */
 .checkout-step__num {
     flex: 0 0 auto;
     display: inline-flex;
@@ -1367,11 +1183,6 @@
     line-height: 1;
 }
 
-/*
- * "không bắt buộc" — nói ngay ở tiêu đề.
- * Khách nhìn thấy thì lướt qua được mà không áy náy, thay vì dừng lại
- * nghĩ xem có phải điền không.
- */
 .checkout-step__optional {
     margin-inline-start: auto;
     padding: 0.1rem 0.5rem;
@@ -1388,8 +1199,6 @@
     font-size: 0.88rem;
     color: var(--ink-500);
 }
-
-/* ---------- cột phải ---------- */
 
 .checkout-aside {
     position: sticky;
@@ -1423,20 +1232,11 @@
 }
 
 @media (max-width: 991.98px) {
-    /* Hai cột xếp chồng thì không còn gì để dính vào. */
     .checkout-aside {
         position: static;
     }
 }
 
-/*
- * ---------- THANH TỔNG TIỀN DÍNH ĐÁY (chỉ điện thoại) ----------
- *
- * Trên màn hình rộng, bảng tóm tắt ở cột phải luôn nhìn thấy được. Trên
- * điện thoại hai cột xếp chồng: biểu mẫu trước, tóm tắt sau — nghĩa là
- * nút gửi nằm TRÊN bảng tiền, và khách bấm "Xem lại đơn hàng" trước khi
- * kịp nhìn thấy mình phải trả bao nhiêu.
- */
 .checkout-bar {
     display: none;
 }
@@ -1453,7 +1253,6 @@
         justify-content: space-between;
         gap: var(--space-sm);
         padding: 0.6rem var(--space-sm);
-        /* Chừa chỗ cho thanh điều hướng của iOS/Android. */
         padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
 
         border-top: 1px solid var(--border-soft);
@@ -1472,32 +1271,11 @@
         color: var(--brand-700);
     }
 
-    /*
-     * Chừa chỗ cho thanh dính đáy, nếu không nó che mất nút cuối trang.
-     * Đặt trên .checkout-layout chứ không trên body: chỉ trang này có
-     * thanh đó.
-     */
     .checkout-layout {
         padding-bottom: 4.5rem;
     }
 }
 
-/* ============ THUẾ GTGT TRONG BẢNG TÓM TẮT ============
- *
- * ĐÂY LÀ CHÚ THÍCH CHO DÒNG TỔNG, KHÔNG PHẢI MỘT DÒNG CỘNG.
- *
- * Giá niêm yết đã bao gồm VAT, nên con số này NẰM TRONG tổng chứ không
- * cộng thêm vào. Kiểu dáng phải nói được điều đó trước khi khách kịp
- * đọc chữ:
- *
- *   - nằm DƯỚI dòng tổng, ngoài nhóm các dòng cộng trừ;
- *   - chữ nhỏ và nhạt hơn hẳn, không in đậm;
- *   - không có dấu + hay − nào.
- *
- * Làm ngược lại — đặt lên trên, cùng cỡ chữ với các dòng khác — là mời
- * khách cộng nhầm, và nỗi sợ "phát sinh phút chót" là lý do hàng đầu
- * khiến người ta bỏ giỏ hàng ở bước cuối.
- */
 .order-summary__tax {
     display: flex;
     flex-wrap: wrap;
@@ -1511,8 +1289,6 @@
 
 .order-summary__tax-label {
     flex: 1 1 auto;
-    /* min-width: 0 để nhãn co được khi hàng chật — flex-shrink một mình
-       không đủ, vì flex item mặc định min-width: auto. */
     min-width: 0;
 }
 
@@ -1524,7 +1300,6 @@
     flex: 1 0 100%;
 }
 
-/* Bảng tách theo mức thuế — chỉ hiện khi đơn có nhiều hơn một mức. */
 .order-summary__tax-rates {
     flex: 1 0 100%;
     list-style: none;
@@ -1543,19 +1318,6 @@
     white-space: nowrap;
 }
 
-/* ============ HOÁ ĐƠN GTGT Ở BƯỚC THANH TOÁN ============
- *
- * MẶC ĐỊNH ẨN CÁC Ô, và mở ra bằng CSS THUẦN chứ không bằng JavaScript.
- *
- * Phần lớn khách mua một bó hoa không lấy hoá đơn. Bày sẵn năm ô mã số
- * thuế trước mặt họ là dựng thêm một bức tường ngay trước nút thanh
- * toán — bước đắt nhất để làm khách chùn tay.
- *
- * Vì sao không dùng JavaScript: khách tắt JS vẫn phải lấy được hoá đơn.
- * Với `:has()` thì trình duyệt cũ không hiểu sẽ hiện luôn cả khối — hơi
- * dài nhưng vẫn dùng được, chứ không phải một ô bấm vào không có gì xảy
- * ra. Máy chủ mới là nơi quyết định trường nào bắt buộc.
- */
 .invoice-toggle {
     display: flex;
     gap: 0.75rem;
@@ -1578,8 +1340,6 @@
 .invoice-toggle__body {
     display: flex;
     flex-direction: column;
-    /* min-width: 0 để phần chữ co được — flex item mặc định
-       min-width: auto, và khi ấy flex-shrink không có tác dụng. */
     min-width: 0;
 }
 
@@ -1592,7 +1352,6 @@
     color: var(--ink-500);
 }
 
-/* Các ô chỉ hiện khi ô đánh dấu ở trên được tích. */
 .checkout-step__body:has(input[name="want_invoice"]:not(:checked)) .invoice-fields {
     display: none;
 }
@@ -1637,13 +1396,6 @@
     color: var(--ink-500);
 }
 
-/*
- * Câu nói rõ cửa hàng làm được đến đâu.
- *
- * Website ghi nhận yêu cầu; việc phát hành hoá đơn điện tử hợp lệ đi qua
- * nhà cung cấp dịch vụ. Câu này phải đủ nổi để khách đọc được, nhưng
- * không được trông như một cảnh báo lỗi.
- */
 .invoice-fields__note {
     margin: 0;
     padding: var(--space-2xs) var(--space-xs);
@@ -1652,8 +1404,6 @@
     font-size: var(--text-caption);
     color: var(--ink-500);
 }
-
-/* ============ HOÁ ĐƠN TRÊN TRANG ĐƠN HÀNG ============ */
 
 .invoice-card {
     margin-top: var(--space-sm);
@@ -1699,7 +1449,6 @@
     margin: 0;
     text-align: right;
     font-weight: 600;
-    /* Chữ dài (địa chỉ, mã số thuế) phải xuống dòng chứ không đẩy ngang. */
     min-width: 0;
     overflow-wrap: anywhere;
 }
@@ -1710,19 +1459,11 @@
     color: var(--ink-500);
 }
 
-/* ============ THANH TOÁN LẠI (MOMO) ============ */
 .order-history__unpaid {
     color: var(--semantic-danger);
     font-weight: 600;
 }
 
-/*
- * TIÊU ĐỀ TRANG ĐƠN ĐỔI MÀU THEO TÌNH TRẠNG THẬT.
- *
- * Dấu tích xanh cho một đơn vừa thanh toán hỏng là lời báo sai, và nó
- * là thứ DUY NHẤT còn lại trên màn hình sau khi dòng thông báo đỏ tự
- * tắt. Màu phải nói đúng trước cả khi khách kịp đọc chữ.
- */
 .order-success--cho-tra {
     border-color: var(--semantic-warning);
     background: color-mix(in srgb, var(--semantic-warning) 8%, var(--surface-alt));
@@ -1736,7 +1477,6 @@
     color: var(--ink-500);
 }
 
-/* Bảng lượt thanh toán ở trang quản trị đơn hàng. */
 .payment-log {
     width: 100%;
     font-size: var(--text-body-sm);
@@ -1760,24 +1500,14 @@
     overflow-wrap: anywhere;
 }
 
-/* ============ THANH CHỌN MÓN + XOÁ TẤT CẢ ============
- *
- * `.cart-select` nay là KHUNG chứa hai biểu mẫu riêng: chọn món, và xoá
- * sạch giỏ. HTML không cho lồng form, nên hai việc phải là hai form —
- * còn với mắt người thì chúng vẫn là một thanh công cụ.
- */
 .cart-select__form {
     display: inline-flex;
     align-items: center;
     gap: 0.75rem;
     flex-wrap: wrap;
-    /* min-width: 0 để phần đếm co được khi hàng chật — flex item mặc
-       định min-width: auto, và khi ấy flex-shrink không có tác dụng. */
     min-width: 0;
 }
 
-/* Đẩy nút xoá về cuối hàng, tách hẳn khỏi nhóm thao tác chọn món:
-   một nút không hoàn tác được thì không nên nằm cạnh nút bấm thường. */
 .cart-select__clear {
     margin-inline-start: auto;
 }
@@ -1791,11 +1521,6 @@
     color: var(--semantic-danger);
 }
 
-/* ============ XOÁ MỘT ĐỊA CHỈ ĐÃ LƯU ============
- *
- * Nút "×" đứng NGOÀI <label> để cú bấm không tick luôn cái radio của
- * nhãn — bấm xoá mà lại vừa chọn đúng địa chỉ định bỏ.
- */
 .address-option-row {
     position: relative;
     display: flex;
@@ -1804,10 +1529,7 @@
 
 .address-option-row .address-option {
     flex: 1 1 auto;
-    /* min-width: 0 để nhãn co được khi địa chỉ dài — flex item mặc định
-       min-width: auto, và khi ấy flex-shrink không có tác dụng. */
     min-width: 0;
-    /* Chừa chỗ cho nút × để chữ không chui xuống dưới nó. */
     padding-inline-end: 2.5rem;
 }
 
@@ -1835,7 +1557,6 @@
     color: var(--semantic-danger);
 }
 
-/* ============ TÌNH TRẠNG GIAO HÀNG (KHÁCH XEM) ============ */
 .shipping-status {
     margin-bottom: var(--space-md);
     padding: var(--space-sm);
@@ -1857,8 +1578,6 @@
     margin: 0;
     font-size: var(--text-body);
     font-weight: 700;
-    /* min-width: 0 để tiêu đề co được khi hàng chật — flex item mặc định
-       min-width: auto, và khi ấy flex-shrink không có tác dụng. */
     min-width: 0;
 }
 
@@ -1893,15 +1612,11 @@
     overflow-wrap: anywhere;
 }
 
-/* Mã vận đơn là thứ khách chép đi dán sang trang GHN — chữ đơn cách
-   để không nhầm 0 với O, 1 với l. */
 .shipping-status__code {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     letter-spacing: 0.02em;
 }
 
-/* Câu thay cho nút tra cứu khi cửa hàng chưa cấu hình trang tra cứu
-   công khai (môi trường thử). Không có nút thì phải nói rõ hỏi ai. */
 .shipping-status__note {
     margin: 0;
     font-size: var(--text-caption);

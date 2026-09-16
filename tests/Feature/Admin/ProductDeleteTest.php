@@ -11,17 +11,7 @@ use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Xoá sản phẩm: nửa hoàn tác được, nửa không, thì không hoàn tác được.
- * ============================================================
- * Product dùng xoá mềm để lịch sử đơn hàng còn đọc được sau nhiều năm.
- * Nhưng trang quản trị lại xoá luôn FILE ẢNH trên đĩa trước khi xoá
- * mềm — một việc không có đường lui.
- *
- * Hậu quả: khôi phục sản phẩm ra một trang hàng đủ tên, đủ giá, và
- * không còn tấm ảnh nào. Không có thông báo lỗi nào, vì xét về mã lệnh
- * thì mọi thứ đã chạy đúng.
- */
+/** Xoá sản phẩm: nửa hoàn tác được, nửa không, thì không hoàn tác được. */
 class ProductDeleteTest extends TestCase
 {
     use RefreshDatabase;
@@ -35,7 +25,6 @@ class ProductDeleteTest extends TestCase
         return $user;
     }
 
-    /** Một sản phẩm có ảnh chính và một ảnh phụ, file thật trên đĩa giả. */
     private function sanPhamCoAnh(): Product
     {
         Storage::fake('public');
@@ -47,8 +36,6 @@ class ProductDeleteTest extends TestCase
         Storage::disk('public')->put('products/chinh.jpg', 'anh-chinh');
         Storage::disk('public')->put('products/phu.jpg', 'anh-phu');
 
-        // Qua quan hệ để không phụ thuộc product_id có nằm trong
-        // $fillable của ProductImage hay không.
         $product->images()->create([
             'path' => 'products/phu.jpg',
             'sort_order' => 1,
@@ -66,10 +53,8 @@ class ProductDeleteTest extends TestCase
             ->delete("/admin/products/{$product->id}")
             ->assertRedirect();
 
-        // Sản phẩm đã khuất khỏi cửa hàng...
         $this->assertSoftDeleted('products', ['id' => $product->id]);
 
-        // ...nhưng ảnh vẫn còn, nên khôi phục là khôi phục được thật.
         Storage::disk('public')->assertExists('products/chinh.jpg');
         Storage::disk('public')->assertExists('products/phu.jpg');
     }
@@ -77,10 +62,6 @@ class ProductDeleteTest extends TestCase
     #[Test]
     public function khoi_phuc_san_pham_thi_anh_van_con_nguyen(): void
     {
-        /*
-         * Bài trên kiểm file còn trên đĩa. Bài này kiểm ĐIỀU MÀ NGƯỜI
-         * DÙNG THẤY: sản phẩm quay lại với đúng bộ ảnh của nó.
-         */
         $product = $this->sanPhamCoAnh();
 
         $this->actingAs($this->admin())->delete("/admin/products/{$product->id}");
@@ -96,11 +77,6 @@ class ProductDeleteTest extends TestCase
     #[Test]
     public function xoa_vinh_vien_moi_don_file_anh(): void
     {
-        /*
-         * Mặt còn lại: không được vì sợ mất ảnh mà giữ rác mãi mãi. Khi
-         * sản phẩm bị xoá HẲN thì file cũng phải đi theo — nếu không,
-         * thư mục ảnh chỉ có phình ra và không ai biết tấm nào còn dùng.
-         */
         $product = $this->sanPhamCoAnh();
 
         $product->forceDelete();

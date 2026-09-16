@@ -1,13 +1,6 @@
 <?php
 
-/**
- * Soát mọi tên cột viết tay trong get([...]) / select([...]) / pluck(...)
- * và đối chiếu với lược đồ THẬT của MySQL.
- *
- * Lý do: SQLite (dùng cho kiểm thử) coi định danh trong nháy kép mà không
- * khớp cột nào là một CHUỖI KÝ TỰ, không báo lỗi. Nên gõ sai tên cột đi
- * lọt qua toàn bộ 905 bài kiểm thử và chỉ nổ trên MySQL lúc chạy thật.
- */
+/** Soát mọi tên cột viết tay trong get([...]) / select([...]) / pluck(...) và đối chiếu với lược đồ THẬT của… */
 
 require 'vendor/autoload.php';
 $app = require 'bootstrap/app.php';
@@ -15,7 +8,6 @@ $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 use Illuminate\Support\Facades\Schema;
 
-/** Mọi cột của mọi bảng, gộp thành một tập. */
 $cot = [];
 $bang = [];
 
@@ -30,7 +22,6 @@ foreach (Schema::getTableListing() as $t) {
 
 echo 'Lược đồ: ', count($bang), ' bảng, ', count($cot), ' tên cột khác nhau', PHP_EOL, PHP_EOL;
 
-/** Những chữ hợp lệ nhưng không phải tên cột. */
 $boQua = ['*', 'id'];
 
 $ngo = [];
@@ -57,7 +48,6 @@ $duyet = function (string $thuMuc) use (&$duyet, &$ngo, &$soFile, $cot, $boQua) 
         $soFile++;
         $noi = file_get_contents($duong);
 
-        // get([...]) / select([...]) / pluck('x') / value('x') / sum('x')
         preg_match_all(
             "/->(?:get|select|pluck|value|sum|avg|max|min|orderBy|orderByDesc|groupBy)\(\s*(\[[^\]]*\]|'[^']*')/",
             $noi,

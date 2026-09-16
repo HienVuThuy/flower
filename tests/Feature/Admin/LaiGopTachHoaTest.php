@@ -14,13 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Lãi gộp theo phiếu nhập KHÔNG tính hoa tươi.
- * ============================================================
- * Hoa không nhập kho theo phiếu; giá vốn hoa tính theo lô ở một báo cáo
- * riêng. Để dòng hoa lọt vào bảng này thì chúng luôn "không có giá vốn" —
- * tỉ lệ phủ tụt vô lý và trang giục lập phiếu nhập cho hoa.
- */
+/** Lãi gộp theo phiếu nhập KHÔNG tính hoa tươi. */
 class LaiGopTachHoaTest extends TestCase
 {
     use RefreshDatabase;
@@ -65,10 +59,6 @@ class LaiGopTachHoaTest extends TestCase
     #[Test]
     public function dong_ban_KHONG_ghi_quy_cach_dung_gia_von_binh_quan_cac_quy_cach(): void
     {
-        /*
-         * Đơn cũ chỉ ghi sản phẩm, còn giá vốn lưu theo quy cách. Không đoán
-         * quy cách nào đã bán: 4 cái @100.000 và 4 cái @200.000 → 150.000.
-         */
         $sp = Product::factory()->for(Category::factory())->price('300000.00')->create(['name' => 'Kim tiền nhiều quy cách']);
         $sp->forceFill(['product_type' => ProductType::Plant])->save();
 
@@ -100,10 +90,6 @@ class LaiGopTachHoaTest extends TestCase
     #[Test]
     public function mon_TAT_theo_doi_ton_duoc_danh_dau_va_trang_chi_cho_bat(): void
     {
-        /*
-         * Biểu mẫu nhập kho không liệt kê món tắt theo dõi tồn. Giục "nhập
-         * giá vốn" cho nó là ngõ cụt — gặp thật trên dữ liệu: Monstera.
-         */
         $this->donGiao(ProductType::Plant, 'Monstera thử', '850000.00');
         $this->donGiao(ProductType::Plant, 'Kim tiền có theo dõi', '300000.00');
 
@@ -128,7 +114,6 @@ class LaiGopTachHoaTest extends TestCase
     #[Test]
     public function dong_CO_quy_cach_van_dung_dung_gia_quy_cach_do(): void
     {
-        // Bình quân gộp chỉ là đường lùi cho dòng thiếu quy cách — không được đè lên dòng có quy cách.
         $sp = Product::factory()->for(Category::factory())->price('300000.00')->create(['name' => 'Kim tiền quy cách rõ']);
         $sp->forceFill(['product_type' => ProductType::Plant])->save();
         $trang = $sp->variants()->create(['name' => 'Chậu trắng', 'price' => '300000.00', 'stock_quantity' => 0, 'track_inventory' => true, 'is_active' => true]);

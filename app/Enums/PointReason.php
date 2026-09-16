@@ -2,40 +2,25 @@
 
 namespace App\Enums;
 
-/**
- * Vì sao điểm của khách thay đổi.
- *
- * Mỗi dòng trong sổ điểm mang đúng một lý do. Không có lý do "khác": một
- * lần cộng điểm không nói được vì sao là một lần cộng điểm không kiểm lại
- * được.
- */
+/** Vì sao điểm của khách thay đổi. */
 enum PointReason: string
 {
-    /** Bài Góc cây được duyệt. */
     case DangBai = 'dang_bai';
 
-    /** Ghé cửa hàng nhiều ngày liền. */
     case ChuoiNgay = 'chuoi_ngay';
 
-    /** Đổi điểm lấy voucher — dòng ÂM. */
     case DoiVoucher = 'doi_voucher';
 
-    /** Đơn hàng đã giao. */
     case MuaHang = 'mua_hang';
 
-    /** Đơn đã được cộng điểm rồi được hoàn tiền — dòng ÂM. */
     case HoanTien = 'hoan_tien';
 
-    /** Viết đánh giá cho sản phẩm đã mua. */
     case DanhGia = 'danh_gia';
 
-    /** Người khác thích bài Góc cây. */
     case DuocThich = 'duoc_thich';
 
-    /** Dùng điểm trừ tiền khi đặt hàng — dòng ÂM. */
     case DungDiem = 'dung_diem';
 
-    /** Trả lại điểm đã dùng khi đơn bị huỷ hoặc được hoàn đủ tiền. */
     case HoanDiem = 'hoan_diem';
 
     public function label(): string

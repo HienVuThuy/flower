@@ -2,31 +2,9 @@
 
 namespace App\Enums;
 
-/**
- * Vận đơn GHN đang ở đâu, dịch sang tiếng khách đọc được.
- * ============================================================
- * `orders.shipping_status` lưu NGUYÊN VĂN mã của GHN (`ready_to_pick`,
- * `delivering`...). Cột đó KHÔNG cast sang enum này, và đó là chủ ý:
- * GHN thêm trạng thái mới bất cứ lúc nào, và một cast sẽ ném lỗi giữa
- * trang đơn hàng của khách vì một chuỗi lạ.
- *
- * Dùng `tuGhn()` để dịch: mã lạ trả về null, và giao diện lùi về câu
- * chung "Đang vận chuyển" thay vì gãy.
- *
- * ============================================================
- * KHÁCH KHÔNG CẦN BIẾT ĐỦ MƯỜI MẤY BƯỚC CỦA GHN.
- *
- * "sorting" (đang phân loại ở kho trung chuyển) là ngôn ngữ nội bộ của
- * đơn vị vận chuyển; với người đang đợi hoa thì nó chỉ có nghĩa "hàng
- * đang trên đường". Vì thế nhiều mã GHN gộp về cùng một câu.
- */
+/** Vận đơn GHN đang ở đâu, dịch sang tiếng khách đọc được. */
 enum ShippingStatus: string
 {
-    /*
-     * KHÔNG phải mã của GHN — đây là giá trị mặc định của cột, nghĩa là
-     * cửa hàng chưa bàn giao cho ai cả. Xem migration
-     * add_ghn_shipping_to_orders_table.
-     */
     case NotShipped = 'not_shipped';
 
     case ReadyToPick = 'ready_to_pick';
@@ -42,7 +20,6 @@ enum ShippingStatus: string
     case Cancel = 'cancel';
     case Lost = 'lost';
 
-    /** Mã lạ (GHN thêm trạng thái mới) trả về null chứ không ném lỗi. */
     public static function tuGhn(?string $raw): ?self
     {
         return $raw === null ? null : self::tryFrom($raw);
@@ -74,13 +51,6 @@ enum ShippingStatus: string
         };
     }
 
-    /**
-     * Câu nói rõ khách cần làm gì, hoặc điều gì sắp xảy ra.
-     *
-     * Một cái nhãn trạng thái không trả lời được câu hỏi thật của người
-     * đang đợi hàng: "vậy giờ tôi phải làm gì". Với trạng thái tốt thì
-     * câu này trấn an; với trạng thái hỏng thì nó chỉ đường.
-     */
     public function hint(): string
     {
         return match ($this) {
@@ -98,7 +68,6 @@ enum ShippingStatus: string
         };
     }
 
-    /** Hàng đã rời cửa hàng chưa. */
     public function daRoiCuaHang(): bool
     {
         return ! in_array($this, [self::NotShipped, self::ReadyToPick, self::Picking], strict: true);

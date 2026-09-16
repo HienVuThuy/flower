@@ -1,18 +1,6 @@
 @props(['journal'])
 
 @php
-    /*
-     * THỐNG KÊ GIÁ — khối làm nên sổ Theo dõi giá.
-     * ============================================================
-     * Câu hỏi thật của người mở sổ này ra là *"bây giờ có phải lúc mua
-     * không"*. Trả lời được câu đó cần ba con số đặt cạnh nhau: giá đang
-     * thấy, giá thấp nhất từng thấy, và khoảng dao động.
-     *
-     * `priceStats()` trả về null khi mới có DƯỚI HAI lần khảo — lúc đó
-     * "thấp nhất", "cao nhất" và "trung bình" đều là chính con số đó, ba
-     * ô hiện cùng một số và trông như một bảng thống kê mà không thống kê
-     * gì cả.
-     */
     $tk = $journal->priceStats();
 @endphp
 
@@ -56,13 +44,6 @@
             </div>
         </div>
 
-        {{--
-            SO LẦN GẦN NHẤT VỚI MỨC THẤP NHẤT — đó mới là câu trả lời.
-
-            Bốn con số đứng cạnh nhau vẫn bắt người đọc tự trừ trong đầu.
-            Nói thẳng ra "đang cao hơn mức thấp nhất 120.000₫" thì họ
-            quyết được ngay.
-        --}}
         <p class="mt-3 mb-0">
             @php $chenh = $tk['latest'] - $tk['low']; @endphp
 
@@ -75,12 +56,5 @@
             @endif
         </p>
 
-        {{--
-            KHÔNG KHUYÊN "NÊN MUA" HAY "NÊN ĐỢI".
-
-            Sổ này là ghi chép của khách, không phải lời tư vấn của cửa
-            hàng — và cửa hàng thì có lợi ích trong việc họ mua sớm. Đưa
-            ra số liệu của chính họ rồi để họ tự quyết là ranh giới đúng.
-        --}}
     @endif
 </div>

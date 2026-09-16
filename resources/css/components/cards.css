@@ -1,11 +1,4 @@
-/*
- * SURFACES
- * ============================================================
- * `.surface-card` là mặt phẳng MẶC ĐỊNH — nền đục, viền mảnh, đổ
- * bóng tinh tế. Glassmorphism (`.glass-accent`) chỉ dùng làm điểm
- * nhấn có chọn lọc (nav nổi, banner chiến dịch, modal) — KHÔNG phải
- * mặc định cho card/bảng/form.
- */
+/* SURFACES */
 
 .surface-card {
     background: var(--surface);
@@ -77,16 +70,6 @@
     box-shadow: var(--shadow-md);
 }
 
-/*
- * THẺ "VÙNG NGUY HIỂM" — viền cảnh báo, nền vẫn bình thường.
- * ============================================================
- * Dùng cho khối Xoá tài khoản ở trang Hồ sơ.
- *
- * CHỈ ĐỔI VIỀN, KHÔNG TÔ ĐỎ CẢ KHỐI. Một mảng đỏ lớn giữa trang kéo mắt
- * về đúng cái thứ người dùng KHÔNG nên bấm nhầm, và biến nó thành thứ
- * nổi bật nhất màn hình. Viền đủ để nói "khu vực này khác", còn sức nặng
- * nằm ở chữ và ở nút.
- */
 .surface-card--danger {
     border-color: color-mix(in srgb, var(--semantic-danger) 40%, transparent);
 }

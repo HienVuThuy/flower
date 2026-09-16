@@ -14,7 +14,6 @@
     </p>
 </div>
 
-{{-- ============ 2. THÊM QUÀ ============ --}}
 <form method="POST" action="{{ route('admin.product-gifts.store', $product) }}" class="admin-panel p-4 mb-4" data-them-qua>
     @csrf
     <h2 class="h6 fw-bold mb-3">Thêm quà</h2>
@@ -27,7 +26,6 @@
                 <span>Sản phẩm có sẵn trong cửa hàng</span>
             </label>
 
-            {{-- Bước 1: chọn sản phẩm quà. Bước 2: mới mở ô quy cách, chỉ gồm quy cách của ĐÚNG sản phẩm đó. --}}
             <label class="form-label small mb-1" for="qg-sp">Bước 1 — Chọn sản phẩm</label>
             <select id="qg-sp" name="gift_product_id" class="form-select mb-2 @error('gift_product_id') is-invalid @enderror" data-qua-chon-san-pham>
                 <option value="">Chọn sản phẩm…</option>
@@ -42,7 +40,6 @@
                     data-qua-chon-quy-cach @disabled(! old('gift_product_id'))>
                 <option value="">Không chọn quy cách</option>
                 @foreach($quyCach as $qc)
-                    {{-- Mọi quy cách được dựng sẵn nhưng ẨN, trừ của sản phẩm đang chọn; JS lọc khi đổi sản phẩm. --}}
                     <option value="{{ $qc->id }}" data-san-pham="{{ $qc->product_id }}"
                             @if((string) old('gift_product_id') !== (string) $qc->product_id) hidden disabled @endif
                             @selected((string) old('gift_variant_id') === (string) $qc->id)>{{ $qc->name }}</option>
@@ -105,7 +102,6 @@
     </div>
 </form>
 
-{{-- ============ 3. DANH SÁCH QUÀ ĐÃ CẤU HÌNH ============ --}}
 <div class="admin-panel p-4" data-danh-sach-qua>
     <h2 class="h6 fw-bold mb-3">Quà đã cấu hình</h2>
 

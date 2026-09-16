@@ -7,12 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Một nơi cửa hàng lấy hàng.
- *
- * Xem chú thích dài ở migration create_suppliers_table: vì sao phải là
- * một bảng chứ không phải ô chữ tự do trên phiếu nhập.
- */
+/** Một nơi cửa hàng lấy hàng. */
 class Supplier extends Model
 {
     protected $fillable = [
@@ -38,24 +33,16 @@ class Supplier extends Model
         ];
     }
 
-    /** @return HasMany<StockReceipt, $this> */
     public function receipts(): HasMany
     {
         return $this->hasMany(StockReceipt::class);
     }
 
-    /** @return HasMany<FlowerLot, $this> */
     public function flowerLots(): HasMany
     {
         return $this->hasMany(FlowerLot::class);
     }
 
-    /**
-     * Chỉ nhà cung cấp còn làm ăn — dùng cho ô chọn trên biểu mẫu.
-     *
-     * Người đã ngừng vẫn nằm trong cơ sở dữ liệu và vẫn đọc được ở lịch
-     * sử; chỉ là không bày ra để chọn mới nữa.
-     */
     public function scopeDangHoatDong(Builder $q): Builder
     {
         return $q->where('is_active', true);

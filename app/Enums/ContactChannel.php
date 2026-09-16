@@ -2,17 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Cách khách muốn cửa hàng liên hệ lại.
- *
- * NGHE NHỎ NHƯNG LÀ CHỖ HỎNG THẬT: nhân viên gọi điện cho một khách
- * doanh nghiệp đang họp cả ngày thì không ai nghe máy, phiếu treo ba
- * hôm, và khách nghĩ cửa hàng bỏ quên mình. Hỏi một câu ở biểu mẫu tiết
- * kiệm được đúng ba hôm đó.
- *
- * Chỉ liệt kê những kênh cửa hàng THẬT SỰ có người trực. Thêm một kênh
- * vào đây mà không ai đọc là hứa một thứ không có.
- */
+/** Cách khách muốn cửa hàng liên hệ lại. */
 enum ContactChannel: string
 {
     case Phone = 'phone';
@@ -37,7 +27,6 @@ enum ContactChannel: string
         };
     }
 
-    /** @return list<string> */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

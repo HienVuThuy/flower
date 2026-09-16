@@ -18,9 +18,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Tổng quan có số liệu của các nghiệp vụ mới: kho, thu mua, hoa, đổi trả, lãi.
- */
+/** Tổng quan có số liệu của các nghiệp vụ mới: kho, thu mua, hoa, đổi trả, lãi. */
 class TongQuanNghiepVuTest extends TestCase
 {
     use RefreshDatabase;
@@ -57,13 +55,8 @@ class TongQuanNghiepVuTest extends TestCase
     public function tien_lay_hang_cung_bo_loc_voi_trang_thu_mua(): void
     {
         $this->phieuNhap(now()->subDays(3)->toDateString(), 2, '100000.00');
-        $this->phieuNhap(now()->subDays(90)->toDateString(), 10, '100000.00');  // ngoài kỳ
+        $this->phieuNhap(now()->subDays(90)->toDateString(), 10, '100000.00');
 
-        /*
-         * PHIẾU NHÁP TRONG KỲ — hàng chưa vào kho, tiền chưa phải đã chi.
-         * Thử phá code đã chứng minh: bỏ điều kiện "đã ghi sổ" mà bài vẫn
-         * xanh, vì trước đó mọi phiếu trong bài đều đã ghi sổ.
-         */
         $this->phieuNhap(now()->subDays(1)->toDateString(), 5, '100000.00', StockReceiptStatus::Draft);
         $this->lo(now()->subDays(2)->toDateString(), '300000.00');
 
@@ -100,7 +93,6 @@ class TongQuanNghiepVuTest extends TestCase
     #[Test]
     public function nhan_vien_KHONG_thay_lai_va_hoan_tien_nhung_thay_kho_va_doi_hang(): void
     {
-        // Nhân viên: đơn hàng, kho, đánh giá, báo cáo — không có tài chính.
         $html = $this->actingAs($this->nguoi(UserRole::Staff))
             ->get(route('admin.dashboard'))
             ->assertOk()

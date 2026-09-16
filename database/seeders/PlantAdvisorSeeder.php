@@ -15,43 +15,10 @@ use Illuminate\Support\Str;
 
 /**
  * DỮ LIỆU MẪU cho trang tư vấn chọn cây và gợi ý mua kèm.
- * ============================================================
  * ⚠️ CỬA HÀNG PHẢI RÀ LẠI TRƯỚC KHI BÁN THẬT.
- *
- * NGUỒN CỦA TỪNG LOẠI DỮ LIỆU — ba loại có độ chắc chắn khác hẳn nhau,
- * và trộn chúng lại là cách nhanh nhất để mất tin cậy:
- *
- *   VỊ TRÍ ĐẶT & ĐỘ KHÓ — đặc tính trồng trọt phổ biến, tra được:
- *     lưỡi hổ và trầu bà chịu bóng nên sống được ở phòng tắm và hành
- *     lang; sen đá cần nắng trực tiếp nên hợp ban công; dương xỉ ưa ẩm
- *     nên hợp phòng tắm và bếp. Đây không phải ý kiến.
- *
- *   HỢP MỆNH — TẬP QUÁN VĂN HOÁ, không phải sự thật khoa học.
- *     Gán theo đúng MỘT quy ước duy nhất và nói rõ quy ước đó ra: màu
- *     chủ đạo của cây/hoa ứng với hành cùng màu (xanh lá→Mộc, trắng/ánh
- *     kim→Kim, xanh dương→Thuỷ, đỏ/hồng/tím→Hoả, vàng/nâu→Thổ), cộng
- *     thêm những cây đã có sẵn quy ước dân gian riêng (kim tiền với tiền
- *     bạc, lưỡi hổ với trừ tà).
- *     Cây không rơi vào quy ước nào thì ĐỂ TRỐNG. Bịa một mệnh cho cái
- *     cây là đúng thứ nguyên tắc "không bịa dữ liệu" cấm.
- *
- *   HOA CẮT CÀNH KHÔNG CÓ `placement` VÀ KHÔNG CÓ ĐỘ KHÓ.
- *     Bó hoa cắm ở đâu cũng được và tàn sau vài ngày dù chăm kiểu gì —
- *     gán vị trí đặt cho nó là thông tin sai. Chúng chỉ có `feng_shui`
- *     theo màu, vì khách vẫn hỏi "tặng hoa màu gì hợp mệnh".
- *
- * CHẠY LẠI NHIỀU LẦN ĐƯỢC: updateOrCreate theo slug và ghi đè trọn bộ
- * nhãn, nên không sinh bản sao.
- *
- *     php artisan db:seed --class=PlantAdvisorSeeder
  */
 class PlantAdvisorSeeder extends Seeder
 {
-    /**
-     * CÂY SỐNG — có vị trí đặt, có độ khó, có thể có mệnh.
-     *
-     * @var array<string, array{placement: list<Placement>, feng_shui: list<FengShuiElement>, difficulty: CareDifficulty}>
-     */
     private const PLANT_TRAITS = [
         'monstera-deliciosa-chau-gom' => [
             'placement' => [Placement::LivingRoom, Placement::Office, Placement::Shop],
@@ -60,14 +27,10 @@ class PlantAdvisorSeeder extends Seeder
         ],
         'kim-tien-chau-su' => [
             'placement' => [Placement::LivingRoom, Placement::Office, Placement::Desk, Placement::Shop],
-            // Cây kim tiền gắn với tiền bạc trong quan niệm dân gian;
-            // lá dày xanh đậm nên thường được nói là hợp Mộc và Thổ.
             'feng_shui' => [FengShuiElement::Moc, FengShuiElement::Tho],
             'difficulty' => CareDifficulty::Easy,
         ],
         'luoi-ho-mini-de-ban' => [
-            // Sansevieria chịu bóng và chịu khô rất tốt — sống được cả ở
-            // phòng tắm, phòng ngủ lẫn hành lang tối.
             'placement' => [
                 Placement::Desk, Placement::Office, Placement::Bedroom,
                 Placement::Bathroom, Placement::Hallway,
@@ -76,7 +39,6 @@ class PlantAdvisorSeeder extends Seeder
             'difficulty' => CareDifficulty::Easy,
         ],
         'trau-ba-leo-cot' => [
-            // Trầu bà (Epipremnum) là cây chịu bóng kinh điển.
             'placement' => [
                 Placement::LivingRoom, Placement::Office,
                 Placement::Bathroom, Placement::Hallway, Placement::Kitchen,
@@ -85,8 +47,6 @@ class PlantAdvisorSeeder extends Seeder
             'difficulty' => CareDifficulty::Easy,
         ],
         'sen-da-mix-chau-da' => [
-            // Sen đá cần nắng trực tiếp; để trong nhà thiếu sáng là vươn
-            // dài và thối gốc. Bệ cửa sổ là chỗ trong nhà duy nhất đủ sáng.
             'placement' => [Placement::Balcony, Placement::WindowSill, Placement::Desk],
             'feng_shui' => [FengShuiElement::Tho],
             'difficulty' => CareDifficulty::Easy,
@@ -103,42 +63,16 @@ class PlantAdvisorSeeder extends Seeder
         ],
     ];
 
-    /**
-     * HOA CẮT CÀNH — chỉ gán mệnh theo màu chủ đạo.
-     *
-     * @var array<string, list<FengShuiElement>>
-     */
     private const FLOWER_ELEMENTS = [
-        // Đỏ -> Hoả.
         'hoa-hong-do-ecuador' => [FengShuiElement::Hoa],
-        // Hồng -> Hoả.
         'hop-hoa-hong-pastel' => [FengShuiElement::Hoa],
         'canh-dao-phai-choi-tet' => [FengShuiElement::Hoa],
-        // Trắng -> Kim.
         'gio-hoa-baby-trang' => [FengShuiElement::Kim],
         'hoa-cam-tay-co-dau' => [FengShuiElement::Kim],
-        // Vàng/cam -> Thổ và Hoả.
         'huong-duong-ruc-ro' => [FengShuiElement::Tho, FengShuiElement::Hoa],
-        /*
-         * KHÔNG gán cho "Bó tulip Hà Lan" và "Lẵng hoa khai trương":
-         * cả hai là hàng nhiều màu / làm theo yêu cầu, nên không có màu
-         * chủ đạo để áp quy ước. Gán bừa một mệnh sẽ là thông tin sai.
-         */
     ];
 
-    /**
-     * CÂY MẪU BỔ SUNG.
-     *
-     * ⚠️ Là dữ liệu mẫu do dự án đặt ra để trang tư vấn có đủ lựa chọn
-     * cho mọi vị trí và mọi mệnh. Giá và mô tả không phải hàng cửa hàng
-     * đang bán.
-     *
-     * Chọn đúng những loài lấp được chỗ trống thật:
-     *   - dương xỉ  -> phòng tắm, bếp (ưa ẩm)
-     *   - vạn niên thanh -> hành lang (chịu tối)
-     *   - cẩm tú cầu xanh -> mệnh Thuỷ, trước đó KHÔNG cây nào có
-     *   - lan hồ điệp tím -> mệnh Hoả cho cây chậu, và mức khó Trung bình
-     */
+    /** ⚠️ Là dữ liệu mẫu do dự án đặt ra để trang tư vấn có đủ lựa chọn */
     private const NEW_PLANTS = [
         [
             'name' => 'Dương xỉ Boston treo',
@@ -190,7 +124,6 @@ class PlantAdvisorSeeder extends Seeder
             'category' => 'cay-canh',
             'form' => SellingForm::Pot,
             'placement' => [Placement::LivingRoom, Placement::Shop, Placement::Office],
-            // Kim ngân (Pachira) gắn với tài lộc trong quan niệm dân gian.
             'feng_shui' => [FengShuiElement::Moc, FengShuiElement::Tho],
             'difficulty' => CareDifficulty::Easy,
             'care' => [
@@ -211,7 +144,6 @@ class PlantAdvisorSeeder extends Seeder
             'category' => 'cay-canh',
             'form' => SellingForm::Pot,
             'placement' => [Placement::WindowSill, Placement::LivingRoom, Placement::Shop],
-            // Tím -> Hoả theo quy ước màu.
             'feng_shui' => [FengShuiElement::Hoa],
             'difficulty' => CareDifficulty::Hard,
             'care' => [
@@ -233,8 +165,6 @@ class PlantAdvisorSeeder extends Seeder
             'category' => 'hoa',
             'form' => SellingForm::Bouquet,
             'placement' => [],
-            // Xanh dương -> Thuỷ. Đây là sản phẩm DUY NHẤT của mệnh này,
-            // và đó là lý do nó được thêm vào.
             'feng_shui' => [FengShuiElement::Thuy],
             'difficulty' => null,
             'care' => [
@@ -244,21 +174,6 @@ class PlantAdvisorSeeder extends Seeder
             ],
         ],
     ];
-
-    /**
-     * PHỤ KIỆN — đồ dùng BỀN, mua một lần dùng lâu.
-     */
-    /*
-     * PHỤ KIỆN VÀ VẬT TƯ ĐÃ CHUYỂN SANG SupplyCatalogSeeder.
-     *
-     * Chúng từng nằm ngay trong tệp này. Nhưng một seeder tên là "tư vấn
-     * chọn cây" mà lại quyết định cửa hàng có những danh mục phụ kiện
-     * nào thì không ai đi tìm ở đây — người muốn biết "vì sao chậu sứ
-     * nằm ở danh mục này" sẽ mở CatalogSeeder ra trước, rồi bỏ cuộc.
-     *
-     * Tệp này giờ chỉ còn đúng việc của nó: gắn nhãn tư vấn (vị trí đặt,
-     * hợp mệnh, độ khó chăm) cho cây.
-     */
 
     public function run(): void
     {
@@ -276,11 +191,6 @@ class PlantAdvisorSeeder extends Seeder
     }
 
 
-    /**
-     * Cây mẫu bổ sung.
-     *
-     * @param  array<string, mixed>  $spec
-     */
     private function newPlant(array $spec): void
     {
         $category = Category::where('slug', $spec['category'])->first();
@@ -327,16 +237,11 @@ class PlantAdvisorSeeder extends Seeder
         );
     }
 
-    /**
-     * @param  array{placement: list<Placement>, feng_shui: list<FengShuiElement>, difficulty: CareDifficulty}  $spec
-     */
     private function plant(string $slug, array $spec): void
     {
         $product = Product::where('slug', $slug)->first();
 
         if (! $product) {
-            // Seeder này GÁN NHÃN cho hàng có thật, không phải nơi sinh ra
-            // hàng. Thiếu sản phẩm thì báo rồi bỏ qua.
             $this->command?->warn("Bỏ qua: không có sản phẩm slug '{$slug}'.");
 
             return;
@@ -352,23 +257,12 @@ class PlantAdvisorSeeder extends Seeder
             array_map(fn (FengShuiElement $e) => $e->value, $spec['feng_shui']),
         );
 
-        /*
-         * Độ khó nằm trong care_info (JSON), không phải bảng nhãn.
-         *
-         * Giữ nguyên các khoá care_info khác đã có: ghi đè cả mảng sẽ xoá
-         * mất phần ánh sáng/nước/đất mà admin đã nhập.
-         */
         $care = is_array($product->care_info) ? $product->care_info : [];
         $care['difficulty'] = $spec['difficulty']->value;
 
         $product->update(['care_info' => $care]);
     }
 
-    /**
-     * Hoa cắt cành: CHỈ gán mệnh, không gán vị trí đặt.
-     *
-     * @param  list<FengShuiElement>  $elements
-     */
     private function flower(string $slug, array $elements): void
     {
         $product = Product::where('slug', $slug)->first();
@@ -384,7 +278,6 @@ class PlantAdvisorSeeder extends Seeder
             array_map(fn (FengShuiElement $e) => $e->value, $elements),
         );
 
-        // Xoá vị trí đặt nếu lần chạy trước có gán nhầm.
         $product->syncTraits(TraitType::Placement, []);
     }
 }

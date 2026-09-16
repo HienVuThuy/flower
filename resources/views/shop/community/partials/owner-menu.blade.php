@@ -1,17 +1,4 @@
-{{--
-    BA NÚT CHỦ BÀI TỰ QUẢN LÝ BÀI CỦA MÌNH — nằm trong menu "⋯".
-
-    Để riêng một partial vì bảng tin và trang một bài cùng dùng: chép hai bản
-    thì sửa luật một chỗ, chỗ kia vẫn còn nút cũ.
-
-    Mỗi nút là MỘT form POST + @method('PATCH') + @csrf, không phải liên kết:
-    đây là thao tác đổi dữ liệu, mà GET thì trình duyệt hay công cụ quét trang
-    bấm hộ lúc nào không hay.
-
-    Nút "Ghim" chỉ hiện khi bài ĐANG HIỂN THỊ (hoặc đang ghim, để còn bỏ ghim) —
-    đúng bằng luật trong PostOwner::doiGhim(), khỏi bày ra nút bấm vào chỉ để
-    nhận lỗi.
---}}
+{{-- BA NÚT CHỦ BÀI TỰ QUẢN LÝ BÀI CỦA MÌNH — nằm trong menu "⋯". --}}
 @php
     $dangTuAn = $post->tuAn();
     $daGhim = $post->daGhim();

@@ -8,14 +8,11 @@ use App\Services\AI\ShoppingAdvisor;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * Khung chat trợ lý AI. Mỏng: luật nằm ở ShoppingAdvisor / AdvisorContext.
- */
+/** Khung chat trợ lý AI. */
 class AiChatController extends Controller
 {
     public function store(Request $request, ShoppingAdvisor $troLy): JsonResponse
     {
-        // Chưa có khoá: không gọi ra ngoài, không trả lời giả.
         if (! $troLy->configured()) {
             return response()->json(['loi' => 'Trợ lý AI chưa được cấu hình.'], 503);
         }

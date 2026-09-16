@@ -5,12 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Một khối trong phần mô tả chi tiết: một đoạn chữ, hoặc một ảnh kèm chú.
- *
- * Thứ tự nằm ở `sort_order` — chữ ở trên hay dưới ảnh là do người soạn xếp,
- * không phải do bố cục cứng của trang.
- */
+/** Một khối trong phần mô tả chi tiết: một đoạn chữ, hoặc một ảnh kèm chú. */
 class ProductBlock extends Model
 {
     public const CHU = 'text';

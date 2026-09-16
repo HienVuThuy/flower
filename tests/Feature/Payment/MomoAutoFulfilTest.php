@@ -16,25 +16,7 @@ use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Tiền về là đơn tự chạy tiếp: xác nhận rồi bàn giao GHN.
- * ============================================================
- * VÌ SAO ĐƠN ĐÃ TRẢ TIỀN THÌ TỰ ĐỘNG, CÒN COD THÌ KHÔNG.
- *
- * Tạo vận đơn là CAM KẾT với GHN: họ cử người tới lấy hàng và tính tiền
- * cửa hàng. Với đơn COD, thứ duy nhất đứng sau lời hứa của khách là lời
- * hứa đó — nên cửa hàng phải nhìn đơn trước khi cam kết.
- *
- * Đơn đã trả tiền thì khách đã bỏ tiền ra rồi. Bắt họ đợi một nhân viên
- * bấm nút là kéo dài thời gian giao hàng vì một bước không còn tác dụng.
- *
- * Bốn bất biến được canh ở đây:
- *
- *   1. Trả xong -> đơn tự sang "Đã xác nhận" và có vận đơn.
- *   2. Người thực hiện là "Hệ thống", KHÔNG phải khách đang đăng nhập.
- *   3. GHN hỏng KHÔNG được làm hỏng việc ghi nhận tiền.
- *   4. Gọi lại lần nữa không tạo vận đơn thứ hai.
- */
+/** Tiền về là đơn tự chạy tiếp: xác nhận rồi bàn giao GHN. */
 class MomoAutoFulfilTest extends TestCase
 {
     use RefreshDatabase;
@@ -69,12 +51,6 @@ class MomoAutoFulfilTest extends TestCase
         ]);
     }
 
-    /**
-     * Cả hai dịch vụ ngoài đều giả lập, TÁCH THEO ĐỊA CHỈ.
-     *
-     * Một stub `'*'` duy nhất sẽ trả câu của MoMo cho cả lời gọi GHN, và
-     * bài kiểm thử xanh trong khi luồng thật gãy.
-     */
     private function ngoaiGiaLap(bool $ghnOk = true): void
     {
         Http::fake([
@@ -127,9 +103,6 @@ class MomoAutoFulfilTest extends TestCase
         return $order;
     }
 
-    /**
-     * @return array<string, string>
-     */
     private function goiTin(PaymentTransaction $tx, array $ghiDe = []): array
     {
         $payload = array_merge([
@@ -171,8 +144,6 @@ class MomoAutoFulfilTest extends TestCase
         return PaymentTransaction::where('gateway', 'momo')->latest('id')->firstOrFail();
     }
 
-    /* ================= 1. TIỀN VỀ THÌ ĐƠN CHẠY TIẾP ================= */
-
     #[Test]
     public function tra_xong_thi_don_tu_sang_da_xac_nhan(): void
     {
@@ -209,11 +180,6 @@ class MomoAutoFulfilTest extends TestCase
     #[Test]
     public function GHN_khong_thu_ho_dong_nao_vi_khach_da_tra_roi(): void
     {
-        /*
-         * `cod_amount` phải là 0. Để nguyên số tiền đơn thì shipper thu
-         * thêm một lần nữa của khách đã trả qua MoMo — và cửa hàng chỉ
-         * biết khi khách gọi điện.
-         */
         $this->ngoaiGiaLap();
         $order = $this->datHangMomo();
 
@@ -228,17 +194,9 @@ class MomoAutoFulfilTest extends TestCase
         });
     }
 
-    /* ================= 2. AI LÀ NGƯỜI THỰC HIỆN ================= */
-
     #[Test]
     public function moc_xac_nhan_ghi_la_He_thong_chu_khong_phai_khach(): void
     {
-        /*
-         * Đường callback chạy TRONG PHIÊN CỦA KHÁCH, nên Auth::id() là
-         * khách. Không có cờ `tuDong` thì dòng thời gian ở trang quản
-         * trị ghi "Khách thử đã xác nhận đơn" — trong khi khách không hề
-         * bấm gì, và cửa hàng thì tưởng có người đã duyệt đơn này.
-         */
         $this->ngoaiGiaLap();
         $order = $this->datHangMomo();
 
@@ -253,16 +211,9 @@ class MomoAutoFulfilTest extends TestCase
         $this->assertSame('Đã nhận thanh toán qua MoMo.', $moc->note);
     }
 
-    /* ================= 3. GHN HỎNG KHÔNG LÀM HỎNG VIỆC CHÍNH ================= */
-
     #[Test]
     public function GHN_hong_thi_tien_van_duoc_ghi_nhan_va_don_van_xac_nhan(): void
     {
-        /*
-         * Tiền đã về thật. Một dịch vụ vận chuyển bảo trì không được
-         * phép biến thành trang lỗi trước mặt khách vừa trả tiền, và
-         * càng không được làm mất bản ghi thanh toán.
-         */
         $this->ngoaiGiaLap(ghnOk: false);
         $order = $this->datHangMomo();
 
@@ -279,17 +230,6 @@ class MomoAutoFulfilTest extends TestCase
     #[Test]
     public function GHN_hong_o_callback_thi_IPN_ve_sau_con_mot_co_hoi_nua(): void
     {
-        /*
-         * Đây là lý do bước hoàn tất chạy cả với kết quả 'already', chứ
-         * không chỉ 'paid'. Không có nó thì một lần lỗi mạng là đơn nằm
-         * lại chờ người thật, dù IPN đã về ngay sau đó.
-         */
-        /*
-         * MỘT stub duy nhất, có TRẠNG THÁI.
-         *
-         * Gọi Http::fake() lần thứ hai chỉ THÊM stub chứ không thay cái
-         * cũ, nên bản "GHN hỏng" vẫn đứng đầu hàng và trả lời mãi.
-         */
         $ghnSong = false;
 
         Http::fake(function ($request) use (&$ghnSong) {
@@ -316,22 +256,15 @@ class MomoAutoFulfilTest extends TestCase
         $this->get('/thanh-toan/momo/ket-qua?' . http_build_query($goiTin));
         $this->assertNull($order->refresh()->ghn_order_code);
 
-        // GHN sống lại, IPN về.
         $ghnSong = true;
         $this->post('/thanh-toan/momo/ipn', $goiTin)->assertOk();
 
         $this->assertSame('GHN123456', $order->refresh()->ghn_order_code);
     }
 
-    /* ================= 4. GỌI LẠI KHÔNG TẠO VẬN ĐƠN THỨ HAI ================= */
-
     #[Test]
     public function callback_va_IPN_cung_ve_thi_chi_mot_van_don(): void
     {
-        /*
-         * Hai vận đơn cho một đơn nghĩa là GHN cử hai chuyến xe và tính
-         * tiền cả hai, còn một kiện sẽ tới nơi mà không ai chờ.
-         */
         $this->ngoaiGiaLap();
         $order = $this->datHangMomo();
         $goiTin = $this->goiTin($this->luot());
@@ -353,8 +286,6 @@ class MomoAutoFulfilTest extends TestCase
         $this->assertSame(1, $order->statusEvents()->where('status', 'confirmed')->count());
     }
 
-    /* ================= 5. NHỮNG TRƯỜNG HỢP KHÔNG ĐƯỢC TỰ ĐỘNG ================= */
-
     #[Test]
     public function tra_hong_thi_KHONG_xac_nhan_va_KHONG_tao_van_don(): void
     {
@@ -375,11 +306,6 @@ class MomoAutoFulfilTest extends TestCase
     #[Test]
     public function don_da_huy_thi_KHONG_tu_xac_nhan_du_tien_ve(): void
     {
-        /*
-         * Khách huỷ đơn rồi mới trả tiền ở tab MoMo còn mở. Tiền về
-         * thật, nhưng đơn đã huỷ thì không được sống lại — việc cần làm
-         * là HOÀN TIỀN, và đó là việc của người thật.
-         */
         $this->ngoaiGiaLap();
         $order = $this->datHangMomo();
         $goiTin = $this->goiTin($this->luot());
@@ -399,25 +325,6 @@ class MomoAutoFulfilTest extends TestCase
     #[Test]
     public function huy_don_sau_khi_da_tra_thi_IPN_ve_sau_KHONG_tao_van_don(): void
     {
-        /*
-         * TRÌNH TỰ HIẾM NHƯNG CÓ THẬT, và là chỗ DUY NHẤT chốt chặn "đơn
-         * đã huỷ" trong hoanTatSauThanhToan() thật sự có tác dụng:
-         *
-         *   1. khách trả tiền xong  -> đơn sang "Đã xác nhận"
-         *   2. GHN đang lỗi         -> chưa có vận đơn
-         *   3. khách huỷ đơn
-         *   4. IPN của MoMo về muộn -> kết quả 'already'
-         *
-         * Bước 4 vẫn chạy tiếp phần hoàn tất (có chủ ý — xem bài "GHN
-         * hỏng ở callback thì IPN về sau còn một cơ hội nữa"). Không có
-         * chốt chặn thì nó bàn giao GHN một đơn vừa bị huỷ: xe tới lấy
-         * hàng, cửa hàng trả cước, và hàng đi tới người không còn chờ nó.
-         *
-         * Bài "đơn đã huỷ thì không tự xác nhận dù tiền về" ở trên KHÔNG
-         * đo được điều này: ở đó đơn huỷ TRƯỚC khi tiền về nên
-         * setPaymentStatus() đã chặn từ sớm, và phần hoàn tất không bao
-         * giờ chạy. Đã kiểm bằng cách bỏ chốt chặn đi — bài đó vẫn xanh.
-         */
         $ghnSong = false;
 
         Http::fake(function ($request) use (&$ghnSong) {
@@ -450,7 +357,6 @@ class MomoAutoFulfilTest extends TestCase
         $this->post('/don-hang/' . $order->order_number . '/huy', ['reason' => 'Đổi ý']);
         $this->assertSame(OrderStatus::Cancelled, $order->refresh()->status);
 
-        // GHN sống lại, IPN về muộn.
         $ghnSong = true;
         $this->post('/thanh-toan/momo/ipn', $goiTin)->assertOk();
 
@@ -463,11 +369,6 @@ class MomoAutoFulfilTest extends TestCase
     #[Test]
     public function don_COD_van_do_cua_hang_xac_nhan_bang_tay(): void
     {
-        /*
-         * KHÔNG ĐƯỢC LAN SANG COD. Tạo vận đơn cho một đơn chưa trả tiền
-         * là cam kết một chuyến xe chỉ dựa trên lời hứa của khách — kể
-         * cả đơn đặt nhầm, hết hàng, hay huỷ sau ba phút.
-         */
         $this->ngoaiGiaLap();
 
         $this->actingAs(User::factory()->create());

@@ -1,13 +1,4 @@
-/**
- * BẤM RỒI MỚI NẠP TRÌNH PHÁT
- * ============================================================
- * Mặc định trang chỉ có một cái nút; iframe của YouTube/Vimeo chỉ được dựng khi
- * khách thật sự bấm. Nhờ vậy người chỉ lướt qua trang sản phẩm không bị bên thứ
- * ba tải về ~1MB JavaScript và gắn thẻ theo dõi.
- *
- * Không có tệp này thì cái nút vẫn là một liên kết mở trang gốc — xem
- * components/product/videos.blade.php.
- */
+/** BẤM RỒI MỚI NẠP TRÌNH PHÁT */
 export function initVideoEmbed() {
     document
         .querySelectorAll('[data-video-embed]:not([data-video-bound])')
@@ -22,8 +13,6 @@ export function initVideoEmbed() {
 
                 const iframe = document.createElement('iframe');
 
-                // `?autoplay=1`: khách vừa bấm "xem", bắt bấm phát lần nữa là
-                // thừa một bước cho đúng thao tác họ vừa làm.
                 iframe.src = `${nut.dataset.videoEmbed}?autoplay=1`;
                 iframe.title = nut.dataset.videoTitle || 'Video sản phẩm';
                 iframe.loading = 'lazy';

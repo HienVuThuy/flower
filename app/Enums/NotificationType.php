@@ -2,12 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Loại thông báo trong trang.
- *
- * Câu chữ dựng lúc hiển thị từ chính sự việc (ai, bài nào) — ở đây chỉ giữ
- * phần cố định và biểu tượng.
- */
+/** Loại thông báo trong trang. */
 enum NotificationType: string
 {
     case BinhLuanBai = 'binh_luan_bai';
@@ -27,7 +22,6 @@ enum NotificationType: string
         };
     }
 
-    /** Biểu tượng SVG trong sprite (icon giao diện luôn là SVG, không dùng emoji). */
     public function icon(): string
     {
         return match ($this) {
@@ -38,7 +32,6 @@ enum NotificationType: string
         };
     }
 
-    /** Thông báo do CỬA HÀNG gây ra (không có người cụ thể). */
     public function cuaCuaHang(): bool
     {
         return in_array($this, [self::BaiDuocDuyet, self::BaiTuChoi, self::BaiBiAn], true);

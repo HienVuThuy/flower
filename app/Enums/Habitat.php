@@ -2,26 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * MÔI TRƯỜNG SỐNG TỰ NHIÊN của cây.
- * ============================================================
- * KHÁC HẲN `Placement`, và hai thứ này rất hay bị lẫn:
- *
- *   - `Placement` = khách định ĐẶT cây ở đâu trong nhà (phòng ngủ, ban
- *     công, bàn làm việc). Đó là câu hỏi về CĂN NHÀ.
- *   - `Habitat` = ngoài thiên nhiên cây này vốn mọc ở đâu (rừng ẩm, sa
- *     mạc, dưới nước, trên đá). Đó là câu hỏi về CÂY.
- *
- * Vì sao cần cả hai: môi trường sống là thứ giải thích cách chăm. Một
- * cây sa mạc và một cây rừng ẩm có thể cùng đặt được ở phòng khách,
- * nhưng tưới giống nhau thì một trong hai sẽ chết. Khách biết mình đang
- * mua "cây sa mạc" thì hiểu ngay vì sao hướng dẫn ghi "tưới 10 ngày một
- * lần".
- *
- * Đây cũng là cách khách tìm theo sở thích: có người thích cây thuỷ
- * sinh, có người mê xương rồng — họ tìm theo NHÓM SINH THÁI chứ không
- * theo danh mục bán hàng.
- */
+/** MÔI TRƯỜNG SỐNG TỰ NHIÊN của cây. */
 enum Habitat: string
 {
     case Terrestrial = 'terrestrial';
@@ -49,12 +30,6 @@ enum Habitat: string
         };
     }
 
-    /**
-     * Điều đó có nghĩa gì với người mua.
-     *
-     * Nhãn khoa học không giúp ai chăm cây. Câu này mới là thứ khách cần:
-     * nó dịch một đặc điểm sinh thái thành một việc phải làm.
-     */
     public function hint(): string
     {
         return match ($this) {
@@ -70,7 +45,6 @@ enum Habitat: string
         };
     }
 
-    /** @return array<string, string> value => label */
     public static function options(): array
     {
         $out = [];

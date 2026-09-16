@@ -1,5 +1,4 @@
 @props([
-    // [['label' => 'Hoàn thành', 'value' => 11, 'color' => 'var(--viz-step-5)'], ...]
     'slices' => [],
     'title' => '',
     'note' => null,
@@ -7,20 +6,13 @@
 ])
 
 @php
-    /*
-     * BỎ MIẾNG BẰNG 0 KHỎI HÌNH, GIỮ LẠI Ở BẢNG.
-     *
-     * Một miếng 0% vẫn chiếm một mục trong chú giải và một màu trong bộ,
-     * mà không vẽ ra gì. Bảng số bên dưới vẫn liệt kê đủ để người đọc
-     * biết trạng thái đó tồn tại và đang bằng 0.
-     */
     $tatCa = collect($slices)->values();
     $veDuoc = $tatCa->filter(fn ($s) => (float) $s['value'] > 0)->values();
     $tong = (float) $tatCa->sum('value');
 
-    $R = 46;      // bán kính ngoài
-    $Rin = 28;    // bán kính lỗ
-    $C = 56;      // tâm
+    $R = 46;
+    $Rin = 28;
+    $C = 56;
 @endphp
 
 <div class="viz viz-card">
@@ -58,8 +50,6 @@
                         $lon = $quet > 180 ? 1 : 0;
                     @endphp
 
-                    {{-- Một miếng chiếm trọn vòng thì cung A không vẽ được
-                         (điểm đầu trùng điểm cuối) — dùng hình tròn. --}}
                     @if($phan >= 0.999)
                         <circle class="viz-donut__seg" cx="{{ $C }}" cy="{{ $C }}" r="{{ $R }}"
                                 fill="{{ $s['color'] }}">
@@ -74,8 +64,6 @@
                     @endif
                 @endforeach
 
-                {{-- Lỗ giữa mang TỔNG. Vòng tròn rỗng ruột mà bỏ trống thì
-                     phí mất chỗ dễ đọc nhất của cả hình. --}}
                 <circle class="viz-donut__hole" cx="{{ $C }}" cy="{{ $C }}" r="{{ $Rin }}" />
                 <text class="viz-donut__total" x="{{ $C }}" y="{{ $C + 1 }}">
                     {{ number_format($tong, 0, ',', '.') }}
@@ -83,8 +71,6 @@
                 <text class="viz-donut__total-label" x="{{ $C }}" y="{{ $C + 12 }}">{{ $unit }}</text>
             </svg>
 
-            {{-- Chú giải LUÔN CÓ vì từ 2 miếng trở lên, và mang cả con số:
-                 màu một mình không nói được "bao nhiêu". --}}
             <dl class="viz-legend">
                 @foreach($veDuoc as $s)
                     <div class="viz-legend__row">
@@ -100,14 +86,6 @@
 
         </div>
 
-        {{--
-            BẢNG SỐ ĐẦY ĐỦ — kể cả mục bằng 0.
-
-            Bắt buộc chứ không phải tuỳ chọn: vài màu trong bộ nằm dưới
-            3:1 so với nền sáng, và luật đền bù là phải có nhãn rõ hoặc
-            một bảng số. Bảng cũng là thứ trình đọc màn hình đọc được và
-            là thứ người ta chép đi chỗ khác.
-        --}}
         <details class="viz-details">
             <summary>Xem bảng số</summary>
 

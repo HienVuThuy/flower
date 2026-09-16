@@ -48,8 +48,6 @@
                     </select>
                     <x-form-error name="kind" />
 
-                    {{-- Nói ra đặc thù từng loại ngay tại chỗ chọn: cùng một giá
-                         tiền, ba nguồn này không phải cùng một lựa chọn. --}}
                     <ul class="form-text mb-0 ps-3">
                         @foreach($cacLoai as $loai)
                             <li><strong>{{ $loai->label() }}</strong> — {{ $loai->hint() }}</li>
@@ -106,7 +104,6 @@
                     <span>Còn đang lấy hàng</span>
                 </label>
 
-                {{-- Không có nút xoá, và nói rõ vì sao. --}}
                 <p class="admin-page-subtitle small">
                     Ngừng làm ăn thì bỏ tích ở trên, đừng xoá: phiếu nhập cũ trỏ tới
                     đây, xoá đi là mất dấu vết những lần đã mua.

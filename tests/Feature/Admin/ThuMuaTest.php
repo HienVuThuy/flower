@@ -22,13 +22,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Phân tích thu mua: lấy hàng ở đâu thì ĐÁNG TIỀN nhất.
- * ============================================================
- * BẤT BIẾN QUAN TRỌNG NHẤT: bảng xếp theo GIÁ DÙNG ĐƯỢC, không theo
- * đơn giá trên hoá đơn. Vựa rẻ mà hỏng nhiều phải đứng sau vựa đắt hơn
- * một chút mà hỏng ít — nếu thật sự nó tốn hơn trên mỗi bó bán được.
- */
+/** Phân tích thu mua: lấy hàng ở đâu thì ĐÁNG TIỀN nhất. */
 class ThuMuaTest extends TestCase
 {
     use RefreshDatabase;
@@ -73,7 +67,6 @@ class ThuMuaTest extends TestCase
         return app(PurchasingReport::class)->trong($k ?? new KhoangThoiGian());
     }
 
-    /** Phiếu nhập ĐÃ GHI SỔ cho một sản phẩm. */
     private function nhap(Product $sp, ?Supplier $ncc, int $sl, string $gia, ?string $ngay = null): StockReceipt
     {
         $this->actingAs($this->admin())->post('/admin/nhap-kho', [
@@ -88,16 +81,9 @@ class ThuMuaTest extends TestCase
         return $p->fresh('items');
     }
 
-    /* ================= HOA: ĐÁNG TIỀN, KHÔNG PHẢI RẺ ================= */
-
     #[Test]
     public function vua_re_ma_hong_nhieu_KHONG_dung_dau_bang(): void
     {
-        /*
-         * Đúng ví dụ ở đầu PurchasingReport:
-         *   A: 50.000/bó, hỏng 20% -> 5.000.000 / 80 = 62.500 mỗi bó dùng được
-         *   B: 55.000/bó, hỏng 5%  -> 5.500.000 / 95 = 57.894,73
-         */
         $loai = FlowerKind::create(['name' => 'Hồng đỏ', 'default_unit' => 'bo']);
         $a = $this->ncc('Vựa A');
         $b = $this->ncc('Vựa B');
@@ -130,11 +116,6 @@ class ThuMuaTest extends TestCase
     #[Test]
     public function hai_don_vi_la_HAI_NHOM_khong_bao_gio_tron(): void
     {
-        /*
-         * Giá mỗi bó và giá mỗi cân không so được. Trộn vào một nhóm là
-         * ra một "đơn giá trung bình" không có nghĩa gì mà trông y hệt
-         * một con số có nghĩa.
-         */
         $loai = FlowerKind::create(['name' => 'Baby', 'default_unit' => 'bo']);
         $n = $this->ncc('Vựa Đà Lạt');
 
@@ -153,10 +134,6 @@ class ThuMuaTest extends TestCase
     #[Test]
     public function don_gia_la_BINH_QUAN_GIA_QUYEN_khong_phai_trung_binh_cac_lan(): void
     {
-        /*
-         * 2 bó @100.000 và 98 bó @50.000. Trung bình hai lần mua là
-         * 75.000 — sai. Đã chi 5.100.000 cho 100 bó: 51.000 mỗi bó.
-         */
         $loai = FlowerKind::create(['name' => 'Tulip', 'default_unit' => 'bo']);
         $n = $this->ncc('Vựa X');
 
@@ -169,10 +146,6 @@ class ThuMuaTest extends TestCase
     #[Test]
     public function hoa_tra_lai_CO_hoan_tien_thi_tru_ca_tien_lan_so_dung_duoc(): void
     {
-        /*
-         * 100 bó = 5.000.000. Trả 10 bó, vựa hoàn 500.000.
-         * Tiền thật 4.500.000, dùng được 90 -> 50.000. Giữ nguyên giá.
-         */
         $loai = FlowerKind::create(['name' => 'Ly', 'default_unit' => 'bo']);
         $lo = $this->lo($loai, $this->ncc('Vựa L'), ['status' => FlowerLotStatus::DangDung, 'closed_at' => null]);
 
@@ -189,7 +162,6 @@ class ThuMuaTest extends TestCase
     #[Test]
     public function hoa_tra_lai_KHONG_duoc_gi_thi_gia_dung_duoc_TANG(): void
     {
-        // 5.000.000 cho 90 bó dùng được = 55.555,55.
         $loai = FlowerKind::create(['name' => 'Lan', 'default_unit' => 'bo']);
         $lo = $this->lo($loai, $this->ncc('Vựa M'), ['status' => FlowerLotStatus::DangDung, 'closed_at' => null]);
 
@@ -268,7 +240,6 @@ class ThuMuaTest extends TestCase
 
         $this->lo($loai, $n, ['purchased_at' => '2026-05-10', 'total_cost' => '4000000.00']);
         $this->lo($loai, $n, ['purchased_at' => '2026-06-10', 'total_cost' => '5000000.00']);
-        // Tháng 7 không mua gì.
         $this->lo($loai, $n, ['purchased_at' => '2026-08-10', 'total_cost' => '5500000.00']);
 
         $thang = $this->bao()->hoa()->first()['thang'];
@@ -277,24 +248,12 @@ class ThuMuaTest extends TestCase
         $this->assertNull($thang[0]['doi']);
         $this->assertSame(25.0, $thang[1]['doi']);
 
-        // So với THÁNG 6 (+10%), không phải tháng 5 đầu kỳ (+37,5%).
         $this->assertSame(10.0, $thang[2]['doi']);
     }
 
     #[Test]
     public function cot_ngay_loc_theo_NGAY_DIA_PHUONG_khong_lech_7_tieng(): void
     {
-        /*
-         * MÚI GIỜ ÂM, CÓ CHỦ ĐÍCH.
-         *
-         * Với giờ Việt Nam (+7), so cột DATE thẳng với mốc UTC tình cờ ra
-         * đúng — thử phá code đã chứng minh: bản đầu bài này viết theo giờ
-         * Việt Nam và KHÔNG phân biệt được hàm đúng với hàm sai.
-         *
-         * New York (−4): nửa đêm ngày D = 04:00 UTC ngày D. Cột DATE `D`
-         * nâng thành `D 00:00` < 04:00 — so thẳng thì lô mua ĐÚNG NGÀY
-         * ĐẦU KỲ bị loại.
-         */
         config(['app.display_timezone' => 'America/New_York']);
 
         $loai = FlowerKind::create(['name' => 'Salem', 'default_unit' => 'bo']);
@@ -309,8 +268,6 @@ class ThuMuaTest extends TestCase
 
         $this->assertSame(1, $this->bao($k)->hoa()->first()['so_lan']);
     }
-
-    /* ================= HÀNG ĐẾM ĐƯỢC ================= */
 
     #[Test]
     public function hang_dem_duoc_so_gia_giua_hai_nguon(): void
@@ -330,10 +287,6 @@ class ThuMuaTest extends TestCase
     #[Test]
     public function hang_tra_KHONG_duoc_gi_thi_gia_dung_duoc_tang_va_doi_thu_hang(): void
     {
-        /*
-         * Chợ rẻ hơn (80k) nhưng 4/10 cái vỡ và không được đền:
-         * 800.000 / 6 = 133.333,33 — đắt hơn gốm 100k không vỡ cái nào.
-         */
         $sp = Product::factory()->for(Category::factory())->stock(0)->create(['name' => 'Chậu sứ']);
 
         $this->nhap($sp, $this->ncc('Gốm Bát Tràng'), 10, '100000');
@@ -379,8 +332,6 @@ class ThuMuaTest extends TestCase
         $this->assertTrue($this->bao()->hang()->isEmpty());
     }
 
-    /* ================= TRANG VÀ QUYỀN ================= */
-
     #[Test]
     public function trang_mo_duoc_khi_chua_co_du_lieu(): void
     {
@@ -408,10 +359,6 @@ class ThuMuaTest extends TestCase
     #[Test]
     public function trang_KHONG_in_cau_re_nhat_khi_chi_co_mot_nguon(): void
     {
-        /*
-         * In câu "rẻ nhất khác đáng tiền nhất" lúc hai câu trả lời trùng
-         * nhau là dạy người đọc bỏ qua nó — đúng lúc nó có điều đáng nói.
-         */
         $loai = FlowerKind::create(['name' => 'Cúc', 'default_unit' => 'bo']);
         $this->lo($loai, $this->ncc('Chợ Quảng Bá'), ['hao_hut' => '30.00']);
 
@@ -425,10 +372,6 @@ class ThuMuaTest extends TestCase
     #[Test]
     public function nhan_vien_vao_duoc_nhung_KHONG_thay_tab_loi_nhuan(): void
     {
-        /*
-         * Nhân viên có quyền kho và báo cáo, KHÔNG có tài chính. Trước
-         * đây tab "Lợi nhuận" vẫn hiện và bấm vào là 403.
-         */
         $nv = $this->admin(UserRole::Staff);
 
         $this->actingAs($nv)

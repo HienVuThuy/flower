@@ -5,34 +5,13 @@ namespace App\Services\Media;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
-/**
- * Xoá TOẠ ĐỘ GPS khỏi video MP4 / MOV điện thoại quay.
- * ============================================================
- * Cùng lý do với ImageMetadataStripper: video quay bằng iPhone / Android ghi
- * vị trí quay (chuẩn ISO 6709, ví dụ "+10.7626+106.6602+012.000/") vào hộp
- * `moov` — đăng công khai là đăng luôn địa chỉ nhà người quay.
- *
- * KHÔNG CẦN ffmpeg (máy chủ không có): đọc cấu trúc hộp MP4, chỉ đọc vào hộp
- * siêu dữ liệu (`moov`, `udta`, `meta` ở tầng trên cùng), bỏ qua dữ liệu hình
- * `mdat`, rồi GHI ĐÈ chuỗi toạ độ bằng khoảng trắng CÙNG ĐỘ DÀI. Không đổi kích
- * thước hộp nào nên mọi con trỏ trong tệp vẫn đúng và video vẫn phát.
- *
- * Mẫu toạ độ chặt (vĩ độ 2 chữ số, kinh độ 3 chữ số, có phần thập phân, kết
- * thúc bằng "/") để không đụng nhầm dữ liệu nhị phân khác trong `moov`.
- *
- * WebM không có chuẩn ghi GPS phổ biến nên không cần xử lý.
- */
+/** Xoá TOẠ ĐỘ GPS khỏi video MP4 / MOV điện thoại quay. */
 final class VideoMetadataStripper
 {
-    /** Hộp siêu dữ liệu lớn hơn mức này là bất thường — không đọc cả vào bộ nhớ. */
     private const TOI_DA_HOP = 32 * 1024 * 1024;
 
     private const TOA_DO = '#[+-]\d{2}\.\d{2,}[+-]\d{3}\.\d{2,}(?:[+-]\d+(?:\.\d+)?)?(?:CRS[^/]{0,40})?/#';
 
-    /**
-     * @param  string  $duongDan  đường dẫn trong đĩa `public`
-     * @return int số chuỗi toạ độ đã xoá
-     */
     public function tuoc(string $duongDan): int
     {
         return $this->tuocTep(Storage::disk('public')->path($duongDan));
@@ -71,7 +50,7 @@ final class VideoMetadataStripper
                 }
 
                 if ($doDai < $dauHop || $viTri + $doDai > $kichThuoc) {
-                    break; // Tệp hỏng hoặc không phải MP4: dừng, không ghi bừa.
+                    break;
                 }
 
                 $noiDung = $doDai - $dauHop;

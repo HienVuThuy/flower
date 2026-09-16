@@ -32,16 +32,6 @@ class StoreProductRequest extends FormRequest
                 ? Str::slug($name)
                 : null,
         ]);
-        /*
-         * Lọc care_info theo HÌNH THỨC BÁN.
-         *
-         * Guide mục 4.4: bó hoa và cây chậu không dùng chung một bộ
-         * thuộc tính chăm sóc. Không lọc thì đổi một cây chậu thành bó
-         * hoa vẫn giữ nguyên các ô ánh sáng/đất/phân bón cũ — đúng lỗi
-         * đang tồn tại trong cơ sở dữ liệu hiện tại.
-         *
-         * Lọc ở SERVER, không tin việc JavaScript đã ẩn ô ở trình duyệt.
-         */
         $care = $this->input('care_info');
 
         if (is_array($care)) {
@@ -61,32 +51,15 @@ class StoreProductRequest extends FormRequest
     {
         return [
 
-            /*
-             * =========================
-             * PRODUCT
-             * =========================
-             */
-
             'category_id' => [
                 'required',
                 'integer',
-                // Danh mục đang ẩn không nhận sản phẩm mới; khi sửa thì giữ được danh mục đang gắn.
                 Rule::exists('categories', 'id')->where('is_active', true),
             ],
 
-            /*
-             * NHÓM THUẾ SUẤT — để trống là hợp lệ.
-             *
-             * Trống nghĩa là "dùng mức mặc định của cửa hàng", không
-             * phải dữ liệu thiếu. Nhưng CÓ giá trị thì phải là một dòng
-             * có thật: một id bịa trên biểu mẫu không được phép chui vào
-             * cột khoá ngoại rồi làm hỏng phép tính thuế của mọi đơn sau
-             * đó.
-             */
             'tax_class_id' => [
                 'nullable',
                 'integer',
-                // Nhóm đã tắt không gán cho sản phẩm mới; khi sửa thì giữ được nhóm đang gắn.
                 Rule::exists('tax_classes', 'id')->where('is_active', true),
             ],
 
@@ -134,18 +107,9 @@ class StoreProductRequest extends FormRequest
             'product_type' => [
                 'required',
 
-                // Danh sách từ enum, không chép tay. Bản cũ ở đây còn
-                // 'gift'/'event'/'wedding' — thuộc trục dịp, xem QĐ-08.
                 Rule::in(ProductType::values()),
             ],
 
-            /*
-             * PHÂN LOẠI THỰC VẬT — ĐỂ TRỐNG ĐƯỢC.
-             *
-             * Hoa cắt cành, phụ kiện, vật tư không có loài cây. Bắt buộc
-             * điền là bắt người nhập liệu bịa ra dữ liệu (xem migration
-             * create_plant_taxa_table).
-             */
             'taxon_id' => [
                 'nullable',
                 'integer',
@@ -184,12 +148,6 @@ class StoreProductRequest extends FormRequest
                 'max:1000000',
             ],
 
-            /*
-             * Chỉ chấp nhận đúng những khoá thuộc hồ sơ chăm sóc của
-             * hình thức bán đang chọn (Guide mục 4.4). Gửi khoá lạ, hoặc
-             * gửi khoá của cây chậu cho một bó hoa, đều bị loại ở
-             * prepareForValidation() bên dưới.
-             */
             'care_info' => ['nullable', 'array'],
             'care_info.light' => ['nullable', 'string', 'max:255'],
             'care_info.water' => ['nullable', 'string', 'max:255'],
@@ -198,22 +156,8 @@ class StoreProductRequest extends FormRequest
             'care_info.temperature' => ['nullable', 'string', 'max:255'],
             'care_info.position' => ['nullable', 'string', 'max:255'],
             'care_info.frequency' => ['nullable', 'string', 'max:255'],
-            // Danh sach do kho lay tu App\Enums\CareDifficulty — mot noi duy nhat.
             'care_info.difficulty' => ['nullable', Rule::in(\App\Enums\CareDifficulty::values())],
 
-            /*
-             * NHÃN PHÂN LOẠI — mảng lồng: traits[placement][], traits[feng_shui][]...
-             *
-             * Chỉ kiểm tra KHUNG ở đây (phải là mảng, phần tử là chuỗi
-             * ngắn). Giá trị hợp lệ hay không do ProductTrait::isValid()
-             * quyết định lúc ghi, vì tập giá trị phụ thuộc loại nhãn —
-             * viết được thành quy tắc validation thì phải liệt kê ba lần,
-             * và ba bản đó sẽ lệch với enum.
-             *
-             * Ô đánh dấu không gửi gì khi bỏ tích hết, nên `nullable`:
-             * thiếu nó thì "bỏ hết nhãn" trở thành lỗi validation thay vì
-             * một thao tác hợp lệ.
-             */
             'traits' => ['nullable', 'array'],
             'traits.*' => ['nullable', 'array'],
             'traits.*.*' => ['string', 'max:32'],
@@ -223,11 +167,6 @@ class StoreProductRequest extends FormRequest
             'care_info.lifespan' => ['nullable', 'string', 'max:255'],
             'care_info.notes' => ['nullable', 'string', 'max:1000'],
 
-            /*
-             * Chu kỳ nhắc chăm sóc — SỐ NGÀY, không phải chữ.
-             * Bỏ trống thì sản phẩm không sinh lịch nhắc nào.
-             * max:365 chặn kiểu gõ nhầm 3000 thay vì 30.
-             */
             'care_info.water_days' => ['nullable', 'integer', 'min:1', 'max:365'],
             'care_info.fertilizer_days' => ['nullable', 'integer', 'min:1', 'max:365'],
 
@@ -238,7 +177,6 @@ class StoreProductRequest extends FormRequest
                 'max:4096',
             ],
 
-            // Ảnh phụ cho gallery ở trang chi tiết.
             'gallery' => [
                 'nullable',
                 'array',
@@ -252,21 +190,6 @@ class StoreProductRequest extends FormRequest
             ],
 
 
-            /*
-             * VIDEO — LINK hoặc TỆP.
-             *
-             * Link: chỉ nhận YouTube/Vimeo, và chỉ lấy mã video ra
-             * (App\Services\Media\VideoLink). Nhận nguyên chuỗi rồi đổ vào
-             * <iframe src> là mở cửa cho `javascript:` và cho một trang giả
-             * làm trình phát ngay giữa trang cửa hàng.
-             *
-             * Tệp: `mimetypes` đọc NỘI DUNG tệp, không chỉ đuôi — đổi tên
-             * `shell.php` thành `clip.mp4` không lọt qua được.
-             *
-             * 20MB: máy chủ nhận tối đa 40MB (upload_max_filesize), và một
-             * video giới thiệu hoa dài 30 giây quay bằng điện thoại thường
-             * dưới 20MB. Video dài hơn nên đăng YouTube rồi dán link.
-             */
             'video_urls' => ['nullable', 'array', 'max:5'],
             'video_urls.*' => ['nullable', 'string', 'max:500', function (string $attr, mixed $value, \Closure $fail) {
                 if (filled($value) && ! \App\Services\Media\VideoLink::hopLe((string) $value)) {
@@ -277,19 +200,12 @@ class StoreProductRequest extends FormRequest
             'video_files' => ['nullable', 'array', 'max:3'],
             'video_files.*' => ['file', 'mimetypes:video/mp4', 'mimes:mp4', 'max:20480'],
 
-            /*
-             * MÔ TẢ CHI TIẾT THEO KHỐI: chữ – ảnh – chữ…
-             *
-             * Thứ tự là thứ tự các dòng gửi lên; ô "sort" gõ tay không tồn tại
-             * (xem ProductBlockService).
-             */
             'blocks' => ['nullable', 'array', 'max:40'],
             'blocks.*.id' => ['nullable', 'integer'],
             'blocks.*.kind' => ['required_with:blocks', 'in:text,image'],
             'blocks.*.body' => ['nullable', 'string', 'max:5000'],
             'blocks.*.caption' => ['nullable', 'string', 'max:255'],
             'blocks.*.image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
-            // Danh sách id ảnh phụ admin bấm xoá.
             'remove_images' => [
                 'nullable',
                 'array',
@@ -322,12 +238,6 @@ class StoreProductRequest extends FormRequest
                 'max:500',
             ],
 
-
-            /*
-             * =========================
-             * VARIANTS
-             * =========================
-             */
 
             'variants' => [
                 'nullable',
@@ -386,13 +296,6 @@ class StoreProductRequest extends FormRequest
     }
 
 
-    /**
-     * Luật LIÊN TRƯỜNG — chạy sau khi từng ô đã hợp lệ.
-     *
-     * Đặt ở after() chứ không ở rules(): tới đây mới chắc chắn cả ba ô
-     * đều có giá trị đọc được, nên thông báo lỗi nói được đúng tổ hợp
-     * nào đang sai, thay vì bảo "trường này không hợp lệ".
-     */
     public function after(): array
     {
         return [
@@ -403,10 +306,6 @@ class StoreProductRequest extends FormRequest
     public function messages(): array
     {
         return [
-
-            /*
-             * PRODUCT
-             */
 
             'category_id.required' =>
                 'Vui lòng chọn danh mục.',
@@ -507,10 +406,6 @@ class StoreProductRequest extends FormRequest
             'status.in' =>
                 'Trạng thái không hợp lệ.',
 
-
-            /*
-             * VARIANTS
-             */
 
             'variants.array' =>
                 'Dữ liệu biến thể không hợp lệ.',

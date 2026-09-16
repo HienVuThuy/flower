@@ -15,7 +15,6 @@
 
     <div class="col-lg-8">
 
-        {{-- enctype bắt buộc: không có thì ô chọn ảnh hero gửi lên rỗng. --}}
         <form action="{{ route('admin.settings.update') }}" method="POST" enctype="multipart/form-data">
 
             @csrf
@@ -52,7 +51,6 @@
                                     @checked($activeTheme === $themeKey)
                                 >
 
-                                {{-- Màu xem trước lấy từ config/theme.php, không hard-code trong JS --}}
                                 <span
                                     class="theme-option-card__swatch"
                                     style="background: linear-gradient(135deg, {{ $theme['swatch'][0] }}, {{ $theme['swatch'][1] }});"
@@ -80,7 +78,6 @@
 
             </div>
 
-            {{-- ============ ẢNH HERO THEO TỪNG THEME ============ --}}
             <div class="admin-panel p-4 mb-4">
 
                 <h2 class="h6 fw-bold mb-1">Ảnh khung lớn trang chủ</h2>
@@ -97,7 +94,6 @@
                 @foreach($availableThemes as $themeKey => $theme)
                     @php $themeHero = $heroImages[$themeKey] ?? []; @endphp
 
-                    {{-- <details> để trang không bị dài; không cần JavaScript. --}}
                     <details class="hero-manager" @if($activeTheme === $themeKey) open @endif>
 
                         <summary class="hero-manager__summary">
@@ -120,9 +116,6 @@
 
                                             <img src="{{ $img['url'] }}" alt="{{ $img['alt'] }}">
 
-                                            {{-- Đường dẫn đi kèm để server biết ảnh nào được
-                                                 giữ lại; server vẫn đối chiếu với bản ghi cũ
-                                                 nên sửa ô ẩn này không chèn được ảnh lạ. --}}
                                             <input type="hidden"
                                                    name="hero[{{ $themeKey }}][keep][{{ $i }}][path]"
                                                    value="{{ $img['path'] }}">
@@ -177,16 +170,6 @@
 
             </div>
 
-            {{--
-                ============================================================
-                NHẬN DIỆN CỬA HÀNG — tên, dòng phụ, logo.
-                ============================================================
-                Trước đây tên cửa hàng viết cứng ở 17 chỗ trong mã nguồn
-                (header, chân trang, sáu mẫu thư, tiêu đề mọi trang, layout
-                quản trị). Đổi tên nghĩa là sửa 17 tệp và chắc chắn bỏ sót
-                một chỗ — thường là một mẫu thư, tức là chỗ khách nhìn thấy
-                mà chủ cửa hàng thì không.
-            --}}
             <div class="admin-panel p-4 mb-4">
 
                 <h2 class="h6 fw-bold mb-3">Nhận diện cửa hàng</h2>
@@ -219,9 +202,6 @@
                         <label class="form-label">Logo</label>
 
                         <div class="d-flex align-items-center gap-3 mb-2">
-                            {{-- Xem trước LOGO ĐANG DÙNG, không phải một ô trống.
-                                 Chưa tải logo riêng thì hiện hình vẽ mặc định —
-                                 admin thấy ngay cửa hàng mình đang trông thế nào. --}}
                             <span class="d-inline-flex align-items-center justify-content-center"
                                   style="width:56px;height:56px;border:1px solid var(--border-soft);border-radius:8px;">
                                 <x-site.brand :size="40" :show-text="false" />
@@ -243,8 +223,6 @@
                         <x-form-error name="site_logo"/>
                         <p class="form-text">
                             PNG, JPG hoặc WebP, tối đa 512KB. Nền trong suốt hiển thị đẹp nhất.
-                            {{-- KHÔNG nhận SVG: SVG là XML và chạy được JavaScript bên
-                                 trong — một tệp logo trở thành lỗ XSS trên mọi trang. --}}
                             <strong>Không nhận SVG</strong> vì lý do an toàn.
                         </p>
                     </div>
@@ -287,15 +265,6 @@
                         <x-form-error name="site_address"/>
                     </div>
 
-                    {{--
-                        TỈNH TÁCH RIÊNG KHỎI ĐỊA CHỈ, và phải CHỌN từ danh sách.
-
-                        Phí giao tra theo đúng chuỗi tên tỉnh. Nếu để hệ thống
-                        tự dò tên tỉnh trong ô địa chỉ gõ tay thì "Hà Nội" và
-                        "TP Hà Nội" ra hai kết quả khác nhau — mà cái sai lại
-                        rơi vào vùng mặc định, tức mọi đơn nội thành bị tính
-                        giá tỉnh xa.
-                    --}}
                     <div class="col-md-6">
                         <label class="form-label">Tỉnh/thành đặt cửa hàng</label>
                         <select name="site_province" class="form-select @error('site_province') is-invalid @enderror">
@@ -318,19 +287,6 @@
 
             </div>
 
-            {{--
-                ============================================================
-                TIỀN TỆ
-                ============================================================
-                Bốn tham số này quyết định MỌI số tiền trên toàn hệ thống
-                hiện ra thế nào — thẻ sản phẩm, giỏ hàng, đơn hàng, thư xác
-                nhận, trang quản trị. Trước đây chúng viết cứng ở 49 chỗ
-                trong 19 tệp, với ba biến thể ký hiệu khác nhau.
-
-                Dấu ngăn nghìn KHÔNG có ô riêng: nó suy ra từ mã tiền tệ.
-                Cho admin tự chọn từng dấu là mở đường cho những tổ hợp
-                không tồn tại ở đâu cả ("1.234.56").
-            --}}
             <div class="admin-panel p-4 mb-4">
 
                 <h2 class="h6 fw-bold mb-3">Đơn vị tiền tệ</h2>
@@ -341,11 +297,6 @@
                     Đang hiển thị: <strong>{{ \App\Services\Shop\Money::format(260000) }}</strong>
                 </p>
 
-                {{--
-                    KHOÁ Ở VND. Bốn ô nhập cũ chỉ đổi CÁCH IN chứ không đổi đơn vị
-                    tiền: giá lưu là đồng, MoMo và GHN nhận đồng, không có tỉ giá.
-                    Xem Money::get().
-                --}}
                 <p class="mb-0">
                     <strong>Đồng Việt Nam (VND)</strong> — cố định. Giá sản phẩm, MoMo và GHN đều tính bằng đồng;
                     đổi ký hiệu sang đơn vị khác mà không quy đổi sẽ in sai mọi số tiền.
@@ -353,15 +304,6 @@
 
             </div>
 
-            {{--
-                ============================================================
-                THUẾ
-                ============================================================
-                GIÁ NIÊM YẾT ĐÃ BAO GỒM VAT. Đổi con số ở đây KHÔNG làm
-                khách phải trả thêm một đồng nào và không con số nào trên
-                giao diện khách hàng thay đổi — nó chỉ đổi cách hệ thống
-                TÁCH phần thuế ra để ghi vào đơn.
-            --}}
             <div class="admin-panel p-4 mb-4">
 
                 <h2 class="h6 fw-bold mb-3">Thuế giá trị gia tăng</h2>
@@ -390,9 +332,6 @@
                     </div>
 
                     <div class="col-md-8 d-flex align-items-end">
-                        {{-- Đây là ranh giới trách nhiệm, không phải câu cảnh
-                             báo cho có: phần mềm không biết mặt hàng của cửa
-                             hàng chịu thuế suất nào. --}}
                         <p class="text-muted small mb-2">
                             Mức thuế phụ thuộc mặt hàng và chính sách từng thời kỳ.
                             Hoa tươi và cây cảnh có trường hợp riêng.
@@ -401,18 +340,6 @@
                     </div>
                 </div>
 
-                {{--
-                    ============ NHÓM THUẾ SUẤT ============
-
-                    MỘT MỨC CHO CẢ CỬA HÀNG LÀ KHÔNG ĐỦ. Cửa hàng bán hoa
-                    tươi, cây giống, chậu sứ và giá thể — bốn thứ có bản
-                    chất thuế khác nhau. Ô "Thuế suất" bên trên chỉ còn là
-                    mức MẶC ĐỊNH: nó áp cho phí vận chuyển và cho những
-                    sản phẩm chưa được phân loại.
-
-                    Gán nhóm cho từng sản phẩm ở trang sửa sản phẩm; ở đây
-                    chỉ chỉnh mức của từng nhóm khi chính sách thay đổi.
-                --}}
                 <h3 class="h6 fw-bold mt-4 mb-2">Nhóm thuế suất</h3>
 
                 <p class="text-muted small mb-3">
@@ -444,13 +371,6 @@
                                     </td>
 
                                     <td>
-                                        {{--
-                                            Ô ẩn đi kèm: trình duyệt KHÔNG gửi
-                                            checkbox chưa tích, nên không có nó
-                                            thì bỏ tích một nhóm sẽ không lưu
-                                            được — ô biến mất khỏi dữ liệu gửi
-                                            lên và máy chủ hiểu là "không đổi".
-                                        --}}
                                         <input type="hidden" name="tax_classes[{{ $nhom->id }}][is_active]" value="0">
                                         <input type="checkbox" class="form-check-input"
                                                name="tax_classes[{{ $nhom->id }}][is_active]" value="1"
@@ -464,17 +384,6 @@
                     </table>
                 </div>
 
-                {{--
-                    Ý NGHĨA CỦA Ô TRỐNG Ở ĐÂY KHÁC Ô "THUẾ SUẤT" BÊN TRÊN,
-                    và đó là một cái bẫy thật nên phải nói ra:
-
-                        ô trên  — trống = "dùng mức mặc định trong cấu hình"
-                        bảng này — trống = "KHÔNG thuộc diện chịu VAT"
-
-                    "Không chịu VAT" khác "chịu thuế suất 0%": hàng 0% vẫn
-                    là hàng chịu thuế và vẫn lên hoá đơn với dòng thuế suất
-                    0%. Muốn 0% thì gõ số 0, đừng để trống.
-                --}}
                 <p class="form-text mt-2">
                     Để trống ô thuế suất nghĩa là <strong>không thuộc diện chịu VAT</strong> —
                     khác với <strong>chịu thuế suất 0%</strong> (gõ số <code>0</code>).
@@ -484,18 +393,6 @@
             </div>
 
 
-            {{--
-                ============================================================
-                HÌNH THỨC THANH TOÁN — bảng TRẠNG THÁI, không có công tắc.
-                ============================================================
-                Một cổng chỉ dùng được khi có đủ khoá bí mật trong .env.
-                Cho admin bật một cổng chưa cấu hình là dựng ra lựa chọn
-                hỏng giữa đường, sau khi khách đã điền hết địa chỉ.
-
-                Bảng này trả lời câu "vì sao MoMo chưa hiện ra ở bước thanh
-                toán" — thứ mà trước đây không chỗ nào trong giao diện trả
-                lời được.
-            --}}
             <div class="admin-panel p-4 mb-4">
 
                 <h2 class="h6 fw-bold mb-3">Hình thức thanh toán</h2>
@@ -548,12 +445,6 @@
 
                 <h2 class="h6 fw-bold mb-1">Cam kết dịch vụ</h2>
 
-                {{--
-                    Đây là LỜI HỨA của cửa hàng, không phải chữ trang trí.
-                    Cố ý không cài sẵn câu mẫu nào ("giao 2h", "tươi 3+
-                    ngày"...) — chỉ chủ cửa hàng mới biết mình làm được gì.
-                    Để trống hết thì trang sản phẩm không hiện mục này.
-                --}}
                 <p class="admin-page-subtitle mb-3">
                     Hiện ở trang chi tiết sản phẩm. Chỉ điền những gì cửa hàng
                     thực sự làm được — bỏ trống dòng nào thì dòng đó không hiện.
@@ -631,9 +522,6 @@
 (function () {
     document.querySelectorAll('#themePicker input[name=theme]').forEach(function (radio) {
         radio.addEventListener('change', function () {
-            // Đi qua ThemeManager để hiệu ứng của theme trước đó được
-            // destroy() sạch trước khi theme mới nạp — kể cả khi admin
-            // bấm thử liên tục nhiều theme ở đây.
             if (window.ThemeManager) {
                 window.ThemeManager.applyTheme(radio.value, radio.dataset.themeEffect || null);
             }

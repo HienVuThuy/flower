@@ -1,10 +1,4 @@
-{{--
-    Thư đặt lại mật khẩu.
-
-    Bảng + style nội tuyến, KHÔNG dùng class hay tệp CSS ngoài — Gmail và
-    Outlook bỏ <link> và cắt <style> ở <head>. Xem chú thích dài hơn ở
-    emails/orders/confirmation.blade.php.
---}}
+{{-- Thư đặt lại mật khẩu. --}}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -38,10 +32,6 @@
 
     <tr>
         <td style="padding:8px 24px 16px 24px;">
-            {{--
-                Nút là một thẻ <a> được tô nền, không phải <button>: nhiều
-                ứng dụng email không dựng nút biểu mẫu.
-            --}}
             <a href="{{ $url }}"
                style="display:inline-block; padding:12px 22px; background:#2f4a37; color:#ffffff; text-decoration:none; border-radius:6px; font-weight:bold; font-size:14px;">
                 Đặt lại mật khẩu
@@ -56,11 +46,6 @@
                 và sẽ hết hạn sau <strong style="color:#1e231f;">{{ $minutes }} phút</strong>.
             </p>
 
-            {{--
-                Câu này quan trọng: người KHÔNG yêu cầu đặt lại mật khẩu cần
-                biết họ không phải làm gì cả. Không có nó, thư trông như một
-                cuộc tấn công và người ta hoảng lên đi đổi mật khẩu lung tung.
-            --}}
             <p style="margin:0 0 10px 0;">
                 Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua thư này —
                 mật khẩu hiện tại của bạn vẫn giữ nguyên và không ai đổi được nó.

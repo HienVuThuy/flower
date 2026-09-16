@@ -1,11 +1,4 @@
-/*
- * PRODUCT CARD — editorial commerce, không phải Bootstrap card.
- * ============================================================
- * Ảnh chiếm hierarchy chính (tỷ lệ cố định, object-fit cover).
- * Metadata nhỏ/tinh tế. Tên rõ. Giá có trọng lượng thị giác mạnh
- * nhất trong phần chữ. Badge chỉ hiện khi thật cần (sale/hết hàng).
- * Hover: chỉ scale ảnh rất nhẹ — không bounce/rotate/glow.
- */
+/* PRODUCT CARD — editorial commerce, không phải Bootstrap card. */
 
 .product-card {
     position: relative;
@@ -120,8 +113,6 @@
     }
 }
 
-/* CTA trên card — chỉ hiện khi rê chuột ở desktop để ảnh và giá
-   vẫn là trọng tâm; trên mobile (không có hover) thì luôn hiện. */
 .product-card__actions {
     margin-top: 0.5rem;
 }
@@ -147,11 +138,6 @@
     }
 }
 
-/*
- * Lý do gợi ý, đặt dưới thẻ sản phẩm.
- * Cỡ nhỏ và màu nhạt có chủ đích: đây là chú thích giúp khách hiểu vì
- * sao thấy sản phẩm này, không được tranh chỗ với tên và giá.
- */
 .reco-reason {
     margin: var(--space-2xs) 0 0;
     font-size: var(--text-caption);
@@ -159,14 +145,6 @@
     line-height: 1.35;
 }
 
-
-/*
- * MUA KÈM (cross-sell)
- * ============================================================
- * Hàng ngang gọn, ảnh nhỏ. Cố ý KHÔNG dùng .product-card: phụ kiện là
- * món phụ, để nó cùng cỡ với hàng chính thì khối "mua kèm" tranh mất sự
- * chú ý với chính thứ khách đang mua.
- */
 
 .cross-sell {
     margin-top: var(--space-md);
@@ -244,8 +222,6 @@
     font-size: 0.72rem;
     color: var(--ink-500);
     line-height: 1.35;
-    /* Cắt ở dòng thứ hai: mô tả phụ kiện dài ngắn khác nhau, không giới
-       hạn thì các ô trong cùng hàng cao thấp lệch nhau. */
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;

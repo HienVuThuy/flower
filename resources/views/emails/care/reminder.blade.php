@@ -1,11 +1,4 @@
-{{--
-    Thư nhắc chăm cây.
-
-    Mỗi cây một khối: tên cây, việc cần làm, và LỜI KHUYÊN CỦA CHÍNH CÂY
-    ĐÓ lấy từ care_info. Lời khuyên là phần làm thư này có ích — không có
-    nó thì đây chỉ là một cái chuông báo, mà chuông báo thì điện thoại
-    của khách đã có sẵn.
---}}
+{{-- Thư nhắc chăm cây. --}}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -55,8 +48,6 @@
                             </p>
 
                             @if($advice !== '')
-                                {{-- Lời khuyên do cửa hàng nhập cho ĐÚNG cây này,
-                                     không phải câu chung chung cho mọi loại cây. --}}
                                 <p style="margin:0 0 3px 0; font-size:13.5px; line-height:1.55;">
                                     {{ $advice }}
                                 </p>
@@ -78,14 +69,6 @@
 
     <tr>
         <td style="padding:14px 24px 22px 24px; border-top:1px solid #e4e2da; font-size:12.5px; color:#5d6660; line-height:1.6;">
-            {{--
-                ĐƯỜNG TẮT NHẮC PHẢI NẰM NGAY TRONG THƯ.
-
-                Thư định kỳ mà muốn tắt phải đi tìm trong trang cá nhân là
-                kiểu làm khó người dùng có chủ đích. Ở đây nói thẳng chỗ
-                tắt, và tắt được từng cây một chứ không phải tất-cả-hoặc-
-                không.
-            --}}
             Cây đã chết, đã tặng đi, hoặc bạn không muốn nhận nhắc nữa?
             Vào <a href="{{ route('shop.care.index') }}" style="color:#1b2f22;">Lịch chăm cây</a>
             để tắt riêng từng cây, hoặc tắt hết trong Hồ sơ tài khoản.

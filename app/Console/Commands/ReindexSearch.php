@@ -5,19 +5,7 @@ namespace App\Console\Commands;
 use App\Services\Search\ProductSearchIndexer;
 use Illuminate\Console\Command;
 
-/**
- * Dựng lại chỉ mục tìm kiếm cho toàn bộ sản phẩm.
- *
- * BA LÚC CẦN CHẠY:
- *   1. Ngay sau khi chạy migration thêm hai cột — dữ liệu cũ chưa có
- *      chỉ mục, không chạy thì mọi sản phẩm hiện có đều không tìm được.
- *   2. Sau khi sửa công thức trong ProductSearchIndexer::values().
- *   3. Sau khi nạp dữ liệu thẳng vào cơ sở dữ liệu bằng SQL (import,
- *      khôi phục bản sao lưu) — đường đó không đi qua model nên observer
- *      không bắn.
- *
- * Chạy lại bao nhiêu lần cũng được: lệnh chỉ ghi những dòng thật sự lệch.
- */
+/** Dựng lại chỉ mục tìm kiếm cho toàn bộ sản phẩm. */
 class ReindexSearch extends Command
 {
     protected $signature = 'search:reindex';

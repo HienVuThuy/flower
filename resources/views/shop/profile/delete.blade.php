@@ -15,14 +15,6 @@
 
         <div class="surface-card p-4">
 
-            {{--
-                NÓI ĐÚNG CON SỐ, KHÔNG NÓI CHUNG CHUNG.
-
-                "Bạn sẽ mất dữ liệu cá nhân" là câu không giúp ai quyết
-                định gì. "Xoá 4 đánh giá, 2 địa chỉ; giữ lại 15 đơn hàng"
-                thì có — người đọc biết chính xác mình đang đánh đổi cái
-                gì, và có thể dừng lại nếu con số lớn hơn họ tưởng.
-            --}}
             <h2 class="text-h4 mb-3">Những gì sẽ bị xoá</h2>
 
             <ul class="mb-4">
@@ -49,15 +41,6 @@
 
             <hr class="my-4">
 
-            {{--
-                BẮT GÕ MỘT DÒNG, KHÔNG CHỈ BẤM NÚT.
-
-                Hộp thoại "Bạn có chắc không?" thì người ta bấm theo phản
-                xạ — đó là cú bấm thứ hai trong cùng một nhịp tay. Phải
-                gõ một dòng thì buộc dừng lại, đọc, và làm một việc khác
-                hẳn. Với thao tác không có đường lùi thì cái khựng lại đó
-                chính là thứ cần.
-            --}}
             <form action="{{ route('shop.profile.delete', $user) }}?{{ $signedQuery }}" method="POST">
                 @csrf
                 @method('DELETE')
@@ -82,13 +65,6 @@
                         Xoá vĩnh viễn tài khoản
                     </button>
 
-                    {{--
-                        ĐƯỜNG LUI ĐẶT NGAY CẠNH, không bắt bấm Back.
-
-                        Người tới được đây có thể chỉ đang xem thử điều gì
-                        sẽ xảy ra. Không có lối quay lại rõ ràng thì lựa
-                        chọn duy nhất trông thấy được là cái nút đỏ.
-                    --}}
                     <a href="{{ route('shop.profile.edit') }}" class="btn btn-secondary-brand">
                         Không, giữ tài khoản của tôi
                     </a>

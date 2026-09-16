@@ -17,21 +17,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
-/**
- * QUÀ TẶNG KÈM SẢN PHẨM — chọn sản phẩm, gắn quà mặc định, sửa hoặc bỏ.
- * ============================================================
- * Như "Mua 1 mặt hàng – nhận quà miễn phí" trên các sàn. KHÔNG phải mã giảm
- * giá hay chương trình: là thuộc tính của sản phẩm (hoặc một quy cách).
- *
- * MỌI LUẬT SỬA ĐƯỢC THEO TỪNG MÓN QUÀ, BẤT CỨ LÚC NÀO: quy cách áp dụng,
- * mua mỗi N → tặng M, tối đa mỗi đơn, thiếu kho thì làm gì, trả hàng thì
- * quà đi đâu, có cho đổi hàng không. Đơn cũ không bị ảnh hưởng — dòng quà
- * trong đơn đã chụp tên, SKU, số lượng lúc đặt.
- *
- * QUY CÁCH PHẢI THUỘC ĐÚNG SẢN PHẨM — kiểm ở máy chủ cho cả quy cách kích
- * hoạt (của sản phẩm chính) lẫn quy cách của món quà. Giao diện lọc sẵn,
- * nhưng giao diện không phải lớp bảo vệ.
- */
+/** QUÀ TẶNG KÈM SẢN PHẨM — chọn sản phẩm, gắn quà mặc định, sửa hoặc bỏ. */
 class ProductGiftController extends Controller
 {
     use LogsAdminActivity;
@@ -60,7 +46,6 @@ class ProductGiftController extends Controller
         ]);
     }
 
-    /** Ô "chọn sản phẩm" ở trang danh sách gửi về đây rồi mở trang quà của sản phẩm. */
     public function open(Request $request): RedirectResponse
     {
         $data = $request->validate(['product_id' => ['required', 'integer', 'exists:products,id']], [], ['product_id' => 'sản phẩm']);
@@ -119,7 +104,6 @@ class ProductGiftController extends Controller
             ]),
         };
 
-        // Cùng sản phẩm + cùng quy cách áp dụng + cùng quà = cùng một cấu hình: cập nhật, không nhân đôi.
         $qua = $this->trung($product, $luat['product_variant_id'], $vat->id) ?? new ProductGift();
         $daCo = $qua->exists;
 
@@ -158,7 +142,6 @@ class ProductGiftController extends Controller
         $productGift->product_variant_id = $luat['product_variant_id'];
         $productGift->save();
 
-        // Tồn kho chỉ sửa ở đây với vật phẩm tặng riêng; quà là sản phẩm thì sửa ở kho của sản phẩm.
         $vat = $productGift->giftItem;
         if ($vat !== null && ! $vat->laSanPham() && ($stock['stock_quantity'] ?? null) !== null) {
             $vat->update(['stock_quantity' => (int) $stock['stock_quantity']]);
@@ -177,21 +160,14 @@ class ProductGiftController extends Controller
 
         $this->audit()->log('product-gift.deleted', 'Bỏ quà kèm "' . $productGift->giftItem?->name . '" khỏi ' . $product->name, $product);
 
-        // Đơn cũ vẫn giữ dòng quà (product_gift_id về NULL) — bỏ quà không viết lại lịch sử.
         $productGift->delete();
 
         return redirect()->route('admin.product-gifts.edit', $product)->with('success', 'Đã bỏ quà khỏi sản phẩm.');
     }
 
-    /**
-     * Luật của một món quà — dùng chung cho thêm và sửa, một bộ kiểm tra.
-     *
-     * @return array{product_variant_id: ?int, per_quantity: int, gift_quantity: int, max_quantity: ?int, khi_thieu_kho: string, tra_hang: string, cho_doi_hang: bool}
-     */
     private function luat(Request $request, Product $product): array
     {
         $data = $request->validate([
-            // Quy cách KÍCH HOẠT phải thuộc chính sản phẩm đang cấu hình.
             'trigger_variant_id' => ['nullable', 'integer', Rule::exists('product_variants', 'id')->where('product_id', $product->id)],
             'per_quantity' => ['required', 'integer', 'min:1', 'max:100'],
             'gift_quantity' => ['required', 'integer', 'min:1', 'max:100'],
@@ -228,12 +204,10 @@ class ProductGiftController extends Controller
             ->first();
     }
 
-    /** Quà là một sản phẩm đang có: dùng lại vật phẩm trỏ sản phẩm / quy cách đó nếu đã có. */
     private function vatPhamTuSanPham(int $productId, mixed $variantId, mixed $giaTri): GiftItem
     {
         $variantId = $variantId === null || $variantId === '' ? null : (int) $variantId;
 
-        // Quy cách của MÓN QUÀ phải thuộc đúng sản phẩm quà — chặn "sản phẩm A, quy cách của B".
         if ($variantId !== null && ! ProductVariant::whereKey($variantId)->where('product_id', $productId)->exists()) {
             throw ValidationException::withMessages(['gift_variant_id' => 'Quy cách không thuộc sản phẩm đã chọn làm quà.']);
         }

@@ -14,13 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Phiếu kiểm kê kho.
- * ============================================================
- * Chỗ dễ sai nhất — và sai mà không ai thấy — là LÚC GHI SỔ: gán số đếm được
- * thay vì cộng chênh lệch thì mọi món bán ra giữa lúc đếm và lúc ghi sổ được
- * "trả lại" vào kho. Phần lớn bài ở đây canh chuyện đó.
- */
+/** Phiếu kiểm kê kho. */
 class StockCountTest extends TestCase
 {
     use RefreshDatabase;
@@ -87,11 +81,6 @@ class StockCountTest extends TestCase
     #[Test]
     public function ghi_so_CONG_CHENH_LECH_khong_gan_so_dem(): void
     {
-        /*
-         * Đếm lúc hệ thống ghi 10, thấy 7 (mất 3). Trước khi ghi sổ, bán thêm
-         * 1 → hệ thống còn 9. Gán số đếm: 7 — trả lại món vừa bán. Cộng chênh
-         * lệch: 9 + (7 − 10) = 6 — đúng.
-         */
         $sp = $this->sp(10);
         $this->lap([$sp->id . ':' => ['counted' => 7, 'reason' => '3 chậu vỡ']]);
 
@@ -107,10 +96,6 @@ class StockCountTest extends TestCase
     #[Test]
     public function ton_se_am_thi_tu_choi_va_KHONG_doi_dong_nao(): void
     {
-        /*
-         * Hai dòng trong một phiếu; dòng thứ hai sẽ âm. Cả phiếu một
-         * transaction: dòng đầu cũng không được đổi, phiếu vẫn là nháp.
-         */
         $tot = $this->sp(10);
         $am = $this->sp(3);
 
@@ -119,7 +104,7 @@ class StockCountTest extends TestCase
             $am->id . ':' => ['counted' => 0],
         ]);
 
-        $am->update(['stock_quantity' => 1]); // đã bán 2 sau lúc đếm
+        $am->update(['stock_quantity' => 1]);
 
         $this->ghiSo(StockCount::first())->assertSessionHas('error');
 

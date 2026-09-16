@@ -8,16 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 use PHPUnit\Framework\Attributes\Test;
 
-/**
- * "Mua ngay" — mua thẳng một món, không đụng vào giỏ.
- * ============================================================
- * LỖI ĐÃ XẢY RA THẬT: trang giỏ hàng hiện 105.000₫ còn trang thanh toán
- * hiện 520.000₫, vì một phiên "mua ngay" cũ còn treo trong session và
- * hai trang đọc hai nguồn khác nhau.
- *
- * Hai con số tiền khác nhau cho cùng một lần mua là loại lỗi phá vỡ lòng
- * tin nhanh nhất, nên nó được canh riêng ở đây.
- */
+/** "Mua ngay" — mua thẳng một món, không đụng vào giỏ. */
 class BuyNowTest extends CheckoutTestCase
 {
     #[Test]
@@ -51,9 +42,6 @@ class BuyNowTest extends CheckoutTestCase
     #[Test]
     public function mo_lai_trang_gio_hang_thi_phien_mua_ngay_bi_go(): void
     {
-        // ĐÂY LÀ LỖI 105.000 vs 520.000. Khách bấm "Mua ngay" rồi đổi ý,
-        // quay về giỏ — nếu phiên mua ngay còn treo thì trang giỏ tính
-        // một đằng, trang thanh toán tính một nẻo.
         $user = User::factory()->create();
         $this->actingAs($user);
 
@@ -64,9 +52,6 @@ class BuyNowTest extends CheckoutTestCase
         $this->post('/mua-ngay', ['product_id' => $muaNgay->id, 'quantity' => 1]);
         $this->assertTrue(session()->has('checkout.direct'));
 
-        // Trang giỏ chuyển hướng về chính nó kèm lời nhắn — huỷ im lặng
-        // thì khách quay lại trang thanh toán, thấy món vừa bấm mua biến
-        // mất và không hiểu vì sao.
         $this->get('/gio-hang')
             ->assertRedirect('/gio-hang')
             ->assertSessionHas('info');

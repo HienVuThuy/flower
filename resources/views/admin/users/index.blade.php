@@ -59,12 +59,6 @@
                     <td class="fw-semibold">
                         <a data-admin-link href="{{ route('admin.users.show', $user) }}">{{ $user->name }}</a>
 
-                        {{--
-                            NGƯỜI ĐANG ĐĂNG NHẬP phải nhận ra ngay dòng
-                            của chính mình: hai nút bên phải đều bị chặn
-                            với dòng này, và không có dấu gì thì họ bấm,
-                            nhận lỗi, rồi tưởng chức năng hỏng.
-                        --}}
                         @if($user->is(auth()->user()))
                             <span class="badge text-bg-light ms-1">Bạn</span>
                         @endif
@@ -72,15 +66,6 @@
                     <td>
                         {{ $user->email }}
 
-                        {{--
-                            ĐÁNH DẤU TÀI KHOẢN CHƯA XÁC THỰC.
-
-                            Chưa xác thực thì không vào được ví voucher,
-                            sổ địa chỉ và lịch sử đơn. Khi khách gọi kêu
-                            "không vào được mục của tôi" thì đây là chỗ
-                            nhìn đầu tiên — không có dấu này thì admin
-                            phải mở cơ sở dữ liệu mới biết.
-                        --}}
                         @unless($user->hasVerifiedEmail())
                             <span class="badge text-bg-warning ms-1">Chưa xác thực</span>
                         @endunless
@@ -93,15 +78,6 @@
                         @endif
 
                         @if($user->isLocked())
-                            {{--
-                                LÝ DO ĐẶT NGAY TRONG title.
-
-                                Danh sách không đủ chỗ cho cả câu, nhưng
-                                "vì sao tài khoản này bị khoá" là câu
-                                hỏi đi liền với việc nhìn thấy nó bị
-                                khoá. Bắt mở một trang khác để đọc một
-                                dòng chữ là một bước thừa.
-                            --}}
                             <span class="badge text-bg-danger ms-1"
                                   @if($user->lock_reason) title="{{ $user->lock_reason }}" @endif>
                                 Đã khoá
@@ -109,13 +85,6 @@
                         @endif
                     </td>
 
-                    {{--
-                        CHỈ ĐẾM ĐƠN ĐÃ HOÀN THÀNH.
-
-                        Đơn đang chờ hoặc đã huỷ không phải tiền cửa hàng
-                        đã nhận. Gộp vào là con số nói dối, và nói dối
-                        đúng ở chỗ dùng để đánh giá khách quen.
-                    --}}
                     <td class="text-end">{{ $user->completed_orders_count }}</td>
                     <td class="text-end">
                         @if($user->spent_total)
@@ -130,45 +99,18 @@
                     <td class="text-end">
                         @if($user->is(auth()->user()))
 
-                            {{--
-                                Không hiện nút cho chính mình.
-
-                                Controller đã chặn cả hai thao tác này
-                                (xem updateRole/updateLock), nhưng hiện
-                                một cái nút chắc chắn báo lỗi là mời
-                                người ta bấm vào chỗ không dùng được.
-                                Chặn ở máy chủ là để an toàn; không hiện
-                                nút là để không lừa người dùng.
-                            --}}
                             <span class="text-muted small">—</span>
 
                         @else
 
                             <div class="d-inline-flex gap-2 align-items-center">
 
-                                {{--
-                                    ĐỔI VAI TRÒ — gửi ngay khi chọn nếu
-                                    có JavaScript, còn không thì bấm nút
-                                    "Lưu" bên cạnh. Vẫn là một biểu mẫu
-                                    POST bình thường.
-                                --}}
                                 <form method="POST"
                                       action="{{ route('admin.users.role', $user) }}"
                                       class="d-inline-flex gap-1">
                                     @csrf
                                     @method('PATCH')
 
-                                    {{--
-                                        NÓI RÕ MỖI VAI TRÒ ĐƯỢC GÌ, ngay
-                                        tại chỗ chọn.
-
-                                        Người bấm ở đây đang trao quyền
-                                        cho một người thật. Một danh sách
-                                        chỉ có ba cái tên bắt họ phải đoán
-                                        — và đoán sai thì hoặc nhân viên
-                                        không làm được việc, hoặc nhìn
-                                        thấy lãi gộp của cửa hàng.
-                                    --}}
                                     <select name="role" class="form-select form-select-sm w-auto"
                                             aria-label="Vai trò của {{ $user->name }}">
                                         @foreach($roles as $role)
@@ -185,14 +127,6 @@
                                     </button>
                                 </form>
 
-                                {{--
-                                    KHOÁ / MỞ KHOÁ.
-
-                                    Khoá thì hỏi lý do — dòng đó hiện
-                                    cho chính người bị khoá đọc ở màn
-                                    hình đăng nhập. Mở khoá thì không
-                                    hỏi gì, chỉ cần một nút.
-                                --}}
                                 <form method="POST"
                                       action="{{ route('admin.users.lock', $user) }}"
                                       @unless($user->isLocked())
@@ -237,18 +171,6 @@
 
 </div>
 
-{{--
-    ============================================================
-    BẢNG QUYỀN — ai thấy được gì
-    ============================================================
-    Trang này là nơi trao quyền cho người thật. Không bày bảng ra thì
-    người bấm phải nhớ hoặc phải đoán, và đoán sai theo hướng nào cũng
-    hỏng: hoặc nhân viên không làm được việc, hoặc họ nhìn thấy giá vốn
-    và lãi gộp của cửa hàng.
-
-    Bảng này đọc thẳng từ UserRole::quyen() — cùng nguồn với middleware
-    khoá đường dẫn. Nó không thể nói sai so với thứ hệ thống thật sự làm.
---}}
 <div class="admin-panel p-4 mt-4">
 
     <h2 class="h5 fw-bold mb-1">Mỗi vai trò vào được khu nào</h2>
@@ -278,8 +200,6 @@
                         @foreach(\App\Enums\UserRole::nhanSu() as $vt)
                             @php $co = in_array($q, $vt->quyen(), true); @endphp
                             <td class="text-center">
-                                {{-- Chữ chứ không phải chỉ một dấu tích: trình đọc
-                                     màn hình phải đọc ra được câu trả lời. --}}
                                 <span class="{{ $co ? 'text-success' : 'text-muted' }}">
                                     {{ $co ? 'Có' : 'Không' }}
                                 </span>
@@ -297,20 +217,6 @@
 
 @push('scripts')
 <script>
-/*
- * HỎI LÝ DO KHOÁ.
- *
- * prompt() chứ không phải một hộp thoại tự dựng: đây là một ô nhập duy
- * nhất, và dựng modal riêng cho nó là thêm chừng năm mươi dòng HTML/CSS
- * để làm lại một thứ trình duyệt đã có sẵn.
- *
- * KHÔNG CÓ JAVASCRIPT VẪN KHOÁ ĐƯỢC: biểu mẫu gửi đi với ly_do rỗng, và
- * máy chủ nhận vì trường đó nullable. Khi ấy người bị khoá thấy câu mặc
- * định "vui lòng liên hệ cửa hàng" — kém cụ thể hơn, nhưng không hỏng.
- *
- * Bấm Huỷ (prompt trả về null) thì KHÔNG gửi gì cả. Coi đó là "khoá mà
- * không nêu lý do" là hiểu sai ý người dùng theo hướng nguy hiểm nhất.
- */
 function promptLockReason(form) {
     const lyDo = window.prompt(
         'Lý do khoá tài khoản này? (người dùng sẽ đọc được dòng này khi đăng nhập)'

@@ -14,21 +14,7 @@ use App\Services\Shop\Money;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
-/**
- * Dữ liệu cửa hàng đưa cho AI để trả lời MỘT câu hỏi.
- * ============================================================
- * ĐỌC TỪ ĐÚNG NHỮNG CHỖ TRANG WEB ĐANG ĐỌC — không tính giá hay tồn kho lại:
- *   - sản phẩm: ProductSearch (cùng bộ tìm của ô tìm kiếm);
- *   - giá: Product::price() — đã gồm khuyến mại, cùng PricingService;
- *   - tồn kho, quy cách, hướng dẫn chăm sóc của chính sản phẩm;
- *   - quà kèm: GiftResolver; khuyến mại đang chạy: ActivePromotionProvider;
- *     mã giảm giá công khai: CouponWallet; cây dễ chăm: PlantAdvisor.
- * Hai nơi hai cách tính thì AI nói một giá, trang sản phẩm nói giá khác.
- *
- * DỮ LIỆU CÁ NHÂN CHỈ CỦA CHÍNH NGƯỜI ĐANG HỎI, và chỉ phần cần để tư vấn:
- * tên sản phẩm yêu thích, mã và trạng thái vài đơn gần nhất. KHÔNG địa chỉ,
- * số điện thoại, email. Khách vãng lai: không có gì cá nhân.
- */
+/** Dữ liệu cửa hàng đưa cho AI để trả lời MỘT câu hỏi. */
 class AdvisorContext
 {
     public function __construct(
@@ -74,7 +60,6 @@ class AdvisorContext
         return implode("\n\n", $phan);
     }
 
-    /** @return Collection<int, Product> */
     private function timSanPham(string $cauHoi): Collection
     {
         $terms = $this->search->terms($cauHoi);
@@ -94,7 +79,6 @@ class AdvisorContext
         $this->search->orderByRelevance($q, $terms);
         $ket = $q->limit($toiDa)->get();
 
-        // Nới lỏng như ô tìm kiếm: câu hỏi tự nhiên hiếm khi khớp đủ mọi từ.
         if ($ket->isEmpty() && $terms->hasMultipleTokens()) {
             $q = $truyVan();
             $this->search->filter($q, $terms, matchAll: false);

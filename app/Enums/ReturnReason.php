@@ -2,16 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Vì sao phải trả hàng lại cho nhà cung cấp.
- * ============================================================
- * KHÔNG PHẢI Ô GHI CHÚ TỰ DO, vì đây chính là số liệu để so sánh nhà
- * cung cấp ở phần phân tích thu mua: cùng một giá, nơi hay giao hàng dập
- * và nơi hiếm khi bị trả không phải hai lựa chọn ngang nhau.
- *
- * Để người lập phiếu tự gõ thì mỗi lần một cách diễn đạt, và không gom
- * nhóm được — đúng lỗi mà bảng nhà cung cấp sinh ra để dẹp.
- */
+/** Vì sao phải trả hàng lại cho nhà cung cấp. */
 enum ReturnReason: string
 {
     case HangHong = 'hang_hong';
@@ -31,7 +22,6 @@ enum ReturnReason: string
         };
     }
 
-    /** Lỗi thuộc về nhà cung cấp — dùng khi chấm điểm nguồn hàng. */
     public function loiNhaCungCap(): bool
     {
         return $this !== self::Khac;

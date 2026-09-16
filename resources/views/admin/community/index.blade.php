@@ -29,10 +29,6 @@
 
 @if($loc === 'bao-cao')
 
-    {{--
-        HÀNG CHỜ BÁO CÁO — mỗi NỘI DUNG một thẻ, không phải mỗi lượt báo một
-        dòng: mười người báo cùng một bài là một việc phải xử, không phải mười.
-    --}}
     @if($hangBaoCao->isEmpty())
         <div class="admin-panel p-4">
             <x-site.empty-state title="Không có báo cáo nào" text="Khách chưa báo nội dung nào, hoặc đã xử lý hết." />
@@ -123,7 +119,6 @@
 
 @elseif($loc === 'binh-luan')
 
-    {{-- Bình luận hiện ngay nên xử lý sau: mới nhất trước, ẩn / bỏ ẩn một chạm. --}}
     <div class="admin-panel">
         <div class="table-responsive">
             <table class="table align-middle mb-0">
@@ -239,7 +234,6 @@
 
                         <div class="d-flex flex-wrap gap-2 align-items-start">
                             @if(! $post->isApproved())
-                                {{-- Hai nút một biểu mẫu: người duyệt vừa đọc bài, nên cũng là người chấm "nổi bật". --}}
                                 <form method="POST" action="{{ route('admin.community.approve', $post) }}" class="d-flex gap-2">
                                     @csrf
                                     @method('PATCH')
@@ -264,7 +258,6 @@
                             @endif
 
                             @if(! $post->isRejected())
-                                {{-- LÝ DO BẮT BUỘC: từ chối im lặng thì khách đăng lại y hệt. --}}
                                 <form method="POST" action="{{ route('admin.community.reject', $post) }}" class="d-flex gap-2">
                                     @csrf
                                     @method('PATCH')

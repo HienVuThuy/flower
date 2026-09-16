@@ -2,26 +2,7 @@
 
 return [
 
-    /*
-     * ============================================================
-     * THEME REGISTRY
-     * ============================================================
-     * Mỗi theme khai báo đủ 3 lớp ở một chỗ duy nhất:
-     *
-     *   1. tokens      — màu sắc (file CSS trong resources/css/themes/)
-     *   2. decoration  — artwork tĩnh (file CSS trong resources/css/seasonal/)
-     *   3. effect      — chuyển động (module JS, nạp động khi cần)
-     *
-     * Nhờ registry này, KHÔNG nơi nào trong code được phép viết
-     * `@if ($theme === 'noel')`. Muốn thêm theme mới (8/3, 20/10...)
-     * chỉ cần thêm một mục vào mảng `themes` và tạo 2 file CSS —
-     * không phải sửa Blade hay controller.
-     *
-     * `effect` = null nghĩa là theme không có chuyển động (mặc định).
-     *
-     * `swatch` dùng cho ô xem trước ở trang Cài đặt admin — để
-     * không phải hard-code màu trong Blade/JS nữa.
-     */
+    /* THEME REGISTRY */
 
     'active' => env('THEME_ACTIVE', 'default'),
 

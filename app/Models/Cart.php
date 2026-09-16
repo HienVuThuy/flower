@@ -20,7 +20,6 @@ class Cart extends Model
         return $this->hasMany(CartItem::class)->orderBy('id');
     }
 
-    /** Tổng số món — dùng cho con số nhỏ trên icon giỏ hàng ở header. */
     public function totalQuantity(): int
     {
         return (int) $this->items->sum('quantity');

@@ -38,20 +38,6 @@
             <x-form-error name="email" bag="profile" />
         </div>
 
-        {{--
-            NÓI ĐIỀU KIỆN MỘT LẦN CHO CẢ HAI Ô.
-
-            Hai ô dưới đây (nhập lại email, mật khẩu hiện tại) cùng phục
-            vụ đúng một việc: đổi email. Trước đây mỗi nhãn tự mang theo
-            "(chỉ cần khi đổi email)", nên cùng một câu hiện hai lần cách
-            nhau vài dòng — đọc lần thứ hai không hiểu là điều kiện khác
-            hay chính điều kiện vừa đọc.
-
-            Cả hai vẫn LUÔN HIỆN chứ không ẩn/hiện theo JavaScript: khách
-            biết trước sẽ phải nhập gì, thay vì bấm Lưu rồi mới bị chặn.
-            Việc có BẮT BUỘC hay không do máy chủ quyết định
-            (ProfileRequest), không do giao diện.
-        --}}
         <p class="form-text mt-0 mb-2">
             Hai ô dưới chỉ cần điền <strong>khi bạn đổi email</strong>.
         </p>
@@ -73,7 +59,6 @@
             </div>
         </div>
 
-        {{-- Điều kiện đã nói ở dòng ghi chú phía trên hai ô này. --}}
         <div class="mb-3">
             <label for="current_password" class="form-label">
                 Mật khẩu hiện tại
@@ -86,13 +71,6 @@
                 :required="false"
                 bag="profile"
             />
-            {{--
-                Thiếu dòng này thì nhập sai mật khẩu là
-                biểu mẫu quay về y nguyên, KHÔNG một chữ
-                giải thích — người dùng bấm Lưu mãi mà
-                không hiểu vì sao không có gì xảy ra.
-                x-form.password-input không tự in lỗi.
-            --}}
             <x-form-error name="current_password" bag="profile" />
         </div>
 

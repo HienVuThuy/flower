@@ -1,15 +1,5 @@
-/*
- * TYPOGRAPHY — hierarchy rõ ràng: Display / H1-H4 / Body / Caption /
- * Label / Price / Metadata. Mọi heading trong site dùng các class
- * này thay vì className tùy tiện theo từng trang.
- */
+/* TYPOGRAPHY — hierarchy rõ ràng: Display / H1-H4 / Body / Caption / Label / Price / Metadata. */
 
-/*
- * Màu nền trang đặt ở <html> chứ KHÔNG ở <body>.
- * Lý do: theme mùa vụ vẽ ảnh nền bằng body::before với z-index:-1.
- * Nếu body còn màu nền riêng thì lớp đó nằm sau nền body và không bao
- * giờ nhìn thấy. Nền của <html> vẫn phủ kín trang như cũ.
- */
 html {
     background: var(--surface-page);
 }

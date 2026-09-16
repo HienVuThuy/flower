@@ -2,22 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Tình trạng cây tại một thời điểm ghi nhật ký.
- * ============================================================
- * NĂM MỨC, KHÔNG PHẢI BA. Ba mức (tốt / bình thường / yếu) nghe gọn
- * nhưng dồn hai chuyện rất khác nhau vào cùng một ô "yếu": cây đang
- * xuống dần và cây sắp chết. Người ghi nhật ký cần phân biệt hai cái đó
- * — chúng dẫn tới hai cách xử lý khác hẳn.
- *
- * Mức "Đang hồi" cũng cần riêng: nó là "yếu nhưng đang tốt lên", và đó
- * là thông tin quan trọng nhất khi nhìn lại xem cách chăm vừa đổi có ăn
- * thua không.
- *
- * TẤT CẢ ĐỀU KHÔNG BẮT BUỘC. Một trang nhật ký chỉ ghi "hôm nay thay
- * chậu" thì không cần đánh giá tình trạng, và ép chọn là ép người ta bịa
- * ra một nhận định họ chưa có.
- */
+/** Tình trạng cây tại một thời điểm ghi nhật ký. */
 enum PlantCondition: string
 {
     case Thriving = 'thriving';
@@ -37,7 +22,6 @@ enum PlantCondition: string
         };
     }
 
-    /** Dấu hiệu nhận biết — để người ghi tự đối chiếu thay vì đoán. */
     public function hint(): string
     {
         return match ($this) {
@@ -49,7 +33,6 @@ enum PlantCondition: string
         };
     }
 
-    /** Màu huy hiệu — dùng lại thang màu trạng thái sẵn có của dự án. */
     public function badge(): string
     {
         return match ($this) {
@@ -61,7 +44,6 @@ enum PlantCondition: string
         };
     }
 
-    /** @return array<string, string> value => label */
     public static function options(): array
     {
         $out = [];

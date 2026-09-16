@@ -11,20 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Phân loại cây: cây phân loại sinh học + nhãn sinh thái.
- * ============================================================
- * HAI CÁCH PHÂN LOẠI, HAI CƠ CHẾ LƯU KHÁC NHAU, và bài này giữ cho cả
- * hai đúng:
- *
- *   - Nhãn sinh thái (môi trường, dạng sống, dáng, màu) là nhãn PHẲNG,
- *     nằm trong `product_traits` — nhiều nhãn một sản phẩm.
- *   - Phân loại sinh học là một CÂY có thứ bậc, nằm ở `plant_taxa`.
- *
- * Điều dễ hỏng nhất và cũng quan trọng nhất: chọn một bậc RỘNG phải ra
- * NHIỀU hàng hơn, không phải ít hơn. Sản phẩm gắn ở bậc Loài, còn khách
- * thì bấm vào bậc Họ.
- */
+/** Phân loại cây: cây phân loại sinh học + nhãn sinh thái. */
 class PlantClassificationTest extends TestCase
 {
     use RefreshDatabase;
@@ -43,7 +30,6 @@ class PlantClassificationTest extends TestCase
         return $p->refresh();
     }
 
-    /** Một nhánh Họ → Chi → Loài. */
     private function nhanh(): array
     {
         $ho = PlantTaxon::create([
@@ -67,14 +53,6 @@ class PlantClassificationTest extends TestCase
     #[Test]
     public function chon_bac_rong_phai_ra_ca_hang_gan_o_bac_hep_hon(): void
     {
-        /*
-         * ĐIỀU QUAN TRỌNG NHẤT TỆP NÀY.
-         *
-         * Sản phẩm gắn ở bậc Loài. Khách bấm vào "Họ Ráy" và phải thấy
-         * nó. Nếu chỉ khớp đúng nút được chọn thì bậc càng cao càng ít
-         * kết quả — ngược hẳn với thứ người dùng mong đợi, và trang Họ
-         * sẽ luôn trống.
-         */
         [$ho, $chi, $loai] = $this->nhanh();
 
         $this->sanPham('Monstera chậu gốm', $loai);
@@ -101,12 +79,6 @@ class PlantClassificationTest extends TestCase
     #[Test]
     public function ten_khong_chua_san_chu_bac_de_khong_lap_khi_hien_canh_cot_bac(): void
     {
-        /*
-         * LỖI ĐÃ SỬA. Bản đầu lưu thẳng "Họ Ráy" vào cột `name`. Ở chỗ
-         * tên đứng một mình thì đọc đúng, nhưng đường dẫn phân loại ở
-         * trang sản phẩm có cột bậc riêng bên cạnh — và nó thành
-         * "Họ | Họ Ráy", bảy dòng bảy lần lặp.
-         */
         [$ho] = $this->nhanh();
 
         $this->assertSame('Ráy', $ho->name);
@@ -118,14 +90,8 @@ class PlantClassificationTest extends TestCase
     #[Test]
     public function vong_lap_trong_cay_phan_loai_khong_lam_treo_trang(): void
     {
-        /*
-         * `parent_id` là một cột bình thường và một lần sửa tay có thể
-         * tạo ra A→B→A. Không chặn thì trang sản phẩm quay vòng cho tới
-         * khi hết bộ nhớ, và nguyên nhân nằm ở một hàng trong bảng khác.
-         */
         [$ho, $chi, $loai] = $this->nhanh();
 
-        // Tạo vòng: Họ trỏ ngược xuống Loài.
         $ho->parent_id = $loai->id;
         $ho->save();
 
@@ -154,12 +120,6 @@ class PlantClassificationTest extends TestCase
     #[Test]
     public function nhieu_tieu_chi_thi_cong_don_chu_khong_gop_lai(): void
     {
-        /*
-         * Chọn "màu trắng" VÀ "cây thân thảo" phải ra cây thân thảo hoa
-         * trắng — không phải hợp của hai danh sách. Đó là cách mọi bộ lọc
-         * thương mại điện tử hoạt động, và trả về hợp thì bộ lọc càng
-         * chọn nhiều càng ra nhiều kết quả, tức là vô dụng.
-         */
         $dung = $this->sanPham('Cúc trắng thân thảo');
         $dung->syncTraits(TraitType::GrowthForm, ['herb']);
         $dung->syncTraits(TraitType::Color, ['white']);
@@ -182,8 +142,6 @@ class PlantClassificationTest extends TestCase
     #[Test]
     public function gia_tri_la_tren_url_bi_bo_qua_chu_khong_lam_hong_trang(): void
     {
-        // Người ta chép link cho nhau, và một tham số hỏng không đáng để
-        // cả trang biến mất.
         $p = $this->sanPham('Cây thử');
         $p->syncTraits(TraitType::Color, ['green']);
 
@@ -195,12 +153,6 @@ class PlantClassificationTest extends TestCase
     #[Test]
     public function bo_loc_chi_bay_ra_nhung_gia_tri_thuc_su_co_hang(): void
     {
-        /*
-         * Dựng bộ lọc thẳng từ enum thì nó liệt kê đủ mười dạng sống, kể
-         * cả những thứ cửa hàng chưa từng bán — và khách bấm vào nhận
-         * màn hình trống. Một lựa chọn dẫn tới ngõ cụt là một lựa chọn
-         * không nên hiện ra.
-         */
         $p = $this->sanPham('Cây thân leo duy nhất');
         $p->syncTraits(TraitType::GrowthForm, ['vine']);
 
@@ -208,7 +160,6 @@ class PlantClassificationTest extends TestCase
 
         $res->assertOk();
         $res->assertSee('Cây thân leo');
-        // "Họ cau dừa" có trong enum nhưng cửa hàng không bán con nào.
         $res->assertDontSee('Họ cau dừa');
     }
 
@@ -230,7 +181,6 @@ class PlantClassificationTest extends TestCase
     #[Test]
     public function nhanh_khong_co_hang_van_mo_duoc_va_noi_ro_la_trong(): void
     {
-        // Trang phải chịu được câu trả lời "không có gì", không phải lỗi.
         $this->nhanh();
 
         $this->get('/loai-cay/ho-ray')
@@ -241,12 +191,6 @@ class PlantClassificationTest extends TestCase
     #[Test]
     public function san_pham_khong_co_phan_loai_van_mo_duoc_binh_thuong(): void
     {
-        /*
-         * Bó hoa cưới phối nhiều loài thì KHÔNG có phân loại sinh học,
-         * và đó là sự thật chứ không phải dữ liệu thiếu. Khối "Phân loại
-         * & đặc điểm" phải tự ẩn thay vì hiện một bảng rỗng — hoặc tệ
-         * hơn, đổ lỗi null.
-         */
         $p = $this->sanPham('Hoa cầm tay cô dâu');
 
         $this->get('/san-pham/' . $p->slug)

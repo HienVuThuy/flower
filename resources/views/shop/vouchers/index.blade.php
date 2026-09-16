@@ -19,7 +19,6 @@
             </div>
         </div>
 
-        {{-- ============ VÍ CỦA TÔI ============ --}}
         @auth
             <h2 class="text-h4 mb-3">Ví của tôi</h2>
 
@@ -40,31 +39,6 @@
                 </div>
             @endif
 
-            {{--
-                MÃ ĐÃ ẨN — cửa quay lại cho nút "Ẩn khỏi ví".
-                ============================================================
-                CHỈ HIỆN KHI THẬT SỰ CÓ MÃ BỊ ẨN.
-
-                Bày một mục "đã ẩn (0)" cho mọi người là thêm một thứ để
-                đọc mà không thêm thông tin nào — và với người chưa bao giờ
-                ẩn mã nào, nó còn gợi ý một tính năng họ không dùng.
-
-                Nhưng khi ĐÃ có mã bị ẩn thì phải hiện: một nút chỉ đi một
-                chiều là cái bẫy. Bấm nhầm rồi thì mã biến mất và khách
-                không biết nó đi đâu.
-            --}}
-            {{--
-                MÃ HẾT HIỆU LỰC — ĐÃ RỜI KHỎI VÍ Ở TRÊN.
-
-                Không hiện thẻ nào, chỉ một dòng đếm. Mã hết hạn hay hết
-                lượt nằm lẫn trong ví thì mã còn dùng được bị chìm giữa
-                chúng — đúng thứ ví voucher sinh ra để khỏi phải lọc bằng
-                mắt.
-
-                VẪN XEM LẠI ĐƯỢC, vì "mã của tôi biến đâu mất" là câu hỏi
-                sẽ được hỏi. Hàng dữ liệu không bị xoá: nó là bằng chứng
-                chống dùng quá suất.
-            --}}
             @if($hetHieuLucCount > 0)
                 <div class="mb-5">
                     @if($xemHetHan)
@@ -129,7 +103,6 @@
             @endif
         @endauth
 
-        {{-- ============ ĐANG MỜI ============ --}}
         <h2 class="text-h4 mb-3">
             @auth Mã khác đang mở @else Mã đang mở @endauth
         </h2>
@@ -144,11 +117,6 @@
                     @endauth
                 </p>
                 <p class="mb-0">
-                    {{--
-                        KHÔNG hứa hẹn "hãy quay lại sau" một cách chung
-                        chung khi chưa biết có chương trình nào sắp chạy
-                        hay không. Chỉ nói đúng thứ khách làm được ngay.
-                    --}}
                     Mã in trên phiếu mua hàng hoặc gửi riêng cho bạn vẫn nhập tay
                     được ở bước thanh toán.
                 </p>

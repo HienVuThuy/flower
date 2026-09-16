@@ -21,14 +21,6 @@
             </p>
         </div>
 
-        {{--
-            Chỉ hiện khi hệ thống CHƯA gửi thư thật được (đang dùng mailer
-            ghi log). Không có dòng này thì người đang phát triển ngồi chờ
-            một thư không bao giờ đến mà không hiểu vì sao.
-
-            Khách thật không bao giờ thấy dòng này, vì máy chủ thật phải
-            cấu hình SMTP đúng mới gửi được.
-        --}}
         @unless($mailWorks)
             <div class="alert alert-warning" role="alert">
                 <strong>Máy chủ chưa cấu hình gửi thư.</strong>

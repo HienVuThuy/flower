@@ -5,22 +5,7 @@ namespace App\Services\Analytics;
 use App\Enums\UserEventType;
 use Illuminate\Support\Collection;
 
-/**
- * DANH SÁCH DUY NHẤT các phần có thể xuất ra tệp.
- * ============================================================
- * VÌ SAO MỘT NƠI: màn hình chọn phần và đoạn mã ghi tệp phải nói về
- * cùng một danh sách. Khai ở hai nơi thì sớm muộn ô đánh dấu có một
- * phần mà tệp không có, hoặc ngược lại — và không có gì báo, người dùng
- * chỉ nhận một tệp thiếu.
- *
- * Mỗi phần tự khai TÊN CỘT và cách lấy DÒNG. Nhờ vậy thêm một báo cáo
- * mới là thêm một mục ở đây, không phải sửa cả bộ xuất file lẫn giao
- * diện.
- *
- * ============================================================
- * MỌI CON SỐ ĐẾM TỪ CƠ SỞ DỮ LIỆU, đúng kỳ admin đang xem. Không ước
- * lượng, không làm tròn cho đẹp, không điền chỗ trống.
- */
+/** DANH SÁCH DUY NHẤT các phần có thể xuất ra tệp. */
 class ReportSections
 {
     public function __construct(
@@ -28,11 +13,6 @@ class ReportSections
     ) {
     }
 
-    /**
-     * Mọi phần, kèm nhãn và nhóm để giao diện xếp cho gọn.
-     *
-     * @return array<string, array{label: string, group: string, note: string}>
-     */
     public static function danhSach(): array
     {
         return [
@@ -163,17 +143,11 @@ class ReportSections
         ];
     }
 
-    /** Mã của mọi phần — dùng để kiểm tra dữ liệu gửi lên. */
     public static function maHopLe(): array
     {
         return array_keys(self::danhSach());
     }
 
-    /**
-     * Dựng một phần thành bảng: tiêu đề, tên cột, các dòng.
-     *
-     * @return array{label: string, columns: list<string>, rows: list<list<scalar|null>>}
-     */
     public function bang(string $ma): array
     {
         $nhan = self::danhSach()[$ma]['label'] ?? $ma;
@@ -203,8 +177,6 @@ class ReportSections
             'danh-gia-thap' => $this->danhGiaThap($nhan),
             'lai-gop' => $this->laiGop($nhan),
 
-            // Mã lạ không bao giờ tới được đây (controller đã lọc), nhưng
-            // trả về bảng rỗng vẫn hơn là ném lỗi giữa lúc ghi tệp.
             default => ['label' => $nhan, 'columns' => [], 'rows' => []],
         };
     }
@@ -223,11 +195,6 @@ class ReportSections
                 ['Doanh thu (đơn đã giao)', $o['revenue']],
                 ['Đã hoàn tiền cho đơn đã giao', $o['refunded']],
                 ['Doanh thu thuần', $o['net_revenue']],
-                /*
-                 * null nghĩa là MẪU SỐ BẰNG 0 — chưa có đơn đã giao nào.
-                 * Ghi 0 ở đây là nói "giá trị đơn trung bình bằng 0", một
-                 * câu khác hẳn và sai.
-                 */
                 ['Giá trị đơn trung bình', $o['average'] ?? 'chưa có đơn đã giao'],
             ],
         ];
@@ -317,13 +284,6 @@ class ReportSections
             ->map(fn ($m) => [$m['thang'], $m['don'], $m['thu'], $m['tra'], $m['chenh']])
             ->all();
 
-        /*
-         * DÒNG TỔNG, rồi DÒNG GHI CHÚ cho phần bị loại.
-         *
-         * Tệp xuất ra bị mở ở chỗ không có giao diện giải thích. Không
-         * ghi số vận đơn bị loại ngay trong tệp thì người đọc bảng tính
-         * tưởng tổng là của cả kỳ.
-         */
         $dong[] = ['Tổng', $tong['tinh_duoc'], $tong['thu'], $tong['tra'], $tong['chenh']];
         $dong[] = ['Không tính: người nhận trả cước', $tong['loai']['nguoi_nhan_tra'], null, null, null];
         $dong[] = ['Không tính: vận đơn đã huỷ', $tong['loai']['da_huy'], null, null, null];
@@ -377,8 +337,6 @@ class ReportSections
             'label' => $nhan,
             'columns' => ['Sản phẩm', 'Lượt xem'],
             'rows' => $this->analytics->topProducts(UserEventType::ProductView, 100)
-                // `product` là null khi sản phẩm đã xoá mà nhật ký còn —
-                // ghi rõ thay vì để ô trống không giải thích.
                 ->map(fn ($r) => [$r['product']?->name ?? '(sản phẩm đã xoá)', $r['total']])
                 ->all(),
         ];
@@ -416,19 +374,6 @@ class ReportSections
                 ->all(),
         ];
     }
-
-    /**
-     * Tồn kho — dùng chung một nguồn với trang Tồn kho.
-     *
-     * `cover` null nghĩa là CẢ KỲ KHÔNG BÁN ĐƯỢC CÁI NÀO (mẫu số bằng
-     * 0). Ghi chữ chứ không ghi số: một con số ở đó là bịa, còn ô trống
-     * thì người đọc tệp không biết vì sao trống.
-     */
-    /*
-     * CÁC PHẦN CỦA TRANG CON — lấy kỳ từ AnalyticsService::khoang(), cùng một
-     * khoảng với phần còn lại của tệp. Con số trong tệp phải đúng bằng con số
-     * trên trang admin vừa xem, nên gọi CHÍNH lớp tính mà trang đó gọi.
-     */
 
     private function dtDanhMuc(string $nhan): array
     {
@@ -546,7 +491,6 @@ class ReportSections
             ->map(fn ($d) => [$d['ten'], $d['so_luong'], $d['doanh_thu'], $d['gia_von'], $d['lai_gop'], $d['bien'] ?? ''])
             ->all();
 
-        // Dòng tổng, rồi phần KHÔNG tính được — tệp mở ra ở chỗ không có giao diện giải thích.
         $dong[] = ['Tổng phần có giá vốn', null, $l['doanh_thu_co_gia_von'], $l['gia_von'], $l['lai_gop'], $l['bien'] ?? ''];
         $dong[] = ['Không có giá vốn, KHÔNG tính vào lãi (' . $l['dong_khong_gia_von'] . ' dòng)', null, $l['doanh_thu_khong_gia_von'], null, null, null];
         $dong[] = ['Tỉ lệ doanh thu có giá vốn (%)', null, $l['ti_le_phu'] ?? '', null, null, null];
@@ -582,15 +526,6 @@ class ReportSections
         ];
     }
 
-    /**
-     * Dựng nhiều phần một lượt, giữ nguyên thứ tự đã khai.
-     *
-     * GIỮ THỨ TỰ CỦA DANH SÁCH, không theo thứ tự người dùng tích: tệp
-     * xuất ra phải luôn cùng một bố cục để so hai kỳ với nhau được.
-     *
-     * @param  list<string>  $ma
-     * @return Collection<int, array{label: string, columns: list<string>, rows: list}>
-     */
     public function nhieuBang(array $ma): Collection
     {
         return collect(self::maHopLe())

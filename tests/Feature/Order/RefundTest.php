@@ -31,16 +31,7 @@ use App\Services\Mail\MailTransport;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Hoàn tiền và hàng trả về.
- * ============================================================
- * ĐÂY LÀ TIỀN RA KHỎI CỬA HÀNG, nên cái sai đắt nhất là hoàn QUÁ hoặc
- * hoàn HAI LẦN. Phần lớn bài ở đây canh đúng hai chuyện đó, dưới mọi
- * đường vòng: hoàn nhiều lần, MoMo từ chối, MoMo im lặng, hai người xử lý
- * cùng một khoản đang chờ.
- *
- * Dùng Http::fake() cho MoMo, không gọi cổng thật.
- */
+/** Hoàn tiền và hàng trả về. */
 class RefundTest extends TestCase
 {
     use RefreshDatabase;
@@ -81,11 +72,6 @@ class RefundTest extends TestCase
         ]);
     }
 
-    /**
-     * Một đơn đã trả 300.000₫ gồm một dòng 3 × 100.000₫.
-     *
-     * forceFill vì `status` và `payment_status` cố ý nằm ngoài $fillable.
-     */
     private function don(OrderStatus $trangThai, PaymentStatus $thanhToan = PaymentStatus::Paid, ?Product $sp = null, string $cach = 'cod'): Order
     {
         $order = Order::create([
@@ -150,8 +136,6 @@ class RefundTest extends TestCase
         ], $them);
     }
 
-    /* ================= 1. HOÀN ĐÚNG SỐ ================= */
-
     #[Test]
     public function hoan_du_cho_don_huy_thi_don_thanh_da_hoan_tien(): void
     {
@@ -169,10 +153,6 @@ class RefundTest extends TestCase
     #[Test]
     public function hoan_mot_phan_thi_van_la_da_thanh_toan_va_van_nhac_phan_con_lai(): void
     {
-        /*
-         * "Đã hoàn tiền" cho đơn mới hoàn 100.000₫ trong 300.000₫ là xoá
-         * mất khoản cửa hàng còn nợ khách.
-         */
         $order = $this->don(OrderStatus::Cancelled);
 
         $this->svc()->hoan($order, $this->chuyenKhoan(100000));
@@ -231,7 +211,6 @@ class RefundTest extends TestCase
     #[Test]
     public function ly_do_phai_hop_trang_thai_don(): void
     {
-        // "Hàng hỏng" cho một đơn chưa từng giao là một câu vô nghĩa.
         $order = $this->don(OrderStatus::Cancelled);
 
         $this->expectException(RefundException::class);
@@ -251,13 +230,9 @@ class RefundTest extends TestCase
 
         $this->svc()->hoan($order, $this->chuyenKhoan(100000));
 
-        // Gỡ "đã thanh toán" khi đã trả lại khách 100.000₫ là một khoản chi
-        // không có khoản thu tương ứng.
         $this->expectException(OrderException::class);
         app(OrderService::class)->setPaymentStatus($order->fresh(), PaymentStatus::Unpaid);
     }
-
-    /* ================= 2. HÀNG TRẢ VỀ ================= */
 
     #[Test]
     public function hang_tra_ve_con_ban_duoc_thi_cong_kho_hang_hong_thi_khong(): void
@@ -272,7 +247,6 @@ class RefundTest extends TestCase
 
         $this->assertSame(11, $sp->fresh()->stock_quantity);
 
-        // Chậu vỡ khách gửi về: vẫn là hàng trả về, nhưng không bán lại được.
         $this->svc()->hoan($order->fresh(), $this->chuyenKhoan(100000, 'hang_hong', [
             'items' => [$dong->id => ['quantity' => 1, 'restock' => '0']],
         ]));
@@ -299,10 +273,6 @@ class RefundTest extends TestCase
     #[Test]
     public function dong_hang_cua_don_KHAC_bi_tu_choi(): void
     {
-        /*
-         * id dòng đơn đến từ biểu mẫu. Không tra trong chính đơn đang hoàn
-         * thì một id bịa trả được hàng của đơn người khác về kho.
-         */
         $sp = $this->sp(10);
         $cuaNguoiKhac = $this->don(OrderStatus::Completed, sp: $sp)->items->first();
         $order = $this->don(OrderStatus::Completed);
@@ -321,8 +291,6 @@ class RefundTest extends TestCase
     #[Test]
     public function don_huy_khong_nhan_hang_tra_ve(): void
     {
-        // Hàng của đơn huỷ chưa rời cửa hàng, và đã được cộng lại kho lúc
-        // huỷ. Cho nhận "trả về" nữa là cộng kho hai lần.
         $order = $this->don(OrderStatus::Cancelled);
 
         $this->expectException(RefundException::class);
@@ -339,8 +307,6 @@ class RefundTest extends TestCase
         $this->expectException(RefundException::class);
         $this->svc()->hoan($order, $this->chuyenKhoan(100000, 'tra_hang'));
     }
-
-    /* ================= 3. HOÀN QUA MOMO ================= */
 
     #[Test]
     public function hoan_qua_momo_ky_dung_va_dung_giao_dich_goc(): void
@@ -386,12 +352,6 @@ class RefundTest extends TestCase
     #[Test]
     public function momo_IM_LANG_thi_giu_cho_va_chan_hoan_lan_nua(): void
     {
-        /*
-         * BÀI QUAN TRỌNG NHẤT CỦA PHẦN MOMO.
-         *
-         * Mất kết nối không có nghĩa MoMo chưa hoàn. Coi là thất bại thì số
-         * tiền được nhả ra, admin bấm hoàn lại, và khách nhận tiền hai lần.
-         */
         Http::fake(fn () => throw new ConnectionException('hết thời gian chờ'));
 
         $order = $this->donMomo(OrderStatus::Cancelled);
@@ -440,8 +400,6 @@ class RefundTest extends TestCase
 
         $this->assertSame('300000.00', $order->fresh('refunds')->refundableAmount());
 
-        // Người thứ hai xác nhận "đã hoàn" sau khi người thứ nhất đã ghi
-        // thất bại: phải bị chặn, không được ghi đè.
         $this->expectException(RefundException::class);
         $this->svc()->xacNhanDaHoan($r, '123');
     }
@@ -456,8 +414,6 @@ class RefundTest extends TestCase
         $this->expectException(RefundException::class);
         $this->svc()->hoan($order, ['amount' => 300000, 'reason' => 'don_huy', 'method' => 'momo']);
     }
-
-    /* ================= 4. MÀN HÌNH ================= */
 
     #[Test]
     public function admin_ghi_hoan_tien_qua_bieu_mau_va_co_nhat_ky(): void
@@ -501,11 +457,6 @@ class RefundTest extends TestCase
     #[Test]
     public function KHONG_bay_nut_go_danh_dau_ma_bam_vao_chac_chan_loi(): void
     {
-        /*
-         * OrderService từ chối gỡ "đã thanh toán" cho đơn đã giao và cho đơn
-         * đã có khoản hoàn. Bày nút ra ở đó là một nút lúc nào bấm cũng báo
-         * lỗi — thứ giao diện không được có.
-         */
         $admin = $this->admin();
 
         $daGiao = $this->don(OrderStatus::Completed);
@@ -515,7 +466,6 @@ class RefundTest extends TestCase
         $this->svc()->hoan($daHoanMotPhan, $this->chuyenKhoan(100000));
         $this->actingAs($admin)->get(route('admin.orders.show', $daHoanMotPhan))->assertDontSee('Gỡ đánh dấu');
 
-        // Mặt còn lại: đơn đang xử lý, chưa hoàn gì, vẫn gỡ được khi bấm nhầm.
         $dangXuLy = $this->don(OrderStatus::Confirmed);
         $this->actingAs($admin)->get(route('admin.orders.show', $dangXuLy))->assertSee('Gỡ đánh dấu');
     }
@@ -540,15 +490,12 @@ class RefundTest extends TestCase
             ->assertDontSee($thatBai->code);
     }
 
-    /* ================= 5. DOANH THU VÀ HÀNG ĐỢI ================= */
-
     #[Test]
     public function doanh_thu_thuan_tru_hoan_tien_cua_don_da_giao_KHONG_tru_don_huy(): void
     {
         $daGiao = $this->don(OrderStatus::Completed);
         $this->svc()->hoan($daGiao, $this->chuyenKhoan(100000, 'hang_hong'));
 
-        // Tiền hoàn của đơn huỷ chưa bao giờ nằm trong doanh thu.
         $huy = $this->don(OrderStatus::Cancelled);
         $this->svc()->hoan($huy, $this->chuyenKhoan(300000));
 
@@ -590,8 +537,6 @@ class RefundTest extends TestCase
             ->assertDontSee($khac->order_number);
     }
 
-    /* ================= 6. THƯ BÁO KHÁCH ================= */
-
     private function coEmail(Order $order): Order
     {
         $order->forceFill(['recipient_email' => 'khach@vi-du.vn'])->save();
@@ -613,10 +558,6 @@ class RefundTest extends TestCase
     #[Test]
     public function momo_CHUA_RO_ket_qua_thi_KHONG_bao_khach_cho_toi_khi_xac_nhan(): void
     {
-        /*
-         * Báo "tiền đang về" cho một khoản chưa chắc đã đi là hứa một điều
-         * có thể không xảy ra. Thư chỉ đi khi người thật xác nhận đã hoàn.
-         */
         Mail::fake();
         Http::fake(fn () => throw new ConnectionException('hết thời gian chờ'));
 
@@ -657,18 +598,12 @@ class RefundTest extends TestCase
         $thu->assertDontSeeInHtml('ảnh mờ');
         $thu->assertSeeInHtml(Money::format('90000'));
         $thu->assertSeeInHtml($r->reference);
-        // Hoàn một phần: phải nói tổng đã hoàn trên số đã trả, không để
-        // khách tưởng đã nhận đủ.
         $thu->assertSeeInHtml('trên ' . Money::format('300000'));
     }
 
     #[Test]
     public function gui_thu_hong_KHONG_lam_hong_lan_hoan(): void
     {
-        /*
-         * Tiền đã đi, sổ đã ghi. Ném lỗi gửi thư ra ngoài thì admin thấy
-         * trang lỗi, tưởng chưa hoàn, và hoàn lần nữa.
-         */
         $this->mock(MailTransport::class, function ($m) {
             $m->shouldReceive('deliver')->andThrow(new \RuntimeException('máy chủ thư sập'));
             $m->shouldReceive('deliversForReal')->andReturn(true);

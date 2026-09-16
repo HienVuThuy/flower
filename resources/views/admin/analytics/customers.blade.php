@@ -13,7 +13,6 @@
     $tien = fn ($v) => \App\Services\Shop\Money::format((string) $v);
 @endphp
 
-{{-- ============ 1. KHÁCH MỚI / QUAY LẠI ============ --}}
 <h2 class="admin-section-title">1. Khách mới và khách quay lại</h2>
 
 <div class="row g-3 mb-3">
@@ -53,7 +52,6 @@
     </p>
 </div>
 
-{{-- ============ 2. GIỎ HÀNG BỎ DỞ ============ --}}
 <h2 class="admin-section-title">2. Giỏ hàng bỏ dở</h2>
 
 <div class="row g-3 mb-3">
@@ -68,7 +66,6 @@
         </x-admin.kpi>
     </div>
     <div class="col-12 col-lg-3">
-        {{-- Gọi đúng tên: đây là giá NẾU MUA BÂY GIỜ, không phải tiền đã mất. --}}
         <x-admin.kpi label="Giá trị nếu mua theo giá hôm nay" note="Giỏ không lưu giá lúc bỏ hàng vào.">
             {{ $tien($gioBoDo['tong_gia_tri']) }}
         </x-admin.kpi>
@@ -140,13 +137,6 @@
 </div>
 
 <div class="admin-panel p-3 mb-4">
-    {{--
-        NÓI GIỚI HẠN, và NÓI VÌ SAO KHÔNG CÓ NÚT "GỬI EMAIL NHẮC".
-
-        Hệ thống không có ô nào ghi khách đồng ý nhận thư tiếp thị. Gửi thư
-        nhắc mua hàng cho người chưa đồng ý là thư rác — và với địa chỉ của
-        khách, là dùng dữ liệu cá nhân cho một việc họ không cho phép.
-    --}}
     <p class="admin-page-subtitle small mb-0">
         Giỏ của khách có tài khoản không tính nếu họ đã đặt một đơn sau lần sửa giỏ cuối cùng — phần còn lại là món họ chọn không mua.
         Giỏ của khách vãng lai không loại được theo cách đó, vì đơn hàng không lưu phiên duyệt web.

@@ -23,26 +23,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Trả góp TRƯỚC KHI GIAO — nơi duy nhất ghi kế hoạch và từng kỳ.
- * ============================================================
- *   đặt đơn "Trả góp" ─► taoKeHoach()  (trong transaction tạo đơn; kho đã trừ)
- *        │
- *        ├─ khách trả một kỳ qua MoMo ─► MomoController ─► ghiNhanKy()
- *        ├─ khách trả tại cửa hàng ─────► thuTaiCuaHang() ─► ghiNhanKy()
- *        │        kỳ cuối xong ─► đơn "đã thanh toán" ─► xác nhận + bàn giao GHN
- *        │
- *        ├─ quá hạn một kỳ + ân hạn ─► voNo() ─► huỷ đơn (hoàn kho, trả mã, trả
- *        │                                     điểm), tiền đã trả thành khoản phải hoàn
- *        └─ đơn bị huỷ vì lý do khác ─► dongTheoDon()
- *
- * GIAO HÀNG BỊ CHẶN ở OrderService/GHNOrderService bằng Order::choDoiTraGop(),
- * không phải ở đây: chặn ở nơi đổi trạng thái thì mọi đường (admin, đồng bộ
- * GHN) đều bị chặn như nhau.
- */
+/** Trả góp TRƯỚC KHI GIAO — nơi duy nhất ghi kế hoạch và từng kỳ. */
 class InstallmentService
 {
-    /** Tên "cổng" cho tiền khách trả tại quầy, trong sổ payment_transactions. */
     public const TAI_CUA_HANG = 'tai_cua_hang';
 
     public function __construct(
@@ -51,13 +34,6 @@ class InstallmentService
     ) {
     }
 
-    /**
-     * Lịch dự kiến cho màn xác nhận — không ghi gì.
-     *
-     * @return array{xet: array<string, mixed>, lich: list<array{sequence: int, amount: string, due_on: string}>}
-     *
-     * @throws InstallmentException
-     */
     public function duKien(?User $user, string $tong, int $soKy): array
     {
         $xet = $this->policy->xet($user, $tong);
@@ -82,24 +58,12 @@ class InstallmentService
         ];
     }
 
-    /**
-     * Tạo kế hoạch cho đơn vừa ghi. PHẢI GỌI TRONG TRANSACTION TẠO ĐƠN: không
-     * được thì ném lỗi và cả đơn cuộn lại — không có đơn "trả góp" nào thiếu
-     * kế hoạch.
-     *
-     * @throws InstallmentException
-     */
     public function taoKeHoach(Order $order, ?User $user, int $soKy): InstallmentPlan
     {
         if ($user === null) {
             throw new InstallmentException('Đăng nhập để trả góp — cửa hàng xét trả góp theo lịch sử thanh toán của tài khoản.');
         }
 
-        /*
-         * KHOÁ DÒNG NGƯỜI DÙNG trước khi xét: hai tab cùng bấm đặt hàng trả
-         * góp thì cả hai cùng thấy "chưa có kế hoạch nào đang trả". Tab thứ
-         * hai phải đợi, và tới lượt nó thì kế hoạch của tab một đã có.
-         */
         User::whereKey($user->id)->lockForUpdate()->first();
 
         ['xet' => $xet, 'lich' => $lich] = $this->duKien($user, (string) $order->grand_total, $soKy);
@@ -124,15 +88,6 @@ class InstallmentService
         return $plan->load('payments');
     }
 
-    /**
-     * Ghi MỘT kỳ đã được trả. PHẢI GỌI TRONG TRANSACTION.
-     *
-     * Gọi mấy lần cũng ra một kết quả: kỳ đã trả thì 'already'.
-     *
-     * @return 'paid'|'completed'|'already'|'closed'
-     *   closed = tiền về cho kế hoạch đã đóng (vỡ / huỷ): kỳ vẫn ghi đã trả,
-     *   vì tiền đã về thật — và nó thành khoản cửa hàng phải hoàn.
-     */
     public function ghiNhanKy(int $kyId): string
     {
         $ky = InstallmentPayment::whereKey($kyId)->lockForUpdate()->firstOrFail();
@@ -154,21 +109,12 @@ class InstallmentService
 
         $plan->forceFill(['status' => InstallmentStatus::HoanTat, 'completed_at' => now()])->save();
 
-        // "Đã thanh toán" của đơn là HỆ QUẢ của kỳ cuối — OrderService chặn mọi đường đặt tay khác.
         $order = Order::whereKey($plan->order_id)->lockForUpdate()->firstOrFail();
         app(OrderService::class)->setPaymentStatus($order, PaymentStatus::Paid);
 
         return 'completed';
     }
 
-    /**
-     * Khách trả một kỳ TẠI CỬA HÀNG — nhân viên có quyền tài chính ghi.
-     *
-     * Ghi THEO THỨ TỰ: chỉ kỳ chưa trả sớm nhất. Ghi nhảy kỳ thì kỳ sớm
-     * hơn vẫn quá hạn và kế hoạch vỡ, dù khách đã đưa tiền.
-     *
-     * @throws InstallmentException
-     */
     public function thuTaiCuaHang(Order $order, int $kyId): string
     {
         $ky = null;
@@ -227,12 +173,6 @@ class InstallmentService
         return $ketQua;
     }
 
-    /**
-     * Mở lượt MoMo cho kỳ chưa trả sớm nhất.
-     *
-     * @throws InstallmentException
-     * @throws \App\Services\Payment\PaymentException
-     */
     public function moMomo(Order $order, ?MomoFlow $flow): string
     {
         $plan = InstallmentPlan::query()->where('order_id', $order->id)->with('payments')->first();
@@ -244,11 +184,6 @@ class InstallmentService
         return app(MomoGateway::class)->createPayment($order, $flow, $ky);
     }
 
-    /**
-     * Kế hoạch có kỳ quá hạn vượt ân hạn thì vỡ. Chạy mỗi ngày.
-     *
-     * @return int số kế hoạch vừa vỡ
-     */
     public function xuLyQuaHan(): int
     {
         $homNay = now(Gio::mui())->toDateString();
@@ -269,11 +204,6 @@ class InstallmentService
         return $dem;
     }
 
-    /**
-     * Kế hoạch vỡ: đánh dấu, rồi huỷ đơn qua đúng đường huỷ thường (hoàn kho,
-     * trả lượt mã, trả điểm, trả suất quà, báo khách). Tiền khách đã trả
-     * thành khoản cửa hàng phải hoàn — Order::daThu() và mục Hoàn tiền.
-     */
     public function voNo(InstallmentPlan $plan, InstallmentPayment $ky): bool
     {
         $doi = DB::transaction(function () use ($plan) {
@@ -304,7 +234,6 @@ class InstallmentService
             try {
                 app(OrderService::class)->changeStatus($order, OrderStatus::Cancelled, $lyDo, tuDong: true);
             } catch (OrderException $e) {
-                // Kế hoạch đã vỡ; đơn không tự huỷ được thì để người thật xử lý, không lặng lẽ bỏ qua.
                 Log::error('Kế hoạch trả góp vỡ nhưng không huỷ được đơn.', [
                     'order' => $order->order_number,
                     'ly_do' => $e->getMessage(),
@@ -317,10 +246,6 @@ class InstallmentService
         return true;
     }
 
-    /**
-     * Đơn bị huỷ (khách, cửa hàng) khi kế hoạch còn đang trả → kế hoạch đóng.
-     * Gọi trong transaction huỷ đơn. Kế hoạch đã vỡ thì giữ nguyên "vỡ".
-     */
     public function dongTheoDon(Order $order): void
     {
         InstallmentPlan::query()

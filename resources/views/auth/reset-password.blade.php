@@ -23,11 +23,6 @@
         <form action="{{ route('password.update') }}" method="POST">
             @csrf
 
-            {{--
-                token đi kèm biểu mẫu. Đây là ô ẩn nên SỬA ĐƯỢC — không
-                sao: Password broker so mã băm của token với bản ghi
-                trong cơ sở dữ liệu, token bịa ra không khớp được.
-            --}}
             <input type="hidden" name="token" value="{{ $token }}">
 
             <div class="mb-3">
@@ -46,16 +41,11 @@
 
             <div class="mb-3">
                 <label for="password" class="form-label">Mật khẩu mới</label>
-                {{-- Dùng lại component có nút con mắt — không chép lại markup. --}}
                 <x-form.password-input
                     name="password"
                     placeholder="Tối thiểu 8 ký tự, có hoa/thường/số"
                     autocomplete="new-password"
                 />
-                {{-- x-form.password-input chỉ tô viền đỏ, KHÔNG in lý do.
-                     Thiếu dòng này thì mật khẩu quá yếu chỉ khiến trang
-                     nạp lại trống trơn — người dùng thử đi thử lại cùng
-                     một mật khẩu vì không biết mình sai ở đâu. --}}
                 <x-form-error name="password" />
             </div>
 

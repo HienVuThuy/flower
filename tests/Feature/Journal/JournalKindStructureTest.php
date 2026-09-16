@@ -11,27 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Mỗi loại sổ một kết cấu riêng.
- * ============================================================
- * Tệp này canh LỜI HỨA GIỮA CÁC PHẦN với nhau, không canh giao diện.
- *
- * `JournalKind` khai ba thứ tách rời: những khối trang sổ sẽ có
- * (`panels`), những ô biểu mẫu ghi thêm sẽ hỏi (`entryFields`), và những
- * khoá được ghi vào cột JSON (`dataFields`). Ba danh sách đó PHẢI khớp
- * nhau — và không có gì trong PHP bắt chúng khớp.
- *
- * Hai lỗi thật đã tìm ra bằng tay trước khi có tệp này, cả hai đều là
- * lệch giữa ba danh sách đó:
- *
- *   1. Sổ Theo dõi giá có khối biểu đồ nhưng biểu mẫu không có hàng chỉ
- *      số nào — biểu đồ trống vĩnh viễn.
- *   2. Khối mô tả trên trang tạo sổ quảng cáo "chỉ số điền sẵn: Giá" cho
- *      một loại sổ không có ô chỉ số.
- *
- * Cả hai đều XANH ở mọi bài kiểm thử đang có lúc đó, vì không bài nào
- * đối chiếu hai danh sách với nhau.
- */
+/** Mỗi loại sổ một kết cấu riêng. */
 class JournalKindStructureTest extends TestCase
 {
     use RefreshDatabase;
@@ -52,8 +32,6 @@ class JournalKindStructureTest extends TestCase
             $this->assertNotEmpty($kind->panels(), "Loại sổ {$kind->value} không có khối nào.");
             $this->assertNotEmpty($kind->entryFields(), "Loại sổ {$kind->value} không có ô nhập nào.");
 
-            // Ngày ghi là ô duy nhất bắt buộc với mọi loại sổ: không có nó
-            // thì không có gì xếp được lên dòng thời gian.
             $this->assertTrue($kind->hasField('date'), "Loại sổ {$kind->value} thiếu ô ngày ghi.");
         }
     }
@@ -61,21 +39,6 @@ class JournalKindStructureTest extends TestCase
     #[Test]
     public function co_khoi_bieu_do_thi_phai_co_duong_ghi_ra_chi_so(): void
     {
-        /*
-         * LỖI THẬT ĐÃ SỬA — và là lý do tệp này tồn tại.
-         *
-         * Sổ Theo dõi giá có 'chart' trong `panels()` nhưng KHÔNG có
-         * 'metrics' trong `entryFields()`. Người dùng tạo sổ giá bằng
-         * giao diện thật sẽ thấy một khối biểu đồ không bao giờ có dữ
-         * liệu, và không có gì giải thích vì sao.
-         *
-         * Lỗi bị che vì dữ liệu mẫu tôi dựng bằng script đã tự ghi thêm
-         * chỉ số "Giá" — thứ mà biểu mẫu thật không làm.
-         *
-         * Một loại sổ vẽ biểu đồ thì phải có ÍT NHẤT một đường ghi ra
-         * được chỉ số: hoặc hàng chỉ số tự nhập, hoặc một ô riêng được
-         * controller suy ra thành chỉ số (ô giá).
-         */
         foreach (JournalKind::cases() as $kind) {
             if (! $kind->hasPanel('chart')) {
                 continue;
@@ -92,7 +55,6 @@ class JournalKindStructureTest extends TestCase
     #[Test]
     public function so_gia_tu_ghi_gia_thanh_chi_so_de_ve_bieu_do(): void
     {
-        // Bài trên canh phần khai báo; bài này canh phần chạy thật.
         $user = User::factory()->create();
         $so = $this->so($user, JournalKind::Price);
 
@@ -104,7 +66,6 @@ class JournalKindStructureTest extends TestCase
 
         $this->assertDatabaseHas('journal_metrics', ['name' => 'Giá', 'value' => '2150000.00']);
 
-        // Và giá vẫn nằm nguyên trong `data` để bảng khảo giá đọc.
         $trang = $so->entries()->firstOrFail();
         $this->assertSame(2150000, (int) $trang->field('price'));
         $this->assertSame('Vườn ươm Văn Giang', $trang->field('place'));
@@ -113,23 +74,6 @@ class JournalKindStructureTest extends TestCase
     #[Test]
     public function o_nhap_rieng_cua_loai_so_khac_phai_bi_bo_qua(): void
     {
-        /*
-         * CHỐT CHẶN CỦA CỘT JSON `data` — và có HAI lớp, không phải một.
-         *
-         * Gửi lên một khoá mà loại sổ này không khai — dù cố ý hay do một
-         * biểu mẫu cũ còn cache — thì nó KHÔNG được nằm lại trong cơ sở
-         * dữ liệu. Không có chặn này thì cột `data` thành thùng rác, đúng
-         * thứ đã cấm ở `product_traits`.
-         *
-         * Đã đo bằng cách chèn đột biến: phá RIÊNG lớp validate, hoặc
-         * RIÊNG `truongRieng()`, thì bài này vẫn XANH — lớp còn lại giữ
-         * được. Chỉ khi phá CẢ HAI cùng lúc nó mới đỏ.
-         *
-         * Đó là chủ ý, không phải thừa: hai lớp ở hai tầng khác nhau
-         * (nhận dữ liệu, và ghi dữ liệu), nên một lần sửa bất cẩn hiếm
-         * khi chạm được cả hai. Nhưng phải nói rõ ra ở đây, vì người đọc
-         * bài này dễ tưởng nó đang canh đúng một dòng.
-         */
         $user = User::factory()->create();
         $so = $this->so($user, JournalKind::Free);
 
@@ -153,7 +97,6 @@ class JournalKindStructureTest extends TestCase
     {
         $user = User::factory()->create();
 
-        // Sổ giá: có bảng khảo giá, KHÔNG có dòng thời gian kiểu thẻ.
         $gia = $this->so($user, JournalKind::Price);
 
         $this->actingAs($user)
@@ -164,7 +107,6 @@ class JournalKindStructureTest extends TestCase
             ->assertDontSee('Dòng thời gian')
             ->assertDontSee('Các mốc cần đạt');
 
-        // Sổ mục tiêu: có danh sách mốc, không có bảng khảo giá.
         $mucTieu = $this->so($user, JournalKind::Goal);
 
         $this->actingAs($user)
@@ -180,7 +122,6 @@ class JournalKindStructureTest extends TestCase
     {
         $user = User::factory()->create();
 
-        // Sổ giá KHÔNG hỏi tình trạng cây — cây nào ở đây mà đánh giá.
         $gia = $this->so($user, JournalKind::Price);
 
         $this->actingAs($user)
@@ -191,7 +132,6 @@ class JournalKindStructureTest extends TestCase
             ->assertDontSee('Tình trạng cây')
             ->assertDontSee('Hôm nay đã làm gì');
 
-        // Sổ sinh trưởng thì ngược lại.
         $sinhTruong = $this->so($user, JournalKind::Growth);
 
         $this->actingAs($user)
@@ -205,11 +145,6 @@ class JournalKindStructureTest extends TestCase
     #[Test]
     public function nhan_dan_chi_hien_bo_hop_voi_loai_so(): void
     {
-        /*
-         * Sổ giá không cần "đã tưới" hay "thay chậu". Bày cả bộ ở đó là
-         * bắt người dùng lọc bằng mắt qua chín hình vô nghĩa để tìm ba
-         * hình dùng được.
-         */
         $this->assertCount(3, JournalSticker::forKind(JournalKind::Price));
         $this->assertCount(3, JournalSticker::forKind(JournalKind::Goal));
         $this->assertCount(12, JournalSticker::forKind(JournalKind::Growth));
@@ -222,11 +157,6 @@ class JournalKindStructureTest extends TestCase
     #[Test]
     public function moi_nhan_dan_deu_ve_ra_hinh_that(): void
     {
-        /*
-         * Enum có 12 case, nhưng hình vẽ nằm trong một `@switch` ở Blade.
-         * Thêm case mà quên vẽ hình thì nhãn dán đó hiện ra một ô trống —
-         * và không có gì báo, vì `@switch` không khớp thì lặng lẽ bỏ qua.
-         */
         foreach (JournalSticker::cases() as $nhan) {
             $svg = view('components.journal.sticker', ['sticker' => $nhan, 'size' => 24])->render();
 
@@ -246,8 +176,6 @@ class JournalKindStructureTest extends TestCase
         $user = User::factory()->create();
         $so = $this->so($user, JournalKind::Price);
 
-        // Chưa chọn thì lấy mặc định của loại sổ — sổ giá dùng giấy trơn
-        // vì hoa văn chỉ làm rối chỗ đọc số.
         $this->assertSame(JournalTheme::Paper, $so->theme());
         $this->assertNull($so->theme()->pattern());
 
@@ -260,14 +188,6 @@ class JournalKindStructureTest extends TestCase
     #[Test]
     public function moc_muc_tieu_chi_danh_dau_duoc_bang_nut_bam(): void
     {
-        /*
-         * `done_at` CỐ Ý không nằm trong $fillable.
-         *
-         * Ngày hoàn thành là thứ hệ thống ghi lúc người dùng bấm nút,
-         * không phải thứ nhận từ dữ liệu gửi lên. Cho nó vào $fillable
-         * thì ai cũng đặt được một ngày hoàn thành tuỳ ý — và mọi câu
-         * "mất bao lâu để đi từ mốc này sang mốc kia" thành vô nghĩa.
-         */
         $user = User::factory()->create();
         $so = $this->so($user, JournalKind::Goal);
 
@@ -308,8 +228,6 @@ class JournalKindStructureTest extends TestCase
     #[Test]
     public function moc_da_xong_thi_khong_bao_gio_bi_coi_la_qua_han(): void
     {
-        // Đánh dấu đỏ một việc người ta đã làm xong là trách móc chuyện
-        // đã qua, và nó đẩy sự chú ý ra khỏi những mốc còn đang dở.
         $user = User::factory()->create();
         $so = $this->so($user, JournalKind::Goal);
 
@@ -337,7 +255,6 @@ class JournalKindStructureTest extends TestCase
 
         $nguoiKhac = User::factory()->create();
 
-        // 404 chứ không 403 — cùng lý do như với quyển sổ (QĐ-123).
         $this->actingAs($nguoiKhac)
             ->patch('/nhat-ky/' . $so->id . '/moc/' . $moc->id)
             ->assertNotFound();
@@ -370,9 +287,6 @@ class JournalKindStructureTest extends TestCase
     #[Test]
     public function tien_do_moc_la_null_khi_chua_dat_moc_nao(): void
     {
-        // null, không phải 0%. "0%" đọc ra là "đã đặt mốc và chưa làm được
-        // mốc nào", trong khi sự thật là chưa có mốc nào để làm. Cùng
-        // nguyên tắc với goalProgress() — QĐ-127.
         $user = User::factory()->create();
         $so = $this->so($user, JournalKind::Goal);
 
@@ -389,11 +303,6 @@ class JournalKindStructureTest extends TestCase
     #[Test]
     public function thong_ke_gia_la_null_khi_moi_khao_mot_lan(): void
     {
-        /*
-         * Với đúng một lần khảo thì "thấp nhất", "cao nhất" và "trung
-         * bình" đều là chính con số đó — ba ô hiện cùng một số, trông như
-         * một bảng thống kê mà không thống kê gì cả.
-         */
         $user = User::factory()->create();
         $so = $this->so($user, JournalKind::Price);
 
@@ -416,8 +325,6 @@ class JournalKindStructureTest extends TestCase
         $this->assertSame(500000.0, $tk['high']);
         $this->assertSame('Chợ Bưởi', $tk['place_low']);
 
-        // "Gần nhất" theo NGÀY GHI, không phải theo thứ tự nhập: người
-        // dùng ghi bù ngày cũ là chuyện bình thường (QĐ-126).
         $this->assertSame(500000.0, $tk['latest']);
     }
 

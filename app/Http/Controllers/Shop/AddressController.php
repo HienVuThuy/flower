@@ -9,13 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
-/**
- * Sổ địa chỉ của khách.
- *
- * Toàn bộ nhóm route này nằm sau middleware auth, nhưng vẫn phải kiểm
- * tra CHỦ SỞ HỮU ở từng hành động: đăng nhập rồi không có nghĩa là được
- * sửa địa chỉ của người khác.
- */
+/** Sổ địa chỉ của khách. */
 class AddressController extends Controller
 {
     public function index(): View
@@ -36,10 +30,6 @@ class AddressController extends Controller
     {
         $address = Auth::user()->addresses()->create($request->validated());
 
-        /*
-         * Địa chỉ ĐẦU TIÊN luôn là mặc định, kể cả khách không tích ô.
-         * Không có mặc định thì bước thanh toán không biết chọn cái nào.
-         */
         if ($request->boolean('is_default') || Auth::user()->addresses()->count() === 1) {
             $address->makeDefault();
         }
@@ -78,19 +68,10 @@ class AddressController extends Controller
         $wasDefault = $address->is_default;
         $address->delete();
 
-        // Xoá đúng cái đang mặc định thì đưa mặc định sang địa chỉ còn lại.
         if ($wasDefault) {
             Auth::user()->addresses()->first()?->makeDefault();
         }
 
-        /*
-         * back() CHỨ KHÔNG PHẢI về sổ địa chỉ.
-         *
-         * Nút xoá nay còn nằm ở bước thanh toán. Đá khách về sổ địa chỉ
-         * từ đó là bắt họ đi lại toàn bộ bước 1 — và mất những gì đang
-         * gõ dở. Bấm từ chính sổ địa chỉ thì back() cũng trả về đúng
-         * trang đó, nên không có gì đổi ở đường cũ.
-         */
         return back()->with('success', 'Đã xoá địa chỉ.');
     }
 

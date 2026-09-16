@@ -7,15 +7,9 @@ use App\Models\Order;
 use App\Models\Product;
 use PHPUnit\Framework\Attributes\Test;
 
-/**
- * Đi hết luồng: điền thông tin → xác nhận → đặt hàng.
- * ============================================================
- * Đây là nơi TIỀN ĐI QUA, nên phần được canh chừng kỹ nhất là con số:
- * tổng của đơn đã ghi phải bằng đúng thứ trang tóm tắt hứa.
- */
+/** Đi hết luồng: điền thông tin → xác nhận → đặt hàng. */
 class PlaceOrderTest extends CheckoutTestCase
 {
-    /** Điền thông tin, sang trang xác nhận, rồi đặt hàng. */
     private function placeOrder(array $overrides = []): Order
     {
         $this->post(self::DETAILS, $this->details($overrides))
@@ -49,8 +43,6 @@ class PlaceOrderTest extends CheckoutTestCase
     #[Test]
     public function hang_lam_theo_don_khong_bi_tru_ton_kho(): void
     {
-        // stock = 0 nghĩa là HẾT HÀNG; hàng làm theo đơn thì không có
-        // khái niệm "còn mấy cái". Hai chuyện khác hẳn nhau.
         $user = \App\Models\User::factory()->create();
         $this->actingAs($user);
 
@@ -91,8 +83,6 @@ class PlaceOrderTest extends CheckoutTestCase
     #[Test]
     public function khong_tin_so_tien_giam_do_trinh_duyet_gui_len(): void
     {
-        // Trình duyệt chỉ được gửi CHUỖI MÃ. Số tiền do CouponService
-        // tính, không bao giờ nhận từ ngoài vào.
         [$user] = $this->shopperWithCart('500000.00');
         $this->claim($user, Coupon::factory()->fixed('50000.00')->create(['code' => 'GIAM50K']));
         $this->get(self::DETAILS);
@@ -113,10 +103,6 @@ class PlaceOrderTest extends CheckoutTestCase
     #[Test]
     public function ma_go_do_o_o_nhap_van_duoc_ap_khi_bam_xem_lai_don_hang(): void
     {
-        // Ô nhập mã thuộc biểu mẫu chính, nên gõ mã rồi nhấn Enter là
-        // trình duyệt bấm hộ nút "Xem lại đơn hàng". Bỏ qua ô đó thì
-        // khách sang trang xác nhận và thấy mình không được giảm gì.
-        // Mã CHƯA lưu về ví: không được tự áp, nhưng gõ tay thì phải nhận.
         $this->shopperWithCart('500000.00');
         Coupon::factory()->fixed('50000.00')->create(['code' => 'GONHUNGCHUABAM']);
         $this->get(self::DETAILS);
@@ -146,8 +132,6 @@ class PlaceOrderTest extends CheckoutTestCase
     #[Test]
     public function loi_tu_choi_ma_chi_co_gia_tri_cho_don_dang_lam_do(): void
     {
-        // Không xoá cờ sau khi đặt hàng thì đơn sau trong cùng phiên cũng
-        // bị tắt tự chọn mã, mà khách không hề nói vậy.
         [$user, $product] = $this->shopperWithCart('500000.00');
         $this->claim($user, Coupon::factory()->fixed('50000.00')->create(['code' => 'GIAM50K']));
 
@@ -156,7 +140,6 @@ class PlaceOrderTest extends CheckoutTestCase
         $this->post(self::COUPON.'/tu-chon');
         $this->placeOrder();
 
-        // Đơn thứ hai trong cùng phiên.
         $this->addToCart($product);
         $this->get(self::DETAILS);
 
@@ -167,7 +150,6 @@ class PlaceOrderTest extends CheckoutTestCase
     #[Test]
     public function ghi_nhan_luot_dung_ma_sau_khi_don_tao_thanh_cong(): void
     {
-        // Thử mã rồi bỏ giỏ KHÔNG được tính là đã dùng.
         [$user] = $this->shopperWithCart('500000.00');
         $coupon = Coupon::factory()->fixed('50000.00')->create(['code' => 'GIAM50K']);
         $this->claim($user, $coupon);

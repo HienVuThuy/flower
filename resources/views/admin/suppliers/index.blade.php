@@ -53,8 +53,6 @@
                                 <span class="d-block admin-page-subtitle small">{{ $ncc->address }}</span>
                             @endif
                             @if($ncc->note)
-                                {{-- Ghi chú là chỗ đựng thứ quyết định việc chọn ai:
-                                     "hay thiếu hàng cuối tuần", "phải gọi trước 2 hôm". --}}
                                 <span class="d-block admin-page-subtitle small fst-italic">{{ $ncc->note }}</span>
                             @endif
                         </td>

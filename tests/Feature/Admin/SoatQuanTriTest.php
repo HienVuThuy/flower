@@ -14,9 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Chỗ vô lý tìm ra khi soát trang quản trị với dữ liệu mẫu.
- */
+/** Chỗ vô lý tìm ra khi soát trang quản trị với dữ liệu mẫu. */
 class SoatQuanTriTest extends TestCase
 {
     use RefreshDatabase;

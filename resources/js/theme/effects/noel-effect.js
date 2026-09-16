@@ -1,9 +1,6 @@
 import { BaseEffect } from './base-effect.js';
 
-/**
- * Tuyết rơi — nhẹ, có depth (kích thước/tốc độ khác nhau), giới
- * hạn số lượng, vẽ bằng canvas (không tạo DOM node cho từng bông).
- */
+/** Tuyết rơi — nhẹ, có depth (kích thước/tốc độ khác nhau), giới hạn số lượng, vẽ bằng canvas (không tạo DOM… */
 export class NoelEffect extends BaseEffect {
     constructor() {
         super();

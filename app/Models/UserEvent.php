@@ -37,11 +37,6 @@ class UserEvent extends Model
         return $this->belongsTo(Category::class);
     }
 
-    /**
-     * Ghi lại một hành vi người dùng. Không throw nếu ghi log lỗi
-     * (vd DB tạm thời không sẵn sàng) — theo dõi hành vi không
-     * bao giờ được phép làm hỏng trải nghiệm chính của khách.
-     */
     public static function log(UserEventType $type, Request $request, array $attributes = []): void
     {
         try {
@@ -52,7 +47,6 @@ class UserEvent extends Model
                 'created_at' => now(),
             ], $attributes));
         } catch (\Throwable) {
-            // im lặng bỏ qua — tracking không được làm hỏng trang chính
         }
     }
 }

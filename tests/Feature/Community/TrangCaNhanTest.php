@@ -9,12 +9,7 @@ use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Trang cá nhân ở Góc cây: xem lại bài của một người.
- * ============================================================
- * Người khác xem CHỈ thấy bài đã duyệt; chính chủ thấy cả bài chờ duyệt, bị từ
- * chối và bị ẩn — cùng luật "duyệt trước khi hiện" của cả mục.
- */
+/** Trang cá nhân ở Góc cây: xem lại bài của một người. */
 class TrangCaNhanTest extends TestCase
 {
     use RefreshDatabase;
@@ -69,11 +64,9 @@ class TrangCaNhanTest extends TestCase
         $hien = $this->bai($chu, 'Bài đang hiện.');
         $an = $this->bai($chu, 'Bài bị ẩn.', ['hidden_at' => now()]);
 
-        // Cảm xúc và bình luận trên bài đang hiện thì được đếm...
         $this->actingAs(User::factory()->create())->post(route('shop.community.like', $hien->id), ['cam_xuc' => 'yeu']);
         $this->actingAs(User::factory()->create())->post(route('shop.community.comment', $hien->id), ['body' => 'Bình luận của khách.']);
 
-        // ...còn của bài bị ẩn thì không (ghi thẳng, vì đường công khai đã chặn).
         DB::table('community_post_likes')->insert([
             'community_post_id' => $an->id, 'user_id' => User::factory()->create()->id,
             'reaction' => 'thich', 'created_at' => now(),

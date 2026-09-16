@@ -23,18 +23,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Đặt hàng và đổi trạng thái đơn.
- * ============================================================
- * Hai điều bắt buộc phải đúng, và cả hai đều nằm trong transaction:
- *
- *  1. CHỤP GIÁ. Đơn hàng lưu tên và giá tại thời điểm đặt. Sau này
- *     đổi giá hay kết thúc khuyến mại cũng không được viết lại đơn cũ.
- *
- *  2. TRỪ KHO AN TOÀN. Đọc tồn kho bằng lockForUpdate() rồi mới trừ,
- *     nếu không hai khách bấm mua cùng lúc sẽ cùng đọc thấy "còn 1" và
- *     cùng đặt được, tức là bán quá số hàng đang có.
- */
+/** Đặt hàng và đổi trạng thái đơn. */
 class OrderService
 {
     public function __construct(
@@ -49,16 +38,6 @@ class OrderService
     ) {
     }
 
-    /**
-     * Đặt hàng từ giỏ hàng thanh toán.
-     *
-     * Nguồn hàng (giỏ hàng hay "mua ngay") do CheckoutSource quyết định;
-     * ở đây chỉ quan tâm tới các dòng hàng.
-     *
-     * @param  array<string, mixed>  $checkout  dữ liệu đã validate từ 2 bước đầu
-     *
-     * @throws OrderException
-     */
     public function place(CheckoutBasket $basket, array $checkout, ?string $idempotencyKey = null): Order
     {
         if ($basket->isEmpty()) {
@@ -68,31 +47,10 @@ class OrderService
         try {
             $order = DB::transaction(fn () => $this->createOrder($basket, $checkout, $idempotencyKey));
 
-            /*
-             * BÁO CỬA HÀNG — SAU khi transaction đã chốt, và CHỈ cho đơn
-             * vừa tạo.
-             *
-             * Nhánh "trùng khoá chống đặt lại" bên dưới trả về một đơn ĐÃ
-             * CÓ; gửi thư ở đó là báo hai lần cho cùng một đơn. Gửi hỏng
-             * thì OrderMailer tự nuốt lỗi: đơn đã thành, không được hỏng.
-             */
             $this->mailer->notifyShopOfNewOrder($order);
 
             return $order;
         } catch (QueryException $e) {
-            /*
-             * TRÙNG KHOÁ CHỐNG ĐẶT LẠI — KHÔNG PHẢI LỖI.
-             *
-             * Tới đây nghĩa là một request song song đã tạo xong đơn với
-             * đúng khoá này trong lúc ta đang chạy. Cơ sở dữ liệu từ chối
-             * bản ghi thứ hai, và đó chính là điều ta muốn: trả về đơn đã
-             * có, coi như lần bấm này thành công.
-             *
-             * Transaction đã bị cuộn lại nên kho KHÔNG bị trừ hai lần.
-             *
-             * Chỉ nuốt đúng lỗi trùng khoá (SQLSTATE 23000); mọi lỗi cơ
-             * sở dữ liệu khác vẫn phải ném ra để không giấu sự cố thật.
-             */
             if ($idempotencyKey && $this->isDuplicateKeyError($e)) {
                 $existing = Order::where('idempotency_key', $idempotencyKey)->first();
 
@@ -105,31 +63,14 @@ class OrderService
         }
     }
 
-    /**
-     * Lỗi này có phải do vi phạm ràng buộc duy nhất không.
-     *
-     * Kiểm tra cả mã SQLSTATE lẫn tên cột: bảng orders còn một ràng buộc
-     * UNIQUE nữa là order_number, mà trùng order_number là chuyện khác
-     * hẳn — không được coi là đặt lại và không được nuốt.
-     */
     private function isDuplicateKeyError(QueryException $e): bool
     {
         return $e->getCode() === '23000'
             && str_contains($e->getMessage(), 'idempotency_key');
     }
 
-    /**
-     * @param  array<string, mixed>  $checkout
-     */
     private function createOrder(CheckoutBasket $basket, array $checkout, ?string $idempotencyKey): Order
     {
-        /*
-         * THUẾ TÍNH THEO TỪNG DÒNG, không tính trên tổng đơn.
-         *
-         * Mỗi sản phẩm có thể thuộc một nhóm thuế riêng (bó hoa không
-         * chịu VAT, chậu sứ chịu 10%), nên một phép tính trên tổng là
-         * sai ngay ở đơn hỗn hợp. Xem App\Services\Tax\BasketTax.
-         */
         $tax = $basket->tax();
 
         $lines = [];
@@ -138,11 +79,6 @@ class OrderService
             $lines[] = $this->buildLine($line, $tax->lines[$i] ?? null);
         }
 
-        /*
-         * Tiền do CheckoutBasket tính — cùng một nơi mà màn hình thanh
-         * toán đang hiển thị, nên con số khách thấy và con số ghi vào
-         * đơn không thể lệch nhau.
-         */
         $subtotal = $basket->baseTotal();
         $discountTotal = $basket->discountTotal();
         $shippingFee = $basket->shippingFee();
@@ -165,63 +101,21 @@ class OrderService
             'payment_method' => $checkout['payment_method'],
             'subtotal' => $subtotal,
             'discount_total' => $discountTotal,
-            // Chụp mã giảm giá vào đơn: xoá coupon khỏi hệ thống sau này
-            // cũng không làm đơn cũ mất dấu đã dùng mã gì, giảm bao nhiêu.
             'coupon_id' => $basket->coupon?->id,
             'coupon_code' => $basket->coupon?->code,
             'coupon_discount' => $basket->couponDiscount(),
-            // Chụp điểm đã dùng: huỷ đơn phải trả lại đúng số này, đổi tỉ giá sau này không làm đơn cũ đổi.
             'points_used' => $basket->pointsUsed(),
-            // Chụp hạng và tiền giảm theo hạng lúc đặt — sửa ngưỡng sau này không đổi đơn cũ.
             'member_tier_code' => $basket->memberTier?->code,
             'member_discount' => $basket->memberDiscount(),
             'points_discount' => $basket->pointsDiscount(),
             'shipping_fee' => $shippingFee,
 
-            /*
-             * CHỤP MÃ ĐỊA GIỚI GHN VÀO ĐƠN.
-             *
-             * Không có hai mã này thì sau đó không tạo được vận đơn: GHN
-             * cần đúng `to_district_id` và `to_ward_code`, và tên chữ
-             * "Quận Bắc Từ Liêm" không suy ngược ra mã được.
-             *
-             * Lưu cả cước GHN thật, TÁCH RIÊNG khỏi `shipping_fee`.
-             * `shipping_fee` là tiền cửa hàng THU của khách;
-             * `ghn_total_fee` là tiền cửa hàng TRẢ cho GHN. Hai con số
-             * lệch nhau mỗi khi miễn phí giao cho đơn lớn, và chỉ giữ cả
-             * hai mới biết tháng này bù lỗ bao nhiêu tiền ship.
-             */
             'to_district_id' => $basket->toDistrictId,
             'to_ward_code' => $basket->toWardCode,
-            // Không hỏi được GHN thì NULL ("chưa biết"), không phải 0.
             'ghn_total_fee' => app(\App\Services\Shipping\ShippingQuote::class)
                 ->ghnFee($basket, $basket->toDistrictId, $basket->toWardCode),
             'grand_total' => $grandTotal,
 
-            /*
-             * THUẾ — TÁCH RA từ tổng, KHÔNG cộng thêm vào.
-             *
-             * Giá niêm yết đã bao gồm VAT (xem config/tax.php), nên
-             * `grand_total` ở trên KHÔNG đổi một đồng nào vì mấy dòng
-             * này. Chúng chỉ ghi lại: trong số tiền khách trả, bao nhiêu
-             * là thuế.
-             *
-             * NULL khi tính thuế đang tắt — KHÔNG phải 0.
-             *
-             * NULL đọc ra là "không có số liệu", 0 đọc ra là "thuế bằng
-             * không". Hai điều khác hẳn nhau khi đối chiếu sổ sách, và
-             * gộp chúng lại là làm mất khả năng phân biệt "chưa cấu hình"
-             * với "hàng miễn thuế".
-             *
-             * `tax_rate` ở ĐẦU ĐƠN nay có nghĩa hẹp hơn trước: nó là MỨC
-             * MẶC ĐỊNH CỦA CỬA HÀNG lúc đặt — mức áp cho phí vận chuyển
-             * và cho sản phẩm chưa phân loại. Mức thật của từng mặt hàng
-             * nằm ở `order_items.tax_rate`, vì một đơn có thể mang nhiều
-             * mức cùng lúc.
-             *
-             * Đẳng thức đối soát luôn đúng:
-             *     tax_amount = SUM(items.tax_amount) + shipping_tax_amount
-             */
             'tax_rate' => $tax->shippingRate,
             'tax_amount' => $tax->total(),
             'shipping_tax_amount' => $tax->shippingTax,
@@ -229,46 +123,11 @@ class OrderService
 
         $order->items()->createMany($lines);
 
-        /*
-         * QUÀ TẶNG — dòng 0đ, SAU hàng bán, trong cùng transaction: đơn cuộn
-         * lại thì suất và kho của quà cũng cuộn theo. Hết quà giữa chừng thì
-         * bỏ quà chứ không hỏng đơn — xem GiftGranter.
-         */
         app(\App\Services\Gift\GiftGranter::class)->tangChoDon($order, $basket, Auth::user());
 
-        /*
-         * DỮ LIỆU HOÁ ĐƠN — TRONG CÙNG TRANSACTION VỚI ĐƠN.
-         *
-         * Cùng lý do với việc ghi nhận lượt dùng mã giảm giá ngay bên
-         * dưới: nếu bước này chạy sau khi transaction đã commit và nó
-         * ngã, đơn ĐÃ ghi xong và không cuộn lại được. Kết quả là một
-         * đơn nói "khách có yêu cầu xuất hoá đơn" mà không có dữ liệu
-         * hoá đơn nào — và chỉ phát hiện khi khách gọi điện hỏi.
-         *
-         * `load('items')` trước khi lập: hoá đơn cần bảng tách theo mức
-         * thuế, mà bảng đó dựng từ các dòng vừa ghi. Không nạp lại thì
-         * quan hệ `items` vẫn rỗng và bảng tách ra rỗng theo — âm thầm,
-         * không lỗi nào.
-         *
-         * Khách không yêu cầu hoá đơn thì hàm trả về null và không có
-         * bản ghi nào được tạo. Đó là trường hợp thường gặp nhất.
-         */
         $order->load('items');
         $this->invoices->taoTuDon($order, $checkout);
 
-        /*
-         * ĐƠN COD CŨNG CÓ MỘT DÒNG TRONG SỔ GIAO DỊCH.
-         *
-         * Tiền COD không đi qua cổng nào, nhưng nếu chỉ đơn online mới
-         * có dòng thì `payment_transactions` không còn trả lời được câu
-         * "đơn này đã thu tiền bằng đường nào" — phải nhớ hỏi thêm cột
-         * `payment_method` ở bảng khác.
-         *
-         * Đơn MoMo KHÔNG tạo dòng ở đây: mỗi lần bấm trả tiền là một
-         * lượt riêng do MomoGateway::createPayment() sinh ra. Tạo sẵn ở
-         * đây thì dòng đó không bao giờ có `gateway_order_id` và nằm lại
-         * mãi ở trạng thái chờ.
-         */
         if ($order->payment_method === PaymentMethod::Cod) {
             PaymentTransaction::create([
                 'order_id' => $order->id,
@@ -279,76 +138,21 @@ class OrderService
             ]);
         }
 
-        /*
-         * KẾ HOẠCH TRẢ GÓP — trong cùng transaction. Khách không còn đủ điều
-         * kiện lúc bấm đặt (điểm vừa tụt, tab khác vừa mở một kế hoạch) thì
-         * InstallmentException cuộn cả đơn: kho không bị giữ cho một đơn trả
-         * góp không có kế hoạch.
-         */
         if ($order->payment_method === PaymentMethod::TraGop) {
             app(\App\Services\Installment\InstallmentService::class)
                 ->taoKeHoach($order, Auth::user(), (int) ($checkout['so_ky'] ?? 0));
         }
 
-        /*
-         * CHẤM ĐIỂM RỦI RO — sau khi đơn đã có id và đã có dòng hàng.
-         *
-         * Phải nằm TRONG transaction tạo đơn: điểm là một phần của bản
-         * ghi đơn, không phải thông tin thêm. Đơn ghi thành công mà điểm
-         * hỏng thì trang quản trị hiện 0 điểm cho một đơn đáng ngờ — tệ
-         * hơn hẳn việc không có tính năng này.
-         *
-         * Lớp chấm điểm KHÔNG BAO GIỜ chặn đơn, chỉ ghi số và liệt kê
-         * dấu hiệu. Xem App\Services\Order\OrderRiskScorer.
-         */
         $this->risk->apply($order);
 
-        /*
-         * GHI NHẬN LƯỢT DÙNG MÃ — TRONG CÙNG TRANSACTION VỚI ĐƠN.
-         *
-         * LỖI TRƯỚC KHI SỬA: chỗ này nằm ở CheckoutController, chạy SAU
-         * khi transaction tạo đơn đã commit. Hai hỏng hóc từ đó:
-         *
-         *  1. MÃ DÙNG MIỄN PHÍ. Nếu redeem() ngã — mất kết nối, hết
-         *     lượt, lỗi bất kỳ — thì đơn ĐÃ ghi xong và không cuộn lại
-         *     được. Khách nhận hàng đã giảm giá, còn bộ đếm mã đứng yên.
-         *     Một mã "50 lượt" có thể dùng vô hạn theo đúng cách này.
-         *
-         *  2. ĐẶT LẠI THÌ ĐẾM HAI LẦN. place() có chống đặt trùng: bấm
-         *     hai lần thì lần sau trả về ĐƠN CŨ chứ không tạo đơn mới.
-         *     Nhưng controller không phân biệt được, nên vẫn gọi
-         *     redeem() lần nữa cho cùng một đơn.
-         *
-         * Đặt vào createOrder() giải quyết cả hai: cùng transaction nên
-         * hỏng là cuộn lại cùng nhau, và nó chỉ chạy trên đường THẬT SỰ
-         * tạo đơn mới — đường trả về đơn cũ không đi qua đây.
-         *
-         * CouponException ném ra từ đây sẽ cuộn cả đơn — đúng ý: thà
-         * không có đơn còn hơn có đơn giảm giá bằng lượt không tồn tại.
-         */
         if ($basket->coupon) {
             $this->coupons->redeem($basket->coupon, $order);
         }
 
-        /*
-         * TRỪ ĐIỂM ĐÃ DÙNG — cùng lý do với lượt mã ngay trên: trong
-         * transaction, nên không đủ điểm (dùng ở tab khác trong lúc đang
-         * xem lại đơn) thì cuộn cả đơn, không có đơn giảm bằng điểm ảo.
-         */
         if ($basket->pointsUsed() > 0 && Auth::user() !== null) {
             app(\App\Services\Points\PointLedger::class)->dungChoDon(Auth::user(), $basket->pointsUsed(), $order);
         }
 
-        /*
-         * BƯỚC ĐẦU TIÊN CỦA DÒNG THỜI GIAN, ghi ngay khi đơn ra đời.
-         *
-         * Trong cùng transaction: một đơn tồn tại mà không có bước nào
-         * trong lịch sử là một đơn mà trang tra cứu hiện ra trống trơn —
-         * khách hiểu là cửa hàng chưa nhận được gì.
-         *
-         * Không ghi người thực hiện: đơn do chính khách tạo, và trên
-         * dòng thời gian thì "bạn đã đặt đơn" không cần ai đứng tên.
-         */
         OrderStatusEvent::create([
             'order_id' => $order->id,
             'status' => $order->status->value,
@@ -359,20 +163,6 @@ class OrderService
         return $order->load('items');
     }
 
-    /**
-     * Dựng một dòng đơn hàng, đồng thời trừ kho.
-     *
-     * Giá lấy từ CheckoutLine (tính lại từ Product/Variant), không bao
-     * giờ từ dữ liệu client gửi lên.
-     *
-     * @return array<string, mixed>
-     */
-    /**
-     * @param  array{line: CheckoutLine, discount: string, taxable: string, rate: ?string, tax: ?string}|null  $thue
-     *   Số liệu thuế của chính dòng này, do BasketTax tính. null khi
-     *   tính thuế đang tắt — khi đó ba cột thuế của dòng để trống, đúng
-     *   nghĩa "không có số liệu".
-     */
     private function buildLine(CheckoutLine $line, ?array $thue = null): array
     {
         $product = $line->product;
@@ -392,41 +182,12 @@ class OrderService
             'quantity' => $line->quantity,
             'line_total' => $line->lineTotal(),
 
-            /*
-             * CHỤP THUẾ VÀO DÒNG HÀNG.
-             *
-             * Admin đổi phân loại thuế của sản phẩm, hay Nhà nước đổi
-             * mức, thì đơn cũ vẫn phải giữ nguyên con số đã áp lúc đặt.
-             * Không chụp thì báo cáo quý trước tự đổi mỗi lần ai đó sửa
-             * một dòng cấu hình.
-             *
-             * `discount_amount` là phần mã giảm giá PHÂN BỔ cho dòng
-             * này — cần để giải thích vì sao tiền chịu thuế của dòng nhỏ
-             * hơn `line_total`.
-             */
             'discount_amount' => $thue['discount'] ?? '0.00',
             'tax_rate' => $thue['rate'] ?? null,
             'tax_amount' => $thue['tax'] ?? null,
         ];
     }
 
-    /**
-     * Món này còn bán được không — KIỂM LẠI NGAY TRƯỚC KHI TRỪ KHO.
-     *
-     * LỖI TRƯỚC KHI SỬA: CartService::assertPurchasable() kiểm đủ (còn
-     * bán, còn hoạt động, biến thể đúng sản phẩm) nhưng nó chạy lúc
-     * THÊM VÀO GIỎ. Giữa lúc đó và lúc đặt hàng có thể là hàng giờ:
-     *
-     *   10:00  khách thêm vào giỏ
-     *   10:05  admin chuyển sản phẩm sang "nháp" hoặc tắt biến thể
-     *   10:06  khách bấm đặt hàng  ->  đơn vẫn được tạo
-     *
-     * Cửa hàng nhận đơn cho thứ vừa ngừng bán, và chỉ phát hiện khi
-     * chuẩn bị hàng.
-     *
-     * ĐỌC LẠI TỪ CƠ SỞ DỮ LIỆU trong cùng transaction, không tin đối
-     * tượng đã nạp từ trước — chính đối tượng đó mới là thứ đã cũ.
-     */
     private function assertStillSellable(Product $product, ?ProductVariant $variant): void
     {
         $fresh = Product::whereKey($product->id)->first();
@@ -438,7 +199,6 @@ class OrderService
             ));
         }
 
-        // Sản phẩm chuyển sang "liên hệ báo giá" sau khi đã vào giỏ.
         if ($fresh->base_price === null) {
             throw new OrderException(sprintf(
                 'Sản phẩm "%s" nay chỉ nhận báo giá, không bán trực tiếp.',
@@ -447,19 +207,6 @@ class OrderService
         }
 
         if (! $variant) {
-            /*
-             * SẢN PHẨM CÓ QUY CÁCH THÌ DÒNG ĐƠN PHẢI CÓ QUY CÁCH.
-             *
-             * CartService đã chặn chuyện này ở cửa vào giỏ, nhưng giỏ có
-             * thể mang sẵn dòng cũ được thêm TRƯỚC khi có phép kiểm đó —
-             * và cửa hàng có thể mới thêm quy cách cho một sản phẩm mà
-             * trước đây bán trơn.
-             *
-             * Đây là cổng CUỐI trước khi dòng hàng thành đơn thật, nên
-             * nó phải tự kiểm chứ không dựa vào việc cửa trước đã kiểm.
-             * Lọt qua đây là cửa hàng nhận một đơn không nói rõ giao
-             * chậu nào, và tính theo giá quy cách rẻ nhất.
-             */
             $coQuyCach = $fresh->variants()->where('is_active', true)->exists();
 
             if ($coQuyCach) {
@@ -475,11 +222,6 @@ class OrderService
 
         $freshVariant = ProductVariant::whereKey($variant->id)->first();
 
-        /*
-         * Kiểm cả product_id: biến thể có thể đã được chuyển sang sản
-         * phẩm khác. Không kiểm thì đơn ghi tên sản phẩm này nhưng trừ
-         * kho của sản phẩm kia.
-         */
         if (! $freshVariant
             || ! $freshVariant->is_active
             || $freshVariant->product_id !== $fresh->id) {
@@ -533,54 +275,15 @@ class OrderService
         $fresh->decrement('stock_quantity', $quantity);
     }
 
-    /**
-     * Đổi trạng thái đơn, có kiểm tra bước chuyển hợp lệ.
-     * Huỷ đơn thì HOÀN kho, nếu không huỷ vài đơn là kho hụt dần.
-     *
-     * @throws OrderException
-     */
     public function changeStatus(
         Order $order,
         OrderStatus $target,
         ?string $reason = null,
-        /*
-         * ĐỔI TRẠNG THÁI DO HỆ THỐNG TỰ LÀM, không do ai bấm nút.
-         *
-         * Mốc thời gian ghi `changed_by` từ Auth::id(). Với đường
-         * callback của cổng thanh toán thì người đang đăng nhập là
-         * KHÁCH — và dòng thời gian ở trang quản trị sẽ ghi "Rin đã xác
-         * nhận đơn", trong khi thật ra khách không hề bấm gì.
-         *
-         * Cờ này để `changed_by` là NULL, và OrderStatusEvent::actorLabel()
-         * đọc ra "Hệ thống" — đúng như việc đã xảy ra.
-         */
         bool $tuDong = false,
     ): void {
-        // Giữ lại để nhật ký nói được "từ đâu sang đâu". Đọc sau
-        // transaction thì đã là trạng thái mới, và câu nhật ký thành
-        // "Đã giao → Đã giao".
         $truocDo = $order->status;
 
         DB::transaction(function () use ($order, $target, $reason, $tuDong) {
-            /*
-             * KHOÁ ĐƠN RỒI ĐỌC LẠI, TRƯỚC KHI KIỂM.
-             *
-             * LỖI ĐUA TRƯỚC KHI SỬA: phép kiểm canTransitionTo() nằm
-             * NGOÀI transaction và dựa vào trạng thái đã nạp từ trước.
-             * Hai request huỷ cùng một đơn:
-             *
-             *   A đọc "pending"  -> pending->cancelled: được
-             *   B đọc "pending"  -> pending->cancelled: được
-             *   A ghi cancelled + HOÀN KHO
-             *   B ghi cancelled + HOÀN KHO lần nữa
-             *
-             * Kho được cộng lại hai lần cho một đơn. Admin bấm hai lần
-             * vì trang chậm là đủ để tái hiện — không cần kịch bản hiếm.
-             *
-             * lockForUpdate() bắt request thứ hai đợi; tới lượt nó thì
-             * trạng thái đã là "cancelled" và phép kiểm chặn lại. CƠ SỞ
-             * DỮ LIỆU là nơi phân xử, không phải bản sao trong bộ nhớ.
-             */
             $locked = Order::whereKey($order->id)->lockForUpdate()->first();
 
             if (! $locked) {
@@ -595,26 +298,11 @@ class OrderService
                 ));
             }
 
-            /*
-             * ĐƠN TRẢ GÓP CHƯA TRẢ ĐỦ KHÔNG ĐƯỢC CHUẨN BỊ HAY GIAO.
-             *
-             * "Xác nhận" vẫn được (cửa hàng nhận giữ hàng). Chặn ở đây thì mọi
-             * đường — admin bấm, đồng bộ GHN — đều bị chặn như nhau.
-             */
             if (in_array($target, [OrderStatus::Preparing, OrderStatus::Shipping, OrderStatus::Completed], true)
                 && $locked->choDoiTraGop()) {
                 throw new OrderException('Đơn trả góp chưa trả đủ các kỳ nên chưa chuẩn bị hay giao được.');
             }
 
-            /*
-             * KHÔNG HUỶ ĐƠN KHI VẬN ĐƠN GHN CÒN HIỆU LỰC.
-             *
-             * Lỗi đã sửa: huỷ đơn chỉ đổi trạng thái, hoàn kho và trả lượt mã
-             * — không đụng tới GHN. Đơn đã bàn giao mà bấm huỷ thì hệ thống
-             * ghi "đã huỷ", kho cộng lại, trong khi shipper vẫn đang cầm hàng
-             * đi giao. Huỷ vận đơn trước (nút riêng, gọi GHN thật) rồi mới
-             * huỷ đơn — hai việc có hai kết quả có thể khác nhau.
-             */
             if ($target === OrderStatus::Cancelled
                 && $locked->ghn_order_code
                 && $locked->shipping_status !== 'cancel') {
@@ -625,7 +313,6 @@ class OrderService
                 ));
             }
 
-            // Đối tượng gọi vào có thể đã cũ — dùng bản vừa khoá.
             $order->setRawAttributes($locked->getAttributes(), sync: true);
 
             $restoreStock = $target === OrderStatus::Cancelled && $order->status->holdsStock();
@@ -647,15 +334,6 @@ class OrderService
 
             $order->save();
 
-            /*
-             * GHI MỐC — TRONG cùng transaction với việc đổi trạng thái.
-             *
-             * Đặt bên ngoài thì có lúc trạng thái đổi xong mà mốc không
-             * ghi được, và dòng thời gian nhảy cóc: khách thấy "đã xác
-             * nhận" rồi "đã giao", không có bước chuẩn bị nào ở giữa,
-             * dù đơn có đi qua bước đó. Lịch sử thiếu mảnh thì tệ hơn
-             * không có lịch sử, vì nó trông vẫn như đầy đủ.
-             */
             OrderStatusEvent::create([
                 'order_id' => $order->id,
                 'status' => $target->value,
@@ -667,47 +345,17 @@ class OrderService
                 $this->restoreStock($order);
             }
 
-            /*
-             * Huỷ đơn thì trả lại lượt dùng mã giảm giá.
-             *
-             * Đặt ở ĐÂY chứ không ở controller, để admin huỷ và khách tự
-             * huỷ đi qua cùng một đoạn mã — hai bản sao thì sớm muộn cũng
-             * lệch nhau.
-             *
-             * Điều kiện giống hệt hoàn kho: chỉ trả lại khi đơn còn đang
-             * "sống". Huỷ một đơn đã huỷ không được trừ tiếp lần nữa.
-             */
             if ($restoreStock) {
                 $this->coupons->release($order);
 
-                // Trả lại điểm khách đã dùng — cùng điều kiện, cùng transaction với trả lượt mã.
                 app(\App\Services\Points\PointLedger::class)->traDiemCuaDon($order);
 
-                // Trả suất quà (kho của dòng quà đã trả ở restoreStock, cùng đường với hàng bán).
                 app(\App\Services\Gift\GiftGranter::class)->traSuatCuaDon($order);
 
-                // Kế hoạch trả góp còn đang trả thì đóng theo đơn — cùng transaction.
                 app(\App\Services\Installment\InstallmentService::class)->dongTheoDon($order);
             }
         });
 
-        /*
-         * DỰNG LỊCH NHẮC CHĂM CÂY khi đơn đã giao.
-         *
-         * ĐẶT SAU transaction, cùng lý do với việc gửi thư: bên trong thì
-         * lịch có thể đã ghi trong khi transaction sau đó bị cuộn lại vì
-         * một lỗi khác — khách nhận nhắc tưới cho một đơn chưa từng giao.
-         *
-         * Nuốt lỗi: trạng thái đơn đã đổi thành công rồi. Không được để
-         * việc dựng lịch nhắc — một dịch vụ phụ — làm hỏng thao tác chính
-         * và bắt admin bấm lại (lần bấm thứ hai sẽ bị máy trạng thái từ
-         * chối vì đơn đã ở trạng thái đó).
-         */
-        /*
-         * NHẬT KÝ NỘI BỘ — sau transaction, vì nó không được quyền làm
-         * hỏng việc chính. ActivityLogger đã tự nuốt lỗi, chỗ này chỉ
-         * cần đặt đúng thứ tự.
-         */
         $this->audit->logChange(
             'order.status_changed',
             $order,
@@ -730,7 +378,6 @@ class OrderService
                 ]);
             }
 
-            // Điểm mua hàng — dịch vụ phụ như lịch nhắc: sau transaction, không làm hỏng việc chính.
             try {
                 app(\App\Services\Points\PointEarning::class)->donHoanTat($order);
             } catch (\Throwable $e) {
@@ -741,53 +388,16 @@ class OrderService
             }
         }
 
-        /*
-         * BÁO CHO KHÁCH — ĐẶT SAU transaction, KHÔNG ĐẶT BÊN TRONG.
-         *
-         * Bên trong transaction thì email có thể đã bay đi trong khi
-         * transaction sau đó bị cuộn lại vì một lỗi khác — khách nhận thư
-         * "đơn đã giao" cho một đơn thật ra vẫn đang chờ. Thư gửi rồi thì
-         * không rút lại được, còn dữ liệu thì rollback được; nên thứ
-         * không rút lại được phải đi sau cùng.
-         *
-         * Đặt ở ĐÂY chứ không ở controller vì cả admin đổi trạng thái lẫn
-         * khách tự huỷ đều đi qua hàm này. Để ở controller là hai bản sao,
-         * và bản thứ hai sẽ quên.
-         *
-         * OrderMailer tự bỏ qua các trạng thái không đáng báo và tự nuốt
-         * lỗi gửi, nên chỗ này không cần rẽ nhánh hay bọc try.
-         */
         $this->mailer->sendStatusUpdate($order);
     }
 
     private function restoreStock(Order $order): void
     {
-        // Cùng một đường với hàng khách trả về — xem StockReturn.
         foreach ($order->items as $item) {
             $this->stock->congLai($item, (int) $item->quantity);
         }
     }
 
-    /**
-     * Đổi trạng thái thanh toán của một đơn.
-     *
-     * NƠI DUY NHẤT ghi cột `payment_status`. Trước đây markPaid() gán
-     * thẳng, không kiểm gì — nên đánh dấu được cả một đơn ĐÃ HUỶ là đã
-     * thanh toán. Đo được: đơn ở trạng thái `cancelled` vẫn nhận
-     * `paid` mà không có lời cảnh báo nào.
-     *
-     * HAI PHÉP KIỂM, cả hai đều cần:
-     *
-     *   1. ĐÚNG ĐƯỜNG ĐI (PaymentStatus::canTransitionTo). Chặn nhảy từ
-     *      "chưa trả" thẳng sang "đã hoàn tiền" — chưa nhận thì không có
-     *      gì để hoàn.
-     *
-     *   2. ĐÚNG BỐI CẢNH ĐƠN HÀNG. Đơn đã huỷ thì không nhận thêm tiền.
-     *      Nếu khách lỡ chuyển rồi thì việc cần làm là HOÀN TIỀN, không
-     *      phải đánh dấu đã thu.
-     *
-     * @throws OrderException với câu nói được cho người dùng
-     */
     public function setPaymentStatus(Order $order, PaymentStatus $target): void
     {
         $current = $order->payment_status;
@@ -807,11 +417,6 @@ class OrderService
             ));
         }
 
-        /*
-         * ĐƠN TRẢ GÓP: "đã thanh toán" là HỆ QUẢ của kỳ cuối (InstallmentService),
-         * không đặt tay, không gỡ tay. Mở đường tắt là có đơn "đã thanh toán"
-         * được giao trong khi còn kỳ chưa trả.
-         */
         if ($order->payment_method === PaymentMethod::TraGop) {
             $traDu = \App\Models\InstallmentPlan::query()
                 ->where('order_id', $order->id)
@@ -832,28 +437,6 @@ class OrderService
             );
         }
 
-        /*
-         * HOÀN TIỀN CHỈ CHO ĐƠN ĐÃ HUỶ.
-         *
-         * LỖI TRƯỚC KHI SỬA: luật chuyển trạng thái chỉ nói "đã trả ->
-         * hoàn tiền được", không hỏi đơn đang ở đâu. Nên một đơn ĐANG
-         * GIAO vẫn đánh dấu "đã hoàn tiền" được — hệ thống ghi cửa hàng
-         * đã trả tiền lại trong khi hàng vẫn đang trên đường tới khách.
-         *
-         * Hoàn tiền cho đơn chưa huỷ là nghiệp vụ TRẢ HÀNG, cần quy
-         * trình riêng (nhận hàng về, kiểm tra, rồi mới hoàn). Chưa có
-         * quy trình đó thì chặn, chứ không để ghi một trạng thái mà
-         * không ai biết nó nghĩa là gì.
-         */
-        /*
-         * "ĐÃ HOÀN TIỀN" KHÔNG ĐẶT TAY ĐƯỢC NỮA.
-         *
-         * Trước đây đây là một cú bấm: đổi trạng thái, không ghi hoàn bao
-         * nhiêu, bằng cách nào, mã giao dịch gì. Giờ trạng thái này là HỆ
-         * QUẢ: RefundService tự đặt khi tổng các lần hoàn xong bằng số
-         * khách đã trả. Mở lại đường tắt ở đây là để có đơn "đã hoàn
-         * tiền" mà không có một đồng hoàn tiền nào được ghi.
-         */
         if ($target === PaymentStatus::Refunded && $order->status === OrderStatus::Cancelled) {
             throw new OrderException(
                 'Hoàn tiền phải ghi ở mục "Hoàn tiền" của đơn: nhập số tiền, cách hoàn và mã giao dịch. '
@@ -869,21 +452,6 @@ class OrderService
             );
         }
 
-        /*
-         * KHÔNG GỠ ĐÁNH DẤU THANH TOÁN CỦA ĐƠN ĐÃ GIAO XONG.
-         *
-         * Đường lui "đã trả -> chưa trả" sinh ra để sửa cú bấm nhầm, và
-         * cú bấm nhầm thì phát hiện ngay. Một đơn đã giao xong mà quay
-         * về "chưa thanh toán" tạo ra trạng thái không có nghĩa: hàng
-         * đã ở nhà khách, tiền thì hệ thống bảo chưa nhận. Nếu thật sự
-         * khách chưa trả thì đó là công nợ, cần chỗ ghi riêng.
-         */
-        /*
-         * ĐÃ CÓ KHOẢN HOÀN TIỀN THÌ KHÔNG GỠ ĐƯỢC "ĐÃ THANH TOÁN".
-         *
-         * Gỡ đi thì đơn thành "khách chưa trả" nhưng lại có tiền đã trả
-         * lại khách — một khoản chi không có khoản thu tương ứng.
-         */
         if ($target === PaymentStatus::Unpaid && $order->refunds()->where('status', '!=', 'failed')->exists()) {
             throw new OrderException(
                 'Đơn này đã có khoản hoàn tiền nên không gỡ đánh dấu thanh toán được.'
@@ -900,21 +468,6 @@ class OrderService
         $order->payment_status = $target;
         $order->save();
 
-        /*
-         * VÀO NHẬT KÝ, KHÔNG CHỈ VÀO FILE LOG.
-         *
-         * Log::info ghi ra file trên máy chủ — hữu ích khi lập trình
-         * viên đi tìm nguyên nhân, nhưng người quản lý cửa hàng không
-         * mở được, và file log bị xoay vòng nên vài ngày là mất.
-         *
-         * Đây là thao tác về TIỀN. "Ai đánh dấu đơn này đã thanh toán?"
-         * là câu hỏi sẽ được hỏi, và phải trả lời được sau nhiều tháng.
-         *
-         * KHÔNG ghi vào order_status_events: bảng đó là dòng thời gian
-         * KHÁCH ĐỌC ĐƯỢC, còn việc cửa hàng đánh dấu đã nhận tiền là
-         * chuyện nội bộ. Khách chỉ cần thấy trạng thái thanh toán hiện
-         * tại, không cần thấy nhân viên nào bấm nút lúc mấy giờ.
-         */
         $this->audit->logChange(
             'order.payment_changed',
             $order,
@@ -931,27 +484,8 @@ class OrderService
         ]);
     }
 
-    /**
-     * Đơn này có đang nợ khách một khoản hoàn tiền không.
-     *
-     * ĐÃ HUỶ MÀ KHÁCH ĐÃ TRẢ TIỀN là tình huống cửa hàng phải xử lý
-     * ngay, nhưng hệ thống không thể tự đánh dấu "đã hoàn tiền": nó
-     * không biết ai đó có thật sự chuyển khoản trả lại hay chưa. Việc
-     * của phần mềm là NHẮC, việc chuyển tiền là của con người.
-     */
     public function owesRefund(Order $order): bool
     {
-        /*
-         * Còn tiền chưa trả lại mới là còn nợ. Đơn huỷ đã hoàn một phần
-         * thì vẫn nợ phần còn lại; đã giữ chỗ đủ (kể cả lần hoàn MoMo
-         * đang chờ kết quả) thì không nhắc thêm — việc cần làm lúc đó là
-         * xác nhận lần đang chờ, không phải hoàn thêm.
-         */
-        /*
-         * "Còn tiền đã thu chưa trả lại" — không đòi `paid`: đơn trả góp vỡ giữa
-         * chừng vẫn "chưa thanh toán" nhưng các kỳ đã trả là tiền thật phải hoàn.
-         * Đơn thường chưa trả thì Order::daThu() = 0 nên không bị nhắc nhầm.
-         */
         return $order->status === OrderStatus::Cancelled
             && $order->payment_status !== PaymentStatus::Refunded
             && bccomp($order->refundableAmount(), '0', 2) > 0;

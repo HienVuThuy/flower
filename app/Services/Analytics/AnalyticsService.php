@@ -14,34 +14,9 @@ use App\Models\UserEvent;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
-/**
- * Truy vấn cho trang Phân tích của admin.
- * ============================================================
- * MỌI CON SỐ Ở ĐÂY ĐỀU ĐẾM TỪ CƠ SỞ DỮ LIỆU. Không ước lượng, không
- * sinh dữ liệu mẫu, không "tạm để đó cho đẹp". Chưa có dữ liệu thì trả
- * về rỗng và để giao diện nói thẳng là chưa có.
- *
- * HAI NGUỒN DỮ LIỆU, KHÔNG ĐƯỢC TRỘN:
- *
- *   `user_events`  — HÀNH VI. Là nhật ký những việc đã xảy ra: ai xem
- *                    gì, thêm gì vào giỏ. Bản ghi ở lại kể cả khi đơn
- *                    hàng tương ứng bị xoá.
- *
- *   `orders`       — TIỀN VÀ ĐƠN. Là sự thật hiện tại của cửa hàng.
- *
- * Vì sao phải tách: hiện có 8 sự kiện `purchase` nhưng 0 đơn hàng, do
- * các đơn thử nghiệm đã bị xoá còn nhật ký thì không. Nếu tính doanh thu
- * từ `meta` của sự kiện (trong đó có sẵn quantity và unit_price) thì sẽ
- * báo cáo doanh thu của những đơn KHÔNG CÒN TỒN TẠI — tức là bịa tiền.
- * Doanh thu chỉ được đọc từ bảng `orders`.
- *
- * TẤT CẢ TRUY VẤN GOM VỀ MỘT LỚP để controller mỏng, để hai màn hình
- * (Bảng điều khiển và Phân tích) dùng chung một định nghĩa cho cùng một
- * chỉ số, và để sau này đổi cách tính chỉ phải sửa một nơi.
- */
+/** Truy vấn cho trang Phân tích của admin. */
 class AnalyticsService
 {
-    /** Các khoảng thời gian cho ô chọn. */
     public const PERIODS = [
         '7' => '7 ngày qua',
         '30' => '30 ngày qua',
@@ -50,20 +25,8 @@ class AnalyticsService
 
     private ?Carbon $since = null;
 
-    /**
-     * Mốc kết thúc khoảng đang xét.
-     *
-     * null = tới hiện tại, tức là khoảng "gần đây" bình thường. Chỉ khác
-     * null khi đang nhìn về KỲ TRƯỚC để so sánh.
-     */
     private ?Carbon $until = null;
 
-    /**
-     * Chốt khoảng thời gian cho mọi truy vấn sau đó.
-     *
-     * Trả về chính nó để controller viết được một dòng:
-     *     $analytics->forPeriod($period)->funnel()
-     */
     public function forPeriod(string $period): static
     {
         $this->since = self::startOf($period);
@@ -72,12 +35,6 @@ class AnalyticsService
         return $this;
     }
 
-    /**
-     * Khoảng ngày do admin tự chọn.
-     *
-     * `$den` là mốc MỞ — nửa đêm của ngày kế tiếp ngày cuối. Xem ChonKy;
-     * mọi nơi áp khoảng đều so bằng `<` ở đầu này.
-     */
     public function forRange(Carbon $tu, Carbon $den): static
     {
         $this->since = $tu;
@@ -86,35 +43,8 @@ class AnalyticsService
         return $this;
     }
 
-    /**
-     * Chuyển sang KỲ TRƯỚC, dài đúng bằng kỳ hiện tại.
-     * ============================================================
-     * "30 ngày qua" thành "30 ngày trước đó nữa", tức là từ ngày thứ 60
-     * tới ngày thứ 30 tính ngược từ hôm nay.
-     *
-     * VÌ SAO CẦN: một con số trần trụi ("12 đơn") không nói lên điều gì.
-     * Chỉ khi đặt cạnh kỳ trước ("12 đơn, kỳ trước 20") thì admin mới
-     * biết cửa hàng đang lên hay đang xuống — và đó mới là câu hỏi thật
-     * sự cần trả lời khi mở trang này.
-     *
-     * HAI ĐẦU KHOẢNG PHẢI KHỚP NHAU, nếu không so sánh là vô nghĩa: kỳ
-     * trước phải dài đúng bằng kỳ này, không được là "toàn bộ những gì
-     * trước đó".
-     *
-     * Kỳ 'all' KHÔNG có kỳ trước — không có gì nằm trước "toàn bộ". Lúc
-     * đó hàm trả về false và giao diện tự ẩn phần so sánh, thay vì bịa ra
-     * một mốc.
-     */
     public function forPreviousPeriod(string $period): bool
     {
-        /*
-         * KHOẢNG TỰ CHỌN có mốc kết thúc riêng, không kéo tới "bây giờ".
-         *
-         * Dùng chung công thức `$start -> now()` cho nó là sai: chọn
-         * 01/09–07/09 rồi so với "kỳ trước" thì kỳ trước phải là
-         * 25/08–31/08, chứ không phải một khoảng dài bằng khoảng từ 01/09
-         * tới hôm nay. Kỳ càng cũ thì sai càng nhiều, và không có gì báo.
-         */
         if ($this->since !== null && $this->until !== null) {
             $dai = (int) $this->since->diffInSeconds($this->until);
 
@@ -138,17 +68,6 @@ class AnalyticsService
         return true;
     }
 
-    /**
-     * Đọc mã kỳ từ tham số URL, trả về một mã CHẮC CHẮN hợp lệ.
-     *
-     * Ở ĐÂY chứ không ở từng controller: hai màn hình (Tổng quan và
-     * Phân tích) cùng nhận tham số `ky`. Mỗi nơi tự kiểm một kiểu thì
-     * đủ để một nơi nhận '90' còn nơi kia lùi về '30', và hai trang nói
-     * hai con số cho cùng một cửa hàng.
-     *
-     * Tham số lạ thì LÙI VỀ MẶC ĐỊNH, không nổ: `?ky=<script>` là thứ
-     * bất kỳ ai cũng gõ được vào thanh địa chỉ.
-     */
     public static function hopLeKy(mixed $ky, string $macDinh = '30'): string
     {
         $ky = is_scalar($ky) ? (string) $ky : '';
@@ -156,24 +75,8 @@ class AnalyticsService
         return array_key_exists($ky, self::PERIODS) ? $ky : $macDinh;
     }
 
-    /**
-     * Mốc bắt đầu của một kỳ, hoặc null với 'all'.
-     *
-     * NỬA ĐÊM GIỜ VIỆT NAM, không phải nửa đêm UTC (tức 7h sáng). Xem
-     * KhoangThoiGian.
-     */
     private static function startOf(string $period): ?Carbon
     {
-        /*
-         * "7 NGÀY QUA" LÀ 7 NGÀY, TÍNH CẢ HÔM NAY.
-         *
-         * Lỗi đã sửa: trước đây lấy nửa đêm của 7 ngày trước, nên cửa sổ
-         * phủ 8 ngày lịch — đo được 06/09 00:00 đến 13/09 01:22. Nhãn nói
-         * 7, số liệu là 8. Lệch âm thầm: không trang nào báo, mà mọi so
-         * sánh "kỳ này với kỳ trước" đều dịch theo.
-         *
-         * Trừ đi 1 vì hôm nay đã là một trong bảy ngày đó.
-         */
         return match ($period) {
             '7' => KhoangThoiGian::nuaDemTruoc(7 - 1),
             '30' => KhoangThoiGian::nuaDemTruoc(30 - 1),
@@ -181,26 +84,11 @@ class AnalyticsService
         };
     }
 
-    /**
-     * Kỳ đang chốt, dưới dạng một đối tượng đưa được cho lớp báo cáo khác.
-     *
-     * Các trang con của Phân tích (doanh thu, khách hàng, đánh giá, lợi
-     * nhuận) lấy kỳ từ ĐÂY chứ không tự tính lại — để "7 ngày qua" ở mọi
-     * trang là cùng một khoảng.
-     */
     public function khoang(): KhoangThoiGian
     {
         return new KhoangThoiGian($this->since, $this->until);
     }
 
-    /**
-     * Phần trăm thay đổi giữa kỳ này và kỳ trước.
-     *
-     * Trả về null khi KHÔNG SO SÁNH ĐƯỢC, và đó là trường hợp phải xử lý
-     * cẩn thận: kỳ trước bằng 0 thì mọi con số dương đều là "tăng vô
-     * hạn". In ra "+∞%" hay "+100%" đều là bịa. null để giao diện nói
-     * "kỳ trước chưa có dữ liệu" — đúng sự thật và hữu ích hơn.
-     */
     public static function change(float $now, float $before): ?float
     {
         if ($before <= 0.0) {
@@ -210,22 +98,6 @@ class AnalyticsService
         return round(($now - $before) / $before * 100, 1);
     }
 
-    /* ================= HÀNH VI (user_events) ================= */
-
-    /**
-     * Phễu chuyển đổi: xem → thêm giỏ → mua.
-     *
-     * Đếm theo PHIÊN chứ không theo lượt.
-     *
-     * Đếm lượt sẽ cho ra tỷ lệ vô nghĩa: một người xem đi xem lại một
-     * sản phẩm 20 lần rồi mua 1 lần thành "tỷ lệ chuyển đổi 5%", trong
-     * khi thực tế người đó mua 100%. Phễu phải trả lời "bao nhiêu phiên
-     * đi được tới bước này", đó mới là câu hỏi kinh doanh.
-     *
-     * @return array{views: int, carts: int, purchases: int,
-     *               view_to_cart: float|null, cart_to_purchase: float|null,
-     *               view_to_purchase: float|null}
-     */
     public function funnel(): array
     {
         $views = $this->distinctSessions(UserEventType::ProductView);
@@ -242,7 +114,6 @@ class AnalyticsService
         ];
     }
 
-    /** Tổng số lượt (không phải số phiên) theo từng loại sự kiện. */
     public function eventTotals(): Collection
     {
         return $this->events()
@@ -251,14 +122,6 @@ class AnalyticsService
             ->pluck('total', 'event_type');
     }
 
-    /**
-     * Sản phẩm được quan tâm nhất theo một loại sự kiện.
-     *
-     * Nạp kèm `product` bằng một truy vấn (whereIn) thay vì để Blade tự
-     * gọi — nếu không thì 10 dòng là 10 truy vấn.
-     *
-     * @return Collection<int, array{product: \App\Models\Product|null, total: int}>
-     */
     public function topProducts(UserEventType $type, int $limit = 8): Collection
     {
         $rows = $this->events()
@@ -275,14 +138,11 @@ class AnalyticsService
             ->keyBy('id');
 
         return $rows->map(fn ($r) => [
-            // Sản phẩm có thể đã bị xoá — nhật ký vẫn còn. Để null và
-            // giao diện tự hiển thị "(đã xoá)", không được nổ.
             'product' => $products->get($r->product_id),
             'total' => (int) $r->total,
         ]);
     }
 
-    /** Danh mục được xem nhiều nhất. */
     public function topCategories(int $limit = 6): Collection
     {
         $rows = $this->events()
@@ -304,15 +164,6 @@ class AnalyticsService
         ]);
     }
 
-    /**
-     * Từ khoá khách tìm nhiều nhất.
-     *
-     * Từ khoá nằm trong cột JSON `meta->q`. Gom nhóm ở PHP chứ không ở
-     * SQL: cú pháp truy vấn JSON khác nhau giữa MySQL và các hệ khác, mà
-     * số dòng `search` luôn nhỏ hơn nhiều so với `product_view`.
-     *
-     * @return Collection<int, array{term: string, total: int}>
-     */
     public function topSearches(int $limit = 10): Collection
     {
         $terms = $this->events()
@@ -320,7 +171,6 @@ class AnalyticsService
             ->pluck('meta')
             ->map(fn ($meta) => is_array($meta) ? trim((string) ($meta['q'] ?? '')) : '')
             ->filter()
-            // Gộp "Hoa" với "hoa" — người tìm không phân biệt hoa thường.
             ->map(fn (string $q) => mb_strtolower($q));
 
         return $terms->countBy()
@@ -330,26 +180,10 @@ class AnalyticsService
             ->values();
     }
 
-    /**
-     * Hoạt động theo ngày, dùng để vẽ biểu đồ cột.
-     *
-     * ĐIỀN ĐỦ CẢ NHỮNG NGÀY KHÔNG CÓ SỰ KIỆN. Nếu chỉ trả về các ngày có
-     * dữ liệu thì biểu đồ sẽ nối liền ngày 1 với ngày 5 như thể chúng
-     * liền nhau — nhìn tưởng hoạt động đều, thực tế có ba ngày chết.
-     *
-     * @return Collection<int, array{date: string, label: string, total: int}>
-     */
     public function dailyActivity(int $days = 14): Collection
     {
         $from = KhoangThoiGian::nuaDemTruoc($days - 1);
 
-        /*
-         * GOM THEO NGÀY GIỜ VIỆT NAM, ở PHP.
-         *
-         * `DATE(created_at)` trong SQL cắt ngày theo giờ lưu (UTC) — mọi sự
-         * kiện từ 0h tới 7h sáng rơi vào ngày hôm trước. Đổi múi giờ trong
-         * SQL thì MySQL và SQLite viết khác nhau, nên đếm ở đây.
-         */
         $counts = UserEvent::where('created_at', '>=', $from)
             ->pluck('created_at')
             ->countBy(fn ($t) => KhoangThoiGian::diaPhuong($t)->toDateString());
@@ -368,27 +202,6 @@ class AnalyticsService
         });
     }
 
-    /* ================= TIỀN VÀ ĐƠN (orders) ================= */
-
-    /**
-     * Số liệu đơn hàng — đọc từ bảng `orders`, KHÔNG từ nhật ký sự kiện.
-     *
-     * Doanh thu chỉ tính đơn ĐÃ GIAO. Đơn đang xử lý chưa phải là tiền
-     * đã thu; gộp vào là báo cáo doanh thu cao hơn sự thật.
-     *
-     * `revenue` là tiền của đơn đã giao, CHƯA trừ hoàn tiền. `refunded` là
-     * phần đã trả lại khách cho CHÍNH những đơn đó, và `net_revenue` là số
-     * cửa hàng thật sự giữ lại — con số trang Tổng quan và Phân tích đưa
-     * lên đầu.
-     *
-     * Chỉ trừ hoàn tiền của đơn ĐÃ GIAO: tiền hoàn của đơn đã huỷ chưa bao
-     * giờ nằm trong doanh thu, trừ đi là trừ hai lần. Chỉ tính lần hoàn ĐÃ
-     * XONG: một lần "chưa rõ kết quả" chưa chắc tiền đã đi.
-     *
-     * @return array{total: int, completed: int, cancelled: int,
-     *               revenue: float, refunded: float, bu_doi_hang: float, net_revenue: float,
-     *               average: float|null}
-     */
     public function orderStats(): array
     {
         $query = $this->applyWindow(Order::query(), 'created_at');
@@ -403,20 +216,6 @@ class AnalyticsService
             ->whereIn('order_id', (clone $query)->where('status', OrderStatus::Completed)->select('id'))
             ->sum('amount');
 
-        /*
-         * TIỀN KHÁCH BÙ KHI ĐỔI HÀNG LÀ TIỀN VÀO.
-         *
-         * Khách đổi sang món đắt hơn và trả thêm phần chênh. Khoản đó
-         * không nằm trong `grand_total` của đơn — đơn đã chốt từ trước —
-         * nên bỏ qua nó là cửa hàng thu tiền thật mà sổ không thấy.
-         *
-         * Chiều ngược lại (hàng mới rẻ hơn, cửa hàng trả lại) KHÔNG cộng
-         * ở đây: phiếu đổi đã lập một chứng từ hoàn tiền, và `$refunded`
-         * bên trên đã trừ nó rồi. Cộng thêm lần nữa là trừ hai lần.
-         *
-         * Gắn theo ĐƠN GỐC, cùng cách với hoàn tiền: một lần đổi thuộc về
-         * kỳ của đơn đã bán, không phải kỳ của ngày đi đổi.
-         */
         $buThem = (float) \App\Models\Exchange::query()
             ->where('status', \App\Enums\ExchangeStatus::HoanTat->value)
             ->whereIn('order_id', (clone $query)->where('status', OrderStatus::Completed)->select('id'))
@@ -430,34 +229,12 @@ class AnalyticsService
             'refunded' => $refunded,
             'bu_doi_hang' => $buThem,
             'net_revenue' => $revenue - $refunded + $buThem,
-            // Chia cho 0 là lỗi; chưa có đơn nào giao thì không có giá
-            // trị trung bình, và null khác 0 — giao diện hiển thị khác nhau.
             'average' => $completed > 0 ? $revenue / $completed : null,
         ];
     }
 
-    /**
-     * Doanh thu và số đơn theo từng NGÀY trong kỳ đang chọn.
-     * ============================================================
-     * TRẢ VỀ ĐỦ MỌI NGÀY, kể cả ngày không có đơn nào.
-     *
-     * Nhóm bằng SQL rồi vẽ thẳng kết quả thì ngày không có đơn biến mất
-     * khỏi trục — và đường biểu đồ nối thẳng từ ngày 3 sang ngày 7, đọc
-     * ra như bốn ngày đó bán đều đều. Ngày trống PHẢI là số 0 nhìn thấy
-     * được, không phải một khoảng trống.
-     *
-     * "Toàn bộ" thì lấy 90 ngày gần nhất: một đường 3 năm nén vào 600px
-     * không đọc được gì, và câu hỏi của biểu đồ này là "gần đây thế nào".
-     *
-     * @return Collection<int, array{date: string, label: string, revenue: float, orders: int}>
-     */
     public function revenueByDay(int $toiDa = 90): Collection
     {
-        /*
-         * MỌI MỐC Ở ĐÂY LÀ GIỜ VIỆT NAM: ngày đầu, ngày cuối, và ngày của
-         * từng đơn. Xem KhoangThoiGian — gom theo DATE() của SQL thì đơn
-         * đặt lúc 6h sáng rơi vào ngày hôm trước.
-         */
         $mg = KhoangThoiGian::muiGio();
 
         $tu = $this->since
@@ -468,8 +245,6 @@ class AnalyticsService
             ? KhoangThoiGian::diaPhuong($this->until)->subSecond()->endOfDay()
             : now($mg)->endOfDay();
 
-        // Chặn trần: kỳ "Toàn bộ" của một cửa hàng chạy vài năm sẽ sinh
-        // ra hàng nghìn cột.
         if ($tu->diffInDays($den) > $toiDa) {
             $tu = $den->copy()->subDays($toiDa - 1)->startOfDay();
         }
@@ -498,15 +273,6 @@ class AnalyticsService
         });
     }
 
-    /**
-     * Cơ cấu đơn theo trạng thái.
-     *
-     * TRẢ VỀ ĐỦ MỌI TRẠNG THÁI, kể cả trạng thái không có đơn nào — biểu
-     * đồ tròn và bảng bên cạnh phải cùng một danh sách, nếu không thì
-     * chú giải nhảy chỗ mỗi lần đổi kỳ và người đọc mất mốc so sánh.
-     *
-     * @return Collection<int, array{status: OrderStatus, total: int, revenue: float}>
-     */
     public function statusBreakdown(): Collection
     {
         $rows = $this->applyWindow(Order::query(), 'created_at')
@@ -522,14 +288,6 @@ class AnalyticsService
         ]);
     }
 
-    /**
-     * Cơ cấu theo hình thức thanh toán.
-     *
-     * ĐẾM MỌI ĐƠN, doanh thu chỉ tính đơn đã giao — hai câu hỏi khác
-     * nhau: "khách chọn cách nào" và "cách nào mang về tiền".
-     *
-     * @return Collection<int, array{method: PaymentMethod, total: int, revenue: float}>
-     */
     public function paymentMix(): Collection
     {
         $dem = $this->applyWindow(Order::query(), 'created_at')
@@ -550,15 +308,6 @@ class AnalyticsService
         ]);
     }
 
-    /**
-     * Khách mua nhiều nhất trong kỳ.
-     *
-     * CHỈ ĐƠN ĐÃ GIAO, và bỏ qua khách vãng lai (`user_id` NULL): gom
-     * mọi đơn không tài khoản thành "một khách" là dựng ra một khách
-     * hàng không có thật, thường đứng đầu bảng.
-     *
-     * @return Collection<int, array{name: string, email: ?string, orders: int, revenue: float}>
-     */
     public function topCustomers(int $limit = 8): Collection
     {
         return $this->applyWindow(Order::query(), 'orders.created_at')
@@ -577,15 +326,6 @@ class AnalyticsService
             ]);
     }
 
-    /**
-     * Mã giảm giá đã dùng trong kỳ, kèm tiền đã giảm.
-     *
-     * Đọc từ BẢN CHỤP trên đơn (`coupon_code`, `coupon_discount`) chứ
-     * không join sang bảng `coupons`: mã bị xoá sau đó thì đơn cũ vẫn
-     * phải kể được câu chuyện của nó.
-     *
-     * @return Collection<int, array{code: string, orders: int, discount: float}>
-     */
     public function couponUsage(int $limit = 10): Collection
     {
         return $this->applyWindow(Order::query(), 'created_at')
@@ -602,45 +342,16 @@ class AnalyticsService
             ]);
     }
 
-    /**
-     * Sản phẩm bán chạy — đọc từ order_items của đơn ĐÃ GIAO.
-     *
-     * Dùng tên đã chụp trong đơn (`product_name`) chứ không join sang
-     * bảng products: đơn hàng là bản chụp tại thời điểm mua, và sản phẩm
-     * có thể đã đổi tên hoặc bị xoá.
-     */
     public function bestSellers(int $limit = 8): Collection
     {
         $query = \App\Models\OrderItem::query()
-            ->hangBan() // quà tặng kèm không phải hàng bán chạy
+            ->hangBan()
             ->join('orders', 'orders.id', '=', 'order_items.order_id')
             ->where('orders.status', OrderStatus::Completed->value)
             ->whereNull('orders.deleted_at');
 
         $this->applyWindow($query, 'orders.created_at');
 
-        /*
-         * GOM THEO product_id, KHÔNG THEO TÊN.
-         *
-         * Tên trong `order_items` là BẢN CHỤP lúc đặt hàng — cố ý như
-         * vậy để hoá đơn cũ không đổi khi cửa hàng sửa tên sản phẩm.
-         * Nhưng gom nhóm theo nó thì:
-         *
-         *   - Đổi tên "Hoa hồng đỏ" thành "Hoa hồng đỏ Ecuador" là MỘT
-         *     sản phẩm bị tách làm hai dòng, cả hai đều thấp hơn thực
-         *     tế, và có thể rơi khỏi top.
-         *   - Hai sản phẩm khác nhau từng trùng tên thì bị GỘP thành
-         *     một — con số cao hơn sự thật.
-         *
-         * `product_id` không đổi theo tên. Sản phẩm bị xoá hẳn thì id
-         * thành null; nhóm đó gom chung và hiện bằng tên chụp, xem
-         * phần map bên dưới.
-         *
-         * MAX(product_name) chứ không phải product_name trần: chuẩn SQL
-         * cấm chọn cột không nằm trong GROUP BY, và MySQL bật
-         * ONLY_FULL_GROUP_BY sẽ báo lỗi. Lấy tên mới nhất trong nhóm là
-         * đủ đúng — đó là tên khách thấy gần đây nhất.
-         */
         return $query
             ->selectRaw(
                 'order_items.product_id,'
@@ -659,20 +370,6 @@ class AnalyticsService
             ]);
     }
 
-    /* ================= HOÀN TIỀN ================= */
-
-    /**
-     * Mọi lần hoàn tiền GHI TRONG KỲ, theo NGÀY GHI chứ không theo ngày đặt
-     * đơn — khác các báo cáo đơn hàng.
-     *
-     * Câu hỏi của bảng này là "tháng này cửa hàng đã trả lại bao nhiêu",
-     * và một đơn tháng trước hoàn tháng này là tiền đi ra tháng này.
-     *
-     * Gồm cả lần chưa rõ kết quả và lần không thành công, có cột trạng thái:
-     * người đối soát cần thấy cả những lần MoMo từ chối.
-     *
-     * @return Collection<int, Refund>
-     */
     public function refundList(int $limit = 1000): Collection
     {
         return $this->applyWindow(Refund::query(), 'created_at')
@@ -682,38 +379,6 @@ class AnalyticsService
             ->get();
     }
 
-    /* ================= VẬN CHUYỂN ================= */
-
-    /**
-     * PHÍ SHIP THU CỦA KHÁCH so với CƯỚC TRẢ GHN, trong kỳ.
-     * ============================================================
-     * Trả lời câu "tháng này cửa hàng bù bao nhiêu tiền ship". Chênh lệch
-     * dương là cửa hàng bù (miễn phí giao, hoặc bảng phí theo tỉnh thấp
-     * hơn cước GHN); âm là phí thu dư.
-     *
-     * CHỈ TÍNH VẬN ĐƠN CỬA HÀNG THẬT SỰ TRẢ CƯỚC. Ba loại bị loại ra, và
-     * đếm riêng để giao diện nói được đã loại những gì:
-     *
-     *   người nhận trả   vận đơn tạo trước khi sửa người trả cước; cửa
-     *                    hàng không trả GHN đồng nào
-     *   đã huỷ           GHN không thu cước vận đơn huỷ trước khi lấy hàng
-     *   thiếu số liệu    GHN không báo cước lúc tạo; NULL, không coi là 0
-     *
-     * Gộp bất kỳ loại nào vào là bịa: loại đầu thành một khoản chi không
-     * có thật, loại cuối thành đơn cửa hàng lãi trọn phí ship.
-     *
-     * CƯỚC LÀ CON SỐ GHN BÁO LÚC TẠO VẬN ĐƠN. API chi tiết vận đơn của GHN
-     * không trả lại cước, nên phí hoàn hàng hay điều chỉnh khối lượng sau
-     * khi lấy hàng KHÔNG có ở đây. Con số cuối nằm ở bảng đối soát của
-     * GHN; `hoan_hang` đếm những đơn chắc chắn lệch vì lý do đó.
-     *
-     * Tiền cộng bằng bcmath, trả về CHUỖI: đây là số đem đi đối soát với
-     * hoá đơn GHN, lệch một đồng vì làm tròn số thực là không khớp.
-     *
-     * @return array{van_don: int, tinh_duoc: int, thu: string, tra: string,
-     *               chenh: string, mien_phi: int, hoan_hang: int,
-     *               loai: array{nguoi_nhan_tra: int, da_huy: int, thieu_cuoc: int}}
-     */
     public function shippingCost(): array
     {
         $vanDon = $this->applyWindow(Order::query(), 'created_at')->whereNotNull('ghn_order_code');
@@ -754,22 +419,11 @@ class AnalyticsService
         ];
     }
 
-    /**
-     * Cùng phép so sánh, chia theo THÁNG (theo ngày đặt đơn).
-     *
-     * Gom ở PHP chứ không bằng SQL: hàm định dạng ngày khác nhau giữa
-     * MySQL (DATE_FORMAT) và SQLite (strftime), mà số vận đơn một kỳ luôn
-     * nhỏ. Tháng không có vận đơn thì không có dòng; bảng này không vẽ
-     * thành đường nên không có khoảng trống nào bị nối liền sai.
-     *
-     * @return Collection<int, array{thang: string, don: int, thu: string, tra: string, chenh: string}>
-     */
     public function shippingCostByMonth(): Collection
     {
         return $this->vanDonTinhDuocCuoc()
             ->orderBy('created_at')
             ->get(['created_at', 'shipping_fee', 'ghn_total_fee'])
-            // Tháng theo giờ Việt Nam: đơn 6h sáng ngày 1 thuộc tháng mới.
             ->groupBy(fn ($o) => KhoangThoiGian::diaPhuong($o->created_at)->format('Y-m'))
             ->map(function (Collection $nhom, string $thang) {
                 [$thu, $tra] = $this->congCuoc($nhom);
@@ -785,15 +439,6 @@ class AnalyticsService
             ->values();
     }
 
-    /**
-     * Những đơn cửa hàng bù ship NHIỀU NHẤT.
-     *
-     * Con số tổng nói "bù 300.000₫"; danh sách này nói bù VÌ ĐÂU: đơn
-     * miễn phí giao, hay tỉnh xa mà bảng phí theo tỉnh đặt thấp hơn cước
-     * GHN. Hai nguyên nhân đó sửa ở hai chỗ khác nhau.
-     *
-     * @return Collection<int, array{order: Order, thu: string, tra: string, chenh: string}>
-     */
     public function shippingSubsidies(int $limit = 10): Collection
     {
         return $this->vanDonTinhDuocCuoc()
@@ -809,11 +454,6 @@ class AnalyticsService
             ]);
     }
 
-    /**
-     * MỘT định nghĩa cho "vận đơn tính được cước", dùng cho tổng, theo
-     * tháng và danh sách. Ba hàm tự viết điều kiện thì chỉ cần một hàm
-     * quên loại vận đơn đã huỷ là tổng và bảng tháng lệch nhau.
-     */
     private function vanDonTinhDuocCuoc()
     {
         return $this->applyWindow(Order::query(), 'created_at')
@@ -823,7 +463,6 @@ class AnalyticsService
             ->whereNotNull('ghn_total_fee');
     }
 
-    /** @return array{0: string, 1: string} tổng thu của khách, tổng trả GHN */
     private function congCuoc(Collection $dong): array
     {
         $thu = '0.00';
@@ -837,28 +476,13 @@ class AnalyticsService
         return [$thu, $tra];
     }
 
-    /* ================= HỖ TRỢ ================= */
-
-    /** Câu truy vấn nền, đã áp khoảng thời gian đang chọn. */
     private function events()
     {
         return $this->applyWindow(UserEvent::query(), 'created_at');
     }
 
-    /**
-     * Áp khoảng thời gian đang chọn lên một câu truy vấn bất kỳ.
-     *
-     * MỘT NƠI DUY NHẤT áp cả hai đầu khoảng. Trước đây ba chỗ (events,
-     * orderStats, bestSellers) mỗi chỗ tự viết `if ($this->since)`, và
-     * khi thêm mốc kết thúc thì chỉ cần sót một chỗ là kỳ trước lấy nhầm
-     * luôn cả dữ liệu của kỳ này — con số vẫn hiện ra bình thường, chỉ là
-     * sai, nên không ai phát hiện.
-     *
-     * @param  string  $column  tên cột thời gian, có tiền tố bảng khi cần join
-     */
     private function applyWindow(mixed $query, string $column): mixed
     {
-        // Một cách áp khoảng duy nhất, dùng chung với các trang con.
         return $this->khoang()->apDung($query, $column);
     }
 
@@ -870,7 +494,6 @@ class AnalyticsService
             ->count('session_id');
     }
 
-    /** Tỷ lệ phần trăm, hoặc null khi mẫu số bằng 0. */
     private function rate(int $part, int $whole): ?float
     {
         return $whole > 0 ? round($part / $whole * 100, 1) : null;

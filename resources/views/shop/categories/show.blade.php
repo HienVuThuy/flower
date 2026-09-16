@@ -30,11 +30,6 @@
             <div class="row g-4">
                 @foreach($products as $product)
                     <div class="col-6 col-md-4 col-lg-3">
-                        {{--
-                            :show-category="false" — tiêu đề trang đã là
-                            tên danh mục này rồi, in lại trên từng thẻ là
-                            viết cùng một chữ 12 lần trong một màn hình.
-                        --}}
                         <x-product.card :product="$product" :show-category="false" />
                     </div>
                 @endforeach

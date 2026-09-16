@@ -6,46 +6,12 @@ use App\Enums\TraitType;
 use App\Models\Product;
 use Illuminate\Database\Seeder;
 
-/**
- * Gắn nhãn môi trường sống / dạng sống / dáng / màu cho từng sản phẩm.
- * ============================================================
- * KHÔNG CẦN MIGRATION: bảng `product_traits` đã có sẵn với đúng hình
- * dạng cần thiết (product_id + trait_type + trait_value), và nó vốn được
- * dựng cho chính việc này — nhiều nhãn một sản phẩm, nhiều sản phẩm một
- * nhãn. Thêm bốn cột vào bảng `products` là làm hỏng cả hai chiều đó.
- *
- * ============================================================
- * SẢN PHẨM PHỐI NHIỀU LOÀI CHỈ CÓ DÁNG VÀ MÀU.
- *
- * "Lẵng hoa khai trương" hay "Hoa cầm tay cô dâu" là một BÓ gồm nhiều
- * loài khác nhau. Hỏi nó "môi trường sống là gì" thì không có câu trả
- * lời đúng — nên bỏ trống, y như `taxon_id`. Dáng và màu thì vẫn tả được
- * vì đó là đặc điểm của chính sản phẩm chứ không phải của một loài.
- *
- * Bịa cho đủ bốn nhãn thì bộ lọc trông "đầy đủ" hơn và trả về kết quả
- * sai — khách lọc "cây sa mạc" mà ra một bó hoa cưới.
- *
- * ============================================================
- * `syncTraits()` GHI ĐÈ, KHÔNG CỘNG DỒN.
- *
- * Product::syncTraits() xoá hết nhãn cùng loại rồi ghi lại. Nhờ vậy chạy
- * seeder lần thứ hai không nhân đôi nhãn, và sửa một dòng trong bảng
- * dưới đây là sửa được dữ liệu thật.
- */
+/** Gắn nhãn môi trường sống / dạng sống / dáng / màu cho từng sản phẩm. */
 class PlantTraitSeeder extends Seeder
 {
-    /**
-     * Bảng dữ liệu: tên sản phẩm => [môi trường, dạng sống, dáng, màu].
-     *
-     * Mảng rỗng nghĩa là "không áp dụng cho mặt hàng này", không phải
-     * "chưa điền".
-     *
-     * @return array<string, array{habitat: list<string>, form: list<string>, shape: list<string>, color: list<string>}>
-     */
     private function bang(): array
     {
         return [
-            /* ---------- HOA CẮT CÀNH ---------- */
             'Hoa hồng đỏ Ecuador' => [
                 'habitat' => ['temperate', 'terrestrial'],
                 'form' => ['shrub'], 'shape' => ['upright'], 'color' => ['red'],
@@ -91,7 +57,6 @@ class PlantTraitSeeder extends Seeder
                 'form' => ['shrub'], 'shape' => ['round'], 'color' => ['pink'],
             ],
 
-            /* ---------- CÂY TRỒNG CHẬU ---------- */
             'Monstera Deliciosa chậu gốm' => [
                 'habitat' => ['rainforest', 'epiphyte'],
                 'form' => ['vine'], 'shape' => ['columnar'], 'color' => ['green'],
@@ -113,7 +78,6 @@ class PlantTraitSeeder extends Seeder
                 'form' => ['herb'], 'shape' => ['upright'], 'color' => ['green'],
             ],
             'Kim ngân bện thân' => [
-                // Pachira aquatica mọc ở vùng đầm lầy — chịu được gốc ẩm.
                 'habitat' => ['semiaquatic', 'rainforest'],
                 'form' => ['tree'], 'shape' => ['upright'], 'color' => ['green'],
             ],
@@ -134,7 +98,6 @@ class PlantTraitSeeder extends Seeder
                 'form' => ['succulent'], 'shape' => ['upright'], 'color' => ['green', 'yellow'],
             ],
 
-            /* ---------- SEN ĐÁ & XƯƠNG RỒNG ---------- */
             'Sen đá mix chậu đá' => [
                 'habitat' => ['desert', 'lithophyte'],
                 'form' => ['succulent'], 'shape' => ['rosette'], 'color' => ['mixed'],
@@ -152,7 +115,6 @@ class PlantTraitSeeder extends Seeder
                 'form' => ['cactus'], 'shape' => ['round'], 'color' => ['green'],
             ],
 
-            /* ---------- BONSAI ---------- */
             'Bonsai tùng la hán dáng trực' => [
                 'habitat' => ['temperate', 'terrestrial'],
                 'form' => ['tree'], 'shape' => ['upright'], 'color' => ['green'],
@@ -162,10 +124,6 @@ class PlantTraitSeeder extends Seeder
                 'form' => ['tree'], 'shape' => ['bushy'], 'color' => ['white', 'green'],
             ],
 
-            /* ---------- HÀNG PHỐI NHIỀU LOÀI ----------
-             * Không có môi trường sống hay dạng sống — xem chú thích đầu
-             * tệp. Dáng và màu thì vẫn là đặc điểm của chính sản phẩm.
-             */
             'Hoa cầm tay cô dâu' => [
                 'habitat' => [], 'form' => [], 'shape' => ['round'], 'color' => ['white'],
             ],
@@ -211,14 +169,6 @@ class PlantTraitSeeder extends Seeder
 
         $this->command?->info("Đã gắn nhãn sinh thái cho {$daGan} sản phẩm.");
 
-        /*
-         * NÓI RA khi có tên không khớp sản phẩm nào.
-         *
-         * Đổi tên một sản phẩm ở trang quản trị là dòng tương ứng ở đây
-         * thành vô nghĩa — và nếu seeder im lặng bỏ qua thì sản phẩm đó
-         * mất hết nhãn mà không ai biết, cho tới lúc có người thắc mắc
-         * vì sao nó không lên trong bộ lọc nào cả.
-         */
         if ($khongThay) {
             $this->command?->warn(
                 'Không tìm thấy sản phẩm (tên có thể đã đổi): ' . implode(', ', $khongThay)

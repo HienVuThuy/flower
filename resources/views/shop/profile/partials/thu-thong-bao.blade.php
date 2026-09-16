@@ -33,21 +33,11 @@
                 Nhắc tôi tưới nước / bón phân cho cây đã mua
             </label>
             <div class="form-text">
-                {{-- Công tắc TỔNG. Nói rõ quan hệ với trang
-                     Lịch chăm cây, nếu không khách tắt ở đây
-                     rồi vẫn thấy danh sách lịch "đang bật" bên
-                     kia và không hiểu cái nào thắng. --}}
                 Đây là công tắc tổng. Muốn tắt riêng từng cây thì vào
                 <a href="{{ route('shop.care.index') }}">Lịch chăm cây</a>.
             </div>
         </div>
 
-        {{--
-            Nói thẳng thứ KHÔNG tắt được, ngay tại chỗ tắt.
-            Người bỏ tích ở đây thường muốn "đừng gửi gì
-            nữa"; nếu không nói rõ, họ sẽ tưởng đã tắt hết
-            rồi bực mình khi vẫn nhận thư xác nhận đơn.
-        --}}
         <p class="text-caption mb-3">
             Thư xác nhận đơn hàng và thư cảnh báo bảo mật (đổi mật khẩu,
             đặt lại mật khẩu) luôn được gửi — đó là biên nhận mua hàng và

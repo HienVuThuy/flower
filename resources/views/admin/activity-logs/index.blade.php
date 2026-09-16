@@ -12,23 +12,7 @@
                 một nhật ký sửa được thì không dùng để đối chiếu.
             </p>
 
-            {{--
-                NÓI RÕ GIỚI HẠN, NGAY TRÊN TRANG.
-
-                Nhật ký này chỉ thấy những gì đi qua ứng dụng. Ai sửa
-                thẳng cơ sở dữ liệu — phpMyAdmin, tinker, câu lệnh SQL —
-                thì không để lại dòng nào.
-
-                Không viết ra thì người đọc mặc định hiểu đây là bản ghi
-                ĐẦY ĐỦ, và sẽ kết luận rằng thứ không có ở đây thì đã
-                không xảy ra. Một nhật ký nói thiếu mà người đọc tưởng là
-                đủ thì còn dẫn sai hơn không có nhật ký.
-
-                Đã gặp đúng cảnh đó trong lúc dựng tính năng này: nhật ký
-                ghi một tài khoản bị hạ quyền và bị khoá, nhưng việc trả
-                lại nguyên trạng làm bằng lệnh ghi thẳng nên không có
-                dòng nào — người đọc tưởng tài khoản vẫn đang bị khoá.
-            --}}
+            {{-- NÓI RÕ GIỚI HẠN, NGAY TRÊN TRANG. --}}
             <p class="admin-page-subtitle mb-0">
                 <strong>Lưu ý:</strong> chỉ ghi những thay đổi thực hiện qua màn hình quản trị.
                 Sửa thẳng cơ sở dữ liệu (phpMyAdmin, dòng lệnh) sẽ không xuất hiện ở đây,
@@ -58,11 +42,6 @@
             @endforeach
         </select>
 
-        {{--
-            KHOẢNG NGÀY — câu hỏi thường gặp nhất ở trang này là "hôm
-            thứ Ba có ai đụng vào cái này không", nên phải lọc được theo
-            ngày mà không cần lật từng trang.
-        --}}
         <input type="date" name="tu" value="{{ request('tu') }}"
                class="form-control" aria-label="Từ ngày">
         <input type="date" name="den" value="{{ request('den') }}"
@@ -98,15 +77,6 @@
                                 {{ $log->description }}
 
                                 @if($log->properties)
-                                    {{--
-                                        CHI TIẾT ĐỂ TRONG THẺ GẤP.
-
-                                        Mở sẵn thì mỗi dòng cao gấp ba và
-                                        bảng không đọc lướt được nữa —
-                                        mà đọc lướt là cách người ta dùng
-                                        trang này. Ai cần soi kỹ một dòng
-                                        thì bấm mở đúng dòng đó.
-                                    --}}
                                     <details class="mt-1">
                                         <summary class="admin-page-subtitle" style="cursor: pointer;">
                                             Chi tiết

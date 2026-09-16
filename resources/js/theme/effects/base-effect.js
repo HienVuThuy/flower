@@ -1,15 +1,4 @@
-/**
- * Hợp đồng lifecycle cho mọi seasonal effect (Layer 3).
- *
- * init()    — tạo canvas, gắn listener. Gọi một lần.
- * enable()  — bắt đầu vẽ (bỏ qua nếu prefers-reduced-motion).
- * disable() — dừng vòng lặp vẽ, xoá canvas, KHÔNG gỡ listener.
- * destroy() — disable() + gỡ toàn bộ listener + canvas khỏi DOM.
- *
- * ThemeManager đảm bảo effect cũ luôn destroy() xong trước khi
- * effect mới init(), nên không có 2 effect chạy song song và
- * không rò rỉ animation frame khi đổi theme liên tục.
- */
+/** Hợp đồng lifecycle cho mọi seasonal effect (Layer 3). */
 export class BaseEffect {
     constructor() {
         this.canvas = null;
@@ -122,7 +111,6 @@ export class BaseEffect {
         this._loop();
     }
 
-    // Ghi đè ở effect con.
     spawnParticle() {
         return {};
     }

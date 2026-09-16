@@ -8,18 +8,7 @@
 
     <div class="product-gallery__main">
         @if($paths)
-            {{--
-                ẢNH CHÍNH — thứ quyết định mốc LCP của trang này.
-
-                Viết tay <picture> thay vì dùng x-site.image vì JavaScript
-                phải ĐỔI được ảnh khi khách bấm ảnh nhỏ, và nó cần đổi cả
-                <source> lẫn <img>. Component dùng chung không có chỗ bám
-                cho việc đó, mà thêm vào chỉ để phục vụ đúng một nơi thì
-                component thành khó hiểu cho tám nơi còn lại.
-
-                KHÔNG lazy: ảnh này nằm ngay đầu trang. Đặt lazy cho nó là
-                tự làm chậm chính con số đo "trang đã dùng được chưa".
-            --}}
+            {{-- ẢNH CHÍNH — thứ quyết định mốc LCP của trang này. --}}
             @php
                 $anh = app(\App\Services\Media\ResponsiveImage::class);
                 $srcsetChinh = $anh->webpSrcset($paths[0]);
@@ -60,7 +49,6 @@
                     class="product-gallery__thumb {{ $i === 0 ? 'is-active' : '' }}"
                     data-gallery-thumb
                     data-src="{{ asset('storage/' . $path) }}"
-                    {{-- JavaScript cần cả bộ srcset để đổi luôn <source>. --}}
                     data-srcset="{{ app(\App\Services\Media\ResponsiveImage::class)->webpSrcset($path) }}"
                     aria-label="Xem ảnh {{ $i + 1 }}"
                     @if($i === 0) aria-current="true" @endif

@@ -4,18 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Cảm xúc cho BÌNH LUẬN (bài đã có ở community_post_likes).
- * ============================================================
- * Bảng riêng chứ không gộp chung với cảm xúc của bài: hai thứ có khoá ngoại
- * khác nhau, và gộp lại thì phải thêm một cột "loại đối tượng" — mọi truy vấn
- * đếm đều phải nhớ lọc thêm cột đó, quên một chỗ là đếm nhầm.
- *
- * MỘT NGƯỜI MỘT CẢM XÚC cho một bình luận (UNIQUE). Đổi cảm xúc là sửa dòng.
- *
- * KHÔNG THƯỞNG ĐIỂM cho cảm xúc dưới bình luận: bình luận vốn không được thưởng
- * (xem CommunityReward) — thưởng ở đây là mời bình luận rác để xin cảm xúc.
- */
+/** Cảm xúc cho BÌNH LUẬN (bài đã có ở community_post_likes). */
 return new class extends Migration
 {
     public function up(): void

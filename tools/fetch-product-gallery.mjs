@@ -1,29 +1,4 @@
-/*
- * Tải ẢNH PHỤ cho thư viện ảnh của trang chi tiết sản phẩm.
- * ============================================================
- * Khác `fetch-product-photos.mjs` ở chỗ: script kia lấy MỘT ảnh đại diện
- * cho mỗi sản phẩm (`products.main_image`); script này lấy THÊM vài ảnh
- * nữa vào bảng `product_images`.
- *
- * Vì sao cần: `components/product/gallery.blade.php` đã dựng sẵn khung
- * thư viện có ảnh nhỏ bấm để đổi ảnh lớn — nhưng bảng `product_images`
- * rỗng hoàn toàn, nên mọi sản phẩm hiện đúng một ảnh và hàng ảnh nhỏ
- * không bao giờ xuất hiện. Một khung thư viện chỉ có một ảnh là một cái
- * khung rỗng có viền.
- *
- * ============================================================
- * KHÔNG LẤY LẠI ẢNH ĐÃ DÙNG LÀM ẢNH ĐẠI DIỆN.
- *
- * Cùng câu truy vấn thì Openverse trả về cùng thứ tự kết quả, nên ảnh
- * đầu tiên gần như luôn là ảnh đã dùng. Không loại nó ra thì thư viện có
- * hai ô giống hệt nhau — trông như trang bị lỗi.
- *
- * Loại theo `foreign_landing_url` chứ không theo tên tệp: cùng một bức
- * ảnh có thể tải về dưới hai tên khác nhau.
- *
- *     node tools/fetch-product-gallery.mjs              (tất cả)
- *     node tools/fetch-product-gallery.mjs bo-tulip-ha-lan
- */
+/* Tải ẢNH PHỤ cho thư viện ảnh của trang chi tiết sản phẩm. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -34,19 +9,10 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const PRODUCTS = path.join(ROOT, 'storage/app/public/products');
 const OUT = path.join(PRODUCTS, 'gallery');
 
-/*
- * BAO NHIÊU ẢNH PHỤ LÀ ĐỦ.
- *
- * Hai. Cộng ảnh đại diện là ba ô — đủ để hàng ảnh nhỏ có nghĩa và đủ để
- * khách xem cây từ vài góc. Nhiều hơn thì mỗi lần mở trang là thêm vài
- * trăm KB cho thứ phần lớn khách không bấm tới, và với ảnh stock thì ảnh
- * thứ tư trở đi thường đã lạc đề.
- */
 const SO_ANH_PHU = 2;
 
 fs.mkdirSync(OUT, { recursive: true });
 
-/* Ảnh đại diện đã dùng — để không lấy trùng. */
 const mainCredits = (() => {
     const p = path.join(PRODUCTS, 'credits.json');
 
@@ -65,7 +31,6 @@ const todo = only.length ? PRODUCT_TARGETS.filter((t) => only.includes(t.slug)) 
 
 const creditsPath = path.join(OUT, 'credits.json');
 
-// Giữ lại phần ghi nguồn của những ảnh không chạy lại lần này.
 const credits = fs.existsSync(creditsPath)
     ? JSON.parse(fs.readFileSync(creditsPath, 'utf8')).filter(
           (c) => !todo.some((t) => c.slug === t.slug)
@@ -80,14 +45,6 @@ for (const target of todo) {
     try {
         await sleep(1200);
 
-        /*
-         * GOM KẾT QUẢ TỪ MỌI CÂU TRUY VẤN, không dừng ở câu đầu tiên.
-         *
-         * Khác `fetchInto`, vốn dừng ngay khi một câu cho ra kết quả vì
-         * nó chỉ cần một ảnh. Ở đây cần vài ảnh KHÁC NHAU, và câu truy
-         * vấn thứ hai thường cho ra góc chụp khác hẳn — đúng thứ một
-         * thư viện ảnh cần.
-         */
         const ungVien = [];
         const daThay = new Set();
 

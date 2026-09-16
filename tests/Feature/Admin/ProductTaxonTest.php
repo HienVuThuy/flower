@@ -14,13 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Gán "loài cây" cho sản phẩm trong trang quản trị.
- * ============================================================
- * Trước đây biểu mẫu sản phẩm KHÔNG có ô này: 27/53 sản phẩm có loài cây
- * đều do dữ liệu mẫu đưa vào, còn sản phẩm thêm mới thì không bao giờ
- * xuất hiện ở trang /loai-cay.
- */
+/** Gán "loài cây" cho sản phẩm trong trang quản trị. */
 class ProductTaxonTest extends TestCase
 {
     use RefreshDatabase;
@@ -87,12 +81,6 @@ class ProductTaxonTest extends TestCase
             ->assertSessionHasNoErrors();
         $this->assertSame($moi->id, $sp->fresh()->taxon_id);
 
-        /*
-         * BỎ TRỐNG PHẢI VỀ NULL, không giữ giá trị cũ.
-         *
-         * Hoa cắt cành, phụ kiện, vật tư không có loài cây. Chọn nhầm
-         * rồi không gỡ ra được thì sản phẩm nằm mãi ở một trang loài sai.
-         */
         $this->put(route('admin.products.update', $sp), array_merge($du, ['taxon_id' => '']))
             ->assertSessionHasNoErrors();
         $this->assertNull($sp->fresh()->taxon_id);
@@ -109,10 +97,6 @@ class ProductTaxonTest extends TestCase
     #[Test]
     public function o_chon_chi_co_bac_Ho_Chi_Loai(): void
     {
-        /*
-         * Gắn một chậu cây vào "Giới Thực vật" đúng mà vô ích: trang
-         * /loai-cay không lọc được gì từ đó.
-         */
         $gioi = $this->nut(TaxonRank::Kingdom, 'Thực vật');
         $ho = $this->nut(TaxonRank::Family, 'Lá bỏng', $gioi, 'Crassulaceae');
 
@@ -122,13 +106,6 @@ class ProductTaxonTest extends TestCase
             ->assertSee('name="taxon_id"', false)
             ->getContent();
 
-        /*
-         * SO TRONG ĐÚNG Ô CHỌN, không so cả trang.
-         *
-         * `value="1"` có sẵn ở chỗ khác trên trang (ô danh mục, công tắc
-         * theo dõi tồn kho) — so cả trang thì bài này đỏ hay xanh tuỳ id
-         * nào được cấp, chứ không tuỳ ô chọn có lọc bậc hay không.
-         */
         $dau = strpos($html, 'id="taxon_id"');
         $this->assertNotFalse($dau);
         $oChon = substr($html, $dau, strpos($html, '</select>', $dau) - $dau);
@@ -151,13 +128,6 @@ class ProductTaxonTest extends TestCase
             ->assertSee('Echeveria elegans')
             ->getContent();
 
-        /*
-         * SO TRONG ĐÚNG Ô CHỌN LOÀI.
-         *
-         * Thử phá code đã chứng minh: bỏ hẳn phần đánh dấu mà bài vẫn
-         * xanh — vì ô DANH MỤC cũng có `value="1" selected`, và danh mục
-         * lẫn loài cây trong bài này đều mang id 1.
-         */
         $dau = strpos($html, 'id="taxon_id"');
         $oChon = substr($html, $dau, strpos($html, '</select>', $dau) - $dau);
 
@@ -167,7 +137,6 @@ class ProductTaxonTest extends TestCase
     #[Test]
     public function san_pham_moi_gan_loai_hien_o_trang_loai_cay(): void
     {
-        // Đây là cả lý do của ô chọn: trước đây sản phẩm mới không bao giờ tới được trang này.
         $loai = $this->nut(TaxonRank::Genus, 'Sen đá', null, 'Echeveria');
 
         $du = $this->duLieu(['taxon_id' => $loai->id, 'name' => 'Sen đá mới về']);

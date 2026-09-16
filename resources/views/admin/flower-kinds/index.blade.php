@@ -45,8 +45,6 @@
                         @endforeach
                     </select>
                     <x-form-error name="default_unit" />
-                    {{-- Chỉ là gợi ý điền sẵn: đơn vị thật nằm trên từng lô, vì có
-                         hôm mua theo bó ở vựa có hôm mua theo cân ngoài chợ. --}}
                     <div class="form-text">Chỉ để điền sẵn; mỗi lô vẫn chọn được đơn vị riêng.</div>
                 </div>
 

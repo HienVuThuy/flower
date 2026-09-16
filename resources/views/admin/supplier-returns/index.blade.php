@@ -17,13 +17,6 @@
 
 <x-admin.nhom-tab ten="nhap-kho" />
 
-{{--
-    NÓI TRƯỚC ĐIỀU DỄ LÀM SAI NHẤT.
-
-    "Đã trả hàng rồi thì trừ tiền đi" nghe rất thuận tai, và nó sai trong
-    hai trên bốn trường hợp. Sai theo hướng làm lãi đẹp lên, tức hướng
-    không ai tự đi kiểm.
---}}
 <div class="admin-panel p-4 mb-3">
     <h2 class="h6 fw-bold mb-2">Cách xử lý tiền quyết định giá vốn có giảm hay không</h2>
     <ul class="mb-0 ps-3 admin-page-subtitle">
@@ -33,7 +26,6 @@
     </ul>
 </div>
 
-{{-- ============ HÀNG ĐẾM ĐƯỢC ============ --}}
 <h2 class="admin-section-title">Hàng đếm được — từ phiếu nhập đã ghi sổ</h2>
 
 @if($phieuNhap->isEmpty())
@@ -73,10 +65,6 @@
                             <tbody>
                                 @foreach($p->items as $d)
                                     @php
-                                        /* Tên riêng, KHÔNG dùng lại $daTra: biến đó là
-                                           danh sách phiếu đã trả, dùng ở cuối trang. Đè
-                                           lên nó bằng một số nguyên làm cả trang lỗi 500
-                                           — đã xảy ra, bài kiểm thử bắt được. */
                                         $daTraDong = $daTraTheoDong($d->id);
                                         $con = (int) $d->quantity - $daTraDong;
                                     @endphp
@@ -92,7 +80,6 @@
                                             @if($d->unit_cost !== null)
                                                 {{ $tien($d->unit_cost) }}
                                             @else
-                                                {{-- Dòng chưa điền giá: trả được, nhưng không tính ra tiền. --}}
                                                 <span class="admin-page-subtitle">chưa điền giá</span>
                                             @endif
                                         </td>
@@ -159,7 +146,6 @@
     </div>
 @endif
 
-{{-- ============ HOA TƯƠI ============ --}}
 <h2 class="admin-section-title">Hoa tươi — từ lô đã lấy</h2>
 
 @if($loHoa->isEmpty())
@@ -216,8 +202,6 @@
                 </form>
 
                 <p class="admin-page-subtitle small mt-2 mb-0">
-                    {{-- Không hỏi tiền: gõ tay thì một con số lệch đi thẳng vào
-                         giá vốn hoa của kỳ, và không có gì đối chiếu. --}}
                     Tiền lấy lại tính theo đúng đơn giá của lô
                     ({{ $l->donGia() ? $tien($l->donGia()) . '/' . $l->unit->label() : 'chưa tính được' }}).
                 </p>
@@ -226,7 +210,6 @@
     </div>
 @endif
 
-{{-- ============ ĐÃ TRẢ ============ --}}
 @if($daTra->isNotEmpty() || $loDaTra->isNotEmpty())
     <h2 class="admin-section-title">Đã trả</h2>
 
@@ -259,7 +242,6 @@
                                 @if($p->settlement_amount !== null)
                                     {{ $tien($p->settlement_amount) }}
                                 @else
-                                    {{-- NULL khác 0: 0 là "được trả 0 đồng". --}}
                                     <span class="admin-page-subtitle">không có tiền</span>
                                 @endif
                             </td>

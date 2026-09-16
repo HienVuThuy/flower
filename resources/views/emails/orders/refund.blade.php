@@ -1,13 +1,4 @@
-{{--
-    Thư báo hoàn tiền.
-
-    Bảng + style nội tuyến, cùng lý do với emails/orders/status: Gmail và
-    Outlook bỏ <link> và cắt <style> ở <head>.
-
-    KHÔNG IN GHI CHÚ NỘI BỘ của lần hoàn. Ô ghi chú là chỗ nhân viên viết
-    cho nhau ("khách gửi ảnh mờ, tạm hoàn 30%") — nó không được đi ra hộp
-    thư khách.
---}}
+{{-- Thư báo hoàn tiền. --}}
 @php
     $tien = fn ($v) => \App\Services\Shop\Money::format((string) $v);
     $cach = $refund->method;
@@ -75,14 +66,6 @@
                 </tr>
             </table>
 
-            {{--
-                KHÔNG HỨA MỘT CON SỐ NGÀY CỤ THỂ.
-
-                Thời gian tiền về do ví, ngân hàng hay tổ chức phát hành thẻ
-                quyết định, không phải cửa hàng. Viết "trong 24 giờ" rồi thẻ
-                tín dụng mất một tuần là một lời hứa sai do chính cửa hàng
-                đưa ra. Thứ nói được là: đưa mã nào cho ai để tra.
-            --}}
             <p style="margin:16px 0 0 0; padding:10px 12px; background:#f4f5f0; border-left:3px solid #2f4a37;">
                 @if($cach === \App\Enums\RefundMethod::Momo)
                     Tiền về ví MoMo thường nhanh; nếu bạn thanh toán bằng thẻ ngân hàng, thời gian tiền về tài khoản do ngân hàng phát hành thẻ quyết định.
@@ -114,8 +97,6 @@
 
     <tr>
         <td style="padding:0 24px 16px 24px; font-size:14px; line-height:1.6;">
-            {{-- Nói rõ đơn đã hoàn đủ hay mới một phần: "đã hoàn tiền" trần
-                 trụi làm khách hoàn một phần tưởng mình đã nhận hết. --}}
             @if($daHoanDu)
                 Đơn này đã được hoàn đủ số tiền bạn đã trả ({{ $tien($order->grand_total) }}).
             @else

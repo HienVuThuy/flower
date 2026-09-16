@@ -79,7 +79,6 @@ class PromotionController extends Controller
 
         return view('admin.promotions.edit', array_merge($this->formData(), [
             'promotion' => $promotion,
-            // Danh sách để admin chọn thêm sản phẩm vào chương trình.
             'availableProducts' => Product::query()
                 ->with('category')
                 ->whereNotIn('id', $promotion->products->pluck('id'))
@@ -103,7 +102,6 @@ class PromotionController extends Controller
         try {
             $promotion->update($data);
         } catch (\Throwable $e) {
-            // Update hỏng thì dọn ảnh vừa upload, tránh rác trong storage.
             if ($newBanner) {
                 $this->anh->xoa($newBanner);
             }
@@ -120,13 +118,6 @@ class PromotionController extends Controller
             ->with('success', 'Đã cập nhật chương trình.');
     }
 
-    /**
-     * Đồng bộ danh sách sản phẩm áp dụng.
-     *
-     * Tính sẵn promotional_price để bảng admin hiển thị nhanh mà
-     * không phải tính lại cho từng dòng. Giá hiển thị cho KHÁCH vẫn
-     * do PricingService tính lúc render, nên cột này chỉ là cache.
-     */
     public function syncProducts(
         SyncPromotionProductsRequest $request,
         Promotion $promotion
@@ -171,9 +162,6 @@ class PromotionController extends Controller
             $this->anh->xoa($promotion->banner);
         }
 
-        // promotion_product có onDelete cascade nên các liên kết
-        // tự biến mất; sản phẩm KHÔNG bị ảnh hưởng.
-        // Ghi trước khi xoá, để dòng nhật ký còn giữ đúng khoá chính.
         $this->logCrud('promotion.deleted', $promotion, 'chương trình khuyến mại', $promotion->name);
 
         $promotion->delete();

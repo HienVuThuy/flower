@@ -7,14 +7,7 @@
 <section class="section-sm">
     <div class="container-shop">
 
-        {{--
-            BREADCRUMB DỰNG TỪ CHÍNH ĐƯỜNG DẪN PHÂN LOẠI.
-
-            Đây là chỗ hiếm hoi mà breadcrumb và cấu trúc dữ liệu trùng
-            khít nhau: đường đi trong cây phân loại CHÍNH LÀ đường đi
-            trong trang. Chép tay một danh sách khác là dựng ra hai sự
-            thật cho cùng một thứ.
-        --}}
+        {{-- BREADCRUMB DỰNG TỪ CHÍNH ĐƯỜNG DẪN PHÂN LOẠI. --}}
         <x-site.breadcrumb :items="collect([['label' => 'Cây theo loài', 'url' => route('shop.taxa.index')]])
             ->merge($chain->map(fn ($nut) => [
                 'label' => $nut->displayName(),
@@ -28,11 +21,6 @@
                 <h1 class="text-h1 section-header__title">{{ $taxon->name }}</h1>
 
                 @if($taxon->scientific_name)
-                    {{--
-                        Từ bậc Chi trở xuống thì tên khoa học viết
-                        NGHIÊNG, Họ trở lên viết thẳng. Quy ước quốc tế,
-                        và là thứ đầu tiên người có chuyên môn nhìn vào.
-                    --}}
                     <p class="taxon-sci taxon-sci--lead mb-0">
                         @if($taxon->rank->italic())
                             <em>{{ $taxon->scientific_name }}</em>
@@ -48,7 +36,6 @@
             </div>
         </div>
 
-        {{-- Nhánh con: đi tiếp xuống bậc hẹp hơn. --}}
         @if($nhanhCon->isNotEmpty())
             <div class="filter-chip-group mb-4">
                 @foreach($nhanhCon as $muc)
@@ -60,14 +47,6 @@
             </div>
         @endif
 
-        {{--
-            HÀNG TRONG CẢ NHÁNH, không chỉ gắn thẳng vào nút này.
-
-            Chọn "Họ Ráy" phải ra cả Monstera, Trầu bà, Kim tiền — chúng
-            gắn ở bậc Chi và Loài bên dưới. Chỉ khớp đúng nút thì bậc
-            càng cao càng ít kết quả, ngược hẳn với thứ người dùng mong
-            đợi.
-        --}}
         @if($products->isEmpty())
             <x-site.empty-state
                 title="Chưa có hàng trong nhóm này"

@@ -4,12 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-/**
- * Một hạng thành viên. Xem migration create_member_tiers_table.
- *
- * `code` KHÔNG nằm trong $fillable: code và bài kiểm thử tham chiếu nó;
- * đổi tên hiển thị thì được, đổi mã thì không.
- */
+/** Một hạng thành viên. */
 class MemberTier extends Model
 {
     protected $fillable = [

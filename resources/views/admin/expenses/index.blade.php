@@ -29,7 +29,6 @@
 </div>
 
 <div class="row g-3 mb-4">
-    {{-- DÒNG TIỀN: tiền trong két tăng hay giảm. --}}
     <div class="col-lg-6">
         <div class="admin-panel p-4 h-100">
             <h2 class="h6 fw-bold mb-1">Dòng tiền</h2>
@@ -53,7 +52,6 @@
         </div>
     </div>
 
-    {{-- LÃI RÒNG ƯỚC TÍNH: cửa hàng có lời không. --}}
     <div class="col-lg-6">
         <div class="admin-panel p-4 h-100">
             <h2 class="h6 fw-bold mb-1">Lãi ròng ước tính</h2>
@@ -81,7 +79,6 @@
                 </div>
             </dl>
 
-            {{-- Nói ra khi con số cao hơn sự thật — không để nó đứng một mình. --}}
             @php
                 $canhBao = [];
                 if ($lai['ti_le_phu'] !== null && $lai['ti_le_phu'] < 100) {
@@ -182,8 +179,6 @@
                                 </td>
                             </tr>
                         @empty
-                            {{-- Không dùng x-admin.empty-row: nó coi `?thang=` là đang lọc và báo
-                                 "không khớp bộ lọc" — trong khi tháng đó thật sự chưa ghi gì. --}}
                             <tr>
                                 <td colspan="5" class="text-center py-5 text-muted">Tháng này chưa ghi khoản chi nào.</td>
                             </tr>

@@ -1,20 +1,5 @@
-/*
- * GÓC CÂY — PHẦN THÊM, KHÔNG PHẢI PHẦN CHÍNH.
- * ============================================================
- * Không có tệp này thì mọi thứ vẫn chạy: thích / lưu là biểu mẫu thật, menu và
- * bảng emoji là <details>, hộp thoại đăng bài là modal của Bootstrap. Tệp này
- * chỉ bỏ đi những chỗ khó chịu:
- *
- *   1. Thích / lưu gửi bằng fetch và đổi tại chỗ — bấm thích giữa bảng tin
- *      không còn tải lại trang rồi nhảy về đầu danh sách.
- *   2. Bảng emoji chèn vào ĐÚNG vị trí con trỏ trong ô đang gõ.
- *   3. Hộp báo cáo biết nó đang báo bài nào / bình luận nào.
- *   4. Chọn ảnh xong thấy ngay ảnh thu nhỏ và tổng dung lượng — không phải gửi
- *      lên rồi mới biết quá nặng.
- *   5. Gửi bài lỗi thì mở lại hộp soạn để thấy lỗi ngay chỗ vừa nhập.
- */
+/* GÓC CÂY — PHẦN THÊM, KHÔNG PHẢI PHẦN CHÍNH. */
 
-/** Giới hạn máy chủ nhận mỗi lần gửi (post_max_size 40MB) trừ hao cho phần chữ. */
 const TONG_TOI_DA_MB = 38;
 
 function token() {
@@ -23,7 +8,6 @@ function token() {
     return o ? o.value : '';
 }
 
-/** Đổi <use href="#i-cu"> sang icon khác mà không dựng lại cả nút. */
 function doiIcon(nut, thuocTinh, ten) {
     const use = nut.querySelector(`[${thuocTinh}] use`);
 
@@ -32,7 +16,6 @@ function doiIcon(nut, thuocTinh, ten) {
     }
 }
 
-/** Biểu tượng và tên của từng cảm xúc — khớp với App\Enums\CommunityReaction. */
 const CAM_XUC = {
     thich: { icon: 'hand-thumbs-up-fill', nhan: 'Thích' },
     yeu: { icon: 'heart-fill', nhan: 'Yêu thích' },
@@ -42,20 +25,9 @@ const CAM_XUC = {
 };
 
 function nhanThich(form, data) {
-    /*
-     * Nút chính và bảng chọn nằm trong CÙNG khối .cam-xuc nhưng KHÁC biểu mẫu —
-     * bấm ở bảng chọn vẫn phải cập nhật nút chính, nên tìm theo khối chứ không
-     * theo biểu mẫu vừa gửi.
-     */
     const khoi = form.closest('.cam-xuc');
     const nut = khoi?.querySelector('[data-thich]') || form.querySelector('[data-thich]');
 
-    /*
-     * PHẠM VI CẬP NHẬT: bình luận trước, bài sau.
-     *
-     * Cảm xúc của một bình luận nằm BÊN TRONG thẻ bài, nên nếu tìm dòng tóm tắt
-     * theo thẻ bài thì bấm thích một bình luận sẽ đổi số cảm xúc của cả bài.
-     */
     const khung = form.closest('[data-binh-luan]') || form.closest('[data-bai]');
 
     if (!nut) return;
@@ -76,7 +48,6 @@ function nhanThich(form, data) {
 
     if (so) so.textContent = data.so;
 
-    // Bấm lại nút chính lần nữa phải BỎ đúng cảm xúc đang có.
     const oHienTai = khoi?.querySelector('[data-cam-xuc-hien-tai]');
 
     if (oHienTai) oHienTai.value = loai || 'thich';
@@ -85,20 +56,14 @@ function nhanThich(form, data) {
         n.classList.toggle('is-on', n.dataset.chonCamXuc === loai);
     });
 
-    // Đóng bảng chọn sau khi đã chọn.
     const bangChon = khoi?.querySelector('details.cam-xuc-chon');
 
     if (bangChon) bangChon.open = false;
 
-    // Dòng tóm tắt (dưới bài hoặc cạnh bình luận) cũng phải khớp.
     const tomTat = khung?.querySelector('[data-tom-tat-thich]');
 
     if (tomTat) {
         tomTat.hidden = data.so < 1;
-        /*
-         * Dựng lại mấy biểu tượng: loại cảm xúc đến từ enum của máy chủ và được
-         * lọc qua CAM_XUC, nên chuỗi dưới đây không mang dữ liệu người dùng.
-         */
         const icons = (data.tom_tat || [])
             .filter((x) => CAM_XUC[x.loai])
             .slice(0, 3)
@@ -110,11 +75,6 @@ function nhanThich(form, data) {
 }
 
 function nhanLuu(form, data) {
-    /*
-     * Một bài có thể có HAI nút lưu (thanh hành động và menu "⋯"), nên cập nhật
-     * theo id bài chứ không chỉ cái nút vừa bấm — nếu không, hai nút nói hai
-     * chuyện khác nhau về cùng một bài.
-     */
     const id = form.querySelector('[data-luu]')?.dataset.luu;
 
     if (!id) return;
@@ -135,10 +95,6 @@ function nhanLuu(form, data) {
 }
 
 async function guiToggle(form) {
-    /*
-     * GỬI CẢ NỘI DUNG BIỂU MẪU: loại cảm xúc nằm trong một ô ẩn, gửi thiếu thì
-     * máy chủ luôn hiểu là "Thích" và bảng chọn năm cảm xúc thành vô nghĩa.
-     */
     const res = await fetch(form.action, {
         method: 'POST',
         headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': token() },
@@ -153,7 +109,6 @@ async function guiToggle(form) {
     else nhanLuu(form, data);
 }
 
-/** Chèn emoji vào đúng chỗ con trỏ đang đứng. */
 function chenEmoji(o, chu) {
     const dau = o.selectionStart ?? o.value.length;
     const cuoi = o.selectionEnd ?? o.value.length;
@@ -209,7 +164,6 @@ export function initCommunity() {
 
     document.body.dataset.congDongBound = '1';
 
-    // 1. Thích / lưu không tải lại trang.
     document.addEventListener('submit', async (e) => {
         const form = e.target.closest('form[data-toggle-json]');
 
@@ -220,13 +174,11 @@ export function initCommunity() {
         try {
             await guiToggle(form);
         } catch {
-            // Mạng hỏng: để biểu mẫu chạy kiểu cũ, khách vẫn bấm được.
             form.removeAttribute('data-toggle-json');
             form.submit();
         }
     });
 
-    // 2. Bảng emoji.
     document.addEventListener('click', (e) => {
         const nut = e.target.closest('[data-emoji]');
 
@@ -240,14 +192,12 @@ export function initCommunity() {
         if (bang) bang.open = false;
     });
 
-    // Bấm ra ngoài thì đóng bảng emoji và menu "⋯" đang mở.
     document.addEventListener('click', (e) => {
         document.querySelectorAll('.emoji-picker[open], .post-menu[open]').forEach((d) => {
             if (!d.contains(e.target)) d.open = false;
         });
     });
 
-    // 3. Hộp báo cáo biết đang báo nội dung nào.
     document.addEventListener('click', (e) => {
         const nut = e.target.closest('[data-bao-cao]');
 
@@ -261,22 +211,12 @@ export function initCommunity() {
         hop.querySelector('[data-bao-cao-id]').value = nut.dataset.id;
     });
 
-    // 4. Xem trước ảnh / video vừa chọn.
     document.addEventListener('change', (e) => {
         const input = e.target.closest('[data-media-input]');
 
         if (input) xemTruocMedia(input);
     });
 
-    /*
-     * 5. RÊ CHUỘT VÀO NÚT THÍCH THÌ BẢNG CẢM XÚC TỰ HIỆN — như Facebook.
-     *
-     * Chỉ trên máy CÓ chuột thật: trên cảm ứng, "rê" là chạm, và bảng sẽ bật ra
-     * mỗi lần khách định bấm Thích. Ở đó vẫn còn mũi tên để mở bằng một chạm.
-     *
-     * Có độ trễ hai chiều: mở sau 320ms để lướt chuột ngang qua không bật bảng
-     * lên, đóng sau 260ms để còn kịp đưa chuột từ nút sang bảng.
-     */
     if (window.matchMedia?.('(hover: hover)').matches) {
         let hen = null;
 
@@ -296,7 +236,6 @@ export function initCommunity() {
         document.addEventListener('mouseout', (e) => {
             const khoi = e.target.closest?.('.cam-xuc');
 
-            // Rê sang phần tử con vẫn là còn trong khối — chưa đóng.
             if (!khoi || khoi.contains(e.relatedTarget)) return;
 
             clearTimeout(hen);
@@ -308,7 +247,6 @@ export function initCommunity() {
         });
     }
 
-    // 6. Gửi bài lỗi thì mở lại hộp soạn.
     const moLai = document.querySelector('[data-mo-lai]');
 
     if (moLai && window.bootstrap?.Modal) {

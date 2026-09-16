@@ -32,7 +32,6 @@ class RegisterRequest extends FormRequest
             'password' => [
                 'required',
                 'confirmed',
-                // Quy tắc khai ở AppServiceProvider — xem chú thích ở đó.
                 Password::defaults(),
             ],
         ];

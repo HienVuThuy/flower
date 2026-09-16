@@ -13,28 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 
-/**
- * Khai tồn đầu kỳ: hàng đã nằm trên kệ trước khi có hệ thống.
- * ============================================================
- * VÌ SAO LÀ MỘT TRANG RIÊNG, không phải "một phiếu nhập như mọi phiếu".
- *
- * Việc này làm ĐÚNG MỘT LẦN, cho hàng chục mặt hàng cùng lúc, và câu hỏi
- * ở mỗi dòng là "cái này hồi đó mua bao nhiêu" — không phải "nhập thêm
- * bao nhiêu". Bắt người ta lập một phiếu nhập bình thường rồi tự nhớ
- * chọn đúng loại, tự gõ lại số tồn đang có của từng món, là cách chắc
- * chắn nhất để có một phiếu sai.
- *
- * Trang này tự liệt kê những món ĐANG CÓ TỒN MÀ CHƯA CÓ GIÁ VỐN, điền
- * sẵn số lượng đúng bằng tồn hiện tại, và chỉ hỏi một câu cho mỗi dòng.
- *
- * ============================================================
- * KHÔNG ÉP KHAI ĐỦ.
- *
- * Có món thật sự không nhớ nổi giá vốn. Để trống thì món đó vẫn nằm
- * ngoài phần tính lãi — và trang Lãi gộp đã đếm và nói ra phần nằm
- * ngoài. Bịa một con số cho đủ còn tệ hơn: nó biến "chưa biết" thành
- * "biết sai", và không ai phân biệt được nữa.
- */
+/** Khai tồn đầu kỳ: hàng đã nằm trên kệ trước khi có hệ thống. */
 class OpeningStockController extends Controller
 {
     public function __construct(
@@ -61,13 +40,6 @@ class OpeningStockController extends Controller
             'items' => ['required', 'array', 'max:500'],
             'items.*.quantity' => ['nullable', 'integer', 'min:0', 'max:1000000'],
 
-            /*
-             * GIÁ VỐN ĐỂ TRỐNG ĐƯỢC, nhưng đã điền thì phải > 0.
-             *
-             * 0 đồng là một khẳng định ("nhận không mất tiền"), không
-             * phải "chưa biết" — xem QĐ-214. Muốn nói chưa biết thì để
-             * trống.
-             */
             'items.*.unit_cost' => ['nullable', 'numeric', 'min:1', 'max:999999999'],
         ], [], [
             'received_at' => 'ngày chốt tồn',
@@ -89,8 +61,6 @@ class OpeningStockController extends Controller
                 'received_at' => $data['received_at'],
             ]);
 
-            // `kind` cố ý không nằm trong $fillable: loại phiếu quyết định
-            // việc có cộng vào kho hay không, không phải một ô biểu mẫu.
             $phieu->forceFill(['kind' => StockReceiptKind::TonDauKy])->save();
 
             $this->service->gan($phieu);
@@ -111,27 +81,12 @@ class OpeningStockController extends Controller
             ));
     }
 
-    /**
-     * Mặt hàng đang có tồn mà chưa từng có giá vốn nào.
-     *
-     * Đã khai rồi thì không hỏi lại: hỏi lại là mời người ta khai lần
-     * hai, và hai phiếu tồn đầu kỳ cho cùng một món sẽ kéo giá vốn bình
-     * quân đi lệch mà không ai thấy.
-     */
     private function chuaCoGiaVon(): \Illuminate\Support\Collection
     {
         return Product::query()
             ->where('track_inventory', true)
             ->where('stock_quantity', '>', 0)
 
-            /*
-             * BỎ HOA TƯƠI. Đây cũng là chứng từ khai TIỀN, nên nó nằm
-             * cùng phía ranh giới với phiếu nhập: giá vốn hoa đến từ lô.
-             *
-             * Đo được lúc làm: 9 sản phẩm hoa đang bật theo dõi tồn, nên
-             * không có dòng này thì chúng hiện ngay ở trang khai và giá
-             * vốn hoa bị đếm hai lần.
-             */
             ->where('product_type', '!=', \App\Enums\ProductType::Flower->value)
             ->whereNotIn('id', StockReceiptItem::query()
                 ->whereNotNull('product_id')
@@ -141,10 +96,6 @@ class OpeningStockController extends Controller
             ->get(['id', 'name', 'product_code', 'stock_quantity', 'base_price']);
     }
 
-    /**
-     * @param  array<int|string, array{quantity?: mixed, unit_cost?: mixed}>  $items
-     * @return list<array<string, mixed>>
-     */
     private function dongHopLe(array $items): array
     {
         $ket = [];
@@ -157,13 +108,6 @@ class OpeningStockController extends Controller
             $soLuong = (int) ($dong['quantity'] ?? 0);
             $gia = $dong['unit_cost'] ?? null;
 
-            /*
-             * CHỈ NHẬN DÒNG CÓ ĐỦ CẢ HAI.
-             *
-             * Số lượng mà không có giá thì dòng đó chẳng khai được gì —
-             * nó chỉ làm phiếu dài ra. Giá mà không có số lượng thì không
-             * biết giá đó áp cho bao nhiêu cái.
-             */
             if ($soLuong <= 0 || $gia === null || $gia === '') {
                 continue;
             }

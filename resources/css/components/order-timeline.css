@@ -1,19 +1,4 @@
-/*
- * DÒNG THỜI GIAN ĐƠN HÀNG
- * ============================================================
- * Dùng ở cả trang đơn của khách lẫn trang chi tiết đơn của quản trị —
- * xem resources/views/components/order/timeline.blade.php.
- *
- * DỰNG BẰNG DANH SÁCH <ol>, KHÔNG DÙNG BẢNG.
- *
- * Đây là một chuỗi việc theo thứ tự, và <ol> nói đúng điều đó với trình
- * đọc màn hình: "danh sách 4 mục". Bảng thì báo "bảng 4 hàng 2 cột",
- * và người dùng phải tự hiểu cột nào là gì.
- *
- * Đường nối vẽ bằng ::before của từng mục chứ không phải một đường kẻ
- * riêng: nó phải dài đúng bằng nội dung mục đó. Vẽ một đường cố định
- * thì mục nào có ghi chú dài sẽ bị đường kẻ hụt mất một đoạn.
- */
+/* DÒNG THỜI GIAN ĐƠN HÀNG */
 
 .order-timeline {
     list-style: none;
@@ -27,11 +12,6 @@
     padding-bottom: var(--space-sm);
 }
 
-/*
- * Đường nối xuống mốc sau. MỤC CUỐI KHÔNG CÓ — đường kẻ thò ra khỏi
- * mốc cuối cùng trông như còn bước nữa đang chờ, mà với đơn đã huỷ thì
- * đó là một lời hứa sai.
- */
 .order-timeline__item::before {
     content: "";
     position: absolute;
@@ -60,14 +40,6 @@
     background: var(--semantic-secondary);
 }
 
-/*
- * Màu chấm theo trạng thái, dùng CHUNG bộ màu với status-pill.
- *
- * Cùng một trạng thái phải cùng một màu ở mọi nơi trên trang: khách
- * nhìn thấy "Đã huỷ" màu đỏ ở nhãn phía trên thì chấm tương ứng trong
- * dòng thời gian cũng phải đỏ. Lệch màu làm người ta tưởng là hai việc
- * khác nhau.
- */
 .order-timeline__item--warning   .order-timeline__dot { background: #b5813a; }
 .order-timeline__item--info      .order-timeline__dot { background: #3c6178; }
 .order-timeline__item--primary   .order-timeline__dot { background: #27496d; }

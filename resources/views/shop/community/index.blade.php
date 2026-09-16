@@ -36,9 +36,7 @@
 
         <div class="row g-4 goc-cay">
 
-            {{-- ---------- CỘT TRÁI: ĐIỀU HƯỚNG ---------- --}}
             <div class="col-lg-3 d-none d-lg-block">
-                {{-- Cả cột là MỘT khối dính: từng thẻ dính riêng thì thẻ dưới trượt đè lên thẻ trên. --}}
                 <div class="goc-cay__cot">
                 <nav class="goc-cay-nav" aria-label="Mục Góc cây">
                     @foreach($cacTab as $ma => $nhan)
@@ -53,7 +51,6 @@
                     @endforeach
 
                     @auth
-                        {{-- Không nằm trong $cacTab vì đây là đường khác hẳn, không phải một tab của bảng tin. --}}
                         <a href="{{ route('shop.community.profile', auth()->id()) }}" class="goc-cay-nav__item">
                             <span><x-site.icon name="person" /> Trang cá nhân của tôi</span>
                         </a>
@@ -71,7 +68,6 @@
                 </div>
             </div>
 
-            {{-- ---------- GIỮA: BẢNG TIN ---------- --}}
             <div class="col-lg-6">
 
                 @auth
@@ -92,7 +88,6 @@
                     </div>
                 @endauth
 
-                {{-- Điều hướng cho màn hình hẹp: cùng danh sách, nằm ngang. --}}
                 <nav class="goc-cay-nav goc-cay-nav--ngang d-lg-none" aria-label="Mục Góc cây">
                     @foreach($cacTab as $ma => $nhan)
                         <a href="{{ route('shop.community.index', ['tab' => $ma]) }}"
@@ -122,12 +117,10 @@
                 <div class="mt-4">{{ $posts->links() }}</div>
             </div>
 
-            {{-- ---------- CỘT PHẢI: ĐIỂM THƯỞNG ---------- --}}
             <div class="col-lg-3 d-none d-lg-block">
                 <div class="goc-cay__cot">
                 <div class="surface-card p-3 goc-cay-thuong">
                     <h2 class="text-h5 mb-2">Đăng bài được điểm</h2>
-                    {{-- Luật thưởng đọc từ đúng hằng số đang tính — không ghi tay con số. --}}
                     <p class="text-body-sm mb-2" data-luat-thuong>
                         Bài được duyệt: <strong>+{{ $thuong::CO_BAN }} điểm</strong>, có ảnh hoặc video thêm {{ $thuong::CO_ANH }},
                         bài nổi bật thêm {{ $thuong::NOI_BAT }}. Tối đa {{ $thuong::TOI_DA_MOI_TUAN }} bài được thưởng mỗi tuần.

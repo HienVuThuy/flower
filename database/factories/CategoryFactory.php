@@ -7,9 +7,6 @@ use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-/**
- * @extends Factory<Category>
- */
 class CategoryFactory extends Factory
 {
     protected $model = Category::class;
@@ -27,7 +24,6 @@ class CategoryFactory extends Factory
         ];
     }
 
-    /** Nhóm phụ kiện / vật tư — KHÔNG hiện ở các khối gợi ý cây cảnh. */
     public function supply(): static
     {
         return $this->state(fn () => ['kind' => CategoryKind::Supply]);

@@ -5,40 +5,22 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Hạng thành viên — ngưỡng và quyền lợi CẤU HÌNH ĐƯỢC.
- * ============================================================
- * HẠNG KHÔNG TÍNH THEO ĐIỂM. Hạng là mức gắn bó lâu dài, dựa trên tiền hàng
- * của các đơn đã giao (xem App\Services\Loyalty\QualifiedSpending). Điểm
- * là thứ tiêu được: xếp hạng theo điểm thì khách đổi voucher xong bị tụt
- * hạng — phạt đúng người dùng chương trình.
- *
- * MỘT BẢNG, không phải các khoá rời trong `settings`: mỗi hạng mang nhiều
- * quyền lợi đi cùng nhau, và luật "ngưỡng tăng dần" phải kiểm trên cả bộ.
- *
- * Năm dòng chèn sẵn là CẤU HÌNH KHỞI ĐẦU theo đề xuất đã chốt với chủ cửa
- * hàng — sửa được ở trang quản trị, không phải dữ liệu nghiệp vụ.
- */
+/** Hạng thành viên — ngưỡng và quyền lợi CẤU HÌNH ĐƯỢC. */
 return new class extends Migration
 {
     public function up(): void
     {
         Schema::create('member_tiers', function (Blueprint $table) {
             $table->id();
-            // Mã cố định để code và bài kiểm thử tham chiếu; tên hiển thị thì sửa được.
             $table->string('code', 20)->unique();
             $table->string('name', 50);
 
-            // Tiền hàng hợp lệ tối thiểu để đạt hạng. Hạng thấp nhất luôn là 0.
             $table->decimal('min_spend', 14, 2);
 
-            // % giảm trên tiền hàng khi thanh toán.
             $table->decimal('discount_percent', 5, 2)->default(0);
 
-            // Ngưỡng miễn phí giao RIÊNG của hạng; NULL = theo ngưỡng chung của cửa hàng.
             $table->decimal('free_shipping_from', 14, 2)->nullable();
 
-            // % điểm cộng thêm khi đơn được giao.
             $table->unsignedSmallInteger('bonus_points_percent')->default(0);
 
             $table->timestamps();

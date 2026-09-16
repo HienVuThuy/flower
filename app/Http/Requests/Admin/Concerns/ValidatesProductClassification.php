@@ -8,30 +8,13 @@ use App\Enums\SellingForm;
 use App\Models\Category;
 use Illuminate\Validation\Validator;
 
-/**
- * Ba trường của sản phẩm phải kể cùng một câu chuyện.
- * ============================================================
- * category_id, product_type và selling_form đều hợp lệ khi xét RIÊNG
- * từng cái, nhưng ghép lại có thể vô nghĩa: một "cây cảnh" bán theo
- * "bó hoa", hay một bó hoa nằm trong danh mục vật tư.
- *
- * Không có gì ở tầng nào chặn được chuyện đó trước đây — biểu mẫu lưu
- * xong, không báo lỗi, và sản phẩm lặng lẽ nằm sai gian hàng hoặc mất
- * bộ thông tin chăm sóc của nó.
- *
- * DÙNG CHUNG CHO CẢ THÊM MỚI LẪN SỬA. Chép luật vào hai FormRequest thì
- * sớm muộn có một bên được sửa còn bên kia không — và đường "sửa sản
- * phẩm" mới chính là đường dễ tạo ra tổ hợp sai nhất, vì admin đổi một
- * trường mà quên hai trường kia.
- */
+/** Ba trường của sản phẩm phải kể cùng một câu chuyện. */
 trait ValidatesProductClassification
 {
     protected function validateClassification(Validator $validator): void
     {
         $type = ProductType::tryFrom((string) $this->input('product_type'));
 
-        // Giá trị sai hẳn đã có rule 'in' báo rồi — không báo chồng lên
-        // một lỗi thứ hai cho cùng một ô.
         if ($type === null) {
             return;
         }

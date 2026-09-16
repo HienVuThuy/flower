@@ -11,12 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * In phiếu soạn hàng + phiếu giao hàng cho một đơn.
- * ============================================================
- * Bất biến quan trọng nhất: SỐ TIỀN PHẢI THU trên phiếu giao. Đơn đã trả
- * mà phiếu vẫn ghi thu tiền là khách bị đòi hai lần ngoài đường.
- */
+/** In phiếu soạn hàng + phiếu giao hàng cho một đơn. */
 class InPhieuDonTest extends TestCase
 {
     use RefreshDatabase;
@@ -67,7 +62,6 @@ class InPhieuDonTest extends TestCase
             ->get(route('admin.orders.print', $don));
     }
 
-    /** Phần HTML của một tờ, theo nhãn aria của nó. */
     private function to(string $html, string $nhan): string
     {
         $dau = strpos($html, 'aria-label="' . $nhan . '"');
@@ -106,10 +100,6 @@ class InPhieuDonTest extends TestCase
     #[Test]
     public function DA_THANH_TOAN_thi_phieu_giao_KHONG_thu_tien(): void
     {
-        /*
-         * Kể cả đơn COD: cửa hàng đã đánh dấu nhận tiền (khách chuyển
-         * khoản trước) thì người giao không được thu nữa.
-         */
         $html = $this->trangIn($this->don(PaymentStatus::Paid))->getContent();
         $giao = $this->to($html, 'Phiếu giao hàng');
 
@@ -120,16 +110,9 @@ class InPhieuDonTest extends TestCase
     #[Test]
     public function phieu_soan_hang_KHONG_co_gia(): void
     {
-        // Tờ này nằm trên bàn làm việc, ai đi qua cũng đọc được.
         $html = $this->trangIn($this->don())->getContent();
         $soan = $this->to($html, 'Phiếu soạn hàng');
 
-        /*
-         * KHÔNG CÓ KÝ HIỆU TIỀN NÀO, không chỉ "không có hai con số này".
-         *
-         * Thử phá code đã chứng minh: in thành tiền của dòng (300.000) lên
-         * tờ soạn mà bài vẫn xanh, vì bài chỉ tìm đơn giá và tổng đơn.
-         */
         $this->assertStringNotContainsString('₫', $soan);
         $this->assertStringNotContainsString('150.000', $soan);
         $this->assertStringNotContainsString('300.000', $soan);

@@ -5,25 +5,7 @@ namespace App\Console\Commands;
 use App\Services\Shipping\GHNService;
 use Illuminate\Console\Command;
 
-/**
- * Tra mã địa giới của GHN từ dòng lệnh.
- * ============================================================
- * VÌ SAO CẦN: `GHN_FROM_DISTRICT_ID` trong .env là mã quận/huyện nơi
- * cửa hàng GỬI hàng. Không có mã đó thì không tính được cước, mà GHN
- * không có trang tra cứu — chỉ có API.
- *
- * DỮ LIỆU GHN CÓ BẢN GHI TRÙNG TÊN, và đây là lý do lệnh này in ra CẢ
- * SỐ QUẬN/HUYỆN của mỗi tỉnh. Ví dụ thật gặp phải khi dựng tính năng
- * này: danh sách tỉnh có hai mục tên gần giống nhau —
- *
- *     id=2002  "Hà Nội 02"   → 0 quận/huyện  (bản ghi rác)
- *     id=201   "Hà Nội"      → 30 quận/huyện (bản ghi thật)
- *
- * Chọn nhầm bản đầu thì mọi lời gọi tiếp theo trả về `data: null` kèm
- * `code: 200` — nghĩa là "thành công" nhưng rỗng, và không có gì gợi ý
- * rằng mình đã chọn sai tỉnh. Cột số quận/huyện làm chuyện đó lộ ra
- * ngay.
- */
+/** Tra mã địa giới của GHN từ dòng lệnh. */
 class GhnLookup extends Command
 {
     protected $signature = 'ghn:tra-dia-chi
@@ -65,8 +47,6 @@ class GhnLookup extends Command
             return self::SUCCESS;
         }
 
-        /* ---------- Không nêu quận: liệt kê tỉnh ---------- */
-
         if (! $this->option('quan')) {
             $this->table(
                 ['ProvinceID', 'Tên tỉnh/thành', 'Số quận/huyện'],
@@ -87,8 +67,6 @@ class GhnLookup extends Command
 
             return self::SUCCESS;
         }
-
-        /* ---------- Có nêu quận: tra tới phường/xã ---------- */
 
         $tenQuan = (string) $this->option('quan');
 

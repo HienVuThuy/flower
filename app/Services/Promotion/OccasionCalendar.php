@@ -7,46 +7,9 @@ use App\Models\Promotion;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
-/**
- * Dịp lễ sắp tới, và dịp nào chưa có chương trình nào phủ.
- * ============================================================
- * CHỈ NHẮC, KHÔNG TỰ TẠO.
- *
- * Lớp này không tạo chương trình khuyến mại. Tạo chương trình là quyết
- * định giá bán, và quyết định giá phải có người bấm nút — không phải một
- * tác vụ nền chạy lúc nửa đêm rồi sáng ra cả cửa hàng giảm 20%.
- *
- * ============================================================
- * "ĐÃ PHỦ" NGHĨA LÀ GÌ.
- *
- * Một dịp được coi là đã phủ khi có ít nhất một chương trình còn hiệu
- * lực (Đang chạy hoặc Đã lên lịch) mà khoảng ngày của nó CHỨA ngày diễn
- * ra dịp đó.
- *
- * Chương trình không đặt ngày kết thúc thì phủ mọi dịp từ ngày bắt đầu
- * trở đi — đúng như cách `Promotion::scopeActiveNow()` hiểu "để trống là
- * không giới hạn". Hai chỗ phải hiểu giống nhau, nếu không admin sẽ thấy
- * một chương trình đang chạy mà công cụ vẫn báo "chưa có gì".
- *
- * ============================================================
- * DỊP ÂM LỊCH KHÔNG ĐƯỢC ĐOÁN NGÀY DƯƠNG.
- *
- * Xem chú thích ở `config/occasions.php`. Chúng được trả về trong một
- * danh sách RIÊNG, không có ngày, không có kết luận "đã phủ hay chưa" —
- * vì không biết ngày thì không kiểm được. Nói "chưa có chương trình cho
- * Tết" khi admin đã tạo một chương trình Tết là một cảnh báo sai, và vài
- * lần như thế là admin ngừng đọc cả khối này.
- */
+/** Dịp lễ sắp tới, và dịp nào chưa có chương trình nào phủ. */
 class OccasionCalendar
 {
-    /**
-     * Các dịp DƯƠNG LỊCH sắp tới trong `$days` ngày, kèm tình trạng phủ.
-     *
-     * @return Collection<int, array{
-     *   key: string, name: string, date: Carbon, days_away: int,
-     *   weight: int, note: ?string, covered_by: ?Promotion,
-     * }>
-     */
     public function upcoming(int $days = 60): Collection
     {
         $homNay = now()->startOfDay();
@@ -82,11 +45,6 @@ class OccasionCalendar
             ->values();
     }
 
-    /**
-     * Dịp âm lịch — liệt kê để nhắc, KHÔNG kèm ngày và KHÔNG kết luận.
-     *
-     * @return Collection<int, array{name: string, lunar_note: string, note: ?string}>
-     */
     public function lunar(): Collection
     {
         return collect(config('occasions', []))
@@ -100,15 +58,6 @@ class OccasionCalendar
             ->values();
     }
 
-    /* ================= NỘI BỘ ================= */
-
-    /**
-     * Lần tới của một ngày trong năm.
-     *
-     * Đã qua trong năm nay thì lấy năm sau — nhờ vậy tháng 12 vẫn nhìn
-     * thấy Valentine và Tết Dương lịch của năm kế tiếp, đúng lúc cần
-     * chuẩn bị nhất.
-     */
     private function lanToiCua(int $ngay, int $thang, Carbon $homNay): Carbon
     {
         $trongNam = Carbon::create($homNay->year, $thang, $ngay)->startOfDay();
@@ -118,16 +67,10 @@ class OccasionCalendar
             : Carbon::create($homNay->year + 1, $thang, $ngay)->startOfDay();
     }
 
-    /** @return Collection<int, Promotion> */
     private function chuongTrinhConHieuLuc(): Collection
     {
         return Promotion::query()
             ->where('status', PromotionStatus::Active)
-            /*
-             * Bỏ những chương trình đã kết thúc hẳn. Chương trình chưa
-             * tới ngày thì GIỮ — nó chính là thứ chứng minh dịp đó đã
-             * được chuẩn bị.
-             */
             ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', now()->startOfDay()))
             ->orderBy('starts_at')
             ->get();

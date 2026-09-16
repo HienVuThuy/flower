@@ -10,24 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-/**
- * Mở trước mọi trang quản trị một lần, để lần bấm đầu tiên không chậm.
- * ============================================================
- * VÌ SAO CẦN — ĐO ĐƯỢC, không phỏng đoán:
- *
- * Sau mỗi lần sửa layout, thanh bên hay bộ icon, Blade biên dịch lại
- * view ở LẦN MỞ ĐẦU TIÊN của từng trang. Đo trên chính dự án này: trang
- * Tổng quan lần đầu 8.524ms, lần sau 73ms; Đơn hàng 1.183ms → 31ms. Người
- * dùng bấm qua các mục ngay sau khi cập nhật sẽ thấy "chậm hơn trước",
- * dù mã mới không chậm hơn mã cũ.
- *
- * `php artisan view:cache` không giải được việc này trên Windows (xem
- * docs/HIEU-NANG.md). Lệnh này đi qua đúng đường một request thật — nên
- * mọi view và component mà trang dùng tới đều được biên dịch sẵn.
- *
- * CHỈ ĐỌC: chỉ gọi đường dẫn GET, không tham số, trong khu quản trị; bỏ
- * qua đường dẫn tải tệp xuống.
- */
+/** Mở trước mọi trang quản trị một lần, để lần bấm đầu tiên không chậm. */
 class LamNongQuanTri extends Command
 {
     protected $signature = 'quan-tri:lam-nong';

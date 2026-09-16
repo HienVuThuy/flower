@@ -1,13 +1,6 @@
 @props(['journal'])
 
 @php
-    /*
-     * THANH TIẾN ĐỘ TỚI MỤC TIÊU.
-     *
-     * Chỉ hiện khi sổ ĐÃ ĐẶT mục tiêu. Sổ sinh trưởng không bắt buộc đặt,
-     * và một khung mục tiêu trống thì chỉ là chỗ nhắc người ta rằng mình
-     * chưa điền gì.
-     */
     $tienDo = $journal->goalProgress();
 @endphp
 
@@ -24,13 +17,6 @@
             </span>
 
             <span class="fw-bold">
-                {{--
-                    CHƯA ĐỦ DỮ KIỆN THÌ NÓI "CHƯA CÓ SỐ LIỆU", KHÔNG NÓI 0%.
-
-                    0% đọc ra là "đã bắt đầu và chưa đi được bước nào".
-                    Chưa ghi lần nào là chuyện khác hẳn, và hiện 0% sẽ làm
-                    người ta tưởng mình đang tụt lại. Xem QĐ-127.
-                --}}
                 @if($tienDo === null)
                     <span class="text-body-sm">Chưa có số liệu cho chỉ số này</span>
                 @else
@@ -43,7 +29,6 @@
             <div class="goal-bar" role="progressbar"
                  aria-valuenow="{{ min(100, max(0, $tienDo)) }}" aria-valuemin="0" aria-valuemax="100"
                  aria-label="Tiến độ mục tiêu">
-                {{-- Chặn ở 100% để thanh không tràn ra ngoài khung khi vượt đích. --}}
                 <div class="goal-bar__fill" style="width: {{ min(100, max(0, $tienDo)) }}%"></div>
             </div>
 

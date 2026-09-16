@@ -10,19 +10,7 @@ use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 
-/**
- * Thư xác nhận yêu cầu xoá tài khoản.
- * ============================================================
- * KHÔNG xếp hàng đợi, cùng lý do với EmailVerificationMail: dự án đặt
- * QUEUE_CONNECTION=database mà không chạy `queue:work`, nên vào hàng đợi
- * là thư nằm im mãi mãi. Ở đây thư CHÍNH LÀ chức năng — không có thư thì
- * không ai xoá được tài khoản.
- *
- * THƯ NÀY CŨNG LÀ MỘT CẢNH BÁO. Nếu người nhận không hề yêu cầu xoá, thư
- * là dấu hiệu ai đó đang dùng tài khoản của họ. Vì vậy nội dung phải nói
- * rõ "không phải bạn thì hãy đổi mật khẩu ngay", chứ không chỉ đưa ra
- * một cái liên kết.
- */
+/** Thư xác nhận yêu cầu xoá tài khoản. */
 class AccountDeletionMail extends Mailable
 {
     public function __construct(

@@ -12,12 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Hồ sơ một khách hàng trong trang quản trị.
- * ============================================================
- * Trước đây danh sách người dùng chỉ có con số; khách gọi hỏi "đơn của
- * tôi đâu" thì nhân viên phải sang trang Đơn hàng tự lọc.
- */
+/** Hồ sơ một khách hàng trong trang quản trị. */
 class HoSoKhachHangTest extends TestCase
 {
     use RefreshDatabase;
@@ -88,10 +83,6 @@ class HoSoKhachHangTest extends TestCase
     #[Test]
     public function DA_CHI_chi_tinh_don_da_giao_giong_danh_sach(): void
     {
-        /*
-         * Hai trang hai định nghĩa thì nhân viên đọc hai con số khác
-         * nhau cho cùng một khách.
-         */
         $khach = $this->nguoi(UserRole::Customer, 'Chị Hoa');
         $this->don($khach, OrderStatus::Completed, '300000.00');
         $this->don($khach, OrderStatus::Completed, '200000.00');
@@ -115,12 +106,6 @@ class HoSoKhachHangTest extends TestCase
 
         $html = $this->hoSo($khach)->assertOk()->getContent();
 
-        /*
-         * ĐỌC ĐÚNG Ô "ĐƠN HUỶ", không tìm chữ "2" ở đâu đó sau nhãn.
-         *
-         * Thử phá code đã chứng minh: đếm nhầm trạng thái mà bài vẫn xanh,
-         * vì chữ "2" nào phía sau (ngày tháng, số trang) cũng khớp.
-         */
         $this->assertMatchesRegularExpression(
             '#Đơn huỷ</span>\s*<span class="admin-kpi__value">\s*<span[^>]*>2</span>#u',
             $html,
@@ -157,11 +142,6 @@ class HoSoKhachHangTest extends TestCase
     {
         $khach = $this->nguoi(UserRole::Customer, 'Chị Hoa');
 
-        /*
-         * CÓ DẤU NHÁY ĐÓNG. Thử phá code đã chứng minh: bỏ hẳn liên kết mà
-         * bài vẫn xanh, vì địa chỉ hồ sơ `/admin/users/5` là một phần của
-         * địa chỉ form đổi vai trò `/admin/users/5/vai-tro` ngay cùng dòng.
-         */
         $this->actingAs($this->nguoi(UserRole::Admin, 'Quản trị'))
             ->get(route('admin.users.index'))
             ->assertOk()
@@ -171,7 +151,6 @@ class HoSoKhachHangTest extends TestCase
     #[Test]
     public function chi_quyen_he_thong_xem_duoc(): void
     {
-        // Cùng quyền với danh sách người dùng.
         $khach = $this->nguoi(UserRole::Customer, 'Chị Hoa');
 
         $this->actingAs($this->nguoi(UserRole::Staff, 'Nhân viên'))

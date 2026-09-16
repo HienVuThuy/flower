@@ -24,26 +24,7 @@ use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Hoa tươi: đếm theo LÔ, không đếm theo cành.
- * ============================================================
- * VÌ SAO HOA KHÔNG DÙNG ĐƯỢC CÁCH TÍNH CỦA HÀNG THƯỜNG — bốn lý do cùng
- * lúc: đơn vị mua khác đơn vị bán, số lượng quá lớn để đếm, hao hụt lớn
- * và bình thường, mỗi loại một đặc thù.
- *
- * ============================================================
- * BẤT BIẾN QUAN TRỌNG NHẤT Ở ĐÂY:
- *
- * **TIỀN CHỈ VÀO GIÁ VỐN KHI LÔ ĐƯỢC ĐÓNG, và vào đúng KỲ ĐÓNG.**
- *
- * Lô mua cuối tháng mà dùng sang tháng sau thì tiền của nó thuộc tháng
- * sau — vì đó là lúc hoa thật sự được bán. Lấy theo ngày mua thì cuối
- * mỗi tháng lãi bị kéo xuống bởi lô vừa lấy về còn nguyên trong xô.
- *
- * Hệ quả phải canh: quên đóng lô làm giá vốn THẤP hơn sự thật và lãi
- * gộp CAO hơn sự thật — sai theo hướng dễ chịu, tức là hướng không ai tự
- * đi tìm. Nên có cả bài canh lời nhắc.
- */
+/** Hoa tươi: đếm theo LÔ, không đếm theo cành. */
 class LoHoaTest extends TestCase
 {
     use RefreshDatabase;
@@ -91,8 +72,6 @@ class LoHoaTest extends TestCase
             ->baoCao();
     }
 
-    /* ================= TIỀN VÀO GIÁ VỐN LÚC NÀO ================= */
-
     #[Test]
     public function lo_chua_dong_thi_tien_CHUA_vao_gia_von(): void
     {
@@ -109,22 +88,11 @@ class LoHoaTest extends TestCase
     #[Test]
     public function ky_TOAN_BO_cung_khong_dem_lo_chua_dong(): void
     {
-        /*
-         * BÀI NÀY SINH RA TỪ MỘT PHÉP ĐỘT BIẾN SỐNG SÓT.
-         *
-         * Bỏ hẳn bộ lọc "chỉ lô đã đóng" mà bài trên vẫn xanh — vì kỳ 30
-         * ngày lọc theo `closed_at`, và lô chưa đóng có `closed_at` là
-         * NULL nên tự rơi ra ngoài.
-         *
-         * Nhưng kỳ "Toàn bộ" KHÔNG áp mốc nào cả. Lúc đó `daDong()` là
-         * thứ duy nhất còn đứng giữa "tiền đã tiêu" và "tiền hoa vẫn còn
-         * trong xô" — và trang Lãi gộp có nút "Toàn bộ".
-         */
         $this->doanhThuHoa('500000.00');
         $this->lo(['total_cost' => '1000000.00']);
 
         $b = app(FlowerCostReport::class)
-            ->trong(new KhoangThoiGian())   // Toàn bộ: không mốc đầu, không mốc cuối
+            ->trong(new KhoangThoiGian())
             ->baoCao();
 
         $this->assertSame('0.00', $b['gia_von'], 'Kỳ "Toàn bộ" đang đếm cả lô chưa đóng');
@@ -135,10 +103,6 @@ class LoHoaTest extends TestCase
     #[Test]
     public function dong_lo_roi_thi_tien_vao_gia_von_cua_KY_DONG(): void
     {
-        /*
-         * Lô mua từ 40 ngày trước (ngoài kỳ 30 ngày) nhưng đóng hôm nay:
-         * tiền thuộc kỳ NÀY, vì đây là lúc hoa thật sự được bán hết.
-         */
         $lo = $this->lo([
             'purchased_at' => now()->subDays(40)->toDateString(),
             'total_cost' => '1000000.00',
@@ -157,7 +121,6 @@ class LoHoaTest extends TestCase
     {
         $lo = $this->lo(['purchased_at' => now()->subDays(60)->toDateString()]);
 
-        // Đóng lô cách đây 45 ngày — ngoài kỳ 30 ngày.
         $lo->forceFill([
             'status' => FlowerLotStatus::DaDong,
             'closed_at' => now()->subDays(45),
@@ -169,15 +132,9 @@ class LoHoaTest extends TestCase
         $this->assertSame(0, $b['so_lo_dong']);
     }
 
-    /* ================= KHÔNG BỊA LÃI ================= */
-
     #[Test]
     public function chua_dong_lo_nao_thi_lai_gop_la_NULL_chu_khong_bang_doanh_thu(): void
     {
-        /*
-         * "Lãi gộp bằng đúng doanh thu" là câu sai hoàn toàn, và là câu
-         * dễ tin nhất vì trông như một cửa hàng lãi 100%.
-         */
         $this->doanhThuHoa('500000.00');
         $this->lo();
 
@@ -209,15 +166,9 @@ class LoHoaTest extends TestCase
         $this->assertSame('500000.00', $this->bao()['doanh_thu']);
     }
 
-    /* ================= ĐÓNG LÔ ================= */
-
     #[Test]
     public function khong_dong_lo_hai_lan(): void
     {
-        /*
-         * Đóng hai lần thì `closed_at` bị đẩy sang kỳ khác, và giá vốn
-         * hoa nhảy từ kỳ này sang kỳ kia mà không ai thấy.
-         */
         $lo = $this->lo();
         $this->dichVu()->dongLo($lo);
 
@@ -230,10 +181,6 @@ class LoHoaTest extends TestCase
     #[Test]
     public function hao_hut_khong_vuot_qua_so_da_mua(): void
     {
-        /*
-         * Hao 12 bó trên một lô 10 bó là con số không có nghĩa, và nó sẽ
-         * đi thẳng vào bảng so sánh chất lượng dưới dạng "hao hụt 120%".
-         */
         $lo = $this->lo(['quantity' => '10.00']);
 
         $this->expectException(FlowerLotException::class);
@@ -255,11 +202,6 @@ class LoHoaTest extends TestCase
     #[Test]
     public function hao_hut_KHONG_lam_giam_gia_von(): void
     {
-        /*
-         * Tiền đã trả rồi. Hao hụt là thước đo CHẤT LƯỢNG, không phải
-         * một khoản được hoàn lại — trừ nó khỏi giá vốn là tự tặng cho
-         * cửa hàng một khoản lãi không có thật.
-         */
         $lo = $this->lo(['quantity' => '10.00', 'total_cost' => '1000000.00']);
 
         $this->dichVu()->dongLo($lo, haoHut: 4);
@@ -268,36 +210,21 @@ class LoHoaTest extends TestCase
         $this->assertSame(40.0, $lo->fresh()->tiLeHaoHut());
     }
 
-    /* ================= HAO HỤT TRUNG BÌNH ================= */
-
     #[Test]
     public function hao_hut_trung_binh_tinh_theo_TONG_so_luong(): void
     {
-        /*
-         * Một lô 2 bó hao sạch và một lô 200 bó hao 1 bó KHÔNG phải "hao
-         * trung bình 50%". Trung bình của các tỉ lệ là con số vô nghĩa
-         * khi các lô chênh nhau cả trăm lần.
-         */
         $a = $this->lo(['quantity' => '2.00']);
         $b = $this->lo(['quantity' => '200.00']);
 
-        $this->dichVu()->dongLo($a, haoHut: 2);    // 100%
-        $this->dichVu()->dongLo($b, haoHut: 1);    // 0,5%
+        $this->dichVu()->dongLo($a, haoHut: 2);
+        $this->dichVu()->dongLo($b, haoHut: 1);
 
-        // Đúng: (2 + 1) / (2 + 200) = 1,5%. Sai: (100 + 0,5) / 2 = 50,25%.
         $this->assertSame(1.5, $this->bao()['hao_hut_trung_binh']);
     }
-
-    /* ================= NHẮC LÔ QUÊN ĐÓNG ================= */
 
     #[Test]
     public function lo_mo_qua_lau_duoc_nhac(): void
     {
-        /*
-         * Quên đóng lô làm giá vốn THẤP hơn sự thật và lãi CAO hơn sự
-         * thật. Sai theo hướng dễ chịu là hướng không ai tự đi tìm, nên
-         * nó phải tự tìm đến người dùng.
-         */
         $this->lo(['purchased_at' => now()->subDays(2)->toDateString()]);
         $qua = $this->lo(['purchased_at' => now()->subDays(20)->toDateString()]);
 
@@ -319,8 +246,6 @@ class LoHoaTest extends TestCase
         $this->assertSame(0, $this->bao()['lo_qua_han']);
     }
 
-    /* ================= ĐƠN GIÁ VÀ ĐƠN VỊ ================= */
-
     #[Test]
     public function don_gia_la_tien_chia_so_luong_va_khong_chia_cho_0(): void
     {
@@ -330,12 +255,9 @@ class LoHoaTest extends TestCase
 
         $khong = $this->lo(['quantity' => '0.00']);
 
-        // "Giá mỗi bó của một lô không có bó nào" không phải câu có nghĩa.
         $this->assertNull($khong->donGia());
         $this->assertNull($khong->tiLeHaoHut());
     }
-
-    /* ================= ĐI QUA GIAO DIỆN ================= */
 
     #[Test]
     public function ghi_lo_va_dong_lo_qua_giao_dien(): void
@@ -356,7 +278,6 @@ class LoHoaTest extends TestCase
 
         $lo = FlowerLot::firstOrFail();
 
-        // Bản chụp tên nhà cung cấp, cùng nguyên tắc với phiếu nhập.
         $this->assertSame('Vựa Quảng Bá', $lo->supplier_name);
         $this->assertSame('12.50', $lo->quantity);
 
@@ -407,20 +328,9 @@ class LoHoaTest extends TestCase
         $this->assertSame(1, FlowerKind::count());
     }
 
-    /* ================= RANH GIỚI VỚI KHO THƯỜNG ================= */
-
     #[Test]
     public function hoa_tuoi_KHONG_hien_o_o_chon_cua_phieu_nhap(): void
     {
-        /*
-         * ĐÂY LÀ RANH GIỚI GIỮA HAI CÁCH TÍNH GIÁ VỐN, và để hở nó là
-         * ĐẾM HAI LẦN.
-         *
-         * Đo trên dữ liệu thật lúc làm: 9 sản phẩm hoa đang bật theo dõi
-         * tồn. Trước bản này có thể vừa lập phiếu nhập cho "Bó tulip Hà
-         * Lan" vừa ghi lô hoa tulip — hai con số cùng vào giá vốn, ở hai
-         * báo cáo nằm chung một trang.
-         */
         $hoa = Product::factory()->for(Category::factory())->stock(10)
             ->create(['name' => 'Bó tulip Hà Lan', 'product_type' => ProductType::Flower]);
 
@@ -432,8 +342,6 @@ class LoHoaTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        // Soi theo giá trị ô chọn, không soi tên trần: tên còn xuất hiện
-        // ở chỗ khác trên trang.
         $this->assertStringContainsString('value="' . $chau->id . ':"', $html);
         $this->assertStringNotContainsString('value="' . $hoa->id . ':"', $html);
     }
@@ -441,11 +349,6 @@ class LoHoaTest extends TestCase
     #[Test]
     public function gui_thang_hoa_vao_phieu_nhap_thi_bi_bo_qua(): void
     {
-        /*
-         * Ô chọn chỉ là gợi ý; `mat_hang` đến từ trình duyệt và ai cũng
-         * sửa được. Chặn ở giao diện mà không chặn ở máy chủ là khoá cửa
-         * còn để ngỏ cửa sổ.
-         */
         $hoa = Product::factory()->for(Category::factory())->stock(10)
             ->create(['product_type' => ProductType::Flower]);
 
@@ -469,7 +372,6 @@ class LoHoaTest extends TestCase
     #[Test]
     public function hoa_tuoi_KHONG_hien_o_trang_khai_ton_dau_ky(): void
     {
-        // Tồn đầu kỳ cũng là chứng từ khai TIỀN, nên cùng phía ranh giới.
         $hoa = Product::factory()->for(Category::factory())->stock(10)
             ->create(['product_type' => ProductType::Flower]);
 
@@ -488,16 +390,6 @@ class LoHoaTest extends TestCase
     #[Test]
     public function kiem_ke_thi_VAN_nhan_hoa(): void
     {
-        /*
-         * Ranh giới KHÔNG phải "hoa không có tồn kho".
-         *
-         * Số bó làm sẵn trong tủ mát vẫn đếm được, và vẫn nên đếm nếu cửa
-         * hàng muốn chặn bán quá. Kiểm kê chỉ sửa SỐ LƯỢNG, không bao giờ
-         * đụng tới TIỀN — nên nó không gây đếm hai lần.
-         *
-         * Bài này là đối chứng: không có nó thì một thay đổi loại hoa ra
-         * khỏi mọi chứng từ kho cũng đi qua sạch sẽ.
-         */
         $hoa = Product::factory()->for(Category::factory())->stock(10)
             ->create(['product_type' => ProductType::Flower]);
 
@@ -506,11 +398,8 @@ class LoHoaTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        // Biểu mẫu kiểm kê đánh khoá ô theo `dem[<id>:<quy cách>]`.
         $this->assertStringContainsString('name="dem[' . $hoa->id . ':]', $html);
     }
-
-    /* ================= HỖ TRỢ ================= */
 
     private function doanhThuHoa(string $tien, ProductType $loai = ProductType::Flower): void
     {

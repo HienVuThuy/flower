@@ -8,16 +8,7 @@ use App\Models\Product;
 use App\Models\User;
 use PHPUnit\Framework\Attributes\Test;
 
-/**
- * Chọn riêng từng món trong giỏ để thanh toán.
- * ============================================================
- * Khách để dành vài món chờ lương và muốn mua trước một bó hoa sinh
- * nhật: giỏ giữ nguyên, đơn chỉ gồm thứ họ tích.
- *
- * ĐÂY LÀ CHỖ DỄ MẤT DỮ LIỆU CỦA KHÁCH NHẤT trong cả hệ thống — gọi nhầm
- * clear() thay vì clearSelected() là cuốn sạch thứ họ cố ý để lại, mà
- * không có cách nào lấy lại.
- */
+/** Chọn riêng từng món trong giỏ để thanh toán. */
 class CartSelectionTest extends CheckoutTestCase
 {
     private const SELECT = '/gio-hang/chon';
@@ -36,7 +27,6 @@ class CartSelectionTest extends CheckoutTestCase
         $cart = Cart::latest('id')->first();
         $dongMuaNgay = $cart->items()->where('product_id', $muaNgay->id)->first();
 
-        // Chỉ tích một món: danh sách gửi lên là danh sách món ĐƯỢC chọn.
         $this->post(self::SELECT, ['selected' => [$dongMuaNgay->id]])->assertRedirect();
 
         $this->post(self::DETAILS, $this->details())->assertRedirect('/thanh-toan/xac-nhan');
@@ -90,9 +80,6 @@ class CartSelectionTest extends CheckoutTestCase
     #[Test]
     public function id_la_gui_len_khong_cham_duoc_gio_cua_nguoi_khac(): void
     {
-        // "Tin dữ liệu ID từ request mà không validate" là lỗ hổng, không
-        // phải chuyện phong cách. Ở đây phép bảo vệ nằm trong câu UPDATE
-        // của CartService, nên bài này canh chừng đúng chỗ đó.
         $nanNhan = User::factory()->create();
         $this->actingAs($nanNhan);
         $this->addToCart(Product::factory()->create());
@@ -103,7 +90,6 @@ class CartSelectionTest extends CheckoutTestCase
         $this->addToCart(Product::factory()->create());
         $dongCuaKeTanCong = Cart::latest('id')->first()->items()->first();
 
-        // Kẻ tấn công gửi lên id dòng của người khác.
         $this->post(self::SELECT, ['selected' => [$dongCuaNanNhan->id]]);
 
         $this->assertTrue(

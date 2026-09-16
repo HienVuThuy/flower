@@ -22,16 +22,6 @@
 
         <div class="row g-4 g-lg-5">
 
-            {{--
-                HƯỚNG DẪN ĐI TRƯỚC, HÀNG ĐI SAU.
-
-                Khách bấm vào thẻ này vì họ CHƯA BIẾT chọn gì — nếu biết
-                rồi thì đã vào thẳng trang sản phẩm. Đưa lưới hàng lên
-                trước là trả lời câu hỏi họ chưa kịp hỏi.
-
-                Trên màn hình rộng thì hai cột: hướng dẫn bên trái đọc
-                được liên tục, ảnh minh hoạ bên phải bám theo khi cuộn.
-            --}}
             <div class="col-lg-7">
                 <div class="intent-page">
                     @include('shop.intents._guide', ['intent' => $intent])
@@ -48,13 +38,6 @@
                         decoding="async"
                     >
 
-                    {{--
-                        Ba lối đi tiếp, đặt ngay cạnh bài viết.
-
-                        Đọc xong hướng dẫn là lúc khách sẵn sàng làm gì đó;
-                        bắt họ cuộn lên header tìm menu là đánh mất đúng
-                        khoảnh khắc đó.
-                    --}}
                     <div class="intent-page__links">
                         <a href="{{ route('shop.advisor.index') }}" class="btn btn-secondary-brand w-100">
                             Lọc cây theo điều kiện nhà bạn
@@ -71,7 +54,6 @@
 
         </div>
 
-        {{-- ============ HÀNG GỢI Ý ============ --}}
         <div class="mt-5">
             <div class="section-header">
                 <div>
@@ -101,11 +83,6 @@
             @endif
         </div>
 
-        {{--
-            ============ MUA KÈM ============
-            Không render nếu rỗng — một khối "mua kèm" trống chỉ là một
-            lời mời rỗng. Xem IntentController::extrasFor().
-        --}}
         <x-product.cross-sell
             :items="$extras"
             title="Dụng cụ nên có sẵn"

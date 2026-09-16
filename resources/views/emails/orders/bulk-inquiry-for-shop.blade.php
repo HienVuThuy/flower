@@ -1,9 +1,4 @@
-{{--
-    Thư NỘI BỘ gửi cửa hàng khi có yêu cầu báo giá số lượng lớn.
-
-    Đưa NGÀY SỰ KIỆN và CÒN BAO NHIÊU NGÀY lên đầu: đó là thứ quyết định
-    phải gọi lại ngay hôm nay hay để mai.
---}}
+{{-- Thư NỘI BỘ gửi cửa hàng khi có yêu cầu báo giá số lượng lớn. --}}
 @php
     $conNgay = $inquiry->daysUntilEvent();
 @endphp

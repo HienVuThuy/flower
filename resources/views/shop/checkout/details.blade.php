@@ -15,27 +15,9 @@
 
             <div class="col-lg-7">
 
-                {{--
-                    MỘT BIỂU MẪU CHO CẢ NGƯỜI NHẬN, GIAO HÀNG VÀ THANH TOÁN.
-
-                    Trước đây là hai màn hình. Phí giao phụ thuộc TỈNH — nhập
-                    ở màn một — nên tổng tiền chỉ đúng từ màn hai trở đi:
-                    khách điền xong màn một vẫn chưa biết mình phải trả bao
-                    nhiêu, và đó là lúc nhiều người bỏ giỏ hàng.
-
-                    CHIA THÀNH BA KHỐI CÓ ĐÁNH SỐ, không để một cột dài
-                    1184px liền mạch: gộp hai màn hình lại mà không nhóm gì
-                    thì khách cuộn qua một biểu mẫu dài không thấy đầu đuôi,
-                    và không biết còn bao nhiêu việc nữa mới xong. Ba thẻ có
-                    số thứ tự cho biết ngay mình đang ở đâu và còn mấy bước.
-
-                    Mã giảm giá đã chuyển sang cột phải, ngay trên bảng tiền
-                    — xem ghi chú ở đó.
-                --}}
                 <form id="checkout-details-form" method="POST" action="{{ route('shop.checkout.store-details') }}" class="checkout-form">
                     @csrf
 
-                    {{-- ============ 1. NƠI NHẬN ============ --}}
                     <section class="checkout-step">
                         <h2 class="checkout-step__title">
                             <span class="checkout-step__num">1</span>
@@ -49,20 +31,6 @@
                         <div class="address-picker" data-address-picker>
 
                             @foreach($addresses as $address)
-                                {{--
-                                    NÚT XOÁ NẰM NGOÀI <label>, có chủ ý.
-
-                                    Đặt bên trong thì mỗi cú bấm vào nút
-                                    cũng tick luôn cái radio của nhãn —
-                                    khách bấm xoá lại vừa chọn đúng địa
-                                    chỉ mình đang muốn bỏ.
-
-                                    Nút thuộc về một <form> khác qua thuộc
-                                    tính form="": cả khối này đang nằm
-                                    trong biểu mẫu thanh toán, mà HTML
-                                    không cho lồng form. Các form xoá được
-                                    đặt ở cuối trang.
-                                --}}
                                 <div class="address-option-row">
                                     <label class="address-option">
                                         <input
@@ -153,52 +121,8 @@
                             <x-form-error name="shipping_address" />
                         </div>
 
-                        {{--
-                            BA Ô CHỌN NỐI NHAU: Tỉnh → Quận/Huyện → Phường/Xã.
-                            ============================================================
-                            Danh mục lấy trực tiếp từ Giao Hàng Nhanh, vì CƯỚC ĐƯỢC
-                            TÍNH THEO ĐÚNG BỘ MÃ NÀY. Nhập tay như trước thì gõ "Bắc
-                            Từ Liêm" hay "Q. Bắc Từ Liêm" đều ra một chuỗi mà GHN
-                            không hiểu, và không tính được cước thật.
-
-                            MỖI Ô CÓ HAI PHẦN:
-                              - <select> hiện TÊN cho người đọc;
-                              - <input hidden> giữ TÊN đó để lưu vào đơn hàng.
-
-                            Vì sao cần cả hai: `<select>` gửi lên MÃ SỐ của GHN, mà
-                            đơn hàng là chứng từ phải đọc được sau nhiều năm — kể cả
-                            khi GHN đổi mã hoặc cửa hàng đổi sang đơn vị vận chuyển
-                            khác. Chỉ lưu mã thì nhân viên mở đơn cũ thấy
-                            `to_district_id = 1482` và không biết đó là đâu.
-
-                            KHÔNG CÓ JAVASCRIPT THÌ SAO: ba ô chọn nằm im, không tải
-                            được danh mục. Phần dự phòng ngay bên dưới cho nhập tay
-                            như cũ, và phí lùi về bảng theo tỉnh. Chậm hơn và kém
-                            chính xác hơn, nhưng khách vẫn đặt được hàng.
-                        --}}
-                        {{--
-                            Ba ô chọn ẨN SẴN, JavaScript mới cho hiện.
-
-                            Không có JavaScript thì chúng đứng im ở "-- Đang tải...
-                            --" mãi mãi — một hàng ô vô dụng chắn giữa biểu mẫu.
-                            Ẩn sẵn thì người tắt JavaScript chỉ thấy khối nhập tay
-                            bên dưới, đúng thứ dùng được với họ.
-                        --}}
                         <div class="col-md-4 ghn-select" hidden>
                             <label class="form-label" for="province_select">Tỉnh/Thành phố *</label>
-                            {{--
-                                ĐỊA CHỈ ROUTE ĐI QUA THUỘC TÍNH data, không nhúng
-                                Blade vào tệp JavaScript.
-
-                                Nhờ vậy ghn-address.js là một tệp tĩnh thật: Vite
-                                đóng gói và băm tên được, trình duyệt lưu đệm được,
-                                và nó không phải nằm inline trong mỗi trang. Tài
-                                liệu hướng dẫn viết `{{ route(...) }}` thẳng trong
-                                <script> — cách đó buộc toàn bộ đoạn mã phải nằm
-                                trong Blade và tải lại ở mọi lần mở trang.
-
-                                `__ID__` là chỗ JavaScript thay bằng mã thật.
-                            --}}
                             <select id="province_select" class="form-select"
                                     data-ghn-province
                                     data-url-provinces="{{ route('locations.provinces') }}"
@@ -218,18 +142,9 @@
                             <select id="district_select" class="form-select" data-ghn-district disabled>
                                 <option value="">-- Chọn Tỉnh/Thành trước --</option>
                             </select>
-                            {{--
-                                data-cu giữ tên quận/huyện đã chọn lần trước.
-
-                                Biểu mẫu quay về vì sai một ô bất kỳ thì ba ô địa
-                                chỉ phải tự chọn lại đúng chỗ cũ — không thì khách
-                                phải làm lại cả ba cấp mỗi lần gõ nhầm số điện
-                                thoại, và họ sẽ bỏ giữa chừng.
-                            --}}
                             <input type="hidden" id="shipping_district" name="shipping_district"
                                    data-cu="{{ old('shipping_district', $values['shipping_district'] ?? '') }}"
                                    value="{{ old('shipping_district', $values['shipping_district'] ?? '') }}">
-                            {{-- Mã GHN: thứ máy chủ dùng để hỏi cước, xem ShippingQuote. --}}
                             <input type="hidden" name="to_district_id" data-ghn-district-id
                                    value="{{ old('to_district_id', $values['to_district_id'] ?? '') }}">
                         </div>
@@ -239,7 +154,6 @@
                             <select id="ward_select" class="form-select" data-ghn-ward disabled>
                                 <option value="">-- Chọn Quận/Huyện trước --</option>
                             </select>
-            {{-- data-cu: cùng lý do với quận/huyện — xem ô bên trên. --}}
                             <input type="hidden" id="shipping_ward" name="shipping_ward"
                                    data-cu="{{ old('shipping_ward', $values['shipping_ward'] ?? '') }}"
                                    value="{{ old('shipping_ward', $values['shipping_ward'] ?? '') }}">
@@ -249,16 +163,6 @@
 
                     </div>
 
-                    {{--
-                        PHẦN DỰ PHÒNG cho trường hợp không có JavaScript hoặc GHN
-                        không trả lời.
-
-                        Ẩn đi khi JavaScript chạy được (CSS dùng `html.has-js`), nên
-                        người dùng bình thường không thấy. Nhưng nó phải TỒN TẠI
-                        trong HTML: thiếu nó thì người tắt JavaScript nhìn thấy ba ô
-                        chọn rỗng và không có cách nào nhập địa chỉ — tức là không
-                        đặt được hàng.
-                    --}}
                     <div class="ghn-fallback mt-3" data-ghn-fallback>
                         <p class="text-caption mb-2">
                             Không tải được danh sách địa chỉ. Bạn có thể nhập tay —
@@ -288,13 +192,6 @@
                         </div>
                     </div>
 
-                    {{--
-                        CƯỚC HIỆN NGAY KHI CHỌN XONG PHƯỜNG/XÃ.
-
-                        Con số này CHỈ ĐỂ XEM TRƯỚC. Lúc ghi đơn, máy chủ hỏi lại
-                        GHN bằng chính mã quận/phường đã lưu — xem ShippingQuote.
-                        Biểu mẫu này KHÔNG gửi lên số tiền nào.
-                    --}}
                     <div class="ghn-fee mt-3" data-ghn-fee-box hidden>
                         <x-site.icon name="geo-alt" />
                         <span>Phí giao hàng dự kiến:</span>
@@ -312,21 +209,17 @@
                         </div>
                     @endauth
 
-                    </div>{{-- /data-address-fields --}}
+                    </div>
 
 
 
                         </div>
                     </section>
 
-                    {{-- ============ 2. THỜI GIAN GIAO ============ --}}
                     <section class="checkout-step">
                         <h2 class="checkout-step__title">
                             <span class="checkout-step__num">2</span>
                             Giao khi nào
-                            {{-- Nói ngay đây là phần KHÔNG bắt buộc: khách
-                                 nhìn thấy "không bắt buộc" thì lướt qua được
-                                 mà không thấy áy náy, thay vì dừng lại nghĩ. --}}
                             <span class="checkout-step__optional">không bắt buộc</span>
                         </h2>
 
@@ -357,7 +250,6 @@
                         </div>
                     </section>
 
-                    {{-- ============ 3. THANH TOÁN ============ --}}
                     <section class="checkout-step">
                         <h2 class="checkout-step__title">
                             <span class="checkout-step__num">3</span>
@@ -367,11 +259,6 @@
                         <div class="checkout-step__body">
 <div class="payment-options">
                         @foreach($paymentMethods as $method)
-                            {{--
-                                TRẢ GÓP: không đủ điều kiện thì vẫn hiện, khoá lại và NÓI VÌ SAO
-                                (chưa đăng nhập, đơn nhỏ, điểm tín dụng) — ẩn đi thì khách không
-                                biết cửa hàng có trả góp.
-                            --}}
                             <label class="payment-option {{ $method === \App\Enums\PaymentMethod::TraGop && ! $traGop['duoc'] ? 'payment-option--disabled' : '' }}"
                                    @if($method === \App\Enums\PaymentMethod::TraGop) data-tra-gop="{{ $traGop['duoc'] ? 'duoc' : 'khong' }}" @endif>
                                 <input type="radio" name="payment_method" value="{{ $method->value }}"
@@ -383,7 +270,6 @@
 
                                     @if($method === \App\Enums\PaymentMethod::TraGop)
                                         @if($traGop['duoc'])
-                                            {{-- Chi tiết trả góp chỉ hiện khi đã chọn trả góp (CSS :has), để khách chọn COD/MoMo không bị rối. --}}
                                             <span class="tra-gop-chi-tiet d-block" data-tra-gop-chi-tiet>
                                                 <span class="payment-option__hint d-block mt-1" data-tra-gop-muc>
                                                     Điểm tín dụng {{ $traGop['diem'] }}: trả trước {{ $traGop['tra_truoc'] }}%,
@@ -411,20 +297,6 @@
 
                     <x-form-error name="payment_method" />
 
-                    {{--
-                        CÁCH TRẢ TIỀN TRÊN TRANG MOMO — chỉ hiện khi chọn MoMo.
-
-                        MoMo có nhiều dịch vụ khác nhau và mỗi cái mở ra
-                        một trang khác hẳn: mã QR để quét bằng ứng dụng,
-                        hay ô nhập thẻ quốc tế. Chọn nhầm thì KHÔNG có lỗi
-                        nào báo — MoMo vẫn nhận yêu cầu, chỉ là trang mở
-                        ra không có ô nhập nào khớp với thứ khách đang
-                        cầm. Vì thế phải để khách tự chọn.
-
-                        Ẩn/hiện bằng CSS thuần (:has), không bằng
-                        JavaScript — cùng cách đã dùng cho khối hoá đơn.
-                        Máy chủ mới là nơi quyết định ô nào bắt buộc.
-                    --}}
                     @if(in_array('momo', \App\Enums\PaymentMethod::values(), true))
                         <div class="momo-flow">
                             <span class="form-label d-block">Trả bằng cách nào</span>
@@ -448,7 +320,6 @@
                         </div>
                     </section>
 
-                    {{-- ============ 4. HOÁ ĐƠN GTGT ============ --}}
                     <section class="checkout-step">
                         <h2 class="checkout-step__title">
                             <span class="checkout-step__num">4</span>
@@ -457,20 +328,6 @@
 
                         <div class="checkout-step__body">
 
-                            {{--
-                                MẶC ĐỊNH KHÔNG TÍCH, VÀ CÁC Ô ẨN ĐI.
-
-                                Phần lớn khách mua một bó hoa không lấy hoá
-                                đơn. Bày sẵn năm ô mã số thuế trước mặt họ là
-                                dựng một bức tường ngay trước nút thanh toán để
-                                phục vụ thiểu số — và bước cuối là chỗ đắt nhất
-                                để làm khách chùn tay.
-
-                                Ẩn/hiện bằng CSS thuần (:has), KHÔNG bằng
-                                JavaScript: khách tắt JS vẫn phải lấy được hoá
-                                đơn. Máy chủ mới là nơi quyết định trường nào
-                                bắt buộc — xem CheckoutDetailsRequest.
-                            --}}
                             <label class="invoice-toggle">
                                 <input type="checkbox" name="want_invoice" value="1"
                                        @checked(old('want_invoice', $values['want_invoice'] ?? false))>
@@ -539,27 +396,10 @@
                                            class="form-control @error('invoice_email') is-invalid @enderror"
                                            value="{{ old('invoice_email', $values['invoice_email'] ?? '') }}"
                                            placeholder="ketoan@congty.vn">
-                                    {{--
-                                        Ô RIÊNG, KHÔNG DÙNG LẠI EMAIL ĐẶT HÀNG.
-
-                                        Đơn thường do thư ký hoặc trợ lý đặt,
-                                        còn hoá đơn phải về kế toán. Dùng chung
-                                        một ô là gửi hoá đơn nhầm chỗ cho gần
-                                        như mọi đơn của công ty.
-                                    --}}
                                     <div class="form-text">Hoá đơn điện tử sẽ được gửi tới địa chỉ này.</div>
                                     <x-form-error name="invoice_email" />
                                 </div>
 
-                                {{--
-                                    NÓI THẲNG RA CỬA HÀNG LÀM ĐƯỢC ĐẾN ĐÂU.
-
-                                    Website ghi nhận yêu cầu và dữ liệu; việc
-                                    phát hành hoá đơn điện tử hợp lệ đi qua nhà
-                                    cung cấp dịch vụ hoá đơn. Để khách tưởng
-                                    hoá đơn có ngay sau khi bấm đặt hàng là hứa
-                                    một điều hệ thống chưa làm được.
-                                --}}
                                 <p class="invoice-fields__note">
                                     Cửa hàng ghi nhận yêu cầu ngay khi bạn đặt hàng.
                                     Hoá đơn điện tử được phát hành sau đó và gửi tới email trên.
@@ -576,18 +416,6 @@
                     </div>
                 </form>
 
-                {{--
-                    BIỂU MẪU XOÁ ĐỊA CHỈ — đặt NGOÀI biểu mẫu thanh toán.
-
-                    HTML không cho lồng form, nên chúng đứng riêng ở đây
-                    và các nút "×" trong danh sách nối vào bằng thuộc tính
-                    form="" — đúng cách đã dùng cho ô chọn món ở giỏ hàng.
-
-                    Mỗi địa chỉ một biểu mẫu vì đường dẫn khác nhau. Ẩn đi
-                    bằng `hidden`, không phải CSS: các form này không có
-                    gì để nhìn, và `hidden` thì trình đọc màn hình cũng bỏ
-                    qua luôn.
-                --}}
                 @foreach($addresses as $address)
                     <form
                         id="xoa-dia-chi-{{ $address->id }}"
@@ -607,25 +435,6 @@
 
                 <div class="checkout-aside">
 
-                    {{--
-                        MÃ GIẢM GIÁ Ở CỘT PHẢI, ngay trên bảng tiền.
-
-                        Trước đây nó nằm giữa cột trái, kẹp giữa "Thời gian
-                        giao" và "Hình thức thanh toán" — cách xa con số mà nó
-                        thay đổi hơn nửa màn hình. Áp mã xong phải đi tìm xem
-                        tổng tiền có đổi không.
-
-                        MỌI NÚT Ở ĐÂY ĐỀU THUỘC BIỂU MẪU BÊN TRÁI
-                        (form="checkout-details-form"), chỉ đổi đích bằng
-                        formaction. Trước đây chúng là biểu mẫu riêng, và hậu
-                        quả là khách điền xong tên, số điện thoại, địa chỉ rồi
-                        bấm "Bỏ mã" thì trang tải lại TRẮNG TRƠN — đúng cảm
-                        giác đơn hàng vừa bị huỷ. Nay thứ đang gõ dở đi kèm
-                        theo và được trả lại qua old().
-
-                        formnovalidate: mấy nút này không phải "gửi đơn", nên
-                        không được đòi điền đủ mới cho bấm.
-                    --}}
                     <div class="checkout-coupon">
                         <h2 class="checkout-coupon__title">
                             <x-site.icon name="tags" class="checkout-coupon__icon" />
@@ -639,14 +448,6 @@
                                     <span class="text-muted">{{ $basket->coupon->name }}</span>
                                 </span>
 
-                                {{--
-                                    name="_method" value="DELETE" đặt TRÊN NÚT
-                                    chứ không phải một ô ẩn: ô ẩn nằm trong
-                                    biểu mẫu thì nút "Xem lại đơn hàng" cũng
-                                    gửi kèm, biến việc đặt hàng thành một
-                                    request DELETE. Giá trị của nút chỉ được
-                                    gửi khi chính nó được bấm.
-                                --}}
                                 <button type="submit"
                                         form="checkout-details-form"
                                         formaction="{{ route('shop.checkout.remove-coupon') }}"
@@ -656,13 +457,6 @@
                             </div>
                         @endif
 
-                        {{--
-                            Ô NHẬP TAY luôn hiện, kể cả khi đang có mã.
-
-                            Bản trước giấu nó sau khi áp mã, nên muốn đổi sang
-                            mã khác phải bỏ mã cũ rồi mới gõ được mã mới — hai
-                            lần tải trang cho một việc.
-                        --}}
                         <div class="coupon-box__input">
                             <label class="visually-hidden" for="coupon_code">Nhập mã giảm giá</label>
                             <input type="text" id="coupon_code" name="coupon_code"
@@ -681,25 +475,6 @@
 
                         <x-form-error name="coupon_code" />
 
-                        {{--
-                            DANH SÁCH MÃ TRONG VÍ, mở bằng <details> nên
-                            không cần JavaScript.
-
-                            CHỈ MÃ ĐÃ LƯU. Trang Voucher hứa với khách rằng
-                            "lưu mã về ví, tới bước thanh toán chọn lại là
-                            xong" — liệt kê ở đây cả mã họ chưa lưu là nói
-                            khác lời hứa đó, và làm nút "Lưu mã" thành vô
-                            nghĩa.
-
-                            HIỆN CẢ MÃ CHƯA DÙNG ĐƯỢC, kèm lý do: "cần đơn
-                            từ 300.000đ" cho khách biết mua thêm chút nữa là
-                            được giảm — có ích hơn hẳn việc giấu đi.
-
-                            MỖI MÃ LÀ MỘT NÚT GỬI mang theo wallet_code — đi
-                            qua ĐÚNG endpoint mà ô nhập tay dùng, nên mọi
-                            phép kiểm tra chạy y hệt. Bấm nút không phải
-                            đường tắt bỏ qua kiểm tra.
-                        --}}
                         @auth
                             @if($couponChoices->isNotEmpty())
                                 @php($usableCount = $couponChoices->whereNull('reason')->count())
@@ -742,8 +517,6 @@
                                     </p>
                                 </details>
                             @else
-                                {{-- Cùng một câu với trang Voucher, để hai nơi
-                                     không kể hai câu chuyện khác nhau. --}}
                                 <p class="text-caption mt-2 mb-0">
                                     Ví voucher đang trống.
                                     <a href="{{ route('shop.vouchers.index') }}">Xem mã đang mở</a>.
@@ -755,14 +528,6 @@
                             </p>
                         @endauth
 
-                        {{--
-                            ĐỐI TRỌNG CỦA NÚT "BỎ MÃ".
-
-                            Bỏ mã xong là cửa hàng ngừng tự chọn mã cho đơn
-                            này — đúng ý khách, nhưng phải có đường quay lại,
-                            nếu không họ kẹt với lựa chọn của chính mình cho
-                            tới hết phiên.
-                        --}}
                         @if($autoDeclined)
                             <p class="coupon-box__auto">
                                 Cửa hàng đang không tự chọn mã cho đơn này.
@@ -775,18 +540,7 @@
                         @endif
                     </div>
 
-                    {{--
-                        DÙNG ĐIỂM THƯỞNG — cùng kiểu nút với khối mã giảm giá: thuộc
-                        biểu mẫu bên trái, đổi đích bằng formaction, nên thứ đang gõ dở
-                        không mất. Số tiền giảm và mức tối đa do CheckoutBasket tính.
-                    --}}
                     @auth
-                        {{--
-                            Dạng một dòng, KHÔNG dùng khối có thẻ đóng: Blade gom khối PHP
-                            TRƯỚC khi bỏ chú thích, nên thẻ đóng ở đây ghép với dạng một dòng
-                            phía trên (usableCount) thành một khối và nuốt mất cả đoạn giữa.
-                            Vì cùng lý do đó, chú thích này không được viết tên hai thẻ ấy.
-                        --}}
                         @php($soDuDiem = app(\App\Services\Points\PointLedger::class)->soDu(auth()->user()))
                         @php($diemToiDa = \App\Services\Points\PointRedemption::dungDuoc(PHP_INT_MAX, $basket->itemsAfterCoupon(), $soDuDiem))
                         <div class="checkout-coupon" data-khoi-diem>
@@ -849,18 +603,6 @@
     </div>
 </section>
 
-{{--
-    THANH TỔNG TIỀN DÍNH ĐÁY — CHỈ TRÊN ĐIỆN THOẠI.
-
-    Trên màn hình rộng, bảng tóm tắt nằm cột phải và luôn nhìn thấy được.
-    Trên điện thoại thì hai cột xếp chồng: biểu mẫu trước, tóm tắt sau —
-    nghĩa là nút gửi nằm TRÊN bảng tiền, và khách bấm "Xem lại đơn hàng"
-    trước khi kịp nhìn thấy mình phải trả bao nhiêu.
-
-    Thanh này lặp lại tổng tiền và nút gửi ở đáy màn hình, luôn trong tầm
-    mắt. Nút bên trong dùng form="checkout-details-form" nên bấm ở đây
-    hay bấm nút trong biểu mẫu đều như nhau.
---}}
 <div class="checkout-bar">
     <div class="checkout-bar__total">
         <span class="checkout-bar__label">Tổng thanh toán</span>

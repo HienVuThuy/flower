@@ -20,13 +20,6 @@
 
 <x-admin.nhom-tab ten="lo-hoa" />
 
-{{--
-    NHẮC LÔ QUÊN ĐÓNG — ĐẶT TRÊN CÙNG, CÓ CHỦ Ý.
-
-    Quên đóng lô làm giá vốn hoa thấp hơn sự thật và lãi gộp cao hơn sự
-    thật. Sai theo hướng dễ chịu là hướng không ai tự đi tìm, nên nó phải
-    tự tìm đến người dùng.
---}}
 @if($quenDong->isNotEmpty())
     <div class="admin-panel p-4 mb-3 border-warning">
         <h2 class="h6 fw-bold mb-2">
@@ -103,7 +96,6 @@
                         </td>
                         <td>{{ $l->kind?->name ?? '—' }}</td>
                         <td>
-                            {{-- Bản chụp tên, không phải tên hiện tại. --}}
                             {{ $l->supplier_name ?? $l->supplier?->name ?? '—' }}
                         </td>
                         <td>{{ rtrim(rtrim(number_format((float) $l->quantity, 2, ',', '.'), '0'), ',') }}
@@ -137,7 +129,6 @@
                                 </button>
                             @endunless
 
-                            {{-- Sửa / xoá chỉ hiện khi bấm được: lô còn mở và chưa ghi trả hàng. --}}
                             @if(\App\Services\Inventory\FlowerLotService::conSuaDuoc($l))
                                 <div class="d-flex gap-1 mt-1">
                                     <a data-admin-link href="{{ route('admin.flower-lots.edit', $l) }}"

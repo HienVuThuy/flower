@@ -15,13 +15,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Danh sách mọi khoản hoàn tiền.
- * ============================================================
- * Trước đây khoản hoàn chỉ xem được trong trang của từng đơn — đối soát
- * một tháng là mở từng đơn. Bất biến chính: con số "đã hoàn" chỉ cộng
- * khoản ĐÃ XONG.
- */
+/** Danh sách mọi khoản hoàn tiền. */
 class DanhSachHoanTienTest extends TestCase
 {
     use RefreshDatabase;
@@ -94,10 +88,6 @@ class DanhSachHoanTienTest extends TestCase
     #[Test]
     public function DA_HOAN_chi_cong_khoan_da_xong(): void
     {
-        /*
-         * Khoản chưa rõ kết quả chưa phải tiền đã rời cửa hàng; khoản thất
-         * bại thì không bao giờ rời. Cộng chung là lệch với sao kê.
-         */
         $don = $this->don('FP-HT-0002');
         $this->hoan($don, '200000.00', RefundStatus::Completed);
         $this->hoan($don, '150000.00', RefundStatus::Completed);

@@ -15,12 +15,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
-/**
- * Vật phẩm dùng làm quà. Xem migration create_gift_tables.
- *
- * XOÁ chỉ khi chưa chương trình nào dùng và chưa đơn nào tặng — đơn cũ
- * phải còn kể được đã tặng gì. Ngừng dùng thì bỏ tích "đang dùng".
- */
+/** Vật phẩm dùng làm quà. */
 class GiftItemController extends Controller
 {
     use LogsAdminActivity;
@@ -79,7 +74,6 @@ class GiftItemController extends Controller
         ]);
     }
 
-    /** @return array<string, mixed> */
     private function duLieu(Request $request): array
     {
         $data = $request->validate([
@@ -102,10 +96,6 @@ class GiftItemController extends Controller
         $data['is_active'] = $request->boolean('is_active');
 
         if (! empty($data['product_id'])) {
-            /*
-             * TRỎ SẢN PHẨM: tồn kho là của sản phẩm. Ô số lượng riêng bỏ đi —
-             * để lại là có hai con số tồn cho cùng một món.
-             */
             $data['stock_quantity'] = null;
 
             if (! empty($data['product_variant_id'])

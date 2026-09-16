@@ -1,22 +1,4 @@
-/*
- * Tải ảnh minh hoạ danh mục / nhu cầu / sản phẩm.
- * ============================================================
- * NGUỒN: Openverse (https://openverse.org) — gom ảnh Creative Commons
- * từ Flickr và nhiều kho khác, có API công khai không cần khoá.
- *
- * Vì sao KHÔNG dùng Wikimedia Commons: đã thử và kho public-domain của
- * Commons chủ yếu là tranh vẽ cổ và ảnh tư liệu nghiệp dư — tìm "trang
- * trí nhà bằng cây" thì ra tranh màu nước thế kỷ 19. Sai loại nguồn.
- *
- * API được hỏi thẳng bằng license_type=commercial,modification nên chỉ
- * trả về ảnh cho phép dùng thương mại và cho phép sửa. Script vẫn kiểm
- * tra lại giấy phép của từng ảnh, không tin suông tham số.
- *
- *     node tools/fetch-photos.mjs
- *
- * Kết quả: ảnh trong resources/images/catalog/ + credits.json.
- * KHÔNG chạy khi deploy — ảnh đã nằm sẵn trong repo.
- */
+/* Tải ảnh minh hoạ danh mục / nhu cầu / sản phẩm. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -26,13 +8,8 @@ const OUT = path.join(ROOT, 'resources/images/catalog');
 const API = 'https://api.openverse.org/v1/images/';
 const UA = { 'User-Agent': 'btlar-student-project/1.0' };
 
-// Giấy phép chấp nhận: dùng thương mại được VÀ sửa đổi được.
 const LICENSE_OK = new Set(['cc0', 'pdm', 'by', 'by-sa']);
 
-/*
- * Loại ảnh không phải cây/hoa thật. Lần chạy trước nhận nhầm một cây
- * bonsai LEGO cho danh mục Bonsai.
- */
 const TITLE_BLOCK =
     /lego|toy|plastic|artificial|fake|origami|paper craft|drawing|painting|tattoo|cake|clip ?art|render|minecraft/i;
 
@@ -72,7 +49,6 @@ const TARGETS = [
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/** Tải và xác nhận đúng là ảnh thật, không phải trang lỗi trá hình. */
 async function download(url) {
     let res;
 
@@ -120,7 +96,6 @@ async function search(q) {
         if (TITLE_BLOCK.test(it.title ?? '')) return false;
         if (!it.width || !it.height) return false;
 
-        // Thẻ danh mục là khung ngang — ảnh dọc sẽ bị cắt mất nội dung.
         if (it.width < it.height * 1.1) return false;
         if (it.width < 900) return false;
 
@@ -130,11 +105,9 @@ async function search(q) {
 
 fs.mkdirSync(OUT, { recursive: true });
 
-// Cho phép chạy lại chỉ vài mục:  node tools/fetch-photos.mjs cat-bonsai
 const only = process.argv.slice(2);
 const todo = only.length ? TARGETS.filter((t) => only.includes(t.slug)) : TARGETS;
 
-// Giữ lại phần ghi nguồn của những ảnh không chạy lại lần này.
 const creditsPath = path.join(OUT, 'credits.json');
 const credits = only.length && fs.existsSync(creditsPath)
     ? JSON.parse(fs.readFileSync(creditsPath, 'utf8')).filter((c) => !only.some((s) => c.file.startsWith(s)))

@@ -5,13 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Chuyên mục của Cẩm nang.
- *
- * Cố ý ÍT chuyên mục và mỗi cái rộng: "Chăm cây", "Chọn cây", "Ý nghĩa
- * hoa", "Trang trí". Chia nhỏ hơn thì mỗi chuyên mục chỉ có hai ba bài
- * và trang danh sách trông như bỏ hoang.
- */
+/** Chuyên mục của Cẩm nang. */
 class BlogCategory extends Model
 {
     protected $fillable = ['name', 'slug', 'description', 'sort_order'];

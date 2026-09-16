@@ -1,9 +1,4 @@
-{{--
-    Thư NỘI BỘ gửi cửa hàng khi có đơn mới.
-
-    Cùng khuôn với thư "khách huỷ đơn": người đọc là nhân viên sắp xử lý
-    đơn, cần biết ngay đơn nào, giao đâu, thu tiền thế nào.
---}}
+{{-- Thư NỘI BỘ gửi cửa hàng khi có đơn mới. --}}
 @php
     $address = collect([
         $order->shipping_address,
@@ -40,7 +35,6 @@
     </tr>
 
     @if($order->payment_method === \App\Enums\PaymentMethod::Momo && $order->payment_status !== \App\Enums\PaymentStatus::Paid)
-        {{-- MoMo chưa trả xong thì CHƯA nên cắt hoa: khách có thể bỏ ngang ở cổng thanh toán. --}}
         <tr>
             <td style="padding:8px 24px;">
                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"

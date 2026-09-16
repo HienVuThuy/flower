@@ -1,9 +1,6 @@
 import { BaseEffect } from './base-effect.js';
 
-/**
- * Cánh mai rơi — chậm, thưa, không phải confetti. Vẽ hình elip
- * vàng nhỏ xoay nhẹ, mô phỏng cánh hoa mai.
- */
+/** Cánh mai rơi — chậm, thưa, không phải confetti. */
 export class TetEffect extends BaseEffect {
     constructor() {
         super();

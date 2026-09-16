@@ -14,22 +14,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Phiếu nhập kho.
- * ============================================================
- * VẤN ĐỀ ĐÃ SỬA: kho chỉ đổi được qua ô nhập số ở trang sản phẩm — một
- * phép GÁN ĐÈ. Sau đó không ai trả lời được "vì sao tồn là 47", "mua vào
- * bao nhiêu tiền", hay "ai vừa ghi đè của ai".
- *
- * Bất biến được canh ở đây:
- *
- *   1. Tạo phiếu KHÔNG cộng vào kho — còn một bước ghi sổ nữa.
- *   2. Ghi sổ CỘNG THÊM, không gán đè.
- *   3. Ghi sổ ĐÚNG MỘT LẦN, kể cả khi bấm hai lần.
- *   4. Cộng vào đúng chỗ giữ tồn: quy cách có kho riêng.
- *   5. Phiếu đã ghi sổ KHÔNG xoá được.
- *   6. Giá để trống là NULL ("chưa biết"), không phải 0₫.
- */
+/** Phiếu nhập kho. */
 class StockReceiptTest extends TestCase
 {
     use RefreshDatabase;
@@ -68,7 +53,6 @@ class StockReceiptTest extends TestCase
         ]);
     }
 
-    /** Lập phiếu qua đúng đường admin đi. */
     private function lapPhieu(array $dong, array $them = []): StockReceipt
     {
         $this->actingAs($this->admin())
@@ -82,16 +66,9 @@ class StockReceiptTest extends TestCase
         return StockReceipt::latest('id')->firstOrFail();
     }
 
-    /* ================= 1. TẠO PHIẾU CHƯA CỘNG VÀO KHO ================= */
-
     #[Test]
     public function tao_phieu_KHONG_cong_vao_kho_ngay(): void
     {
-        /*
-         * Người lập phải nhìn lại phiếu rồi mới bấm ghi sổ. Cộng luôn thì
-         * một lần gõ nhầm số lượng đi thẳng vào kho, và không có bước nào
-         * để phát hiện.
-         */
         $p = $this->hang('Sen đá', ton: 5);
 
         $phieu = $this->lapPhieu([
@@ -103,18 +80,9 @@ class StockReceiptTest extends TestCase
         $this->assertSame(5, $p->fresh()->stock_quantity, 'Tạo phiếu đã cộng vào kho — lẽ ra phải chờ ghi sổ.');
     }
 
-    /* ================= 2. GHI SỔ CỘNG THÊM ================= */
-
     #[Test]
     public function ghi_so_CONG_THEM_chu_khong_gan_de(): void
     {
-        /*
-         * BÀI QUAN TRỌNG NHẤT.
-         *
-         * Giữa lúc admin mở phiếu và lúc bấm ghi sổ, có thể đã có đơn
-         * hàng trừ kho. Gán đè `stock_quantity = 50` là xoá luôn phần đã
-         * bán đó — kho nói còn 50 trong khi thực tế chỉ còn 47.
-         */
         $p = $this->hang('Sen đá', ton: 5);
 
         $phieu = $this->lapPhieu([
@@ -133,11 +101,6 @@ class StockReceiptTest extends TestCase
     #[Test]
     public function ghi_so_hai_lan_KHONG_cong_kho_hai_lan(): void
     {
-        /*
-         * Bấm hai lần vì trang chậm là đủ để tái hiện. Không có chốt thì
-         * kho cộng gấp đôi cho một phiếu, và không có gì trên màn hình
-         * cho thấy điều đó.
-         */
         $p = $this->hang('Sen đá', ton: 0);
 
         $phieu = $this->lapPhieu([
@@ -155,12 +118,6 @@ class StockReceiptTest extends TestCase
     #[Test]
     public function so_luong_AM_tru_bot_kho(): void
     {
-        /*
-         * Phiếu điều chỉnh là cách sửa một lần nhập nhầm — phiếu đã ghi
-         * sổ không sửa được, nên phải có đường trừ bớt ra. Chặn số âm thì
-         * cách duy nhất còn lại là sửa tay cột tồn kho, đúng thứ tính
-         * năng này sinh ra để thay thế.
-         */
         $p = $this->hang('Sen đá', ton: 100);
 
         $phieu = $this->lapPhieu([
@@ -172,16 +129,9 @@ class StockReceiptTest extends TestCase
         $this->assertSame(70, $p->fresh()->stock_quantity);
     }
 
-    /* ================= 3. ĐÚNG CHỖ GIỮ TỒN ================= */
-
     #[Test]
     public function nhap_theo_quy_cach_cong_vao_kho_cua_quy_cach(): void
     {
-        /*
-         * Sản phẩm có quy cách thì `products.stock_quantity` không phải
-         * thứ khách mua. Cộng vào đó là cộng vào một con số không ai đọc,
-         * còn quy cách thì vẫn hết hàng.
-         */
         $p = $this->hang('Lưỡi hổ', ton: 0);
         $suTrang = $this->quyCach($p, 'Chậu sứ trắng', ton: 2);
         $gomNau = $this->quyCach($p, 'Chậu gốm nâu', ton: 9);
@@ -200,10 +150,6 @@ class StockReceiptTest extends TestCase
     #[Test]
     public function hang_KHONG_theo_doi_ton_thi_khong_hien_trong_o_chon(): void
     {
-        /*
-         * Cho chọn thứ không theo dõi tồn là bày ra một lựa chọn mà lúc
-         * ghi sổ sẽ bị từ chối — sau khi người dùng đã gõ xong cả phiếu.
-         */
         $this->hang('Có theo dõi');
         $this->hang('Không theo dõi', theoDoi: false);
 
@@ -222,7 +168,6 @@ class StockReceiptTest extends TestCase
         $p = $this->hang('Lưỡi hổ', ton: 0);
         $this->quyCach($p, 'Chậu sứ trắng');
 
-        // Ép một dòng "cả sản phẩm" cho hàng có quy cách.
         $phieu = $this->lapPhieu([
             ['mat_hang' => $p->id . ':', 'quantity' => 10],
         ]);
@@ -235,16 +180,9 @@ class StockReceiptTest extends TestCase
         $this->assertSame(0, $p->fresh()->stock_quantity);
     }
 
-    /* ================= 4. PHIẾU ĐÃ GHI SỔ LÀ BẤT BIẾN ================= */
-
     #[Test]
     public function phieu_da_ghi_so_KHONG_xoa_duoc(): void
     {
-        /*
-         * Kho đã cộng theo nó. Xoá chứng từ sau khi nó đã tác động là làm
-         * sổ sách không còn khớp với thực tế, và không ai lần ra được vì
-         * sao lệch.
-         */
         $p = $this->hang('Sen đá');
         $phieu = $this->lapPhieu([['mat_hang' => $p->id . ':', 'quantity' => 5]]);
 
@@ -275,7 +213,6 @@ class StockReceiptTest extends TestCase
     public function phieu_rong_KHONG_ghi_so_duoc(): void
     {
         $phieu = $this->lapPhieu([
-            // Dòng trống — controller lọc bỏ, phiếu còn lại 0 dòng.
             ['mat_hang' => '', 'quantity' => 0],
         ]);
 
@@ -286,16 +223,9 @@ class StockReceiptTest extends TestCase
             ->assertSessionHas('error');
     }
 
-    /* ================= 5. GIÁ VỐN: NULL KHÁC 0 ================= */
-
     #[Test]
     public function gia_de_trong_luu_NULL_chu_khong_phai_0(): void
     {
-        /*
-         * NULL là "không có số liệu" (hàng tặng, hàng mẫu, chưa biết
-         * giá); 0 là "nhận không mất tiền". Gộp lại thì giá vốn bình quân
-         * bị kéo xuống bởi những lô chưa ai điền.
-         */
         $p = $this->hang('Sen đá');
 
         $phieu = $this->lapPhieu([
@@ -319,14 +249,11 @@ class StockReceiptTest extends TestCase
 
         $this->assertEqualsWithDelta(200_000, $phieu->totalCost(), 0.01);
 
-        // Và trang phiếu phải NÓI RA chỗ thiếu, không im lặng.
         $this->actingAs($this->admin())
             ->get('/admin/nhap-kho/' . $phieu->id)
             ->assertOk()
             ->assertSee('chưa điền giá vốn', escape: false);
     }
-
-    /* ================= 6. GHI LẠI AI LÀM ================= */
 
     #[Test]
     public function phieu_ghi_lai_nguoi_lap(): void
@@ -345,16 +272,9 @@ class StockReceiptTest extends TestCase
         $this->assertSame($admin->name, $phieu->created_by_name);
     }
 
-    /* ================= 7. XÁC THỰC VÀ PHÂN QUYỀN ================= */
-
     #[Test]
     public function ngay_nhap_o_tuong_lai_bi_chan(): void
     {
-        /*
-         * Hàng chưa về mà đã ghi ngày mai là làm báo cáo nhập hàng theo
-         * tháng sai. Ngày trong QUÁ KHỨ thì hợp lệ — hàng về thứ Bảy,
-         * thứ Hai mới ngồi nhập máy.
-         */
         $p = $this->hang('Sen đá');
 
         $this->actingAs($this->admin())
@@ -375,10 +295,6 @@ class StockReceiptTest extends TestCase
     #[Test]
     public function ma_mat_hang_bia_tren_bieu_mau_bi_bo_qua(): void
     {
-        /*
-         * Chuỗi "id:idQuyCach" đến từ trình duyệt. Không tra lại trong cơ
-         * sở dữ liệu thì một id bịa chui thẳng vào khoá ngoại.
-         */
         $p = $this->hang('Sen đá');
 
         $phieu = $this->lapPhieu([

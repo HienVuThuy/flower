@@ -1,10 +1,4 @@
-{{--
-    LƯỚI ẢNH / VIDEO của một bài trên bảng tin.
-
-    Tối đa 4 ô; ô thứ tư mang "+N" nếu còn nữa — bấm vào mở trang bài để xem
-    đủ. Video hiện khung hình đầu kèm dấu play, KHÔNG tự phát: bảng tin có
-    nhiều bài, tự phát là ngốn dữ liệu di động của khách.
---}}
+{{-- LƯỚI ẢNH / VIDEO của một bài trên bảng tin. --}}
 @php
     $ds = $post->media;
     $tong = $ds->count();
@@ -15,7 +9,6 @@
         @foreach($ds->take(4) as $i => $m)
             <a href="{{ route('shop.community.show', $post->id) }}" class="media-grid__item">
                 @if($m->laVideo())
-                    {{-- preload="metadata": chỉ tải phần đầu để có khung hình, không tải cả video. --}}
                     <video class="media-grid__media" preload="metadata" muted playsinline
                            src="{{ $m->url() }}#t=0.1"
                            aria-label="Video do {{ $post->user?->name ?? 'khách' }} chia sẻ"></video>

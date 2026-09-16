@@ -1,15 +1,4 @@
-{{--
-    Thư xác nhận yêu cầu xoá tài khoản.
-
-    Bảng + style nội tuyến, KHÔNG dùng class hay tệp CSS ngoài — Gmail và
-    Outlook bỏ <link> và cắt <style> ở <head>. Xem chú thích dài hơn ở
-    emails/orders/confirmation.blade.php.
-
-    THƯ NÀY VỪA LÀ BƯỚC XÁC NHẬN VỪA LÀ CẢNH BÁO. Người nhận có thể là
-    chủ tài khoản đang muốn xoá, nhưng cũng có thể là người vừa bị kẻ
-    khác chiếm tài khoản. Nội dung phải phục vụ được cả hai: đường xoá
-    cho người thứ nhất, và lời cảnh báo rõ ràng cho người thứ hai.
---}}
+{{-- Thư xác nhận yêu cầu xoá tài khoản. --}}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -61,11 +50,6 @@
                 Liên kết hết hạn sau {{ $minutes }} phút và chỉ dùng được một lần.
             </p>
 
-            {{--
-                CẢNH BÁO ĐẶT NGAY DƯỚI NÚT, không nhét xuống chân thư.
-                Người đọc thư này mà không hề yêu cầu xoá chính là người
-                cần đọc kỹ nhất, và họ sẽ dừng lại ngay khi thấy nút.
-            --}}
             <p style="margin:0 0 12px 0; padding:12px; background:#fdf1d8; border-radius:6px; color:#7a5b12;">
                 <strong>Bạn không yêu cầu việc này?</strong>
                 Vậy có người khác đang đăng nhập được vào tài khoản của bạn.

@@ -5,10 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Một ảnh hoặc video của bài Góc cây. Chỉ CommunityMediaStore ghi — ảnh đã
- * tước metadata, video đã xoá toạ độ GPS.
- */
+/** Một ảnh hoặc video của bài Góc cây. */
 class CommunityPostMedia extends Model
 {
     protected $table = 'community_post_media';

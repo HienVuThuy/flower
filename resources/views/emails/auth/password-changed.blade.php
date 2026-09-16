@@ -1,8 +1,4 @@
-{{--
-    Thư CẢNH BÁO mật khẩu vừa bị đổi.
-
-    Bảng + style nội tuyến, không dùng CSS ngoài (Gmail/Outlook cắt bỏ).
---}}
+{{-- Thư CẢNH BÁO mật khẩu vừa bị đổi. --}}
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -14,8 +10,6 @@
 
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:600px; margin:0 auto; background:#ffffff; border:1px solid #e4e2da; border-radius:8px;">
 
-    {{-- Dải màu cảnh báo, không phải màu thương hiệu: thư này cần khác
-         mắt so với thư khuyến mại để người ta không lướt qua. --}}
     <tr>
         <td style="height:4px; background:#8a2e2e; border-radius:8px 8px 0 0; font-size:0; line-height:0;">&nbsp;</td>
     </tr>
@@ -45,10 +39,6 @@
         </td>
     </tr>
 
-    {{--
-        Phần quan trọng nhất của thư. Đóng khung và tô nền để người đang
-        hoảng đọc được ngay mà không phải tìm.
-    --}}
     <tr>
         <td style="padding:0 24px 16px 24px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%"
@@ -75,14 +65,6 @@
 
     <tr>
         <td style="padding:16px 24px 24px 24px; border-top:1px solid #e4e2da; font-size:13px; color:#5d6660;">
-            {{--
-                KHÔNG kèm liên kết đặt lại mật khẩu trong thư này.
-
-                Thư cảnh báo có nút bấm là mẫu quen thuộc của thư lừa đảo:
-                "tài khoản của bạn bị xâm nhập, bấm vào đây". Dạy khách bấm
-                theo là dạy họ mắc bẫy lần sau. Ở đây chỉ nói tên chức năng
-                để họ tự vào website.
-            --}}
             Vì lý do an toàn, thư này không kèm liên kết đăng nhập hay đặt lại mật khẩu.
             Hãy tự mở website của cửa hàng và dùng chức năng ở đó.
         </td>

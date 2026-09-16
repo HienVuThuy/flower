@@ -12,14 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Cửa hàng trả lời đánh giá của khách.
- * ============================================================
- * VÌ SAO CẦN: trước đây admin chỉ làm được đúng một việc với đánh giá —
- * ẨN nó đi. Với đánh giá 2 sao thì đó là lựa chọn tệ nhất: khách viết ra
- * vì muốn được nghe, ẩn đi là nói rằng cửa hàng không muốn nghe. Và
- * người đọc sau đó chỉ thấy toàn 5 sao nên không tin trang đánh giá nữa.
- */
+/** Cửa hàng trả lời đánh giá của khách. */
 class ReviewReplyTest extends TestCase
 {
     use RefreshDatabase;
@@ -70,18 +63,11 @@ class ReviewReplyTest extends TestCase
     #[Test]
     public function sua_lai_cau_chu_KHONG_lam_moi_ngay_phan_hoi(): void
     {
-        /*
-         * Đặt lại mốc mỗi lần lưu thì một lần sửa lỗi chính tả biến
-         * thành "vừa phản hồi hôm nay" cho câu trả lời từ tháng trước —
-         * và khách đọc thấy cửa hàng vừa mới trả lời, trong khi họ đã
-         * chờ ba tuần.
-         */
         $review = $this->review();
         $this->reply($review, 'Cảm ơn anh chị.');
 
         $mocDau = $review->fresh()->admin_replied_at;
 
-        // Lùi mốc để phân biệt được nếu nó bị ghi đè.
         Review::where('id', $review->id)->update([
             'admin_replied_at' => now()->subDays(30),
         ]);
@@ -100,8 +86,6 @@ class ReviewReplyTest extends TestCase
     #[Test]
     public function gui_o_trong_thi_xoa_phan_hoi(): void
     {
-        // Xoá phản hồi = gửi ô trống. Không cần thêm một route "xoá"
-        // riêng cho thao tác mà chính biểu mẫu này đã diễn tả được.
         $review = $this->review();
         $this->reply($review, 'Cảm ơn anh chị.');
 
@@ -126,8 +110,6 @@ class ReviewReplyTest extends TestCase
     #[Test]
     public function khach_doc_duoc_phan_hoi_tren_trang_san_pham(): void
     {
-        // Phản hồi là CÔNG KHAI — đó là cả điểm của nó. Khác hẳn ghi chú
-        // nội bộ của đơn hàng, thứ khách không bao giờ được thấy.
         $review = $this->review();
         $this->reply($review, 'Cửa hàng đã đổi đơn vị giao cho tuyến này.');
 
@@ -140,11 +122,6 @@ class ReviewReplyTest extends TestCase
     #[Test]
     public function danh_gia_bi_an_thi_phan_hoi_cung_khong_hien(): void
     {
-        /*
-         * Ẩn đánh giá mà phản hồi vẫn còn là để lại một câu trả lời
-         * không có câu hỏi — người đọc thấy cửa hàng đang xin lỗi ai đó
-         * mà không biết vì chuyện gì.
-         */
         $review = $this->review();
         $this->reply($review, 'Cửa hàng xin lỗi anh chị.');
 
@@ -159,8 +136,6 @@ class ReviewReplyTest extends TestCase
     #[Test]
     public function khach_thuong_khong_tu_viet_duoc_phan_hoi_cua_cua_hang(): void
     {
-        // Nếu lọt thì bất kỳ ai cũng ký tên cửa hàng dưới đánh giá của
-        // chính mình — chữ "Phản hồi từ Flower & Plant" mất hết ý nghĩa.
         $review = $this->review();
 
         $this->actingAs(User::factory()->create())

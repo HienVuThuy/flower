@@ -84,17 +84,6 @@
 
             </div>
 
-            {{--
-                MÔ TẢ CHI TIẾT THEO KHỐI: chữ – ảnh – chữ – ảnh…
-                ============================================================
-                Mỗi khối một dòng, thứ tự trên màn hình CHÍNH LÀ thứ tự hiện ra
-                ở trang khách. Không có ô "số thứ tự" gõ tay: hai khối cùng mang
-                số 3 thì thứ tự do database quyết định, không ai đoán được.
-
-                Ảnh ở đây là TỆP CÓ CHỦ (một dòng trong bảng), không phải thẻ
-                <img> nhét vào ô chữ — nhờ vậy xoá khối là xoá được cả tệp, và ô
-                chữ không phải mở cửa cho thẻ ảnh tuỳ ý.
-            --}}
             <div class="mb-3" data-blocks>
 
                 <label class="form-label fw-semibold">Khối nội dung chi tiết</label>
@@ -105,11 +94,6 @@
                 </p>
 
                 @php
-                    /*
-                     * Dữ liệu dựng lại sau khi validation hỏng (old) phải thắng
-                     * dữ liệu trong cơ sở dữ liệu — nếu không, người dùng sửa
-                     * xong, gặp lỗi ở ô khác, và mất hết phần vừa gõ.
-                     */
                     $khoiCu = old('blocks', isset($product)
                         ? $product->blocks->map(fn ($b) => [
                             'id' => $b->id,
@@ -135,8 +119,6 @@
                 <x-form-error name="blocks.*.body"/>
                 <x-form-error name="blocks.*.image"/>
 
-                {{-- Mẫu dòng cho JavaScript nhân bản. Để trong <template> nên
-                     trình duyệt không gửi các ô bên trong khi lưu. --}}
                 <template data-block-template="text">
                     @include('admin.products._block-row', ['i' => '__INDEX__', 'khoi' => ['kind' => 'text']])
                 </template>
@@ -149,18 +131,6 @@
 
         </div>
 
-        {{--
-            KHỐI THÔNG TIN CHĂM SÓC — sinh theo HÌNH THỨC BÁN.
-
-            Guide mục 4.4: cây chậu cần ánh sáng/đất/phân bón..., còn
-            "đối với bó hoa/cành hoa thì thông tin chăm sóc lại khác".
-            Trước đây khối này in cứng 9 ô của cây chậu cho MỌI sản phẩm.
-
-            Mỗi hồ sơ được in ra một lần, chỉ hồ sơ khớp hình thức đang
-            chọn là hiện. JS đổi hiển thị khi người dùng đổi hình thức;
-            server vẫn lọc lại ở prepareForValidation() nên ẩn/hiện ở
-            trình duyệt chỉ là tiện lợi, không phải hàng rào.
-        --}}
         @php
             $currentForm = old('selling_form', $product->selling_form?->value ?? '');
             $currentProfile = \App\Enums\SellingForm::tryFrom((string) $currentForm)?->careProfile();
@@ -208,9 +178,6 @@
                                 >{{ $old }}</textarea>
 
                             @elseif($field['input'] === 'number')
-                                {{-- min=1: chu ky 0 ngay nghia la nhac lien tuc,
-                                     va so am thi vo nghia. max=365 chan nham
-                                     kieu go 3000 thay vi 30. --}}
                                 <input
                                     type="number"
                                     id="care-{{ $profile->value }}-{{ $key }}"
@@ -226,10 +193,6 @@
                                 <select id="care-{{ $profile->value }}-{{ $key }}"
                                         name="care_info[{{ $key }}]" class="form-select">
                                     <option value="">— Không áp dụng —</option>
-                                    {{-- Sinh từ App\Enums\CareDifficulty thay vì gõ tay ba
-                                         dòng: quy tắc kiểm tra ở StoreProductRequest và bộ
-                                         lọc ở trang danh sách cũng đọc cùng enum đó, nên ba
-                                         nơi không thể lệch nhau nữa. --}}
                                     @foreach(\App\Enums\CareDifficulty::cases() as $level)
                                         <option value="{{ $level->value }}" @selected($old === $level->value)>
                                             {{ $level->label() }} — {{ $level->hint() }}
@@ -258,17 +221,6 @@
         @endforeach
 
 
-        {{--
-            ============ NHÃN PHÂN LOẠI ============
-
-            Ba nhóm ô đánh dấu: vị trí đặt, hợp mệnh, dùng kèm.
-            Dữ liệu này là NGUỒN DUY NHẤT cho trang "Tư vấn chọn cây" và
-            cho gợi ý mua kèm — hệ thống KHÔNG tự suy ra cây nào hợp ban
-            công hay hợp mệnh Kim, vì suy là bịa.
-
-            Sinh vòng lặp từ enum TraitType nên thêm một loại nhãn mới chỉ
-            cần thêm một case, không phải sửa Blade.
-        --}}
         <div class="admin-panel p-4 mb-4">
 
             <h2 class="h6 fw-bold mb-1">Nhãn phân loại</h2>
@@ -281,22 +233,6 @@
             <div class="row g-4">
                 @foreach(\App\Enums\TraitType::cases() as $traitType)
                     @php
-                        /*
-                         * old() có ưu tiên cao hơn dữ liệu trong cơ sở dữ
-                         * liệu: form gửi lên bị lỗi validation thì phải
-                         * giữ nguyên những gì admin vừa tích, không được
-                         * quay về giá trị cũ.
-                         */
-                        /*
-                         * isset($product) LÀ BẮT BUỘC ở tệp này.
-                         *
-                         * Trang "Thêm sản phẩm" KHÔNG truyền $product —
-                         * cả biểu mẫu này dựa vào toán tử ?? để nuốt biến
-                         * chưa tồn tại ($product->name ?? ''). Viết
-                         * $product->exists mà không kiểm tra trước thì
-                         * trang tạo sản phẩm lỗi 500, còn trang sửa vẫn
-                         * chạy bình thường — sai một nửa nên rất dễ lọt.
-                         */
                         $selected = old("traits.{$traitType->value}")
                             ?? (isset($product) && $product->exists
                                 ? $product->traitValues($traitType)
@@ -307,9 +243,6 @@
                         <p class="form-label mb-2">{{ $traitType->label() }}</p>
 
                         @if($traitType === \App\Enums\TraitType::FengShui)
-                            {{-- Nói rõ đây là tập quán văn hoá, không phải
-                                 chỉ số kỹ thuật — cửa hàng không có tư cách
-                                 khẳng định thay khách. --}}
                             <p class="admin-page-subtitle mb-2" style="font-size: .78rem;">
                                 Theo quan niệm phong thuỷ dân gian. Chỉ gán khi cửa hàng
                                 thật sự tư vấn được.
@@ -965,14 +898,6 @@
                     class="form-select"
                 >
 
-                    {{--
-                        Danh sách lấy từ App\Enums\ProductType.
-
-                        Bảng chép tay cũ còn 'gift'/'event'/'wedding' — ba
-                        giá trị trả lời "mua để làm gì" chứ không phải
-                        "đây là cái gì". Trục dịp thuộc về Category
-                        (xem QĐ-08).
-                    --}}
                     @php $productTypes = \App\Enums\ProductType::options(); @endphp
 
                     <option value="">
@@ -983,7 +908,6 @@
 
                         <option
                             value="{{ $value }}"
-                            {{-- Cột đã cast sang enum nên phải so bằng ->value. --}}
                             @selected(
                                 old(
                                     'product_type',
@@ -1016,9 +940,6 @@
                     class="form-select"
                 
                     data-selling-form
-                    {{-- Bản đồ hình thức -> hồ sơ chăm sóc do SERVER in ra,
-                         để JavaScript không chép lại logic của
-                         SellingForm::careProfile(). --}}
                     data-care-profiles="{{ json_encode(
                         collect(\App\Enums\SellingForm::cases())
                             ->mapWithKeys(fn ($f) => [$f->value => $f->careProfile()->value])
@@ -1051,14 +972,6 @@
 
             </div>
 
-            {{--
-                LOÀI CÂY — trước đây biểu mẫu không có ô này, nên sản phẩm
-                thêm mới không bao giờ xuất hiện ở trang /loai-cay.
-
-                Để trống được: hoa cắt cành, phụ kiện, vật tư không có loài.
-                Chỉ biết tới Chi hoặc Họ ("sen đá mix") thì chọn bậc đó — đúng
-                hơn là bịa một cái tên loài.
-            --}}
             <div class="mt-3">
 
                 <label class="form-label" for="taxon_id">Loài cây</label>
@@ -1088,11 +1001,6 @@
 
             </div>
 
-            {{--
-                Lời giải thích HIỆN CHO KHÁCH khi phân loại dừng ở Chi / Họ.
-                Thiếu nó thì dữ liệu đúng trông y hệt dữ liệu thiếu — xem
-                migration add_taxon_note_to_products_table.
-            --}}
             <div class="mt-3">
 
                 <label class="form-label" for="taxon_note">Vì sao chỉ tới chi / họ</label>
@@ -1150,19 +1058,6 @@
 
             </div>
 
-            {{--
-                ============ NHÓM THUẾ SUẤT ============
-
-                ĐẶT NGAY DƯỚI Ô GIÁ, có chủ ý: giá của cửa hàng này ĐÃ
-                BAO GỒM VAT, nên hai ô này nói về cùng một con số. Đặt
-                nhóm thuế ở một thẻ khác thì người nhập giá không nhìn
-                thấy nó, và mọi sản phẩm sẽ nằm mãi ở mức mặc định.
-
-                ĐỂ TRỐNG LÀ MỘT LỰA CHỌN HỢP LỆ, không phải dữ liệu
-                thiếu. Nó nghĩa là "dùng mức mặc định của cửa hàng" —
-                đúng hành vi trước khi có bảng nhóm thuế, nên sản phẩm cũ
-                không đổi gì cả.
-            --}}
             <div class="mb-3">
 
                 <label class="form-label" for="tax_class_id">
@@ -1183,16 +1078,6 @@
                 </select>
 
                 <div class="form-text">
-                    {{--
-                        NÓI THẲNG RA GIỚI HẠN CỦA PHẦN MỀM.
-
-                        Danh sách này là cấu hình, KHÔNG phải lời tư vấn
-                        thuế. Mã nguồn không biết mặt hàng của cửa hàng
-                        thuộc diện nào — hoa tươi, cây giống, chậu sứ và
-                        dịch vụ chăm cây có thể mỗi thứ một mức. Chọn bừa
-                        thì con số sai đi thẳng vào hoá đơn mà không có
-                        gì báo.
-                    --}}
                     Giá đã bao gồm VAT, nên mức này quyết định phần thuế
                     <strong>tách ra</strong> từ giá, không cộng thêm vào.
                     Việc phân loại phải theo mặt hàng thực tế và quy định
@@ -1203,12 +1088,6 @@
 
             </div>
 
-            {{--
-                Khuyến mại KHÔNG còn nhập tại đây.
-                Giá giảm do Chương trình khuyến mại quyết định, nên
-                admin không phải mở từng sản phẩm để sửa giá dịp lễ.
-                Khối dưới chỉ để xem và điều hướng.
-            --}}
             <div class="mb-3">
 
                 <label class="form-label">
@@ -1253,8 +1132,6 @@
 
             <div class="row g-2 mb-3">
 
-                {{-- col-12: hai ô này nằm trong cột phụ vốn đã hẹp, chia đôi nữa
-                     thì nhãn lựa chọn dài bị cắt cụt ("Không (bán the…"). --}}
                 @php
                     $trackInventoryOld = old(
                         'track_inventory',
@@ -1262,10 +1139,6 @@
                     );
                 @endphp
 
-                {{--
-                    HAI Ô ĐI VỚI NHAU nên nằm chung một khối `data-stock-group`:
-                    ô số tồn chỉ gõ được khi ô trên đang bật.
-                --}}
                 <div class="col-12" data-stock-group>
 
                     <label class="form-label" for="track_inventory">
@@ -1284,16 +1157,6 @@
                         Số lượng tồn
                     </label>
 
-                    {{--
-                        KHOÁ BẰNG readonly, KHÔNG PHẢI disabled.
-
-                        Ô disabled không được gửi lên máy chủ: bật lại quản lý tồn
-                        kho là con số cũ biến mất mà không ai bấm gì.
-
-                        Trạng thái dựng SẴN Ở MÁY CHỦ, không đợi JavaScript — tắt
-                        JS thì ô vẫn khoá đúng, và không có cú nháy "gõ được rồi
-                        khoá lại" ngay sau khi trang hiện.
-                    --}}
                     <input
                         type="number"
                         id="stock_quantity"
@@ -1439,16 +1302,6 @@
 
             @endif
 
-            {{--
-                VIDEO — hai đường, vì hai nhu cầu khác nhau.
-
-                Link YouTube/Vimeo: không tốn chỗ trên máy chủ, nhưng kéo theo
-                theo dõi người xem (đã dùng bản youtube-nocookie, và chỉ tải
-                trình phát khi khách bấm).
-
-                Tệp MP4: cửa hàng tự giữ, không ai theo dõi khách, nhưng tốn chỗ
-                — nên giới hạn 20MB cho một clip ngắn quay bằng điện thoại.
-            --}}
             <hr class="my-4">
 
             <h2 class="h6 fw-bold mb-1">Video</h2>

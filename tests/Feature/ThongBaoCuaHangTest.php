@@ -16,12 +16,7 @@ use Illuminate\Support\Facades\Mail;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Thư báo cho CỬA HÀNG khi có đơn mới và yêu cầu báo giá.
- * ============================================================
- * Trước đây thư duy nhất gửi cửa hàng là khi khách TỰ HUỶ. Đơn mới chỉ lộ
- * ra khi có người mở trang quản trị.
- */
+/** Thư báo cho CỬA HÀNG khi có đơn mới và yêu cầu báo giá. */
 class ThongBaoCuaHangTest extends TestCase
 {
     use RefreshDatabase;
@@ -36,7 +31,6 @@ class ThongBaoCuaHangTest extends TestCase
         Setting::set('site_email', self::EMAIL_SHOP);
     }
 
-    /** Đếm cả thư gửi thẳng lẫn thư xếp hàng đợi — tuỳ cấu hình mail.queue_outgoing. */
     private function soThu(string $lop, ?callable $loc = null): int
     {
         $loc ??= fn () => true;
@@ -44,7 +38,6 @@ class ThongBaoCuaHangTest extends TestCase
         return Mail::sent($lop, $loc)->count() + Mail::queued($lop, $loc)->count();
     }
 
-    /** Phản hồi của lần bấm "Đặt hàng" gần nhất — để kiểm khách có thấy trang lỗi không. */
     private ?\Illuminate\Testing\TestResponse $phanHoiDatHang = null;
 
     private function datDon(string $thanhToan = 'cod'): ?Order
@@ -75,8 +68,6 @@ class ThongBaoCuaHangTest extends TestCase
         ])->assertRedirect();
     }
 
-    /* ================= ĐƠN MỚI ================= */
-
     #[Test]
     public function dat_don_xong_cua_hang_nhan_duoc_thu(): void
     {
@@ -92,7 +83,6 @@ class ThongBaoCuaHangTest extends TestCase
     #[Test]
     public function chua_khai_email_cua_hang_thi_KHONG_gui_cho_ai(): void
     {
-        // Không đoán một địa chỉ để gửi.
         Setting::set('site_email', null);
 
         $this->assertNotNull($this->datDon());
@@ -102,10 +92,6 @@ class ThongBaoCuaHangTest extends TestCase
     #[Test]
     public function gui_thu_hong_thi_DON_VAN_THANH(): void
     {
-        /*
-         * Lúc gửi thư, đơn đã chốt và kho đã trừ. Để lỗi thư lọt ra ngoài
-         * là khách thấy trang lỗi, đặt lại, cửa hàng có hai đơn trùng.
-         */
         $this->mock(MailTransport::class, function ($m) {
             $m->shouldReceive('deliver')->andThrow(new \RuntimeException('SMTP sập'));
             $m->shouldReceive('deliversForReal')->andReturn(false);
@@ -116,12 +102,6 @@ class ThongBaoCuaHangTest extends TestCase
         $this->assertNotNull($don);
         $this->assertSame(1, Order::count());
 
-        /*
-         * ĐẾM ĐƠN THÔI LÀ CHƯA ĐỦ — thử phá code đã chứng minh: đơn được
-         * lưu TRƯỚC khi gửi thư, nên để lỗi thư lọt ra ngoài thì vẫn có
-         * đúng 1 đơn, chỉ là khách nhìn thấy trang lỗi 500. Phải kiểm
-         * chính thứ khách nhận được.
-         */
         $this->phanHoiDatHang->assertRedirect();
     }
 
@@ -148,8 +128,6 @@ class ThongBaoCuaHangTest extends TestCase
 
         $this->assertStringContainsString('Chưa thanh toán MoMo', $html);
     }
-
-    /* ================= YÊU CẦU BÁO GIÁ ================= */
 
     #[Test]
     public function gui_yeu_cau_bao_gia_cua_hang_nhan_duoc_thu(): void

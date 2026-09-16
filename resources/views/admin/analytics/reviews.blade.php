@@ -15,7 +15,6 @@
     <div class="col-6 col-lg-3">
         <x-admin.kpi label="Điểm trung bình" :note="$t['so_bai'] . ' bài, ' . $t['co_don_hang'] . ' bài gắn với đơn đã mua'">
             @if($t['trung_binh'] === null)
-                {{-- null khác 0 sao: chưa có bài nào để tính. --}}
                 <span class="admin-page-subtitle">chưa có đánh giá</span>
             @else
                 {{ number_format($t['trung_binh'], 2, ',', '.') }} / 5

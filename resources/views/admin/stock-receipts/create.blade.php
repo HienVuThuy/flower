@@ -7,13 +7,7 @@
 <div class="mb-4">
     <h1 class="admin-page-title">Lập phiếu nhập kho</h1>
 
-    {{--
-        NÓI RÕ RANH GIỚI GIỮA HAI CÁCH TÍNH GIÁ VỐN.
-
-        Không nói thì người dùng đi tìm "hồng đỏ" trong ô chọn, không
-        thấy, và kết luận là hệ thống thiếu — rồi tạo một sản phẩm mới
-        cho nó. Nói ra thì họ biết đi đâu.
-    --}}
+    {{-- NÓI RÕ RANH GIỚI GIỮA HAI CÁCH TÍNH GIÁ VỐN. --}}
     <p class="admin-page-subtitle mb-0">
         Phiếu này dành cho <strong>hàng đếm được</strong>: chậu, đất, phân, dụng cụ, cây trong chậu.
         <strong>Hoa tươi không nhập ở đây</strong> — hoa đi theo
@@ -21,13 +15,6 @@
         vì đơn vị mua khác đơn vị bán và số lượng không đếm xuể.
     </p>
     <p class="admin-page-subtitle">
-        {{--
-            NÓI TRƯỚC ĐIỀU SẼ XẢY RA.
-
-            Tạo phiếu KHÔNG cộng vào kho — còn một bước ghi sổ nữa. Không
-            nói ra thì người lập bấm "Lưu", đi kiểm kho, thấy số không
-            đổi, và tưởng hệ thống hỏng.
-        --}}
         Lưu xong phiếu vẫn là <strong>nháp</strong> — tồn kho chưa đổi.
         Kiểm lại rồi bấm "Ghi sổ" thì kho mới được cộng thêm.
     </p>
@@ -53,14 +40,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {{--
-                                DỰNG SẴN 8 DÒNG TRỐNG.
-
-                                Không có JavaScript thì vẫn nhập được cả
-                                phiếu; nút "Thêm dòng" bên dưới chỉ là
-                                phần thêm. Dòng để trống bị bỏ qua im
-                                lặng — controller lọc.
-                            --}}
                             @for($i = 0; $i < 8; $i++)
                                 <tr data-receipt-line>
                                     <td>
@@ -99,9 +78,6 @@
 
                 <x-form-error name="items" />
 
-                {{--
-                    HAI ĐIỀU DỄ HIỂU NHẦM, nói ngay cạnh ô nhập.
-                --}}
                 <p class="admin-page-subtitle mt-3 mb-0">
                     <strong>Giá vốn</strong> là giá mua <strong>chưa gồm VAT đầu vào</strong> (theo hoá đơn của nhà cung cấp) — trang Lãi gộp so nó với doanh thu đã trừ VAT. Để trống nghĩa là <em>chưa biết</em> (hàng tặng, hàng mẫu),
                     khác với 0₫. Tổng tiền sẽ bỏ qua những dòng đó thay vì tính bằng không.
@@ -120,9 +96,6 @@
 
                 <div class="mb-3">
                     <label class="form-label">Mã phiếu</label>
-                    {{-- Chỉ để xem: mã thật do máy chủ sinh lúc lưu, vì
-                         giữa lúc mở trang và lúc bấm Lưu có thể đã có
-                         người khác dùng mất mã này. --}}
                     <input type="text" class="form-control" value="{{ $ma }}" disabled>
                     <div class="form-text">Máy chủ sinh lại mã khi lưu.</div>
                 </div>
@@ -133,8 +106,6 @@
                            class="form-control @error('received_at') is-invalid @enderror"
                            value="{{ old('received_at', now()->toDateString()) }}"
                            max="{{ now()->toDateString() }}">
-                    {{-- Ngày trong quá khứ HỢP LỆ: hàng về thứ Bảy, thứ
-                         Hai mới ngồi nhập máy. --}}
                     <div class="form-text">Ngày hàng thật sự về, không phải ngày ngồi nhập máy.</div>
                     <x-form-error name="received_at" />
                 </div>

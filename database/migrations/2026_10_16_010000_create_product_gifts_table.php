@@ -5,24 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * Quà tặng kèm SẢN PHẨM — quà mặc định của chính món hàng.
- * ============================================================
- * Như "Mua 1 mặt hàng – nhận quà miễn phí" trên các sàn: mua sen đá thì kèm
- * túi phân bón nhỏ. Đây KHÔNG phải một chương trình khuyến mại (không thời
- * hạn, không hạng, không suất) — nó là một phần của sản phẩm, cấu hình ngay
- * trên sản phẩm. Quà theo chương trình (giới hạn suất, thời gian, hạng,
- * đơn đầu tiên) ở lại gift_campaigns và thuộc trang Khuyến mại.
- *
- * per_quantity / gift_quantity: mua MỖI per_quantity món thì tặng
- * gift_quantity quà. Mặc định 1/1 — mua 3 chậu sen đá thì 3 túi phân bón.
- *
- * order_items.parent_item_id: dòng quà nằm DƯỚI dòng hàng đã sinh ra nó,
- * để trang đơn và phiếu soạn hàng đọc được "quà của món nào".
- *
- * Chương trình "kèm sản phẩm" cũ (gift_campaigns.kind = kem_san_pham) được
- * chuyển sang bảng mới: cùng một ý nghĩa, không để hai nơi cấu hình.
- */
+/** Quà tặng kèm SẢN PHẨM — quà mặc định của chính món hàng. */
 return new class extends Migration
 {
     public function up(): void
@@ -37,7 +20,6 @@ return new class extends Migration
             $table->unsignedSmallInteger('sort_order')->default(0);
             $table->timestamps();
 
-            // Một món quà gắn một lần cho một sản phẩm — muốn tặng nhiều thì tăng số lượng.
             $table->unique(['product_id', 'gift_item_id']);
         });
 
@@ -60,7 +42,6 @@ return new class extends Migration
                 ],
             );
 
-            // Đã phát quà thì giữ lại để đơn cũ còn trỏ tới; chưa phát thì bỏ.
             if ((int) $cu->used_count > 0) {
                 DB::table('gift_campaigns')->where('id', $cu->id)->update(['status' => 'ended', 'updated_at' => $bayGio]);
             } else {

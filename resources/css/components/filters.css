@@ -1,9 +1,4 @@
-/*
- * FILTERS / SORT
- * ============================================================
- * Desktop: panel cố định trong sidebar. Mobile: bottom sheet
- * (Bootstrap offcanvas bottom), không tràn layout.
- */
+/* FILTERS / SORT */
 
 .filter-panel {
     background: var(--surface);
@@ -45,14 +40,6 @@
 }
 
 
-/*
- * BỘ LỌC TRANG PHỤ KIỆN & VẬT TƯ
- * ============================================================
- * Cố ý đơn giản hơn bộ lọc trang sản phẩm chính: chỉ danh mục và sắp
- * xếp. Người mua vật tư đã biết mình cần gì — họ cần tìm nhanh, không
- * cần được tư vấn theo phong thuỷ hay độ khó chăm.
- */
-
 .supply-filters {
     display: flex;
     align-items: center;
@@ -63,7 +50,6 @@
 
 .supply-filters__sort {
     margin: 0;
-    /* Đẩy ô sắp xếp về cuối hàng, tách khỏi cụm chip danh mục. */
     margin-inline-start: auto;
 }
 
@@ -74,20 +60,6 @@
 }
 
 
-/*
- * CHẤM MÀU TRONG BỘ LỌC MÀU SẮC
- * ============================================================
- * Để mắt quét danh sách bằng màu thay vì đọc chữ. Đó là cả công dụng
- * của nó, và cũng là giới hạn: chấm này KHÔNG tả đúng sản phẩm — một bó
- * hồng đỏ có hàng chục sắc đỏ khác nhau. Ảnh sản phẩm mới nói thật về
- * màu.
- *
- * `flex-shrink: 0` vì chip có thể co lại ở màn hẹp, và một chấm màu bị
- * bóp thành hình bầu dục thì không còn đọc ra là chấm màu nữa.
- *
- * Viền mờ cho những màu rất nhạt: chấm trắng trên nền trắng thì biến
- * mất hoàn toàn, và khách tưởng chip đó bị lỗi.
- */
 .filter-chip__dot {
     display: inline-block;
     width: 0.7rem;
@@ -99,18 +71,11 @@
     border: 1px solid var(--border-soft);
 }
 
-/* Chip phải là flex để chấm màu, chữ và số đếm thẳng hàng với nhau. */
 .filter-chip {
     display: inline-flex;
     align-items: center;
 }
 
-
-/*
- * ============================================================
- * DUYỆT CÂY THEO PHÂN LOẠI SINH HỌC (/loai-cay)
- * ============================================================
- */
 
 .taxon-kingdom {
     margin-bottom: 2rem;
@@ -124,13 +89,6 @@
     margin-bottom: 0.75rem;
 }
 
-/*
- * TÊN KHOA HỌC.
- *
- * Nhạt hơn và nhỏ hơn tên tiếng Việt: nó là thông tin phụ với hầu hết
- * khách, nhưng là thứ đầu tiên người có chuyên môn tìm. Để ngang hàng
- * với tên tiếng Việt thì nhóm thứ nhất phải đọc hai lần cùng một thứ.
- */
 .taxon-sci {
     display: block;
     font-size: 0.85rem;
@@ -181,7 +139,6 @@
     color: var(--ink-500);
 }
 
-/* Ô có ảnh — dùng cho danh sách Họ. */
 .taxon-tile {
     display: block;
     height: 100%;
@@ -203,13 +160,6 @@
 .taxon-tile__img {
     display: block;
     width: 100%;
-    /*
-     * Tỉ lệ CỐ ĐỊNH cho mọi ô.
-     *
-     * Ảnh đại diện lấy từ ảnh sản phẩm sẵn có nên tỉ lệ mỗi tấm một
-     * khác. Không ép tỉ lệ thì lưới ô so le nhau và trông như trang bị
-     * hỏng.
-     */
     aspect-ratio: 4 / 3;
     object-fit: cover;
 }
@@ -240,16 +190,6 @@
 }
 
 
-/*
- * ============================================================
- * KHỐI "PHÂN LOẠI & ĐẶC ĐIỂM" Ở TRANG CHI TIẾT SẢN PHẨM
- * ============================================================
- * Bố cục phải ĂN NHỊP với khối "Chăm sóc cây" ngay bên trên: nhãn nhỏ
- * viết hoa ở trên, nội dung đậm ở dưới, xếp thành lưới. Hai khối cạnh
- * nhau mà một bên dàn ba cột còn một bên là cột chữ dài thì trông như
- * ghép từ hai trang khác nhau.
- */
-
 .classify {
     margin-top: 2.5rem;
     padding-top: 2rem;
@@ -260,13 +200,6 @@
     margin-bottom: 1.25rem;
 }
 
-/*
- * HAI CỘT KHÔNG BẰNG NHAU: phân loại hẹp hơn đặc điểm.
- *
- * Chuỗi phân loại là bảy dòng ngắn xếp dọc — cho nó nửa màn hình thì
- * mỗi dòng thừa một khoảng trắng dài bằng chính nó. Lưới đặc điểm thì
- * cần bề ngang để xếp được hai thẻ một hàng.
- */
 .classify__grid {
     display: grid;
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -289,16 +222,6 @@
     margin-bottom: 0.75rem;
 }
 
-/*
- * CHUỖI PHÂN LOẠI — xếp DỌC, thụt dần.
- *
- * Bảy bậc kèm tên khoa học thì một hàng ngang tràn ra ngoài màn hình
- * điện thoại. Xếp dọc còn cho thấy được thứ bậc: mỗi dòng thụt vào một
- * chút, mắt đọc ra ngay là đang đi từ rộng xuống hẹp.
- *
- * <ol> chứ không <div>: đây là một danh sách CÓ THỨ TỰ, và trình đọc
- * màn hình cần biết điều đó để đọc "mục 3 trên 7".
- */
 .taxon-chain {
     list-style: none;
     margin: 0;
@@ -323,10 +246,6 @@
     background: var(--brand-50);
 }
 
-/*
- * Thụt dần theo bậc. nth-child được vì số bậc có trần cứng là 7 — xem
- * App\Enums\TaxonRank.
- */
 .taxon-chain li:nth-child(2) .taxon-chain__item { margin-inline-start: 0.55rem; }
 .taxon-chain li:nth-child(3) .taxon-chain__item { margin-inline-start: 1.1rem; }
 .taxon-chain li:nth-child(4) .taxon-chain__item { margin-inline-start: 1.65rem; }
@@ -345,29 +264,15 @@
 .taxon-chain__name {
     font-size: 0.92rem;
     font-weight: 600;
-    /* min-width: 0 để tên dài không đẩy dòng tràn ra ngoài. */
     min-width: 0;
 }
 
-/*
- * Tên khoa học nhạt hơn và KHÔNG đậm.
- *
- * Nó là thông tin phụ với hầu hết khách, nhưng là thứ đầu tiên người có
- * chuyên môn tìm. Để ngang hàng với tên tiếng Việt thì nhóm thứ nhất
- * phải đọc hai lần cùng một thứ.
- */
 .taxon-chain__sci {
     font-weight: 400;
     color: var(--ink-500);
     font-size: 0.85rem;
 }
 
-/*
- * LƯỚI THẺ ĐẶC ĐIỂM — hai cột, giống nhịp khối "Chăm sóc cây".
- *
- * auto-fit + minmax để nó tự về một cột ở màn hẹp mà không cần thêm
- * media query.
- */
 .classify__cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
@@ -401,12 +306,9 @@
     color: var(--ink-500);
     display: flex;
     gap: 0.4rem;
-    /* Icon thẳng hàng với DÒNG ĐẦU, không bị kéo xuống giữa khối chữ. */
     align-items: flex-start;
     line-height: 1.55;
 }
-
-/* ---------- Nút chuyển sang kết quả ở trang Chọn cây ---------- */
 
 .advisor-go {
     padding-top: 1.25rem;
@@ -421,17 +323,11 @@
     color: var(--ink-500);
 }
 
-/*
- * Ghi chú nhỏ dưới một nhóm bộ lọc.
- * Dùng ở nhóm "Độ khó chăm sóc" để nói vì sao hoa cắt cành không có mặt.
- */
 .filter-panel__note {
     margin: 0.4rem 0 0;
     font-size: 0.78rem;
     color: var(--ink-500);
 }
-
-/* ---------- Khối mời "Chọn cây theo nhu cầu" ---------- */
 
 .advisor-invite {
     display: flex;
@@ -472,7 +368,6 @@
     white-space: nowrap;
 }
 
-/* Màn hẹp: xếp dọc, nút xuống dòng riêng cho đủ vùng bấm. */
 @media (max-width: 575.98px) {
     .advisor-invite {
         flex-wrap: wrap;

@@ -12,12 +12,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/**
- * Phiếu kiểm kê kho.
- *
- * KHÔNG CÓ SỬA. Nháp thì xoá rồi lập lại (một phiếu đếm là việc của một buổi);
- * đã ghi sổ thì không xoá, không sửa — đếm nhầm thì lập phiếu mới.
- */
+/** Phiếu kiểm kê kho. */
 class StockCountController extends Controller
 {
     public function __construct(

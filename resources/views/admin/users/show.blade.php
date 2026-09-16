@@ -27,12 +27,6 @@
     <a data-admin-link href="{{ route('admin.users.index') }}" class="btn btn-outline-admin">Về danh sách</a>
 </div>
 
-{{--
-    BỐN CON SỐ, CÙNG ĐỊNH NGHĨA VỚI DANH SÁCH NGƯỜI DÙNG.
-
-    "Đã chi" chỉ tính đơn ĐÃ GIAO. Đơn huỷ đứng riêng một ô: khách huỷ
-    nhiều là điều nhân viên cần biết trước khi nhận một đơn COD lớn.
---}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-lg-3">
         <x-admin.kpi label="Đơn đã giao" :note="'Trên tổng ' . $user->orders_count . ' đơn đã đặt'">
@@ -121,7 +115,6 @@
                     </div>
                 </div>
             @empty
-                {{-- Khách vãng lai hoặc chưa lưu địa chỉ: địa chỉ giao nằm trên từng đơn. --}}
                 <p class="analytics-empty mb-0">Chưa lưu địa chỉ nào. Địa chỉ giao của từng lần mua nằm trên đơn.</p>
             @endforelse
         </div>

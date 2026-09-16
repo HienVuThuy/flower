@@ -16,9 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Kiếm điểm từ mua hàng, trừ lại khi hoàn tiền, cộng khi đánh giá; hiện điểm cho khách.
- */
+/** Kiếm điểm từ mua hàng, trừ lại khi hoàn tiền, cộng khi đánh giá; hiện điểm cho khách. */
 class KiemDiemTest extends TestCase
 {
     use RefreshDatabase;
@@ -64,7 +62,6 @@ class KiemDiemTest extends TestCase
 
         $this->giao($don);
 
-        // 355.000 − 30.000 ship = 325.000 → 32 điểm (làm tròn xuống).
         $this->assertSame(32, $this->soDu($u));
     }
 
@@ -88,17 +85,16 @@ class KiemDiemTest extends TestCase
         $this->giao($don);
         $this->assertSame(32, $this->soDu($u));
 
-        // Khách tiêu bớt điểm trước khi hoàn tiền.
         app(PointLedger::class)->tru($u, 30, PointReason::DoiVoucher, 'thu:tieu');
 
         $hoan = fn (int $tien) => app(RefundService::class)->hoan($don->fresh(), [
             'amount' => $tien, 'reason' => 'khac', 'method' => 'chuyen_khoan', 'reference' => 'FT' . random_int(100000, 999999),
         ]);
 
-        $hoan(150000);   // 15 điểm
+        $hoan(150000);
         $this->assertSame(2 - 15, $this->soDu($u), 'Được âm: điểm của đơn đã tiêu trước khi hoàn');
 
-        $hoan(205000);   // 20 điểm theo tiền, nhưng chỉ còn 17 điểm của đơn để trừ
+        $hoan(205000);
         $this->assertSame(2 - 32, $this->soDu($u));
     }
 
@@ -117,7 +113,6 @@ class KiemDiemTest extends TestCase
 
         $this->assertSame($truoc + 10, $this->soDu($u));
 
-        // Gỡ rồi viết lại cho cùng đơn: không cộng thêm.
         $this->actingAs($u)->delete(route('shop.reviews.destroy', $u->reviews()->first()));
         $this->actingAs($u)->post(route('shop.reviews.store', $sp), ['rating' => 4, 'comment' => 'ok']);
         $this->assertSame($truoc + 10, $this->soDu($u));

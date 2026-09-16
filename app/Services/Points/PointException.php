@@ -2,10 +2,7 @@
 
 namespace App\Services\Points;
 
-/**
- * Không làm được việc với điểm (không đủ điểm, gói không có…).
- * Thông điệp đọc được cho khách.
- */
+/** Không làm được việc với điểm (không đủ điểm, gói không có…). */
 class PointException extends \RuntimeException
 {
 }

@@ -10,14 +10,6 @@
     $current = (string) old($name, $selected);
     $groups = \App\Services\Shop\Provinces::grouped();
 
-    /*
-     * Giá trị đang lưu KHÔNG còn trong danh sách hiện hành.
-     *
-     * Xảy ra với địa chỉ nhập từ trước đợt sáp nhập 2025 (ví dụ "Bình
-     * Dương"). Nếu chỉ in ra 34 lựa chọn thì <select> tự nhảy về mục
-     * đầu, và khách bấm Lưu là địa chỉ bị đổi sang tỉnh khác mà không hề
-     * hay biết. Ở đây giữ lại giá trị cũ thành một mục riêng, có ghi chú.
-     */
     $isLegacy = $current !== '' && ! \App\Services\Shop\Provinces::isValid($current);
 @endphp
 

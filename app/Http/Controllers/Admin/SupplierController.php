@@ -10,28 +10,12 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/**
- * Danh sách nơi cửa hàng lấy hàng.
- * ============================================================
- * KHÔNG CÓ NÚT XOÁ.
- *
- * Phiếu nhập cũ trỏ tới đây. Xoá một nhà cung cấp là làm mất dấu vết
- * những lần đã mua của họ — và đó đúng là thứ người ta giữ sổ để có.
- * Ngừng làm ăn thì tắt đi: không hiện ở ô chọn nữa, lịch sử vẫn đọc
- * được.
- */
+/** Danh sách nơi cửa hàng lấy hàng. */
 class SupplierController extends Controller
 {
     public function index(Request $request): View
     {
         $q = Supplier::query()
-            /*
-             * "SỐ LẦN LẤY HÀNG" = phiếu nhập MỚI + lô hoa.
-             *
-             * Lỗi đã sửa: trước chỉ đếm phiếu nhập, nên vựa hoa cấp mười lô
-             * vẫn hiện "0 lần" — trông như nguồn không dùng tới. Và đếm mọi
-             * phiếu thì phiếu TRẢ HÀNG thành một "lần nhập", ngược nghĩa.
-             */
             ->withCount([
                 'receipts' => fn ($q) => $q->where('kind', \App\Enums\StockReceiptKind::NhapMoi->value),
                 'flowerLots',
@@ -90,19 +74,9 @@ class SupplierController extends Controller
             ->with('success', 'Đã lưu ' . $supplier->name . '.');
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     private function duLieu(Request $request, ?Supplier $dangSua = null): array
     {
         $data = $request->validate([
-            /*
-             * TÊN KHÔNG TRÙNG — đây là cả lý do bảng này tồn tại.
-             *
-             * Cho trùng thì lại quay về mớ hỗn độn của ô chữ tự do, chỉ
-             * khác là lần này có id: "Vựa Hoa Tươi" và "Vựa hoa tươi"
-             * thành hai dòng, và so giá giữa chúng thành vô nghĩa.
-             */
             'name' => [
                 'required', 'string', 'max:160',
                 Rule::unique('suppliers', 'name')->ignore($dangSua?->id),
@@ -122,26 +96,8 @@ class SupplierController extends Controller
             'note' => 'ghi chú',
         ]);
 
-        /*
-         * LỚP THỨ HAI, CÓ CHỦ Ý — và đã kiểm là nó đang là lớp thứ hai.
-         *
-         * Middleware `TrimStrings` của Laravel đã cắt khoảng trắng mọi ô
-         * chữ trước khi tới đây; phép đột biến bỏ dòng này đi mà bài kiểm
-         * thử vẫn xanh, đúng như vậy.
-         *
-         * Vẫn giữ: quy tắc "không hai dòng cùng một tên" đứng hay đổ hoàn
-         * toàn dựa vào việc tên đã được cắt. Để nó phụ thuộc vào một
-         * middleware toàn cục mà chỗ này không nói gì là đặt một quy tắc
-         * quan trọng lên một thứ ai cũng có thể tắt mà không biết mình
-         * vừa làm gì.
-         */
         $data['name'] = trim($data['name']);
 
-        /*
-         * Ô đánh dấu không gửi gì lên khi bỏ tích, nên phải đặt lại —
-         * không thì lần lưu sau `is_active` vắng mặt và cột giữ giá trị
-         * cũ: tắt mà không tắt được.
-         */
         $data['is_active'] = $request->boolean('is_active');
 
         return $data;

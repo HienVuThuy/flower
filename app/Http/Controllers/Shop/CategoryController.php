@@ -33,13 +33,8 @@ class CategoryController extends Controller
             'category_id' => $category->id,
         ]);
 
-        // `with('category')` là bắt buộc: x-product.card đọc
-        // $product->category->name, thiếu eager load sẽ sinh thêm
-        // một query cho MỖI sản phẩm trên trang (N+1).
         $products = $category->products()
             ->with(['category', 'promotions',
-                // Thẻ sản phẩm phải biết hàng này có quy cách hay
-                // không để hiện đúng nút; hỏi từng thẻ là N+1.
                 'variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
             ->withAvg(['reviews as rating_avg' => fn ($q) => $q->visible()], 'rating')
             ->withCount(['reviews as rating_count' => fn ($q) => $q->visible()])

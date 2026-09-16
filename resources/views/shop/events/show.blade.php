@@ -10,14 +10,7 @@
     $window = $promotion->scheduleText();
 @endphp
 
-{{--
-    KHỐI ĐẦU TRANG MANG MÀU CỦA CHÍNH SỰ KIỆN.
-
-    data-event-theme lấy từ cột promotions.theme_key, nên trang Giáng sinh
-    trông khác trang Tết mà không cần một dòng CSS riêng cho từng dịp —
-    đó chính là điểm của một landing page. Chương trình không khai theme
-    thì rơi về màu thương hiệu, vẫn đẹp và vẫn đúng.
---}}
+{{-- KHỐI ĐẦU TRANG MANG MÀU CỦA CHÍNH SỰ KIỆN. --}}
 <section class="event-hero" @if($promotion->theme_key) data-event-theme="{{ $promotion->theme_key }}" @endif>
 
     @if($promotion->banner)
@@ -31,14 +24,6 @@
         <div class="event-hero__body">
 
             @unless($isRunning)
-                {{--
-                    ĐÃ KẾT THÚC — nói ngay dòng đầu.
-
-                    Trang này vẫn mở được sau khi chương trình hết hạn vì
-                    link đã được chia sẻ đi khắp nơi; chết link là mất
-                    khách. Nhưng để khách đọc hết giá ưu đãi rồi mới phát
-                    hiện đã hết hạn thì tệ hơn hẳn một trang 404.
-                --}}
                 <span class="event-hero__ended">Chương trình đã kết thúc</span>
             @endunless
 
@@ -80,7 +65,6 @@
 <section class="section-sm">
     <div class="container-shop">
 
-        {{-- ============ MÃ CỦA SỰ KIỆN ============ --}}
         @if($coupons->isNotEmpty())
             <div class="mb-5">
                 <div class="section-header">
@@ -88,10 +72,6 @@
                         <span class="text-label section-header__eyebrow d-block">Ưu đãi kèm theo</span>
                         <h2 class="text-h3 section-header__title">Mã giảm giá của chương trình</h2>
                         <p class="mb-0">
-                            {{--
-                                Nói rõ mã này CHỈ có ở đây. Đó là lý do khách nên
-                                lưu ngay thay vì để lát nữa tìm lại ở trang Voucher.
-                            --}}
                             Chỉ phát trong chương trình này. Lưu về ví để dùng ở bước thanh toán.
                         </p>
                     </div>
@@ -107,7 +87,6 @@
             </div>
         @endif
 
-        {{-- ============ SẢN PHẨM TRONG CHƯƠNG TRÌNH ============ --}}
         <div class="section-header">
             <div>
                 <span class="text-label section-header__eyebrow d-block">Hàng trong chương trình</span>

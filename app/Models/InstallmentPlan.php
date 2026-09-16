@@ -7,12 +7,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Kế hoạch trả góp của một đơn. Chỉ InstallmentService ghi — xem đó.
- */
+/** Kế hoạch trả góp của một đơn. */
 class InstallmentPlan extends Model
 {
-    // Không có biểu mẫu nào ghi thẳng: mọi thay đổi đi qua dịch vụ bằng forceFill.
     protected $guarded = ['*'];
 
     protected function casts(): array
@@ -46,7 +43,6 @@ class InstallmentPlan extends Model
         return $this->hasMany(InstallmentPayment::class)->orderBy('sequence');
     }
 
-    /** Tổng đã trả (chuỗi bcmath), đọc từ các kỳ đã nạp. */
     public function daTra(): string
     {
         return $this->payments
@@ -59,7 +55,6 @@ class InstallmentPlan extends Model
         return bcsub((string) $this->total_amount, $this->daTra(), 2);
     }
 
-    /** Kỳ chưa trả sớm nhất — kỳ khách phải trả tiếp. */
     public function kyKeTiep(): ?InstallmentPayment
     {
         return $this->payments->whereNull('paid_at')->sortBy('sequence')->first();

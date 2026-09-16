@@ -1,24 +1,13 @@
 @props([
-    // $o[hàng][cột] = số đếm
     'o' => [],
-    'hang' => [],   // nhãn hàng
-    'cot' => [],    // nhãn cột
+    'hang' => [],
+    'cot' => [],
     'title' => '',
     'note' => null,
     'unit' => 'đơn',
 ])
 
 @php
-    /*
-     * BẢN ĐỒ NHIỆT MỘT SẮC ĐỘ — việc của nó là ĐỘ LỚN, không phải danh tính.
-     *
-     * Chia làm 5 BẬC thay vì tô liên tục: mắt người không phân biệt được 24
-     * sắc xanh cạnh nhau, nhưng phân biệt được 5 bậc — và chú giải đọc được
-     * "bậc đậm nhất = 11-13 đơn" thay vì một dải màu không có số.
-     *
-     * Ô bằng 0 KHÔNG tô màu nhạt nhất của thang. "Không có đơn nào" và "có
-     * một đơn" là hai câu khác nhau; tô cùng một bậc là gộp chúng lại.
-     */
     $max = 0;
     foreach ($o as $dong) {
         $max = max($max, ...array_values($dong ?: [0]));
@@ -26,7 +15,6 @@
 
     $bac = fn (int $v) => $v <= 0 || $max <= 0 ? 0 : min(5, (int) ceil($v / $max * 5));
 
-    // Khoảng giá trị của từng bậc, cho chú giải.
     $khoangBac = [];
     for ($b = 1; $b <= 5; $b++) {
         $tu = (int) floor(($b - 1) * $max / 5) + 1;
@@ -53,7 +41,6 @@
             <div class="viz-heat__grid" style="--so-cot: {{ count($cot) }}">
                 <span></span>
                 @foreach($cot as $j => $nhan)
-                    {{-- Nhãn cột thưa: 24 nhãn chồng nhau thành vệt đen. --}}
                     <span class="viz-heat__col-label">{{ $j % 3 === 0 ? $nhan : '' }}</span>
                 @endforeach
 
@@ -76,8 +63,6 @@
             <span class="text-muted">{{ $unit }}</span>
         </div>
 
-        {{-- BẢNG SỐ ĐẦY ĐỦ: các bậc nhạt dưới 3:1 so với nền, và luật đền bù là
-             phải có bảng. Bảng cũng là thứ trình đọc màn hình đọc được. --}}
         <details class="viz-details">
             <summary>Xem bảng số</summary>
             <div class="table-responsive">

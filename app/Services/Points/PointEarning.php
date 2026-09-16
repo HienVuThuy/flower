@@ -10,21 +10,7 @@ use App\Models\Refund;
 use App\Models\Review;
 use App\Models\User;
 
-/**
- * Luật kiếm điểm từ mua hàng và đánh giá — một chỗ khai, một chỗ tính.
- * ============================================================
- * MUA HÀNG: 1 điểm cho mỗi 10.000đ TIỀN HÀNG KHÁCH THẬT TRẢ — tổng đơn trừ
- * phí vận chuyển và phần đã hoàn. Cộng khi đơn ĐÃ GIAO, không lúc đặt: đơn
- * huỷ, đơn bom hàng không có điểm để thu hồi.
- *
- * HOÀN TIỀN SAU KHI ĐÃ CỘNG: trừ lại theo số tiền hoàn, không quá số điểm
- * đơn đó đã nhận. Không trừ thì "mua, nhận điểm, hoàn tiền" là cách in điểm.
- *
- * ĐÁNH GIÁ: chỉ sản phẩm đã mua (luật sẵn có của đánh giá). Có nhận xét từ
- * 30 ký tự được nhiều hơn chấm sao suông — nhận xét là thứ người mua sau
- * đọc. Khoá theo ĐƠN + SẢN PHẨM, không theo id đánh giá: gỡ rồi viết lại
- * không được cộng lần hai.
- */
+/** Luật kiếm điểm từ mua hàng và đánh giá — một chỗ khai, một chỗ tính. */
 class PointEarning
 {
     public const DONG_MOI_DIEM = 10000;
@@ -45,7 +31,6 @@ class PointEarning
         return max(0, (int) bcdiv($tien, (string) self::DONG_MOI_DIEM, 0));
     }
 
-    /** @return int số điểm vừa cộng (0 nếu không cộng) */
     public function donHoanTat(Order $order): int
     {
         if ($order->user_id === null || $order->status !== OrderStatus::Completed) {
@@ -58,17 +43,12 @@ class PointEarning
             return 0;
         }
 
-        // Cùng định nghĩa "tiền hàng thật trả" với hạng thành viên — xem QualifiedSpending.
         $diem = self::diemChoTien(\App\Services\Loyalty\QualifiedSpending::tienHangCuaDon($order));
 
         if ($diem === 0) {
             return 0;
         }
 
-        /*
-         * THƯỞNG THEO HẠNG — hạng lúc đơn được giao (đã tính cả đơn này).
-         * Làm tròn xuống: 32 điểm × 5% là 1 điểm, không phải 1,6.
-         */
         $hang = app(\App\Services\Loyalty\MemberTierResolver::class)->cua($user)['hang'];
         $them = $hang ? intdiv($diem * (int) $hang->bonus_points_percent, 100) : 0;
 
@@ -80,7 +60,6 @@ class PointEarning
             : 0;
     }
 
-    /** @return int số điểm vừa trừ (0 nếu không trừ) */
     public function hoanTien(Refund $refund): int
     {
         $order = $refund->order;
@@ -89,7 +68,6 @@ class PointEarning
             return 0;
         }
 
-        // Đơn chưa từng được cộng (huỷ trước khi giao, khách vãng lai) thì không có gì để trừ.
         $daCong = (int) PointTransaction::where('user_id', $user->id)
             ->where('source_key', 'don:' . $order->id)
             ->value('amount');
@@ -113,7 +91,6 @@ class PointEarning
         ) ? $tru : 0;
     }
 
-    /** @return int số điểm vừa cộng (0 nếu không cộng) */
     public function danhGia(Review $review): int
     {
         $user = User::find($review->user_id);

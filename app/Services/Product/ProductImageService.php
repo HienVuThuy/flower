@@ -9,25 +9,13 @@ use App\Services\Media\VideoLink;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Quản lý thư viện ảnh phụ của sản phẩm.
- *
- * Tách khỏi controller vì logic upload/xoá file có tác dụng phụ ra
- * ngoài database (ghi vào disk) và cần được gọi lại giống hệt nhau
- * ở cả store() lẫn update().
- */
+/** Quản lý thư viện ảnh phụ của sản phẩm. */
 class ProductImageService
 {
     public function __construct(private readonly ImageStore $anh)
     {
     }
 
-    /**
-     * Thêm ảnh phụ vào cuối thư viện.
-     *
-     * @param  array<UploadedFile>  $files
-     * @return list<string>  đường dẫn các file vừa lưu, để rollback nếu transaction hỏng
-     */
     public function attach(Product $product, array $files): array
     {
         $stored = [];
@@ -39,13 +27,6 @@ class ProductImageService
                 continue;
             }
 
-            /*
-             * Qua ImageStore để ảnh phụ cũng có bản WebP.
-             *
-             * Ảnh phụ trước đây bị bỏ sót ở CẢ HAI đường: không tối ưu
-             * lúc tải lên, và lệnh `anh:toi-uu` thì quét bằng files()
-             * không đệ quy nên không nhìn thấy thư mục con `gallery`.
-             */
             $path = $this->anh->luu($file, 'products/gallery');
             $stored[] = $path;
 
@@ -59,21 +40,6 @@ class ProductImageService
         return $stored;
     }
 
-    /**
-     * Thêm VIDEO vào cuối thư viện: link YouTube/Vimeo và/hoặc tệp MP4.
-     *
-     * LINK ĐƯỢC DỰNG LẠI, KHÔNG LƯU NGUYÊN CHUỖI NGƯỜI DÙNG DÁN. VideoLink chỉ
-     * lấy mã video rồi tự dựng địa chỉ nhúng; chuỗi nào không ra mã thì bỏ qua
-     * ở đây luôn, không tin rằng tầng kiểm tra biểu mẫu đã lọc hết.
-     *
-     * TỆP MP4 KHÔNG ĐI QUA ImageStore: lớp đó tước metadata ảnh và sinh bản
-     * WebP — cả hai đều vô nghĩa với video, và `toiUu()` gọi lên một tệp không
-     * phải ảnh chỉ tổ ghi log lỗi.
-     *
-     * @param  array<int, string|null>  $links
-     * @param  array<int, UploadedFile|null>  $files
-     * @return list<string> đường dẫn tệp vừa lưu, để rollback nếu transaction hỏng
-     */
     public function attachVideos(Product $product, array $links = [], array $files = []): array
     {
         $stored = [];
@@ -114,25 +80,15 @@ class ProductImageService
         return $stored;
     }
 
-    /**
-     * Xoá các mục thư viện (ảnh HOẶC video) theo id.
-     *
-     * Chỉ xoá ảnh THUỘC sản phẩm này — chặn việc gửi id ảnh của sản
-     * phẩm khác lên để xoá trộm.
-     *
-     * @param  array<int|string>  $imageIds
-     */
     public function detach(Product $product, array $imageIds): void
     {
         if (! $imageIds) {
             return;
         }
 
-        // media() chứ không images(): admin phải xoá được cả video.
         $items = $product->media()->whereIn('id', $imageIds)->get();
 
         foreach ($items as $item) {
-            // Video dạng link không có tệp nào trên đĩa để xoá.
             if ($item->path) {
                 $this->anh->xoa($item->path);
             }
@@ -141,7 +97,6 @@ class ProductImageService
         }
     }
 
-    /** Xoá toàn bộ tệp thư viện (ảnh và video) khi sản phẩm bị xoá hẳn. */
     public function purge(Product $product): void
     {
         foreach ($product->media as $item) {
@@ -151,7 +106,6 @@ class ProductImageService
         }
     }
 
-    /** Dọn file đã upload khi transaction thất bại. */
     public function rollback(array $paths): void
     {
         foreach ($paths as $path) {

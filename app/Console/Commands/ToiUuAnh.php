@@ -7,26 +7,7 @@ use App\Services\Media\ResponsiveImage;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Sinh bản WebP nhiều kích cỡ cho toàn bộ ảnh của cửa hàng.
- * ============================================================
- * ĐÂY LÀ LỆNH QUÉT LẠI, KHÔNG PHẢI ĐƯỜNG CHÍNH.
- *
- * Từ nay ảnh admin tải lên được tối ưu NGAY lúc lưu — xem
- * App\Services\Media\ImageStore. Lệnh này còn lại ba việc:
- *
- *   1. bù cho ảnh cũ đã có trên đĩa từ trước khi có ImageStore;
- *   2. sinh lại toàn bộ khi đổi danh sách kích cỡ hoặc chất lượng nén
- *      (`--lam-lai`);
- *   3. dựng lại manifest nếu tệp đó bị mất.
- *
- * Nó KHÔNG còn tự cài đặt thuật toán resize: phần đó nằm ở
- * ImageOptimizer và dùng chung với đường tải lên. Hai bản riêng là hai
- * bản sẽ lệch nhau, và khi ấy ảnh cũ với ảnh mới trông khác nhau trên
- * cùng một trang.
- *
- * CHẠY LẠI ĐƯỢC NHIỀU LẦN: bỏ qua ảnh đã sinh và chưa đổi.
- */
+/** Sinh bản WebP nhiều kích cỡ cho toàn bộ ảnh của cửa hàng. */
 class ToiUuAnh extends Command
 {
     protected $signature = 'anh:toi-uu
@@ -35,13 +16,6 @@ class ToiUuAnh extends Command
 
     protected $description = 'Quét lại toàn bộ ảnh và sinh bản WebP còn thiếu';
 
-    /**
-     * Những thư mục ảnh do cửa hàng tải lên.
-     *
-     * `hero` THÊM VÀO SAU: ảnh khung lớn trang chủ vốn không có trong
-     * danh sách này, nên nó chưa bao giờ được tối ưu — mà nó lại là ảnh
-     * TO NHẤT và là thứ khách nhìn thấy đầu tiên.
-     */
     private const THU_MUC = ['products', 'categories', 'promotions', 'hero'];
 
     public function handle(ImageOptimizer $optimizer): int
@@ -62,14 +36,6 @@ class ToiUuAnh extends Command
         $bytesMoi = 0;
 
         foreach (self::THU_MUC as $thuMuc) {
-            /*
-             * allFiles() CHỨ KHÔNG files().
-             *
-             * LỖI ĐÃ SỬA: `files()` không đệ quy, nên nó không nhìn thấy
-             * `products/gallery/` — toàn bộ ảnh phụ của sản phẩm chưa bao
-             * giờ được tối ưu, và không có gì báo. Chỉ phát hiện khi ngồi
-             * đối chiếu manifest với ảnh thật trên đĩa.
-             */
             foreach ($disk->allFiles($thuMuc) as $path) {
                 if (! preg_match('/\.(jpe?g|png)$/i', $path)) {
                     continue;
@@ -94,17 +60,6 @@ class ToiUuAnh extends Command
         }
 
         $this->newLine();
-        /*
-         * NÓI RÕ CON SỐ NÀY ĐO CÁI GÌ.
-         *
-         * `$bytesMoi` là tổng của CẢ HAI bản (400px + 800px) cho mỗi
-         * ảnh, còn trình duyệt chỉ tải MỘT bản. Nên đây là con số về chỗ
-         * chiếm trên đĩa, KHÔNG phải mức giảm băng thông mà khách nhận
-         * được — mức đó lớn hơn nhiều.
-         *
-         * Ghi "giảm 23%" trống không thì lần sau có người đọc và tưởng
-         * việc tối ưu ảnh chỉ đáng 23%.
-         */
         $this->info(sprintf(
             'Xong %d ảnh. Ảnh gốc %s; toàn bộ bản WebP (cả %s) %s.',
             $daXuLy,
@@ -121,7 +76,6 @@ class ToiUuAnh extends Command
         return self::SUCCESS;
     }
 
-    /** Tổng dung lượng các bản WebP đã sinh từ một ảnh gốc. */
     private function tongBanWebp(string $path): int
     {
         $disk = Storage::disk('public');

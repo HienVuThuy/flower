@@ -21,31 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Thanh toán MoMo.
- * ============================================================
- *   đơn đã tạo
- *      └─ start / payAgain ─► tạo bản ghi giao dịch ─► gọi API MoMo
- *                                                        └─► payUrl
- *      (khách trả tiền trên trang MoMo)
- *                                │
- *          ┌─────────────────────┴─────────────────────┐
- *      callback (trình duyệt quay về)            ipn (MoMo gọi máy chủ)
- *          └──────────────► ghiNhanThanhToan() ◄──────┘
- *                                │
- *                                └─► hoanTatSauThanhToan()
- *                                      ├─ xác nhận đơn (gửi thư cho khách)
- *                                      └─ tạo vận đơn GHN
- *
- * HAI ĐƯỜNG VỀ, MỘT KẾT QUẢ. Cả hai đều phải kiểm chữ ký rồi mới ghi,
- * và cả hai đi qua cùng một hàm nên chạy đường nào kết quả cũng như
- * nhau. Callback là để KHÁCH nhìn thấy; IPN là đường đáng tin, vì nó
- * không đi qua trình duyệt của khách.
- *
- * IPN không tới được localhost — MoMo gọi từ Internet vào. Khi học ở
- * nhà, luồng vẫn chạy đủ nhờ callback; ghiNhanThanhToan() viết sao cho
- * gọi mấy lần cũng ra một kết quả nên khi có IPN thật cũng không hỏng.
- */
+/** Thanh toán MoMo. */
 class MomoController extends Controller
 {
     use AuthorizesOrderAccess;
@@ -56,17 +32,11 @@ class MomoController extends Controller
     ) {
     }
 
-    /** Lần trả đầu tiên, ngay sau khi đặt hàng. */
     public function start(Request $request, Order $order): RedirectResponse
     {
         return $this->chuyenSangMomo($request, $order);
     }
 
-    /**
-     * Trả lại sau một lần thất bại.
-     *
-     * KHÔNG tạo đơn mới — vẫn là đơn cũ, chỉ thêm một lượt giao dịch.
-     */
     public function payAgain(Request $request, Order $order): RedirectResponse
     {
         return $this->chuyenSangMomo($request, $order);
@@ -94,13 +64,6 @@ class MomoController extends Controller
                 ->with('error', 'Đơn đã kết thúc nên không thanh toán được nữa.');
         }
 
-        /*
-         * CÁCH TRẢ TIỀN ĐỌC TỪ URL, giá trị lạ rơi về mặc định.
-         *
-         * Không abort(404): người ta chép link cho nhau, và một tham số
-         * hỏng không đáng để cả lượt thanh toán biến mất — cùng nguyên
-         * tắc đã dùng cho bộ lọc sản phẩm.
-         */
         $flow = MomoFlow::tryFrom((string) $request->query('cach', ''))
             ?? MomoFlow::macDinh();
 
@@ -113,12 +76,6 @@ class MomoController extends Controller
         }
     }
 
-    /**
-     * Trình duyệt khách quay về sau khi rời trang MoMo.
-     *
-     * KHÔNG tin vào việc khách có mặt ở đây: đường dẫn này ai gõ cũng
-     * được. Thứ quyết định là chữ ký trong gói tin.
-     */
     public function callback(Request $request): RedirectResponse
     {
         $payload = $request->query();
@@ -151,12 +108,6 @@ class MomoController extends Controller
         };
     }
 
-    /**
-     * MoMo gọi thẳng vào máy chủ, không qua trình duyệt khách.
-     *
-     * Luôn trả 204 kể cả khi gói tin hỏng: mã lỗi làm MoMo gọi lại nhiều
-     * lần, mà gói tin sai chữ ký thì gọi bao nhiêu lần cũng vẫn sai.
-     */
     public function ipn(Request $request): JsonResponse
     {
         $payload = $request->all();
@@ -170,15 +121,6 @@ class MomoController extends Controller
         return response()->json(['message' => 'Received']);
     }
 
-    /**
-     * Ghi kết quả của một gói tin ĐÃ XÁC MINH CHỮ KÝ.
-     *
-     * GỌI MẤY LẦN CŨNG RA MỘT KẾT QUẢ. Callback và IPN có thể về gần như
-     * đồng thời cho cùng một lượt; `lockForUpdate` xếp chúng thành hàng
-     * và lần thứ hai thấy giao dịch đã `paid` nên dừng lại.
-     *
-     * @param  array<string, mixed>  $payload
-     */
     private function ghiNhanThanhToan(array $payload): string
     {
         $ketQua = DB::transaction(function () use ($payload): string {
@@ -207,14 +149,6 @@ class MomoController extends Controller
                 return 'invalid';
             }
 
-            /*
-             * SỐ TIỀN PHẢI KHỚP.
-             *
-             * MoMo trả về số tiền đã thu; nếu nó khác số của đơn thì
-             * hoặc gói tin bị sửa, hoặc đã có nhầm lẫn ở đâu đó. Ghi
-             * nhận đã thanh toán trong tình huống đó là để phần mềm tự
-             * xác nhận một số tiền nó không kiểm được.
-             */
             if ((int) round((float) $transaction->amount) !== (int) ($payload['amount'] ?? 0)) {
                 $this->momo->markFailed($transaction, $payload);
 
@@ -227,19 +161,12 @@ class MomoController extends Controller
                 return 'mismatch';
             }
 
-            // Tiền ĐÃ về thật, nên lượt giao dịch phải ghi đúng như vậy
-            // kể cả khi đơn không nhận được nữa.
             $this->momo->markPaid($transaction, $payload);
 
-            /*
-             * TIỀN CỦA MỘT KỲ TRẢ GÓP: ghi vào kỳ đó. "Đã thanh toán" của cả
-             * đơn chỉ đặt khi kỳ cuối xong — InstallmentService quyết.
-             */
             if ($transaction->installment_payment_id !== null) {
                 $ky = app(InstallmentService::class)->ghiNhanKy((int) $transaction->installment_payment_id);
 
                 if ($ky === 'already') {
-                    // Hai lượt MoMo cùng trả một kỳ (hai tab): tiền về hai lần, người thật phải hoàn một lần.
                     Log::warning('Kỳ trả góp đã được trả bằng lượt khác.', [
                         'order' => $order->order_number,
                         'giao_dich' => $transaction->gateway_order_id,
@@ -267,18 +194,6 @@ class MomoController extends Controller
             return 'paid';
         });
 
-        /*
-         * XÁC NHẬN ĐƠN VÀ TẠO VẬN ĐƠN — SAU KHI TRANSACTION ĐÃ COMMIT.
-         *
-         * Hai việc này gọi ra ngoài (gửi thư, gọi API GHN). Để bên trong
-         * transaction thì một cuộc gọi HTTP chậm sẽ giữ khoá hàng của đơn
-         * suốt thời gian đó, và tệ hơn: thư có thể đã bay đi trong khi
-         * transaction sau đó bị cuộn lại.
-         *
-         * Chạy cả với 'already' chứ không chỉ 'paid': nếu lần callback
-         * đầu ghi tiền xong nhưng GHN lỗi mạng, thì IPN về sau còn một
-         * cơ hội nữa. Cả hai bước bên trong đều tự bỏ qua nếu đã làm rồi.
-         */
         if (in_array($ketQua, ['paid', 'already'], true)) {
             $this->hoanTatSauThanhToan($payload);
         }
@@ -286,27 +201,6 @@ class MomoController extends Controller
         return $ketQua;
     }
 
-    /**
-     * Việc phải làm ngay sau khi tiền về: xác nhận đơn, rồi bàn giao GHN.
-     *
-     * ============================================================
-     * VÌ SAO ĐƠN ĐÃ TRẢ TIỀN THÌ TỰ ĐỘNG, CÒN COD THÌ KHÔNG.
-     *
-     * Tạo vận đơn là CAM KẾT với GHN: họ cử người tới lấy hàng và tính
-     * tiền cửa hàng. Với đơn COD, thứ duy nhất đứng sau lời hứa của
-     * khách là lời hứa đó — nên cửa hàng phải nhìn đơn trước khi cam kết.
-     *
-     * Đơn đã trả tiền thì khác hẳn: khách đã bỏ tiền ra, và bắt họ đợi
-     * một nhân viên bấm nút là kéo dài thời gian giao hàng vì một bước
-     * không còn tác dụng gì. Vì thế xác nhận và bàn giao ngay.
-     *
-     * KHÔNG BAO GIỜ NÉM LỖI RA NGOÀI. Tiền đã ghi nhận xong rồi; một
-     * cuộc gọi GHN hỏng không được phép biến thành trang lỗi trước mặt
-     * khách vừa trả tiền. Hỏng thì ghi log, và nút tạo vận đơn thủ công
-     * ở trang quản trị vẫn còn nguyên.
-     *
-     * @param  array<string, mixed>  $payload
-     */
     private function hoanTatSauThanhToan(array $payload): void
     {
         $order = $this->timDon($payload);
@@ -315,13 +209,9 @@ class MomoController extends Controller
             return;
         }
 
-        // Cùng một đường với kỳ cuối trả góp — xem PaidOrderFulfilment.
         app(PaidOrderFulfilment::class)->sauKhiTraTien($order, 'Đã nhận thanh toán qua MoMo.');
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
     private function timDon(array $payload): ?Order
     {
         $ma = $this->momo->orderNumberFrom($payload);
@@ -329,9 +219,6 @@ class MomoController extends Controller
         return $ma ? Order::where('order_number', $ma)->first() : null;
     }
 
-    /**
-     * @param  array<string, mixed>  $payload
-     */
     private function loiCuaMomo(array $payload): string
     {
         $ly = trim((string) ($payload['message'] ?? ''));

@@ -13,22 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Xuất dữ liệu phân tích: chọn phần, chọn định dạng.
- * ============================================================
- * VẤN ĐỀ ĐÃ SỬA: nút "Xuất CSV" tải về một tệp CỐ ĐỊNH gồm năm phần.
- * Ai chỉ cần bảng bán chạy vẫn phải tải cả tệp rồi tự xoá bốn phần
- * thừa; ai cần bảng khách hàng thì không có cách nào lấy.
- *
- * Bất biến được canh ở đây:
- *
- *   1. Chọn phần nào thì tệp có ĐÚNG phần đó.
- *   2. Không chọn gì -> xuất tất cả, KHÔNG phải tệp rỗng.
- *   3. Mã phần lạ bị lọc, không đưa thẳng vào bộ dựng bảng.
- *   4. Định dạng lạ lùi về CSV, không nổ lỗi.
- *   5. Thứ tự phần trong tệp là thứ tự ĐÃ KHAI, không theo thứ tự tích.
- *   6. CSV có BOM — thiếu nó là Excel đọc tiếng Việt thành ký tự rác.
- */
+/** Xuất dữ liệu phân tích: chọn phần, chọn định dạng. */
 class ReportExportTest extends TestCase
 {
     use RefreshDatabase;
@@ -42,7 +27,6 @@ class ReportExportTest extends TestCase
         return $user;
     }
 
-    /** Một đơn đã giao, để bảng nào cũng có ít nhất một dòng thật. */
     private function donDaGiao(): Order
     {
         $product = Product::factory()
@@ -78,15 +62,9 @@ class ReportExportTest extends TestCase
         return $res->streamedContent();
     }
 
-    /* ================= TRANG CHỌN ================= */
-
     #[Test]
     public function trang_chon_liet_ke_du_moi_phan_va_tich_san_tat_ca(): void
     {
-        /*
-         * TÍCH SẴN TẤT CẢ: người vào đây thường muốn cả bộ, và ai chỉ
-         * cần một phần thì bỏ tích nhanh hơn là tích từng cái.
-         */
         $html = $this->actingAs($this->admin())
             ->get('/admin/phan-tich/xuat')
             ->assertOk()
@@ -97,7 +75,6 @@ class ReportExportTest extends TestCase
             $this->assertStringContainsString($m['label'], $html);
         }
 
-        // Số ô đã tích phải bằng số phần.
         $this->assertSame(
             count(ReportSections::danhSach()),
             substr_count($html, 'name="phan[]"'),
@@ -115,8 +92,6 @@ class ReportExportTest extends TestCase
             ->assertForbidden();
     }
 
-    /* ================= CHỌN ĐÚNG PHẦN ================= */
-
     #[Test]
     public function chon_mot_phan_thi_tep_chi_co_phan_do(): void
     {
@@ -127,7 +102,6 @@ class ReportExportTest extends TestCase
         $this->assertStringContainsString('SẢN PHẨM BÁN CHẠY', $csv);
         $this->assertStringContainsString('Cây kiểm thử báo cáo', $csv);
 
-        // Và KHÔNG có những phần không chọn.
         $this->assertStringNotContainsString('PHỄU CHUYỂN ĐỔI', $csv);
         $this->assertStringNotContainsString('TỪ KHOÁ KHÁCH TÌM', $csv);
     }
@@ -135,11 +109,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function khong_chon_gi_thi_xuat_TAT_CA_chu_khong_ra_tep_rong(): void
     {
-        /*
-         * Trả về một tệp rỗng là đúng chữ nhưng vô dụng: người dùng bấm
-         * "Tải về", nhận một tệp không có gì, và không biết mình đã quên
-         * bước nào.
-         */
         $csv = $this->taiVe();
 
         foreach (ReportSections::danhSach() as $m) {
@@ -150,10 +119,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function ma_phan_la_bi_loc_bo(): void
     {
-        /*
-         * `phan[]` đến từ trình duyệt, ai cũng sửa được. Không lọc thì
-         * một chuỗi bịa đi thẳng vào bộ dựng bảng.
-         */
         $csv = $this->taiVe(['phan' => ['ban-chay', 'khong-co-that']]);
 
         $this->assertStringContainsString('SẢN PHẨM BÁN CHẠY', $csv);
@@ -163,10 +128,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function thu_tu_phan_theo_danh_sach_da_khai_chu_khong_theo_thu_tu_tich(): void
     {
-        /*
-         * Tệp xuất ra phải luôn cùng một bố cục để so hai kỳ với nhau
-         * được. Theo thứ tự người dùng tích thì mỗi lần xuất một khác.
-         */
         $csv = $this->taiVe(['phan' => ['ban-chay', 'tong-quan']]);
 
         $viTriTongQuan = strpos($csv, 'TỔNG QUAN ĐƠN HÀNG');
@@ -180,18 +141,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function gui_len_TOAN_ma_la_thi_xuat_tat_ca_chu_khong_ra_tep_rong(): void
     {
-        /*
-         * ĐÂY LÀ CHỖ DUY NHẤT chốt lọc ở controller thật sự khác biệt.
-         *
-         * Bài "mã phần lạ bị lọc bỏ" ở trên vẫn xanh kể cả khi bỏ hẳn
-         * chốt đó — đã kiểm bằng cách bỏ. Vì `nhieuBang()` cũng duyệt
-         * theo danh sách hợp lệ nên mã lạ rơi ra ở lớp dưới.
-         *
-         * Nhưng khi gửi lên TOÀN mã lạ thì hai lớp cho hai kết quả khác
-         * hẳn: không có chốt ở controller thì `$chon` vẫn "có phần tử",
-         * nhánh "không chọn gì thì xuất tất cả" không chạy, và người
-         * dùng nhận một tệp RỖNG mà không hiểu vì sao.
-         */
         $csv = $this->taiVe(['phan' => ['bia-dat-1', 'bia-dat-2']]);
 
         foreach (ReportSections::danhSach() as $m) {
@@ -199,15 +148,9 @@ class ReportExportTest extends TestCase
         }
     }
 
-    /* ================= BA ĐỊNH DẠNG ================= */
-
     #[Test]
     public function CSV_co_BOM_de_Excel_doc_dung_tieng_Viet(): void
     {
-        /*
-         * Không có ba byte này, Excel trên Windows đọc CSV theo bảng mã
-         * hệ thống và mọi tên sản phẩm tiếng Việt thành ký tự rác.
-         */
         $csv = $this->taiVe(['dinh_dang' => 'csv']);
 
         $this->assertStringStartsWith("\xEF\xBB\xBF", $csv);
@@ -216,10 +159,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function JSON_dung_khoa_co_ten_chu_khong_phai_mang_vi_tri(): void
     {
-        /*
-         * `["Kim tiền", 12]` bắt người nhận phải đọc thứ tự cột ở chỗ
-         * khác rồi tự đếm — và hỏng ngay khi thứ tự cột đổi.
-         */
         $this->donDaGiao();
 
         $json = json_decode($this->taiVe(['dinh_dang' => 'json', 'phan' => ['ban-chay']]), true);
@@ -238,10 +177,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function HTML_tu_dung_mot_minh_khong_can_tep_CSS_ngoai(): void
     {
-        /*
-         * Người nhận mở tệp trên máy họ; ở đó không có máy chủ nào để
-         * tải CSS về. Kiểu dáng phải nhúng thẳng.
-         */
         $html = $this->taiVe(['dinh_dang' => 'html', 'phan' => ['tong-quan']]);
 
         $this->assertStringContainsString('<style>', $html);
@@ -257,15 +192,9 @@ class ReportExportTest extends TestCase
         $this->assertStringStartsWith("\xEF\xBB\xBF", $noiDung);
     }
 
-    /* ================= SỐ LIỆU PHẢI THẬT ================= */
-
     #[Test]
     public function con_so_trong_tep_khop_voi_don_hang_that(): void
     {
-        /*
-         * Bài quan trọng nhất: tệp báo cáo mà sai số thì nó tệ hơn không
-         * có báo cáo — người ta ra quyết định dựa vào nó.
-         */
         $order = $this->donDaGiao();
 
         $json = json_decode($this->taiVe(['dinh_dang' => 'json', 'phan' => ['tong-quan']]), true);
@@ -280,11 +209,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function chua_co_don_nao_thi_ghi_ro_chu_khong_ghi_so_0(): void
     {
-        /*
-         * "Giá trị đơn trung bình = 0" và "chưa có đơn đã giao" là hai
-         * câu khác hẳn nhau. Mẫu số bằng 0 thì không có trung bình nào
-         * để nói, và bịa ra số 0 là bịa một kết luận.
-         */
         $json = json_decode($this->taiVe(['dinh_dang' => 'json', 'phan' => ['tong-quan']]), true);
 
         $dong = collect($json['phan'][0]['dong'])->keyBy('Chỉ số');
@@ -292,15 +216,6 @@ class ReportExportTest extends TestCase
         $this->assertSame('chưa có đơn đã giao', $dong['Giá trị đơn trung bình']['Giá trị']);
     }
 
-    /* ================= EXCEL VÀ PDF ================= */
-
-    /**
-     * Tải về mà không cần biết định dạng trả về kiểu phản hồi nào.
-     *
-     * CSV/JSON/HTML là luồng, XLSX là tệp trên đĩa, PDF là chuỗi dựng
-     * sẵn — ba loại phản hồi khác nhau. Bài kiểm thử không nên phải biết
-     * điều đó mới lấy được nội dung.
-     */
     private function taiVeNhiPhan(array $tuyChon = []): string
     {
         $res = $this->actingAs($this->admin())
@@ -321,7 +236,6 @@ class ReportExportTest extends TestCase
         return (string) $res->getContent();
     }
 
-    /** Mở tệp .xlsx trong bộ nhớ và đọc ra một tệp XML bên trong. */
     private function trongXlsx(string $noiDung, string $duong): string
     {
         $tam = tempnam(sys_get_temp_dir(), 'kt-xlsx-');
@@ -340,7 +254,6 @@ class ReportExportTest extends TestCase
         return $xml;
     }
 
-    /** @return list<string> */
     private function tenCacTrangTinh(string $noiDung): array
     {
         preg_match_all('/<sheet name="([^"]+)"/', $this->trongXlsx($noiDung, 'xl/workbook.xml'), $m);
@@ -354,20 +267,11 @@ class ReportExportTest extends TestCase
     #[Test]
     public function XLSX_tach_moi_phan_ra_mot_trang_tinh_rieng(): void
     {
-        /*
-         * ĐÂY LÀ LÝ DO XLSX TỒN TẠI BÊN CẠNH CSV.
-         *
-         * CSV dồn mọi phần vào một bảng cách nhau bằng dòng trống — mở
-         * bằng Excel là một trang dài không lọc, không xoay bảng được.
-         * Nếu tệp .xlsx cũng chỉ có một trang tính thì nó không hơn gì
-         * CSV, và cả định dạng này là thừa.
-         */
         $ten = $this->tenCacTrangTinh($this->taiVeNhiPhan([
             'dinh_dang' => 'xlsx',
             'phan' => ['tong-quan', 'ban-chay', 'ton-kho'],
         ]));
 
-        // Một trang Thông tin + ba phần đã chọn.
         $this->assertCount(4, $ten);
         $this->assertSame('Thông tin', $ten[0]);
         $this->assertStringContainsString('Tổng quan', $ten[1]);
@@ -378,13 +282,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function ten_trang_tinh_luon_hop_le_voi_Excel(): void
     {
-        /*
-         * Excel KHÔNG MỞ ĐƯỢC tệp có tên trang dài quá 31 ký tự, chứa
-         * `: \ / ? * [ ]`, hay trùng nhau — hỏng cả tệp chứ không phải
-         * hiện xấu. Nhãn phần ở đây là câu tiếng Việt dài, có cả dấu hai
-         * chấm ("Đánh giá: tổng quan và phân bố sao"), nên cả ba đều có
-         * thể xảy ra nếu lấy nhãn làm tên trang.
-         */
         $ten = $this->tenCacTrangTinh($this->taiVeNhiPhan(['dinh_dang' => 'xlsx']));
 
         $this->assertNotEmpty($ten);
@@ -400,17 +297,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function hai_phan_giong_nhau_o_31_ky_tu_dau_khong_lam_hong_tep(): void
     {
-        /*
-         * BÀI NÀY SINH RA TỪ MỘT PHÉP ĐỘT BIẾN SỐNG SÓT.
-         *
-         * Bỏ hẳn đoạn chống trùng tên trang mà mọi bài vẫn xanh — vì
-         * trong 23 phần hiện có, không hai nhãn nào giống nhau ở 31 ký
-         * tự đầu. Nghĩa là đoạn đó chưa từng được đo, và sẽ hỏng vào
-         * đúng ngày có người thêm phần thứ 24 tên na ná phần cũ.
-         *
-         * Hai trang tính trùng tên thì Excel KHÔNG MỞ ĐƯỢC tệp — không
-         * phải hiện xấu, mà là báo hỏng tệp.
-         */
         $tam = tempnam(sys_get_temp_dir(), 'kt-trung-') . '.xlsx';
 
         $motPhan = fn (string $nhan) => [
@@ -432,7 +318,6 @@ class ReportExportTest extends TestCase
         $ten = $this->tenCacTrangTinh((string) file_get_contents($tam));
         @unlink($tam);
 
-        // Thông tin + ba phần, và không tên nào trùng tên nào.
         $this->assertCount(4, $ten);
         $this->assertSame(4, count(array_unique($ten)), 'Trùng tên trang: ' . implode(' | ', $ten));
 
@@ -448,26 +333,17 @@ class ReportExportTest extends TestCase
 
         $xml = $this->trongXlsx(
             $this->taiVeNhiPhan(['dinh_dang' => 'xlsx', 'phan' => ['tong-quan']]),
-            // sheet1 là trang Thông tin, sheet2 mới là phần đầu tiên.
             'xl/worksheets/sheet2.xml',
         );
 
-        /*
-         * openspout ghi chữ là `t="inlineStr"`, còn số thì ô KHÔNG có
-         * thuộc tính `t`. Đây là khác biệt duy nhất khiến Excel cộng
-         * được cột tiền — CSV không có cách nào nói điều này.
-         */
         $this->assertMatchesRegularExpression(
             '~<c r="B\d+"[^>]*><v>\d~',
             $xml,
             'Cột giá trị không có ô số nào — mọi thứ đang bị ghi thành chữ',
         );
 
-        // Và ô số KHÔNG được mang t="inlineStr" — mang là Excel coi là chữ.
-        // Chỉ xét từ dòng 2: dòng 1 là tên cột, vốn phải là chữ.
         $this->assertDoesNotMatchRegularExpression('~<c r="B2"[^>]*t="inlineStr"~', $xml);
 
-        // Còn cột tên thì ngược lại: phải là chữ.
         $this->assertMatchesRegularExpression('~<c r="A2"[^>]*t="inlineStr"~', $xml);
         $this->assertStringContainsString('Tổng đơn', $xml);
     }
@@ -475,14 +351,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function so_co_chu_so_0_dau_khong_bi_bien_thanh_so(): void
     {
-        /*
-         * `is_numeric('0912345678')` là true. Ghi nó thành số thì Excel
-         * hiện `912345678` — SỐ ĐIỆN THOẠI SAI, im lặng. Mã đơn `0034`
-         * cũng vậy.
-         *
-         * Gọi thẳng bộ ghi vì chưa phần báo cáo nào có cột kiểu này;
-         * quy tắc vẫn phải đúng từ trước khi có phần đó.
-         */
         $tam = tempnam(sys_get_temp_dir(), 'kt-so-') . '.xlsx';
 
         app(\App\Services\Analytics\Export\XlsxWriter::class)->ghi(
@@ -510,7 +378,6 @@ class ReportExportTest extends TestCase
             );
         }
 
-        // Còn cột bên phải thì phải là số thật.
         $this->assertMatchesRegularExpression('~<c r="B2"[^>]*><v>1234567~', $xml);
         $this->assertMatchesRegularExpression('~<c r="B3"[^>]*><v>42</v>~', $xml);
         $this->assertMatchesRegularExpression('~<c r="B4"[^>]*><v>-5</v>~', $xml);
@@ -519,15 +386,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function PDF_dung_phong_co_du_dau_tieng_Viet(): void
     {
-        /*
-         * ĐÂY LÀ ĐIỀU DUY NHẤT KHIẾN PDF DÙNG ĐƯỢC Ở ĐÂY.
-         *
-         * dompdf không đi hỏi phông của hệ điều hành; nó rơi về
-         * Helvetica nếu không gọi đích danh một bộ có sẵn. Helvetica
-         * KHÔNG có dấu tiếng Việt, và kết quả là một tệp PDF đầy ô
-         * vuông — vẫn tải về được, vẫn mở được, chỉ là không đọc được.
-         * Không có gì báo lỗi, nên chỉ bài này bắt được.
-         */
         $pdf = $this->taiVeNhiPhan(['dinh_dang' => 'pdf', 'phan' => ['tong-quan']]);
 
         $this->assertStringStartsWith('%PDF-', $pdf);
@@ -537,11 +395,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function PDF_va_HTML_dung_chung_mot_ban_dung_noi_dung(): void
     {
-        /*
-         * Hai tệp là cùng một báo cáo, chỉ khác cách người nhận mở ra.
-         * Nếu dựng riêng thì sớm muộn một bên có cột mà bên kia không
-         * có, và hai người cầm hai tệp sẽ cãi nhau về cùng một kỳ.
-         */
         $html = app(\App\Services\Analytics\Export\ReportHtml::class);
 
         $bang = collect([[
@@ -555,13 +408,11 @@ class ReportExportTest extends TestCase
         $html->viet($bang, 'kỳ thử', function (string $d) use (&$choMan) { $choMan .= $d; });
         $html->viet($bang, 'kỳ thử', function (string $d) use (&$choPdf) { $choPdf .= $d; }, choPdf: true);
 
-        // Phần thân giống nhau.
         foreach (['<h2>Một phần</h2>', '<th>Chỉ số</th>', '<td>Tổng đơn</td>', '<td>7</td>'] as $doan) {
             $this->assertStringContainsString($doan, $choMan);
             $this->assertStringContainsString($doan, $choPdf);
         }
 
-        // Chỉ phông là khác — và đúng chiều.
         $this->assertStringContainsString('DejaVu Sans', $choPdf);
         $this->assertStringNotContainsString('DejaVu Sans', $choMan);
     }
@@ -569,12 +420,6 @@ class ReportExportTest extends TestCase
     #[Test]
     public function ten_san_pham_co_the_HTML_khong_chay_duoc_trong_tep_xuat(): void
     {
-        /*
-         * Tên sản phẩm, từ khoá khách gõ, tên người nhận — đều là chữ
-         * NGƯỜI NGOÀI nhập vào, và đều đi thẳng vào báo cáo. Tệp HTML
-         * xuất ra sẽ được mở bằng trình duyệt trên máy kế toán; một thẻ
-         * script lọt vào đó là chạy trên máy họ.
-         */
         Product::factory()
             ->for(Category::factory())
             ->stock(3)
@@ -599,7 +444,6 @@ class ReportExportTest extends TestCase
             'pdf' => 'application/pdf',
         ];
 
-        // Danh sách định dạng khai ở một nơi; giao diện và bài này cùng đọc nó.
         $this->assertSame(
             array_keys($mong),
             array_keys(\App\Services\Analytics\ReportExporter::DINH_DANG),

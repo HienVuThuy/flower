@@ -8,12 +8,6 @@
     $tien = fn ($v) => \App\Services\Shop\Money::format((string) round($v));
     $so = fn ($v) => number_format($v, 0, ',', '.');
 
-    /*
-     * "Còn mấy ngày" in ra chữ.
-     *
-     * null nghĩa là CẢ KỲ KHÔNG BÁN ĐƯỢC CÁI NÀO — mẫu số bằng 0. In
-     * một con số ở đó là bịa; in "—" thì người đọc không biết vì sao.
-     */
     $conNgay = fn (?float $c) => $c === null
         ? 'chưa bán được cái nào'
         : ($c < 1 ? 'dưới 1 ngày' : round($c) . ' ngày');
@@ -29,7 +23,6 @@
     </div>
 
     <div class="d-flex flex-wrap gap-2">
-        {{-- Số trên trang này chỉ đúng khi tồn trên hệ thống khớp kệ thật. --}}
         <a data-admin-link href="{{ route('admin.stock-counts.create') }}" class="btn btn-sm btn-outline-admin">Kiểm kê</a>
 
         @foreach($cacKy as $value => $label)
@@ -41,7 +34,6 @@
     </div>
 </div>
 
-{{-- ============ TỔNG QUAN ============ --}}
 <div class="row g-3 mb-4">
 
     @php
@@ -70,15 +62,6 @@
         <div>
             <h2 class="h6 fw-bold mb-1">Giá trị tồn kho</h2>
             <p class="admin-page-subtitle mb-0">
-                {{--
-                    NÓI RÕ ĐÂY KHÔNG PHẢI VỐN.
-
-                    Cơ sở dữ liệu không có giá vốn — bảng sản phẩm chỉ có
-                    giá bán. Gọi con số này là "vốn tồn kho" là nói sai
-                    một con số kế toán, và nó sẽ được dùng để ra quyết
-                    định. Ước lượng bằng một tỉ lệ phần trăm nghĩ ra thì
-                    còn tệ hơn.
-                --}}
                 Tính theo <strong>giá bán</strong>, không phải giá vốn.
                 Hệ thống chưa lưu giá vốn nên chưa tính được lãi/lỗ hay biên lợi nhuận.
             </p>
@@ -88,7 +71,6 @@
     </div>
 </div>
 
-{{-- ============ 1. HẾT HÀNG MÀ VẪN ĐANG BÁN ============ --}}
 <h2 class="admin-section-title">1. Đang mất đơn — hết hàng nhưng vẫn bày bán</h2>
 
 <div class="admin-panel p-4 mb-4">
@@ -122,20 +104,6 @@
                             </td>
                             <td>{{ $so($d['sold']) }}</td>
                             <td class="text-end">
-                                {{--
-                                    DẪN THẲNG SANG PHIẾU NHẬP, mang theo
-                                    đúng mặt hàng.
-
-                                    Trước đây nút này dẫn sang trang sửa
-                                    sản phẩm, nơi chỉ có một ô số để gán
-                                    đè tồn kho — không ai biết ai nhập,
-                                    khi nào, giá bao nhiêu.
-
-                                    Trang này biết chính xác món nào đang
-                                    thiếu; bắt người dùng đi tìm lại nó
-                                    trong danh sách vài chục mặt hàng là
-                                    vứt đi thông tin vừa có trong tay.
-                                --}}
                                 <a data-admin-link
                                    href="{{ route('admin.stock-receipts.create', ['mat-hang' => $d['product']->id . ':' . ($d['variant_id'] ?? '')]) }}"
                                    class="btn btn-outline-admin btn-sm">Nhập thêm</a>
@@ -148,18 +116,10 @@
     @endif
 </div>
 
-{{-- ============ 2. SẮP HẾT ============ --}}
 <h2 class="admin-section-title">2. Sắp hết — xếp theo còn bán được mấy ngày</h2>
 
 <div class="admin-panel p-4 mb-4">
     <p class="admin-page-subtitle">
-        {{--
-            XẾP THEO NGÀY, KHÔNG THEO SỐ LƯỢNG.
-
-            "Còn 2" của món bán 5 cái/ngày gấp gáp hơn hẳn "còn 2" của
-            món bán một cái mỗi tháng — nhưng xếp theo số lượng thì hai
-            món đó đứng cạnh nhau và trông y hệt.
-        --}}
         Số ngày = tồn kho chia cho tốc độ bán trung bình trong {{ $cacKy[$ky] }}.
         Món chưa bán được cái nào không nằm ở đây — xem mục 3.
     </p>
@@ -197,20 +157,6 @@
                                 </span>
                             </td>
                             <td class="text-end">
-                                {{--
-                                    DẪN THẲNG SANG PHIẾU NHẬP, mang theo
-                                    đúng mặt hàng.
-
-                                    Trước đây nút này dẫn sang trang sửa
-                                    sản phẩm, nơi chỉ có một ô số để gán
-                                    đè tồn kho — không ai biết ai nhập,
-                                    khi nào, giá bao nhiêu.
-
-                                    Trang này biết chính xác món nào đang
-                                    thiếu; bắt người dùng đi tìm lại nó
-                                    trong danh sách vài chục mặt hàng là
-                                    vứt đi thông tin vừa có trong tay.
-                                --}}
                                 <a data-admin-link
                                    href="{{ route('admin.stock-receipts.create', ['mat-hang' => $d['product']->id . ':' . ($d['variant_id'] ?? '')]) }}"
                                    class="btn btn-outline-admin btn-sm">Nhập thêm</a>
@@ -223,7 +169,6 @@
     @endif
 </div>
 
-{{-- ============ 3. CHẾT VỐN ============ --}}
 <h2 class="admin-section-title">3. Tiền nằm im — còn hàng nhưng không bán được cái nào</h2>
 
 <div class="admin-panel p-4 mb-4">
@@ -259,15 +204,6 @@
                             <td>{{ $tien($d['price']) }}</td>
                             <td>{{ $tien($d['value']) }}</td>
                             <td class="text-end">
-                                {{--
-                                    DẪN SANG TRANG KHUYẾN MẠI, không phải
-                                    một nút "giảm giá ngay".
-
-                                    Giảm giá là một quyết định kinh doanh:
-                                    giảm bao nhiêu, trong bao lâu, có kèm
-                                    điều kiện gì. Một nút bấm phát là giảm
-                                    ngay thì phần mềm quyết thay người.
-                                --}}
                                 <a data-admin-link href="{{ route('admin.promotions.index') }}"
                                    class="btn btn-outline-admin btn-sm">Cân nhắc khuyến mại</a>
                             </td>

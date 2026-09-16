@@ -2,25 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * NHU CẦU của khách — trục thứ năm để duyệt hàng.
- * ============================================================
- * Bốn trục đã có đều sắp theo cách CỬA HÀNG nghĩ về hàng hoá (danh mục,
- * hình thức bán, loại, vai trò). Trục này sắp theo cách KHÁCH nghĩ về
- * việc của họ: "tôi cần quà tặng người yêu", "tôi mới tập trồng cây".
- *
- * KHÁC PlantAdvisor Ở CHỖ NÀO: trang tư vấn hỏi ĐIỀU KIỆN cụ thể (ban
- * công nắng, phòng tắm ẩm) và trả về một danh sách đã lọc. Trục này trả
- * lời sớm hơn một bước — khách còn chưa biết mình cần cây hay hoa, chỉ
- * biết mình đang có một dịp phải lo. Vì thế mỗi nhu cầu là một TRANG
- * HƯỚNG DẪN, không phải một bộ lọc.
- *
- * KHÔNG LƯU VÀO CƠ SỞ DỮ LIỆU: mỗi nhu cầu có nội dung hướng dẫn viết
- * riêng, cách chọn hàng riêng, và một trang Blade riêng. Đó là mã nguồn
- * chứ không phải dữ liệu — nhét vào bảng thì admin sửa được cái tên
- * nhưng không sửa được cái quan trọng, còn lập trình viên thì phải mở
- * hai chỗ mới hiểu một tính năng.
- */
+/** NHU CẦU của khách — trục thứ năm để duyệt hàng. */
 enum ShoppingIntent: string
 {
     case Gift = 'tang-nguoi-thuong';
@@ -38,7 +20,6 @@ enum ShoppingIntent: string
         };
     }
 
-    /** Câu dẫn ngắn trên thẻ ở trang chủ. */
     public function tagline(): string
     {
         return match ($this) {
@@ -49,7 +30,6 @@ enum ShoppingIntent: string
         };
     }
 
-    /** Ảnh minh hoạ — tài nguyên giao diện, đi qua Vite. Xem ASSETS.md. */
     public function image(): string
     {
         return match ($this) {
@@ -70,7 +50,6 @@ enum ShoppingIntent: string
         };
     }
 
-    /** Tiêu đề trang, dạng câu hỏi hoặc lời mời — không lặp lại nhãn. */
     public function heading(): string
     {
         return match ($this) {
@@ -81,7 +60,6 @@ enum ShoppingIntent: string
         };
     }
 
-    /** @return list<self> */
     public static function all(): array
     {
         return self::cases();

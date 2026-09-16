@@ -6,21 +6,7 @@ use App\Services\Shipping\ShippingRates;
 use App\Services\Shop\Provinces;
 use Illuminate\Console\Command;
 
-/**
- * In bảng phí giao theo vùng và soát lệch giữa hai tệp config.
- *
- * VÌ SAO CẦN MỘT LỆNH RIÊNG:
- * config/shipping.php nhắc tên tỉnh bằng chuỗi, còn danh sách tỉnh thật
- * nằm ở config/provinces.php. Không có gì buộc hai bên khớp nhau, và khi
- * lệch thì KHÔNG có lỗi nào xảy ra — tỉnh gõ sai chỉ lặng lẽ rơi vào vùng
- * mặc định và khách bị tính sai phí.
- *
- * Đợt sắp xếp 2025 vừa bỏ tỉnh Hà Giang là ví dụ có thật: một dòng trong
- * bảng vùng trỏ tới cái tên không còn tồn tại. Lệnh này tìm ra đúng loại
- * đó trong một giây.
- *
- *     php artisan shipping:zones
- */
+/** In bảng phí giao theo vùng và soát lệch giữa hai tệp config. */
 class CheckShippingZones extends Command
 {
     protected $signature = 'shipping:zones';
@@ -47,7 +33,6 @@ class CheckShippingZones extends Command
 
         $this->newLine();
 
-        /* ---- Lệch 1: tên trong bảng vùng không có trong danh sách tỉnh ---- */
         $unknown = array_diff($mapped, $all);
 
         if ($unknown !== []) {
@@ -60,7 +45,6 @@ class CheckShippingZones extends Command
             $this->info('Mọi tên tỉnh trong bảng vùng đều khớp config/provinces.php.');
         }
 
-        /* ---- Lệch 2: tỉnh chưa khai, đang dùng vùng mặc định ---- */
         $default = array_diff($all, $mapped);
 
         if ($default !== []) {
@@ -77,8 +61,6 @@ class CheckShippingZones extends Command
             }
         }
 
-        // Lệch loại 1 là lỗi cấu hình thật, phải báo về mã thoát khác 0 để
-        // còn dùng được trong kịch bản kiểm tra tự động.
         return $unknown === [] ? self::SUCCESS : self::FAILURE;
     }
 }

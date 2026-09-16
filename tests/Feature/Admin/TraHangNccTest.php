@@ -25,29 +25,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Trả hàng cho nhà cung cấp: hàng hỏng, giao sai, không đạt.
- * ============================================================
- * BẤT BIẾN QUAN TRỌNG NHẤT, và là chỗ dễ sai nhất của cả tính năng:
- *
- * **CÁCH XỬ LÝ TIỀN QUYẾT ĐỊNH GIÁ VỐN CÓ GIẢM HAY KHÔNG.**
- *
- *   - Hoàn tiền / trừ công nợ  -> tiền quay về  -> giá vốn GIẢM.
- *   - Đổi hàng khác            -> nhận đủ hàng  -> giá vốn GIỮ NGUYÊN.
- *   - Không được gì            -> cửa hàng chịu -> giá vốn GIỮ NGUYÊN.
- *
- * "Đã trả hàng rồi thì trừ tiền đi" nghe rất thuận tai, và nó sai trong
- * hai trên bốn trường hợp — sai theo hướng làm lãi đẹp lên, tức hướng
- * không ai tự đi kiểm.
- *
- * ============================================================
- * MỘT KHÁI NIỆM, HAI CƠ CHẾ.
- *
- * Hàng đếm được đi bằng phiếu `tra_ncc` SỐ LƯỢNG ÂM — tái dùng đúng cơ
- * chế đã có sẵn cho phiếu điều chỉnh, nên cùng một đoạn cộng kho và cùng
- * một bảng giá vốn phục vụ cả hai chiều. Hoa đi bằng cách ghi thẳng lên
- * lô, vì hoa không có tồn kho để bớt.
- */
+/** Trả hàng cho nhà cung cấp: hàng hỏng, giao sai, không đạt. */
 class TraHangNccTest extends TestCase
 {
     use RefreshDatabase;
@@ -66,7 +44,6 @@ class TraHangNccTest extends TestCase
         return app(SupplierReturnService::class);
     }
 
-    /** Một phiếu nhập ĐÃ GHI SỔ: 10 cái @100.000đ. */
     private function phieuDaGhiSo(int $sl = 10, string $gia = '100000', int $tonDau = 0): array
     {
         $sp = Product::factory()->for(Category::factory())->stock($tonDau)->create(['name' => 'Chậu sứ']);
@@ -76,8 +53,6 @@ class TraHangNccTest extends TestCase
             'items' => [['mat_hang' => (string) $sp->id, 'quantity' => $sl, 'unit_cost' => $gia]],
         ])->assertSessionHasNoErrors()->assertRedirect();
 
-        // Lấy phiếu MỚI NHẤT: vài bài gọi hàm này nhiều lần, và
-        // firstOrFail() sẽ lấy lại phiếu cũ đã ghi sổ.
         $phieu = StockReceipt::where('kind', StockReceiptKind::NhapMoi->value)
             ->latest('id')
             ->firstOrFail();
@@ -96,8 +71,6 @@ class TraHangNccTest extends TestCase
         ]);
     }
 
-    /* ================= HÀNG ĐẾM ĐƯỢC ================= */
-
     #[Test]
     public function tra_hang_ghi_so_thi_TRU_khoi_kho(): void
     {
@@ -107,7 +80,6 @@ class TraHangNccTest extends TestCase
 
         $tra = $this->traHang($goc, 3, ReturnSettlement::HoanTien);
 
-        // Phiếu trả còn nháp: kho chưa đổi.
         $this->assertSame(10, (int) $sp->fresh()->stock_quantity);
 
         app(StockReceiptService::class)->ghiSo($tra);
@@ -118,14 +90,6 @@ class TraHangNccTest extends TestCase
     #[Test]
     public function dong_phieu_tra_luu_SO_AM_o_dung_don_gia_da_mua(): void
     {
-        /*
-         * Số âm là cả thiết kế: nhờ nó, cùng một đoạn cộng kho và cùng
-         * một bảng giá vốn phục vụ cả hai chiều, không có bản chép thứ
-         * hai để lệch.
-         *
-         * Và đơn giá phải đúng bằng giá đã mua — lấy giá khác là làm lệch
-         * giá vốn bình quân của phần hàng còn giữ lại.
-         */
         [$goc] = $this->phieuDaGhiSo(sl: 10, gia: '100000');
 
         $tra = $this->traHang($goc, 3, ReturnSettlement::HoanTien);
@@ -140,11 +104,6 @@ class TraHangNccTest extends TestCase
     #[Test]
     public function gia_von_binh_quan_KHONG_doi_khi_tra_dung_don_gia(): void
     {
-        /*
-         * Mua 10 @100k rồi trả 3 @100k: phần còn lại vẫn 100k/cái. Đây là
-         * phép kiểm rằng bảng giá vốn lũy kế cả dòng âm cho ra đúng con
-         * số, chứ không phải chỉ "không nổ".
-         */
         [$goc, $sp] = $this->phieuDaGhiSo(sl: 10, gia: '100000');
 
         $tra = $this->traHang($goc, 3, ReturnSettlement::HoanTien);
@@ -162,18 +121,6 @@ class TraHangNccTest extends TestCase
     #[Test]
     public function tra_ma_KHONG_duoc_gi_thi_gia_von_moi_cai_con_lai_TANG(): void
     {
-        /*
-         * ĐÂY LÀ LỖ HỔNG ĐÃ TỪNG CÓ, và nó sai theo hướng làm lãi đẹp lên.
-         *
-         * Mua 10 @100.000 = 1.000.000. Hỏng 3, vựa không đền gì. Cửa hàng
-         * đã tiêu đủ 1.000.000 và chỉ còn 7 cái bán được, nên giá vốn thật
-         * là 1.000.000 / 7 = 142.857 mỗi cái.
-         *
-         * Bản cũ ghi dòng trả ở ĐÚNG GIÁ ĐÃ MUA, nên nền giá vốn thành
-         * 700.000 / 7 = 100.000 — đúng bằng lúc chưa hỏng gì. Ba cái hỏng
-         * bốc hơi khỏi sổ sách: lỗ 300.000 biến mất, lãi gộp cao hơn sự
-         * thật, và không có gì báo.
-         */
         [$goc, $sp] = $this->phieuDaGhiSo(sl: 10, gia: '100000');
 
         $tra = $this->traHang($goc, 3, ReturnSettlement::KhongDuocGi);
@@ -192,13 +139,6 @@ class TraHangNccTest extends TestCase
     #[Test]
     public function vua_hoan_THIEU_thi_phan_hut_o_lai_trong_gia_von(): void
     {
-        /*
-         * Mua 10 @100.000. Trả 3, vựa chỉ chịu đền 200.000 thay vì 300.000.
-         * Cửa hàng thật sự tốn 800.000 cho 7 cái còn lại.
-         *
-         * Ghi dòng trả ở giá đã mua thì nền thành 700.000 — hụt 100.000 mà
-         * không ai thấy. Con số phải theo TIỀN THẬT SỰ LẤY LẠI ĐƯỢC.
-         */
         [$goc, $sp] = $this->phieuDaGhiSo(sl: 10, gia: '100000');
 
         $tra = $this->traHang($goc, 3, ReturnSettlement::HoanTien, tien: 200000);
@@ -208,12 +148,6 @@ class TraHangNccTest extends TestCase
 
         $this->assertSame(7, $cuoi['sl']);
 
-        /*
-         * 800.000,02 chứ không tròn 800.000: 200.000 chia cho 3 cái không
-         * hết, và đơn giá trả lại được làm tròn XUỐNG (66.666,66). Phần lẻ
-         * ở lại trong giá vốn — nghiêng về phía giá vốn cao hơn một chút,
-         * là hướng thận trọng. Làm tròn kiểu kia thì lãi đẹp lên.
-         */
         $this->assertSame('800000.02', $cuoi['tien']);
     }
 
@@ -244,11 +178,6 @@ class TraHangNccTest extends TestCase
     #[Test]
     public function khong_tra_duoc_hang_cua_phieu_con_nhap(): void
     {
-        /*
-         * Phiếu nháp thì hàng chưa vào kho và chưa vào nền giá vốn — "trả
-         * lại" một thứ chưa từng được ghi nhận sẽ đẩy tồn xuống âm và kéo
-         * giá vốn đi lệch.
-         */
         $sp = Product::factory()->for(Category::factory())->stock(0)->create();
 
         $this->actingAs($this->admin())->post('/admin/nhap-kho', [
@@ -263,8 +192,6 @@ class TraHangNccTest extends TestCase
 
         $this->traHang($nhap->fresh('items'), 1, ReturnSettlement::HoanTien);
     }
-
-    /* ================= TIỀN ================= */
 
     #[Test]
     public function tien_lay_lai_tinh_theo_don_gia_khi_khong_go_tay(): void
@@ -289,11 +216,6 @@ class TraHangNccTest extends TestCase
     #[Test]
     public function doi_hang_hoac_khong_duoc_gi_thi_tien_la_NULL_chu_khong_phai_0(): void
     {
-        /*
-         * NULL là "không có khoản tiền nào"; 0 là "được trả 0 đồng" — một
-         * khẳng định khác hẳn, và nó sẽ đi vào bảng so sánh nhà cung cấp
-         * như một lần vựa từ chối trả tiền.
-         */
         foreach ([ReturnSettlement::DoiHang, ReturnSettlement::KhongDuocGi] as $cach) {
             [$goc] = $this->phieuDaGhiSo(sl: 10);
 
@@ -303,12 +225,10 @@ class TraHangNccTest extends TestCase
         }
     }
 
-    /* ================= HOA TƯƠI ================= */
-
     #[Test]
     public function tra_hoa_co_hoan_tien_thi_gia_von_hoa_GIAM(): void
     {
-        $lo = $this->loHoa(sl: '20.00', tien: '2000000.00');   // 100.000đ/bó
+        $lo = $this->loHoa(sl: '20.00', tien: '2000000.00');
 
         $this->dv()->traHangHoa($lo, [
             'quantity' => '3',
@@ -328,14 +248,6 @@ class TraHangNccTest extends TestCase
     #[Test]
     public function tra_hoa_ma_DOI_HANG_thi_gia_von_GIU_NGUYEN(): void
     {
-        /*
-         * ĐÂY LÀ BÀI QUAN TRỌNG NHẤT CỦA CẢ TỆP.
-         *
-         * Vựa đổi hàng khác nghĩa là cửa hàng vẫn nhận đủ hoa — tiền đã
-         * tiêu đúng bằng số đó. Trừ đi là tự tặng cho mình một khoản lãi
-         * không có thật, và "đã trả hàng rồi thì trừ tiền" nghe rất thuận
-         * tai nên rất dễ bị viết ra.
-         */
         $lo = $this->loHoa(sl: '20.00', tien: '2000000.00');
 
         $this->dv()->traHangHoa($lo, [
@@ -405,8 +317,6 @@ class TraHangNccTest extends TestCase
         ]);
     }
 
-    /* ================= ĐI QUA GIAO DIỆN ================= */
-
     #[Test]
     public function trang_tra_hang_mo_duoc_va_lap_phieu_qua_bieu_mau(): void
     {
@@ -428,8 +338,6 @@ class TraHangNccTest extends TestCase
         $this->assertSame('200000.00', $tra->settlement_amount);
         $this->assertSame(ReturnReason::GiaoSai, $tra->return_reason);
     }
-
-    /* ================= HỖ TRỢ ================= */
 
     private function loHoa(string $sl = '20.00', string $tien = '2000000.00'): FlowerLot
     {
@@ -459,7 +367,6 @@ class TraHangNccTest extends TestCase
             ->baoCao();
     }
 
-    /** Bảng giá vốn lũy kế mà ProfitReport dựng — đọc qua phản chiếu. */
     private function bangGiaVon(): array
     {
         $bao = app(\App\Services\Analytics\ProfitReport::class);

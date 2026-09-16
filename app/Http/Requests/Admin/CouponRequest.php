@@ -11,24 +11,14 @@ class CouponRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
-        // Mã luôn lưu chữ hoa để so sánh không phụ thuộc cách gõ.
         if ($this->filled('code')) {
             $this->merge(['code' => mb_strtoupper(trim($this->input('code')))]);
         }
 
-        // Ô đánh dấu không gửi gì lên khi bỏ tích. Không đặt lại ở đây
-        // thì lần lưu sau `is_public` vắng mặt, validated() không có khoá
-        // đó, và cột giữ nguyên giá trị cũ — bỏ tích mà không tắt được.
         $this->merge(['is_public' => $this->boolean('is_public')]);
 
-        // Cùng lý do: bỏ tích "cộng dồn với ưu đãi hạng" phải thật sự tắt được.
         $this->merge(['stack_with_member' => $this->boolean('stack_with_member')]);
 
-        /*
-         * Ô `datetime-local` gửi lên GIỜ TRÊN ĐỒNG HỒ NGƯỜI GÕ, không kèm
-         * múi giờ. Cất thẳng vào cột là cất giờ Hà Nội dưới nhãn UTC: mã
-         * hẹn mở lúc 8h sáng sẽ mở lúc 15h.
-         */
         $this->merge(\App\Services\Time\Gio::doiONhap($this->all(), 'starts_at', 'ends_at'));
     }
 
@@ -41,8 +31,6 @@ class CouponRequest extends FormRequest
                 'required',
                 'string',
                 'max:32',
-                // Chỉ chữ và số: mã có dấu cách hoặc dấu tiếng Việt rất
-                // dễ gõ sai khi khách chép tay từ banner.
                 'regex:/^[A-Z0-9]+$/',
                 Rule::unique('coupons', 'code')->ignore($id),
             ],
@@ -56,37 +44,16 @@ class CouponRequest extends FormRequest
             'max_discount_amount' => ['nullable', 'numeric', 'min:0'],
             'usage_limit' => ['nullable', 'integer', 'min:1'],
 
-            /*
-             * per_user_limit LÀ GIỚI HẠN KHÁC HẲN usage_limit.
-             * usage_limit  : tổng lượt trên toàn hệ thống.
-             * per_user_limit: mỗi tài khoản được dùng mấy lần.
-             * Không có cái thứ hai thì một người dùng hết sạch 100 lượt
-             * của chương trình vẫn là hợp lệ.
-             */
             'per_user_limit' => ['nullable', 'integer', 'min:1', 'max:65535'],
 
-            // Ô đánh dấu không được gửi lên khi bỏ tích — đó là cách HTML
-            // hoạt động. Vì thế 'boolean' + prepareForValidation, không
-            // phải 'required'.
             'is_public' => ['boolean'],
 
-            /*
-             * MÃ CỦA MỘT SỰ KIỆN.
-             * Gắn vào chương trình nào thì mã chỉ hiện ở trang sự kiện đó.
-             * Bỏ trống = mã chung, hiện ở trang Voucher.
-             */
             'promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
 
-            // Cộng dồn với ưu đãi hạng — ô đánh dấu, đặt lại ở prepareForValidation.
             'stack_with_member' => ['boolean'],
 
-            // Mã dành cho hạng này trở lên. Bỏ trống = mọi khách.
             'min_member_tier_id' => ['nullable', 'integer', 'exists:member_tiers,id'],
 
-            /*
-             * Giới hạn hình thức thanh toán. Bỏ trống = mọi hình thức.
-             * ĐƯỢC KIỂM TRA THẬT lúc đặt hàng — xem CouponService::resolve().
-             */
             'payment_methods' => ['nullable', 'array'],
             'payment_methods.*' => [Rule::in(\App\Enums\PaymentMethod::values())],
 
@@ -100,7 +67,6 @@ class CouponRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($v) {
-            // Giảm theo phần trăm thì giá trị phải nằm trong 0-100.
             if ($this->input('type') === CouponType::Percent->value
                 && (float) $this->input('value') > 100) {
                 $v->errors()->add('value', 'Giảm theo phần trăm không được vượt quá 100.');

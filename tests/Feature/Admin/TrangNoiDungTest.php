@@ -10,13 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Sửa nội dung trang giới thiệu / chính sách mà không đụng mã nguồn.
- * ============================================================
- * Hai bất biến:
- *   1. Ô soạn điền sẵn nội dung đang hiện — không phải chép lại cả trang.
- *   2. Không có đường nào để HTML gõ trong ô soạn chạy trên trang công khai.
- */
+/** Sửa nội dung trang giới thiệu / chính sách mà không đụng mã nguồn. */
 class TrangNoiDungTest extends TestCase
 {
     use RefreshDatabase;
@@ -40,8 +34,6 @@ class TrangNoiDungTest extends TestCase
     {
         return (string) app(TrangNoiDung::class)->html($van);
     }
-
-    /* ================= BẢN VIẾT SẴN ================= */
 
     #[Test]
     public function chua_sua_thi_trang_hien_ban_viet_san_voi_du_cau_truc(): void
@@ -78,8 +70,6 @@ class TrangNoiDungTest extends TestCase
         }
     }
 
-    /* ================= Ô SOẠN ĐIỀN SẴN ================= */
-
     #[Test]
     public function o_soan_dien_san_noi_dung_dang_hien(): void
     {
@@ -110,10 +100,6 @@ class TrangNoiDungTest extends TestCase
     #[Test]
     public function luu_nguyen_ban_viet_san_thi_KHONG_ghi_de(): void
     {
-        /*
-         * Bấm Lưu mà không đổi chữ nào: nếu ghi chép đè, lần sau bản viết
-         * sẵn được cập nhật thì trang đứng yên ở bản cũ.
-         */
         $goc = app(TrangNoiDung::class)->banVietSan('chinh-sach-doi-tra');
 
         $this->luu(['chinh-sach-doi-tra' => str_replace("\n", "\r\n", $goc) . "\r\n"])->assertSessionHasNoErrors();
@@ -145,8 +131,6 @@ class TrangNoiDungTest extends TestCase
         $this->assertNull(Setting::get('trang_noi_dung.chinh-sach-doi-tra'));
         $this->get(route('shop.pages.show', 'chinh-sach-doi-tra'))->assertOk()->assertSee('Nhận hàng: kiểm trước khi trả tiền');
     }
-
-    /* ================= AN TOÀN ================= */
 
     #[Test]
     public function HTML_go_vao_KHONG_chay_tren_trang_cong_khai(): void
@@ -193,8 +177,6 @@ class TrangNoiDungTest extends TestCase
         $this->assertStringContainsString('<ol><li>một</li><li>hai</li></ol>', $html);
         $this->assertStringContainsString('<thead><tr><th>A</th><th>B</th></tr></thead><tbody><tr><td>1</td><td>2</td></tr></tbody>', $html);
     }
-
-    /* ================= GHI VÀ QUYỀN ================= */
 
     #[Test]
     public function khong_tao_duoc_khoa_cai_dat_la(): void

@@ -1,9 +1,4 @@
-{{--
-    Ô nhập của bài: dùng CHUNG cho hộp thoại đăng bài mới và trang sửa bài —
-    hai bản sao thì sớm muộn lệch nhau một ô.
-
-    `$post` là bài đang sửa, null khi đăng mới.
---}}
+{{-- Ô nhập của bài: dùng CHUNG cho hộp thoại đăng bài mới và trang sửa bài — hai bản sao thì sớm muộn lệch nhau… --}}
 @php
     $baiSua = $post ?? null;
     $maO = $baiSua ? 'sua-' . $baiSua->id : 'moi';
@@ -55,11 +50,6 @@
     <x-form-error name="media.*" :array="true" />
 </div>
 
-{{--
-    NÓI THẲNG VỀ VIỆC TƯỚC METADATA: khách không biết ảnh và video quay bằng
-    điện thoại mang theo toạ độ GPS. Hệ thống tự xoá là đúng, nhưng nói ra thì
-    họ yên tâm đăng — và người đã biết thì không phải tự hỏi.
---}}
 <p class="composer__privacy">
     Ảnh và video bạn tải lên được <strong>tự động xoá thông tin ẩn</strong>
     (vị trí GPS, loại máy, giờ chụp) trước khi lưu.
@@ -74,7 +64,6 @@
                 <option value="{{ $p->id }}" @selected((int) old('product_id', $baiSua?->product_id) === $p->id)>{{ $p->name }}</option>
             @endforeach
         </select>
-        {{-- Chỉ cây đã mua — cùng luật với nhật ký (QĐ-129). --}}
         <p class="form-text">Chỉ liệt kê cây bạn đã mua ở cửa hàng.</p>
         <x-form-error name="product_id" />
     </div>

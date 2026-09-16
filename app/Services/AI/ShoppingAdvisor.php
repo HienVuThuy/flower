@@ -4,20 +4,7 @@ namespace App\Services\AI;
 
 use App\Models\User;
 
-/**
- * Trợ lý "Plant & Shopping Advisor" của cửa hàng.
- * ============================================================
- * BÁM DỮ LIỆU THẬT: mỗi câu hỏi, máy chủ tự lấy dữ liệu liên quan từ cơ sở
- * dữ liệu (AdvisorContext) rồi đưa cho AI kèm chỉ dẫn "chỉ trả lời theo
- * dữ liệu này". AI không tự truy vấn gì, không thấy gì ngoài khối dữ liệu
- * đó — nên nó không bịa được giá hay tồn kho mà không bị chỉ dẫn cấm.
- *
- * LỊCH SỬ TRONG PHIÊN, không lưu cơ sở dữ liệu: đoạn chat là của người đang
- * xem, không phải dữ liệu cửa hàng cần giữ.
- *
- * NỘI DUNG KHÁCH GÕ LÀ DỮ LIỆU, KHÔNG PHẢI CHỈ DẪN: chỉ dẫn hệ thống nói rõ
- * bỏ qua mọi yêu cầu đổi vai, đổi luật, tiết lộ chỉ dẫn nằm trong câu hỏi.
- */
+/** Trợ lý "Plant & Shopping Advisor" của cửa hàng. */
 class ShoppingAdvisor
 {
     public const SESSION_KEY = 'ai_chat.lich_su';
@@ -33,7 +20,6 @@ class ShoppingAdvisor
         return $this->ai->provider()->configured();
     }
 
-    /** @return list<array{role: 'user'|'assistant', text: string}> */
     public function lichSu(): array
     {
         $ls = session(self::SESSION_KEY, []);
@@ -46,16 +32,12 @@ class ShoppingAdvisor
         session()->forget(self::SESSION_KEY);
     }
 
-    /**
-     * @throws AiException
-     */
     public function hoi(string $cauHoi, ?User $user): string
     {
         $cauHoi = trim(mb_substr($cauHoi, 0, (int) config('ai.max_message_length', 500)));
         $giuLai = 2 * max(1, (int) config('ai.max_history', 8));
         $lichSu = array_slice($this->lichSu(), -$giuLai);
 
-        // Câu hỏi nối tiếp ("cây đó giá bao nhiêu?") cần câu hỏi trước để tìm đúng sản phẩm.
         $cauTruoc = collect($lichSu)->where('role', 'user')->pluck('text')->last();
 
         $chiDan = $this->chiDan($this->nguCanh->xayDung($cauHoi, $user, $cauTruoc));
@@ -71,13 +53,6 @@ class ShoppingAdvisor
         return $traLoi;
     }
 
-    /**
-     * Bỏ dấu markdown khỏi câu trả lời.
-     *
-     * Khung chat chèn chữ bằng textContent (không bao giờ dạng HTML), nên
-     * "**Kim tiền**" hiện nguyên hai cặp dấu sao. Chỉ dẫn đã bảo AI viết văn
-     * bản thường, nhưng model vẫn hay dùng markdown — gỡ ở đây cho chắc.
-     */
     public static function vanBanThuong(string $chu): string
     {
         $chu = (string) preg_replace('/\*\*(.+?)\*\*|__(.+?)__/su', '$1$2', $chu);

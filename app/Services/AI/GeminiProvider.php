@@ -6,16 +6,9 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Google Gemini qua REST (generateContent).
- * ============================================================
- * KHOÁ ĐI TRONG HEADER `x-goog-api-key`, KHÔNG TRÊN ĐƯỜNG DẪN: đường dẫn nằm
- * trong nhật ký máy chủ, nhật ký proxy, thông báo lỗi — khoá trên đó là khoá
- * bị lộ. Nhật ký lỗi ở đây cũng không ghi khoá.
- */
+/** Google Gemini qua REST (generateContent). */
 final class GeminiProvider implements AiProvider
 {
-    /** @param array{key?: ?string, model?: string, base_url?: string, timeout?: int, verify_ssl?: mixed} $cauHinh */
     public function __construct(
         private readonly array $cauHinh,
         private readonly int $toiDaToken = 800,
@@ -44,15 +37,12 @@ final class GeminiProvider implements AiProvider
                 ->post('models/' . rawurlencode($model) . ':generateContent', [
                     'systemInstruction' => ['parts' => [['text' => $systemPrompt]]],
                     'contents' => array_map(fn (array $m) => [
-                        // Gemini gọi lượt của trợ lý là "model".
                         'role' => $m['role'] === 'assistant' ? 'model' : 'user',
                         'parts' => [['text' => $m['text']]],
                     ], $messages),
                     'generationConfig' => [
-                        // Thấp: tư vấn bán hàng cần bám dữ liệu, không cần sáng tạo.
                         'temperature' => 0.3,
                         'maxOutputTokens' => $this->toiDaToken,
-                        // Suy nghĩ ăn chung hạn mức token với câu trả lời — xem config/ai.php.
                         'thinkingConfig' => ['thinkingBudget' => (int) ($this->cauHinh['thinking_budget'] ?? 0)],
                     ],
                 ]);
@@ -63,10 +53,6 @@ final class GeminiProvider implements AiProvider
         }
 
         if ($phanHoi->failed()) {
-            /*
-             * Ghi câu lỗi của Google (không chứa khoá). Chỉ ghi mã trạng thái thì
-             * 404 "model đã ngừng cho khoá mới" trông y hệt 404 "sai đường dẫn".
-             */
             Log::warning('Gemini trả lỗi.', [
                 'model' => $model,
                 'status' => $phanHoi->status(),
@@ -85,7 +71,6 @@ final class GeminiProvider implements AiProvider
             throw new AiException('Trợ lý AI chưa trả lời được câu này. Bạn thử hỏi cách khác nhé.');
         }
 
-        // Hết hạn mức token giữa câu: nói ra, không để khách đọc một câu cụt tưởng là hết.
         if (data_get($phanHoi->json(), 'candidates.0.finishReason') === 'MAX_TOKENS') {
             return rtrim($traLoi) . '… (câu trả lời dài nên bị cắt — bạn hỏi cụ thể hơn để nhận phần còn lại nhé)';
         }

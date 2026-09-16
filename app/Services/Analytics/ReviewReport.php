@@ -6,19 +6,9 @@ use App\Models\Product;
 use App\Models\Review;
 use Illuminate\Support\Collection;
 
-/**
- * Báo cáo đánh giá của khách.
- * ============================================================
- * THEO NGÀY VIẾT ĐÁNH GIÁ trong kỳ, gồm cả bài đang ẩn — cửa hàng ẩn một
- * đánh giá 1 sao không có nghĩa lời phàn nàn đó không tồn tại. Số bài ẩn
- * được đếm riêng và nói ra.
- *
- * TRUNG BÌNH LÀ NULL KHI KHÔNG CÓ BÀI NÀO. "0 sao" là một lời chê cụ thể;
- * "chưa có đánh giá" là chưa có gì để nói.
- */
+/** Báo cáo đánh giá của khách. */
 class ReviewReport
 {
-    /** Sản phẩm cần ít nhất chừng này bài mới vào bảng "bị chê nhiều". */
     public const TOI_THIEU_BAI = 2;
 
     private KhoangThoiGian $khoang;
@@ -35,17 +25,11 @@ class ReviewReport
         return $this;
     }
 
-    /**
-     * @return array{so_bai: int, trung_binh: float|null, phan_bo: array<int, int>, dang_an: int,
-     *               thap_chua_tra_loi: int, ti_le_tra_loi_thap: float|null, co_don_hang: int,
-     *               gio_tra_loi_trung_vi: float|null}
-     */
     public function tongQuan(): array
     {
         $bai = $this->khoang->apDung(Review::query(), 'created_at')
             ->get(['rating', 'is_visible', 'admin_reply', 'admin_replied_at', 'order_id', 'created_at']);
 
-        // Đủ 5 mức, kể cả mức bằng 0 — biểu đồ và bảng cùng một danh sách.
         $phanBo = [5 => 0, 4 => 0, 3 => 0, 2 => 0, 1 => 0];
         foreach ($bai as $b) {
             $phanBo[(int) $b->rating] = ($phanBo[(int) $b->rating] ?? 0) + 1;
@@ -54,11 +38,6 @@ class ReviewReport
         $thap = $bai->filter(fn ($b) => (int) $b->rating <= 2);
         $thapDaTraLoi = $thap->filter(fn ($b) => filled($b->admin_reply));
 
-        /*
-         * THỜI GIAN TỪ LÚC KHÁCH VIẾT TỚI LÚC CỬA HÀNG TRẢ LỜI — TRUNG VỊ, không
-         * phải trung bình. Một bài trả lời sau ba tháng kéo trung bình lên
-         * hàng trăm giờ, trong khi mọi bài khác được trả lời trong ngày.
-         */
         $soGio = $bai
             ->filter(fn ($b) => $b->admin_replied_at !== null)
             ->map(fn ($b) => $b->created_at->diffInMinutes($b->admin_replied_at) / 60)
@@ -77,14 +56,6 @@ class ReviewReport
         ];
     }
 
-    /**
-     * Sản phẩm bị chấm thấp nhất, ít nhất TOI_THIEU_BAI bài.
-     *
-     * Không có ngưỡng thì một sản phẩm với MỘT bài 2 sao đứng đầu bảng, trên
-     * một sản phẩm với 30 bài trung bình 3,1 — sai cả thứ tự lẫn mức gấp.
-     *
-     * @return Collection<int, array{san_pham: ?Product, ten: string, so_bai: int, trung_binh: float, so_bai_thap: int}>
-     */
     public function sanPhamBiCheNhieu(int $gioiHan = 10): Collection
     {
         $dong = $this->khoang->apDung(Review::query(), 'created_at')
@@ -106,12 +77,6 @@ class ReviewReport
         ]);
     }
 
-    /**
-     * Điểm trung bình theo THÁNG (giờ Việt Nam), để thấy chất lượng đang đi
-     * lên hay xuống. Tháng không có bài thì không có dòng.
-     *
-     * @return Collection<int, array{thang: string, so_bai: int, trung_binh: float}>
-     */
     public function theoThang(): Collection
     {
         return $this->khoang->apDung(Review::query(), 'created_at')

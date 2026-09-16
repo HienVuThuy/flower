@@ -4,12 +4,7 @@
 
 @section('content')
 
-{{--
-    429 xuất hiện khi khách bấm tra cứu đơn quá nhiều lần trong một phút.
-    Trang mặc định của Laravel là "Too Many Requests" bằng tiếng Anh —
-    khách gõ nhầm số điện thoại vài lần rồi gặp câu đó sẽ tưởng website
-    hỏng. Ở đây nói rõ chuyện gì đang xảy ra và phải làm gì.
---}}
+{{-- 429 xuất hiện khi khách bấm tra cứu đơn quá nhiều lần trong một phút. --}}
 
 <div class="auth-shell">
 

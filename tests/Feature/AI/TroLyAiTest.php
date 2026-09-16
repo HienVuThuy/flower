@@ -13,10 +13,7 @@ use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Trợ lý AI: chưa có khoá thì không gọi ra ngoài; có khoá thì gọi Gemini đúng cách
- * với dữ liệu cửa hàng thật; dữ liệu cá nhân chỉ của chính người hỏi.
- */
+/** Trợ lý AI: chưa có khoá thì không gọi ra ngoài; có khoá thì gọi Gemini đúng cách với dữ liệu cửa hàng thật… */
 class TroLyAiTest extends TestCase
 {
     use RefreshDatabase;
@@ -130,11 +127,6 @@ class TroLyAiTest extends TestCase
         $this->actingAs($a)->postJson(route('shop.ai.ask'), ['cau_hoi' => 'tôi đang thích gì'])->assertOk();
         $this->actingAs(User::factory()->create())->postJson(route('shop.ai.ask'), ['cau_hoi' => 'tôi đang thích gì'])->assertOk();
 
-        /*
-         * SO ĐÚNG DÒNG "Yêu thích", không so cả khối dữ liệu: sản phẩm có thể
-         * hiện ở phần "sản phẩm liên quan" vì bộ tìm kiếm nới lỏng khớp câu hỏi —
-         * đó là danh mục công khai, không phải dữ liệu cá nhân.
-         */
         $ghi = Http::recorded();
         $this->assertStringContainsString('- Yêu thích: Sen đá kim cương bí mật', $this->noiDungGui($ghi[0][0]));
         $this->assertStringContainsString('- Yêu thích: (chưa có)', $this->noiDungGui($ghi[1][0]), 'Không lộ yêu thích của người khác');

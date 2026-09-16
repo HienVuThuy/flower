@@ -7,10 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Biểu mẫu số lượng lớn: yêu cầu thêm chỉ mở khi khách tick, và máy chủ bỏ
- * giá trị của yêu cầu không tick.
- */
+/** Biểu mẫu số lượng lớn: yêu cầu thêm chỉ mở khi khách tick, và máy chủ bỏ giá trị của yêu cầu không tick. */
 class BulkInquiryYeuCauThemTest extends TestCase
 {
     use RefreshDatabase;
@@ -41,7 +38,6 @@ class BulkInquiryYeuCauThemTest extends TestCase
             'them' => ['mau', 'so_luong'],
             'color_preference' => 'trắng – xanh pastel',
             'quantity_estimate' => 40,
-            // Gõ rồi bỏ tick: không được lọt vào phiếu.
             'flower_preference' => 'hồng Ecuador',
             'event_date' => now()->addDays(10)->toDateString(),
             'budget_min' => 5000000,
@@ -58,7 +54,6 @@ class BulkInquiryYeuCauThemTest extends TestCase
     #[Test]
     public function khong_tick_thi_khong_kiem_o_an_va_loi_quay_lai_giu_tick(): void
     {
-        // Ngày quá khứ trong ô KHÔNG tick: không được chặn cả phiếu vì một ô khách không dùng.
         $this->post(route('shop.bulk-inquiry.store'), $this->lienHe() + [
             'them_form' => '1',
             'event_date' => now()->subDay()->toDateString(),

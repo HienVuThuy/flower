@@ -5,12 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Một dòng hàng trên phiếu nhập.
- *
- * `product_name` / `variant_name` là BẢN CHỤP lúc nhập: sản phẩm đổi tên
- * hay bị xoá thì phiếu cũ vẫn kể được câu chuyện của nó.
- */
+/** Một dòng hàng trên phiếu nhập. */
 class StockReceiptItem extends Model
 {
     protected $fillable = [
@@ -46,7 +41,6 @@ class StockReceiptItem extends Model
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
-    /** Thành tiền; null khi chưa điền giá — KHÁC 0. */
     public function lineCost(): ?float
     {
         return $this->unit_cost === null ? null : (float) $this->unit_cost * $this->quantity;

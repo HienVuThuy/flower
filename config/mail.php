@@ -115,27 +115,6 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | Đẩy thư ra hàng đợi thay vì gửi ngay trong request
-    |--------------------------------------------------------------------------
-    |
-    | VẤN ĐỀ: gửi thư đồng bộ nghĩa là bắt tay SMTP diễn ra ngay giữa
-    | request. Với một đơn thì không ai để ý; nhưng admin đổi trạng thái
-    | mười đơn liên tiếp là mười lần chờ mạng, và mỗi lần có thể mất vài
-    | giây. Đặt cờ này thành true thì thư được ghi vào bảng `jobs` rồi
-    | trả trang cho admin ngay lập tức.
-    |
-    | MẶC ĐỊNH false, VÀ ĐÓ LÀ LỰA CHỌN CÓ CÂN NHẮC: bật hàng đợi mà quên
-    | chạy `php artisan queue:work` thì thư nằm im trong bảng `jobs` mãi
-    | mãi — không lỗi, không cảnh báo, chỉ là khách không bao giờ nhận
-    | được thư xác nhận đơn. Hỏng kiểu im lặng như vậy tệ hơn hẳn việc
-    | chậm vài giây. Ai bật cờ này phải bật kèm một tiến trình queue:work.
-    |
-    | Xem App\Services\Mail\MailTransport::deliver().
-    |
-    */
-
     'queue_outgoing' => env('MAIL_QUEUE', false),
 
 ];

@@ -39,10 +39,6 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    /**
-     * Thử đăng nhập, có giới hạn số lần thử để chống dò
-     * mật khẩu (brute force).
-     */
     public function authenticate(): void
     {
         $this->ensureIsNotRateLimited();
@@ -57,21 +53,6 @@ class LoginRequest extends FormRequest
             ]);
         }
 
-        /*
-         * TÀI KHOẢN BỊ KHOÁ: ĐĂNG XUẤT NGAY, ĐỪNG CHO ĐI TIẾP.
-         *
-         * Kiểm SAU Auth::attempt() chứ không trước, và đó là chủ ý: kiểm
-         * trước thì phải tra email trong bảng users khi CHƯA biết người
-         * gõ có đúng mật khẩu hay không. Khi ấy thông báo "tài khoản đã
-         * bị khoá" trở thành một cách để người lạ dò xem email nào có
-         * tồn tại và email nào đang bị khoá.
-         *
-         * Kiểm sau thì chỉ người biết đúng mật khẩu mới đọc được lý do —
-         * tức là đúng chủ tài khoản, đúng người cần biết.
-         *
-         * Auth::logout() ngay lập tức: attempt() đã đăng nhập họ vào
-         * phiên rồi, không gỡ ra thì trang sau vẫn coi như đã đăng nhập.
-         */
         $user = Auth::user();
 
         if ($user && $user->isLocked()) {

@@ -12,9 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Catalog nhất quán: nhóm danh mục, thùng rác sản phẩm, dọn ảnh, wishlist.
- */
+/** Catalog nhất quán: nhóm danh mục, thùng rác sản phẩm, dọn ảnh, wishlist. */
 class CatalogNhatQuanTest extends TestCase
 {
     use RefreshDatabase;
@@ -27,8 +25,6 @@ class CatalogNhatQuanTest extends TestCase
 
         return $u;
     }
-
-    /* ================= NHÓM DANH MỤC ================= */
 
     #[Test]
     public function tao_duoc_danh_muc_phu_kien_tu_trang_quan_tri(): void
@@ -72,8 +68,6 @@ class CatalogNhatQuanTest extends TestCase
             ->assertSee('Phụ kiện &amp; vật tư', false);
     }
 
-    /* ================= THÙNG RÁC ================= */
-
     #[Test]
     public function san_pham_da_xoa_hien_trong_thung_rac_va_khoi_phuc_ve_NHAP(): void
     {
@@ -111,15 +105,12 @@ class CatalogNhatQuanTest extends TestCase
     #[Test]
     public function KHONG_xoa_vinh_vien_san_pham_con_dang_ban(): void
     {
-        // Chỉ thứ đã nằm trong thùng rác mới xoá hẳn được.
         $sp = Product::factory()->for(Category::factory())->create(['name' => 'Cây thử']);
 
         $this->actingAs($this->admin())
             ->delete(route('admin.products.force-destroy', $sp->id), ['xac_nhan' => 'Cây thử'])
             ->assertNotFound();
     }
-
-    /* ================= DỌN ẢNH ================= */
 
     #[Test]
     public function xoa_vinh_vien_don_anh_qua_ImageStore_ke_ca_anh_chinh(): void
@@ -151,12 +142,9 @@ class CatalogNhatQuanTest extends TestCase
         $this->actingAs($this->admin())->delete(route('admin.categories.destroy', $dm))->assertRedirect();
     }
 
-    /* ================= WISHLIST ================= */
-
     #[Test]
     public function tai_khoan_chua_xac_thuc_van_mo_duoc_trang_yeu_thich(): void
     {
-        // Bấm tim được thì phải xem được danh sách mình vừa bấm.
         $this->actingAs(User::factory()->create(['email_verified_at' => null]))
             ->get(route('shop.wishlist.index'))
             ->assertOk();

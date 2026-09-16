@@ -6,11 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Mục 4.5 Guide.docx — "Liên hệ khi đặt số lượng lớn".
-     * Khách có thể gửi yêu cầu mà không cần tài khoản (guest),
-     * nên user_id để nullable.
-     */
     public function up(): void
     {
         Schema::create('bulk_order_inquiries', function (Blueprint $table) {

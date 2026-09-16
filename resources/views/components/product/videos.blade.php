@@ -3,23 +3,7 @@
 @php $videos = $product->relationLoaded('videos') ? $product->videos : $product->videos()->get(); @endphp
 
 @if($videos->isNotEmpty())
-    {{--
-        VIDEO SẢN PHẨM
-        ============================================================
-        KHÔNG NẠP TRÌNH PHÁT CỦA YOUTUBE KHI TRANG VỪA MỞ.
-
-        Một iframe YouTube kéo theo khoảng 1MB JavaScript của bên thứ ba và đặt
-        thẻ theo dõi cho mọi khách — kể cả người chỉ lướt qua và không xem.
-        Ở đây chỉ đặt một cái nút; iframe được dựng khi khách BẤM (xem
-        resources/js/components/video-embed.js), và dùng bản youtube-nocookie.
-
-        KHÔNG CÓ JAVASCRIPT thì nút vẫn là một liên kết mở trang gốc — không
-        phải một ô trống bấm không ăn.
-
-        Tệp MP4 do cửa hàng tự giữ thì khác: nó nằm trên chính máy chủ này, nên
-        đặt thẳng <video> vào trang, `preload="metadata"` để chưa tải nội dung
-        video cho tới khi có người bấm phát.
-    --}}
+    {{-- VIDEO SẢN PHẨM --}}
     <section class="product-videos mt-4">
         <h2 class="text-h3 mb-3">Video sản phẩm</h2>
 

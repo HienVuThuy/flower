@@ -1,7 +1,4 @@
-{{--
-    TRẢ GÓP CỦA ĐƠN — khách thấy lịch, đã trả bao nhiêu, kỳ nào trả tiếp.
-    Nút MoMo chỉ hiện khi MoMo đã cấu hình; trả tại cửa hàng thì nhân viên ghi.
---}}
+{{-- TRẢ GÓP CỦA ĐƠN — khách thấy lịch, đã trả bao nhiêu, kỳ nào trả tiếp. --}}
 @php
     $keHoach = $order->installmentPlan;
     $kyToi = $keHoach->kyKeTiep();

@@ -1,11 +1,4 @@
-/**
- * KHUNG CHAT TRỢ LÝ AI
- * ============================================================
- * Gửi câu hỏi bằng fetch, chèn câu hỏi và câu trả lời bằng textContent —
- * chữ AI trả về có thể chứa bất cứ thứ gì, không bao giờ chèn dạng HTML.
- *
- * Mọi luật (dữ liệu nào đưa cho AI, chưa cấu hình thì sao) nằm ở máy chủ.
- */
+/** KHUNG CHAT TRỢ LÝ AI */
 export function initAiChat() {
     document.querySelectorAll('[data-ai-form]:not([data-ai-bound])').forEach((form) => {
         form.dataset.aiBound = '1';

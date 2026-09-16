@@ -1,16 +1,6 @@
 @props(['post', 'camXuc' => null, 'count' => 0])
 
-{{--
-    NÚT CẢM XÚC — biểu mẫu thật, chạy được không cần JavaScript.
-
-    Nút chính bấm phát là "Thích" (hoặc bỏ cảm xúc đang có); mũi tên bên cạnh mở
-    bảng năm cảm xúc. Facebook dùng hover để mở bảng — hover thì trên điện thoại
-    không có, và bàn phím cũng không tới được; <details> thì cả ba cách dùng đều
-    mở được.
-
-    Có JavaScript thì community.js gửi bằng fetch và đổi tại chỗ: bấm giữa bảng
-    tin không tải lại trang rồi nhảy về đầu danh sách.
---}}
+{{-- NÚT CẢM XÚC — biểu mẫu thật, chạy được không cần JavaScript. --}}
 @php
     $hienTai = $camXuc ? \App\Enums\CommunityReaction::tryFrom($camXuc) : null;
 @endphp
@@ -19,7 +9,6 @@
     <div class="cam-xuc">
         <form method="POST" action="{{ route('shop.community.like', $post->id) }}" data-toggle-json data-loai="thich">
             @csrf
-            {{-- Bấm lại đúng cảm xúc đang có = bỏ cảm xúc; chưa có gì thì mặc định là "Thích". --}}
             <input type="hidden" name="cam_xuc" value="{{ $hienTai?->value ?? \App\Enums\CommunityReaction::macDinh()->value }}" data-cam-xuc-hien-tai>
 
             <button type="submit" class="post-action {{ $hienTai ? 'is-on ' . $hienTai->mau() : '' }}"

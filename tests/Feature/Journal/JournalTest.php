@@ -9,26 +9,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Nhật ký cá nhân — chức năng.
- * ============================================================
- * Quyền riêng tư nằm ở `JournalPrivacyTest`. Tệp này giữ những chỗ dễ
- * hỏng về NGHIỆP VỤ, và phần lớn chúng là chuyện "câu trả lời đúng khi
- * chưa đủ dữ liệu":
- *
- *   - chưa ghi lần nào thì tiến độ mục tiêu là "chưa có số liệu", KHÔNG
- *     phải 0%;
- *   - hàng nhập chỉ số bỏ trống thì bỏ qua, KHÔNG báo lỗi;
- *   - một điểm dữ liệu thì không vẽ đường.
- */
+/** Nhật ký cá nhân — chức năng. */
 class JournalTest extends TestCase
 {
     use RefreshDatabase;
 
     private function so(User $user, array $ghiDe = []): Journal
     {
-        // `user_id` cố ý không nằm trong $fillable — gán riêng, đúng cách
-        // controller làm.
         $so = new Journal(array_merge([
             'title' => 'Sổ thử',
             'kind' => JournalKind::Growth,
@@ -70,11 +57,6 @@ class JournalTest extends TestCase
     #[Test]
     public function hang_chi_so_bo_trong_bi_bo_qua_chu_khong_bao_loi(): void
     {
-        /*
-         * Biểu mẫu luôn có ba hàng chỉ số, trong đó hàng cuối để trống cho
-         * người dùng tự thêm. Bắt lỗi một hàng người ta không định điền là
-         * chặn họ vì một việc họ không làm.
-         */
         $user = User::factory()->create();
         $so = $this->so($user);
 
@@ -83,8 +65,8 @@ class JournalTest extends TestCase
                 'entry_date' => now()->format('Y-m-d'),
                 'metrics' => [
                     ['name' => 'Chiều cao', 'value' => '24', 'unit' => 'cm'],
-                    ['name' => 'Số lá', 'value' => '', 'unit' => 'lá'],   // thiếu giá trị
-                    ['name' => '', 'value' => '99', 'unit' => ''],         // thiếu tên
+                    ['name' => 'Số lá', 'value' => '', 'unit' => 'lá'],
+                    ['name' => '', 'value' => '99', 'unit' => ''],
                 ],
             ])
             ->assertSessionHasNoErrors()
@@ -97,11 +79,6 @@ class JournalTest extends TestCase
     #[Test]
     public function nguoi_dung_tu_dat_ten_chi_so_nao_cung_duoc(): void
     {
-        /*
-         * Cả lý do bảng `journal_metrics` tồn tại: người trồng lan ghi "số
-         * nụ", người chơi bonsai ghi "đường kính thân". Làm thành cột thì
-         * phải đoán trước mọi chỉ số của mọi loài.
-         */
         $user = User::factory()->create();
         $so = $this->so($user, ['kind' => JournalKind::Free]);
 
@@ -120,12 +97,6 @@ class JournalTest extends TestCase
     #[Test]
     public function ghi_bu_ngay_cu_van_nam_dung_cho_tren_dong_thoi_gian(): void
     {
-        /*
-         * Người ta hay ghi bù: chủ nhật ngồi ghi lại cả tuần. Nếu dòng
-         * thời gian xếp theo `created_at` thì bốn trang của bốn ngày dồn
-         * hết vào chủ nhật, và biểu đồ sinh trưởng thành một cột dựng
-         * đứng.
-         */
         $user = User::factory()->create();
         $so = $this->so($user);
 
@@ -136,7 +107,6 @@ class JournalTest extends TestCase
             ]);
         }
 
-        // Chuỗi vẽ biểu đồ phải xếp TĂNG DẦN theo ngày, bất kể thứ tự nhập.
         $chuoi = $so->fresh()->metricSeries('Chiều cao');
 
         $this->assertSame([24.0, 31.0, 40.0], $chuoi->pluck('value')->all());
@@ -145,8 +115,6 @@ class JournalTest extends TestCase
     #[Test]
     public function khong_nhan_ngay_ghi_o_tuong_lai(): void
     {
-        // Nhật ký là ghi lại thứ đã quan sát được. Một trang đề ngày mai
-        // là dữ liệu chưa tồn tại.
         $user = User::factory()->create();
         $so = $this->so($user);
 
@@ -160,11 +128,6 @@ class JournalTest extends TestCase
     #[Test]
     public function tien_do_muc_tieu_la_null_khi_chua_ghi_so_nao(): void
     {
-        /*
-         * BÀI QUAN TRỌNG. "0%" đọc ra là "đã bắt đầu và chưa đi được bước
-         * nào"; "chưa có số liệu" là chuyện khác hẳn. Hiện 0% sẽ làm người
-         * ta tưởng mình đang tụt lại trong khi thật ra chưa đo lần nào.
-         */
         $user = User::factory()->create();
         $so = $this->so($user, ['target_metric' => 'Chiều cao', 'target_value' => 60]);
 
@@ -197,10 +160,6 @@ class JournalTest extends TestCase
     #[Test]
     public function luu_tru_la_an_di_chu_khong_phai_xoa(): void
     {
-        /*
-         * Cây chết rồi thì quyển sổ vẫn là kỷ niệm, và vẫn là bài học cho
-         * lần trồng sau. Đừng bắt người ta phải xoá mới cho gọn màn hình.
-         */
         $user = User::factory()->create();
         $so = $this->so($user);
 
@@ -209,7 +168,6 @@ class JournalTest extends TestCase
         $this->assertTrue($so->fresh()->is_archived);
         $this->assertDatabaseHas('journals', ['id' => $so->id]);
 
-        // Không hiện ở danh sách chính, nhưng hiện ở mục lưu trữ.
         $this->actingAs($user)->get('/nhat-ky')->assertDontSee('Sổ thử');
         $this->actingAs($user)->get('/nhat-ky?luu-tru=1')->assertSee('Sổ thử');
     }
@@ -254,11 +212,6 @@ class JournalTest extends TestCase
     #[Test]
     public function mot_diem_du_lieu_thi_khong_ve_duong(): void
     {
-        /*
-         * Một điểm thì không có "thay đổi theo thời gian" nào để nhìn.
-         * Vẽ một đường thẳng qua đúng một điểm là bày ra một xu hướng
-         * không tồn tại.
-         */
         $user = User::factory()->create();
         $so = $this->so($user);
 
@@ -291,8 +244,6 @@ class JournalTest extends TestCase
             ->get('/nhat-ky/' . $so->id)
             ->assertOk()
             ->assertSee('journal-chart__line', false)
-            // Tooltip gốc của trình duyệt: giá trị chính xác đọc được mà
-            // không cần một dòng JavaScript nào.
             ->assertSee('01/09/2026: 31 cm');
     }
 }

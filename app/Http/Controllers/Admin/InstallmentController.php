@@ -15,12 +15,9 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
-/**
- * Trang "Trả góp": các kế hoạch, cấu hình trả góp, ghi kỳ trả tại cửa hàng.
- */
+/** Trang "Trả góp": các kế hoạch, cấu hình trả góp, ghi kỳ trả tại cửa hàng. */
 class InstallmentController extends Controller
 {
-    /** Tên ô trên biểu mẫu → khoá cấu hình. Ô không có dấu chấm để old() và lỗi hiển thị đúng. */
     private const O = [
         'bat' => 'tra_gop.bat',
         'don_toi_thieu' => 'tra_gop.don_toi_thieu',

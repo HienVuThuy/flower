@@ -45,7 +45,6 @@
                 @foreach($cacHang as $hang)
                     @php
                         $laHangToi = $cuaToi['hang']?->id === $hang->id;
-                        // Ngưỡng hạng chỉ có nghĩa khi THẤP HƠN ngưỡng chung — cùng luật với CheckoutBasket.
                         $mienShip = $hang->free_shipping_from !== null && bccomp((string) $hang->free_shipping_from, $nguongChung, 2) < 0
                             ? (bccomp((string) $hang->free_shipping_from, '0', 2) === 0 ? 'Mọi đơn' : 'Đơn từ ' . $tien($hang->free_shipping_from))
                             : 'Đơn từ ' . $tien($nguongChung);

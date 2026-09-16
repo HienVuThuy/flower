@@ -26,18 +26,7 @@ use Illuminate\View\View;
 
 /**
  * "Góc cây của bạn" — bảng tin khoe cây kiểu mạng xã hội, cố ý gọn.
- * ============================================================
  * ⚠️ HAI LUẬT KHÔNG ĐƯỢC NỚI:
- *
- *   1. CHỈ BÀI ĐÃ DUYỆT, KHÔNG BỊ ẨN MỚI HIỆN RA NGOÀI. Đây là nội dung người
- *      lạ đăng lên trang bán hàng. Thích, lưu, bình luận, báo cáo, trang chi
- *      tiết — mọi đường đều lấy bài qua `approved()`.
- *
- *   2. ẢNH / VIDEO ĐI QUA CommunityMediaStore — ảnh bị tước metadata, video
- *      bị xoá toạ độ GPS. Gọi thẳng `$file->store()` là bỏ qua lớp bảo vệ đó.
- *
- * Thích và lưu trả JSON khi được gọi bằng fetch (không tải lại trang, không
- * nhảy lên đầu bảng tin); không có JavaScript thì vẫn là biểu mẫu thường.
  */
 class CommunityController extends Controller
 {
@@ -49,7 +38,6 @@ class CommunityController extends Controller
     {
         $tab = in_array($request->query('tab'), self::TAB, true) ? $request->query('tab') : 'moi-nhat';
 
-        // Tương thích đường dẫn cũ ?sap-xep=thich-nhieu.
         if ($request->query('sap-xep') === 'thich-nhieu') {
             $tab = 'thich-nhieu';
         }
@@ -59,7 +47,6 @@ class CommunityController extends Controller
         }
 
         $query = $tab === 'cua-toi'
-            // Bài của chính mình — KỂ CẢ chưa duyệt, bị từ chối, bị ẩn — kèm trạng thái.
             ? CommunityPost::query()->where('user_id', Auth::id())->latest()
             : CommunityPost::query()->approved();
 
@@ -75,7 +62,6 @@ class CommunityController extends Controller
                 'user:id,name',
                 'product:id,name,slug,main_image',
                 'media',
-                // Xem trước 2 bình luận gốc mới nhất ngay dưới bài, như Facebook.
                 'comments' => fn ($q) => $q->visible()->root()->with('user:id,name')->latest()->limit(2),
             ])
             ->withCount(['likers', 'comments as so_binh_luan' => fn ($q) => $q->visible()])
@@ -84,7 +70,6 @@ class CommunityController extends Controller
 
         $ids = $posts->pluck('id')->all();
 
-        // Bình luận xem trước dưới mỗi bài cũng có cảm xúc riêng.
         $idBinhLuan = $posts->getCollection()
             ->flatMap(fn ($p) => $p->relationLoaded('comments') ? $p->comments->pluck('id') : collect())
             ->all();
@@ -103,12 +88,6 @@ class CommunityController extends Controller
         ]);
     }
 
-    /**
-     * Trang cá nhân ở Góc cây: bài của một người, kèm vài con số.
-     *
-     * Người khác xem thì CHỈ thấy bài đã duyệt; chính chủ xem thì thấy cả bài
-     * chờ duyệt, bị từ chối và bị ẩn — đúng như mục "Bài của tôi".
-     */
     public function profile(int $user, CommunityReward $thuong): View
     {
         $nguoi = User::select(['id', 'name', 'created_at'])->findOrFail($user);
@@ -128,7 +107,6 @@ class CommunityController extends Controller
                 'comments' => fn ($q) => $q->visible()->root()->with('user:id,name')->latest()->limit(2),
             ])
             ->withCount(['likers', 'comments as so_binh_luan' => fn ($q) => $q->visible()])
-            // Bài ghim lên đầu TRANG CÁ NHÂN (không đụng bảng tin chung).
             ->orderByRaw('CASE WHEN pinned_at IS NULL THEN 1 ELSE 0 END')
             ->latest('id')
             ->paginate(self::MOI_TRANG)
@@ -139,7 +117,6 @@ class CommunityController extends Controller
             ->flatMap(fn ($p) => $p->relationLoaded('comments') ? $p->comments->pluck('id') : collect())
             ->all();
 
-        // Con số đếm từ BÀI ĐANG HIỆN của người đó — không tính bài chờ duyệt hay bị ẩn.
         $baiHien = CommunityPost::approved()->where('user_id', $nguoi->id)->select('id');
 
         return view('shop.community.profile', [
@@ -169,7 +146,6 @@ class CommunityController extends Controller
             ->where(function ($q) {
                 $q->approved();
 
-                // Chính chủ vẫn mở được bài mình tạm ẩn, để còn bấm "Hiện lại bài".
                 if (Auth::check()) {
                     $q->orWhere(fn ($w) => $w->authorHidden(Auth::id()));
                 }
@@ -178,11 +154,6 @@ class CommunityController extends Controller
             ->withCount(['likers', 'comments as so_binh_luan' => fn ($q) => $q->visible()])
             ->findOrFail($post);
 
-        /*
-         * CHỦ BÀI VẪN THẤY BÌNH LUẬN CHÍNH HỌ ĐÃ ẨN (mờ đi, kèm nút hiện lại) —
-         * ẩn xong mà nó biến mất hẳn thì không còn đường bật lại.
-         * Bình luận do CỬA HÀNG ẩn thì không ai thấy, kể cả chủ bài.
-         */
         $tuAn = fn ($q) => Auth::id() === (int) $bai->user_id
             ? $q->where(fn ($w) => $w->whereNull('hidden_at')->orWhere('hidden_by', Auth::id()))
             : $q->visible();
@@ -229,7 +200,6 @@ class CommunityController extends Controller
 
         if ($request->expectsJson()) {
             return response()->json([
-                // `thich` giữ tên cũ: đang có cảm xúc hay không.
                 'thich' => $ket['co'],
                 'loai' => $ket['loai']?->value,
                 'so' => $bai->likers()->count(),
@@ -270,7 +240,6 @@ class CommunityController extends Controller
         return redirect()->to(route('shop.community.show', $bai->id) . '#binh-luan-' . $bl->id);
     }
 
-    /** Cảm xúc cho một bình luận đang hiện (bình luận bị ẩn hoặc bài chưa duyệt: 404). */
     public function reactComment(Request $request, int $comment, CommunityInteraction $tuongTac): JsonResponse|RedirectResponse
     {
         $bl = CommunityComment::visible()
@@ -303,7 +272,6 @@ class CommunityController extends Controller
 
     public function updateComment(Request $request, int $comment, CommunityInteraction $tuongTac): RedirectResponse
     {
-        // Lọc chủ sở hữu trong truy vấn — 404 chứ không 403, cùng cách xoá.
         $bl = CommunityComment::where('user_id', Auth::id())->findOrFail($comment);
 
         $data = $request->validate([
@@ -326,7 +294,7 @@ class CommunityController extends Controller
 
         DB::transaction(function () use ($bl, $baoCao) {
             $baoCao->donCuaBinhLuan($bl);
-            $bl->delete(); // Câu trả lời bên dưới đi theo (cascade).
+            $bl->delete();
         });
 
         return back()->with('success', 'Đã gỡ bình luận của bạn.');
@@ -367,14 +335,6 @@ class CommunityController extends Controller
         ]);
     }
 
-    /**
-     * Sửa bài của chính mình.
-     *
-     * BÀI ĐÃ ĐĂNG QUAY LẠI CHỜ DUYỆT: duyệt trước khi hiện là luật của Góc cây,
-     * và "sửa sau khi được duyệt" không được là cửa sau để đăng thứ chưa ai đọc.
-     * Bài bị từ chối hay bị ẩn sửa xong cũng gửi duyệt lại — đó là cách khách
-     * sửa lỗi. Điểm thưởng đã cộng không cộng lại (khoá theo bài).
-     */
     public function update(Request $request, int $post, CommunityMediaStore $kho): RedirectResponse
     {
         $bai = CommunityPost::where('user_id', Auth::id())->with('media')->findOrFail($post);
@@ -422,13 +382,8 @@ class CommunityController extends Controller
 
     public function destroy(int $post, CommunityMediaStore $kho, CommunityReports $baoCao): RedirectResponse
     {
-        /*
-         * Lọc theo `user_id` NGAY TRONG TRUY VẤN rồi mới findOrFail — 404 chứ
-         * không 403: 403 xác nhận bài đó có tồn tại.
-         */
         $bai = CommunityPost::where('user_id', Auth::id())->findOrFail($post);
 
-        // Tệp trên đĩa và báo cáo không có khoá ngoại với tới — dọn tay.
         $kho->xoaCuaBai($bai);
         $baoCao->donCuaBai($bai);
         $bai->delete();
@@ -458,26 +413,15 @@ class CommunityController extends Controller
         return $request->expectsJson() ? response()->json(['thong_bao' => $cam]) : back()->with('success', $cam);
     }
 
-    /* ================= BÊN TRONG ================= */
-
-    /** @return array<string, list<mixed>> */
     private function quyTacBai(bool $coTepCu = false): array
     {
         return [
-            // Bài chỉ có ảnh / video vẫn đăng được, như mạng xã hội; không có gì thì phải có chữ.
             'body' => [$coTepCu ? 'nullable' : 'required_without:media', 'nullable', 'string', 'max:2000'],
 
-            /*
-             * CHỈ GẮN ĐƯỢC CÂY ĐÃ MUA — cùng luật với nhật ký (QĐ-129).
-             *
-             * Cho gắn sản phẩm bất kỳ thì mục này thành chỗ dựng bằng chứng giả
-             * về việc đã mua hàng, ngay cạnh chính sản phẩm đó.
-             */
             'product_id' => ['nullable', 'integer', Rule::in($this->cayDaMua()->pluck('id')->all())],
         ];
     }
 
-    /** @return array<string, string> */
     private function thongBao(): array
     {
         return [
@@ -487,26 +431,16 @@ class CommunityController extends Controller
         ];
     }
 
-    /** @return array<string, string> */
     private function tenO(): array
     {
         return ['body' => 'nội dung', 'media' => 'ảnh / video', 'media.*' => 'ảnh / video', 'product_id' => 'cây'];
     }
 
-    /** Về đúng chỗ bài trên trang vừa đứng — không nhảy lên đầu bảng tin. */
     private function veBai(CommunityPost $bai): RedirectResponse
     {
         return redirect()->to(strtok(url()->previous(), '#') . '#bai-' . $bai->id);
     }
 
-    /**
-     * Cảm xúc dưới các BÌNH LUẬN: của tôi, tổng số, và gộp theo loại.
-     *
-     * Ba truy vấn cho cả trang, không phải mỗi bình luận một lần.
-     *
-     * @param  list<int>  $ids
-     * @return array{cua_toi: array<int, string>, so: array<int, int>, tom_tat: array<int, list<array{loai: string, so: int}>>}
-     */
     private function camXucBinhLuan(array $ids): array
     {
         $rong = ['cua_toi' => [], 'so' => [], 'tom_tat' => []];
@@ -540,12 +474,6 @@ class CommunityController extends Controller
         ];
     }
 
-    /**
-     * Cảm xúc CỦA NGƯỜI ĐANG XEM cho từng bài trong danh sách.
-     *
-     * @param  list<int>  $ids
-     * @return array<int, string> id bài => loại cảm xúc
-     */
     private function camXucCuaToi(array $ids): array
     {
         if (! Auth::check() || $ids === []) {
@@ -560,14 +488,6 @@ class CommunityController extends Controller
             ->all();
     }
 
-    /**
-     * Cảm xúc của MỌI NGƯỜI, gộp theo loại — để hiện mấy biểu tượng dưới bài.
-     *
-     * Một truy vấn cho cả trang, không phải mỗi bài một lần.
-     *
-     * @param  list<int>  $ids
-     * @return array<int, list<array{loai: string, so: int}>>
-     */
     private function tomTatCamXuc(array $ids): array
     {
         if ($ids === []) {
@@ -585,12 +505,6 @@ class CommunityController extends Controller
             ->all();
     }
 
-    /**
-     * Id những bài trong danh sách mà người đang xem đã lưu.
-     *
-     * @param  list<int>  $ids
-     * @return list<int>
-     */
     private function cuaToiTrong(string $bang, array $ids): array
     {
         if (! Auth::check() || $ids === []) {
@@ -605,11 +519,6 @@ class CommunityController extends Controller
             ->all();
     }
 
-    /**
-     * Những cây người này ĐÃ MUA — lấy từ đơn hàng thật, cùng định nghĩa với nhật ký.
-     *
-     * @return Collection<int, Product>
-     */
     private function cayDaMua(): Collection
     {
         return Product::query()

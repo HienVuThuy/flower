@@ -1,8 +1,4 @@
-/*
- * PRICE — hiển thị giá thống nhất toàn site.
- * Giá cuối luôn có trọng lượng thị giác lớn nhất; giá gốc bị gạch
- * và mờ đi; nhãn % nhỏ, không tranh chỗ với giá.
- */
+/* PRICE — hiển thị giá thống nhất toàn site. */
 
 .product-price {
     display: inline-flex;
@@ -22,10 +18,6 @@
     white-space: nowrap;
 }
 
-/*
- * Dải thông tin chương trình khuyến mại trên trang sản phẩm —
- * cho khách biết VÌ SAO sản phẩm đang được giảm giá.
- */
 .promo-note {
     display: flex;
     align-items: center;

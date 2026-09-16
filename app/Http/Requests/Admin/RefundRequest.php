@@ -7,13 +7,7 @@ use App\Enums\RefundReason;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-/**
- * Kiểm HÌNH THỨC của biểu mẫu hoàn tiền.
- *
- * Luật NGHIỆP VỤ (không hoàn quá số đã trả, lý do hợp trạng thái đơn, dòng
- * hàng thuộc đúng đơn, MoMo tối thiểu 1.000₫) nằm ở RefundService, dưới
- * khoá dòng. Kiểm ở đây là kiểm trên dữ liệu có thể đã cũ một giây sau.
- */
+/** Kiểm HÌNH THỨC của biểu mẫu hoàn tiền. */
 class RefundRequest extends FormRequest
 {
     public function authorize(): bool
@@ -24,7 +18,6 @@ class RefundRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Số nguyên: tiền Việt không có phần lẻ, và MoMo chỉ nhận số nguyên.
             'amount' => ['required', 'integer', 'min:1', 'max:1000000000'],
             'reason' => ['required', Rule::enum(RefundReason::class)],
             'method' => ['required', Rule::enum(RefundMethod::class)],

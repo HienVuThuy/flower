@@ -2,24 +2,10 @@
     'items' => null,
     'personalized' => false,
     'title' => null,
-    /*
-     * Nhãn cho biết khối này nằm ở trang nào ('home', 'product-detail').
-     * Đi kèm mỗi liên kết dưới dạng ?ref=, để đo được gợi ý ở chỗ nào
-     * thật sự có người bấm. Xem ProductController::show.
-     */
     'source' => 'home',
 ])
 
-{{--
-    Khối gợi ý sản phẩm.
-
-    KHÔNG RENDER GÌ khi không có sản phẩm nào — thà không có khối còn hơn
-    có một khối trống với tiêu đề rỗng bên dưới.
-
-    Tiêu đề đổi theo việc gợi ý có thật sự dựa trên hành vi hay không.
-    Gọi một danh sách "phổ biến nhất" là "gợi ý riêng cho bạn" thì chỉ
-    cần hai người ngồi cạnh nhau mở máy là lộ ngay.
---}}
+{{-- Khối gợi ý sản phẩm. --}}
 @if($items && $items->isNotEmpty())
 
     <section class="section-sm">
@@ -49,18 +35,10 @@
                 @foreach($items as $item)
                     <div class="col-6 col-md-3">
 
-                        {{-- Dùng lại thẻ sản phẩm chuẩn — không dựng thẻ riêng
-                             cho khối này, nếu không mỗi lần sửa thẻ phải sửa
-                             hai nơi. --}}
                         <x-product.card
                             :product="$item['product']"
                             :ref="'goi-y:' . $source" />
 
-                        {{--
-                            Lý do đặt DƯỚI thẻ, cỡ chữ nhỏ: nó là chú thích
-                            giúp khách hiểu vì sao thấy sản phẩm này, không
-                            được tranh chỗ với tên và giá.
-                        --}}
                         <p class="reco-reason">{{ $item['reason'] }}</p>
 
                     </div>

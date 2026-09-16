@@ -1,9 +1,4 @@
-/*
- * BADGES / TAGS / STATUS CHIPS
- * ============================================================
- * Đây là nơi DUY NHẤT dùng radius pill — đúng vai trò của nó
- * (tag/filter/trạng thái), không phải cho CTA.
- */
+/* BADGES / TAGS / STATUS CHIPS */
 
 .badge {
     font-weight: 600;
@@ -64,7 +59,6 @@
 .status-chip--danger  { background: color-mix(in srgb, var(--semantic-danger) 14%, transparent); color: var(--semantic-danger); }
 .status-chip--neutral { background: var(--surface-alt); color: var(--ink-500); }
 
-/* Nhãn nhỏ đặt trên ảnh (card sản phẩm) — chỉ dùng khi thật cần */
 .media-tag {
     position: absolute;
     top: var(--space-2xs);

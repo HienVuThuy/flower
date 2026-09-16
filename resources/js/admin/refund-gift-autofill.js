@@ -1,15 +1,4 @@
-/**
- * ĐIỀN SẴN SỐ QUÀ TRẢ KÈM — phiếu hoàn tiền / trả hàng ở trang đơn quản trị
- * ============================================================
- * Nhập số món chính trả về thì ô quà ngay dưới tự điền số quà cần trả kèm.
- *
- * KHÔNG TÍNH GÌ Ở ĐÂY: bảng "trả r món chính → n quà" do máy chủ dựng sẵn
- * (GiftReturnCalculator) theo luật của từng món quà, gắn vào ô quà qua
- * data-qua-tra-kem. Tệp này chỉ tra bảng.
- *
- * ĐIỀN SẴN, KHÔNG KHOÁ: người lập phiếu sửa được ô quà. Đã sửa tay thì thôi
- * không ghi đè nữa — trừ khi họ xoá trống ô đó.
- */
+/** ĐIỀN SẴN SỐ QUÀ TRẢ KÈM — phiếu hoàn tiền / trả hàng ở trang đơn quản trị */
 export function initRefundGiftAutofill() {
     document
         .querySelectorAll('[data-qua-tra-kem]:not([data-qua-tra-bound])')

@@ -8,13 +8,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Gộp các trang phụ vào trang chính bằng hàng tab.
- * ============================================================
- * Thanh bên chỉ giữ trang chính. Trang phụ (Tồn đầu kỳ, Trả hàng nhà cung
- * cấp, Loại hoa, Chuyên mục cẩm nang, Trang nội dung) thành tab của trang
- * chính; Phân tích thu mua đã có tab ở trang Phân tích.
- */
+/** Gộp các trang phụ vào trang chính bằng hàng tab. */
 class GopDieuHuongTest extends TestCase
 {
     use RefreshDatabase;
@@ -28,7 +22,6 @@ class GopDieuHuongTest extends TestCase
         return $u;
     }
 
-    /** Phần HTML của thanh bên. */
     private function thanhBen(string $html): string
     {
         $dau = strpos($html, 'id="adminNav"');

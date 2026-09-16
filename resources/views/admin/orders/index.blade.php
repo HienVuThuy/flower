@@ -11,22 +11,9 @@
         </div>
     </div>
 
-    {{--
-        Tab lọc theo trạng thái. Số bên cạnh lấy từ một truy vấn
-        GROUP BY duy nhất ở controller, không đếm riêng từng tab.
-    --}}
+    {{-- Tab lọc theo trạng thái. --}}
     <div class="admin-filter-tabs">
 
-        {{--
-            TAB TRẠNG THÁI PHẢI GIỮ CÁC ĐIỀU KIỆN LỌC KHÁC.
-
-            Admin tìm số điện thoại khách rồi bấm sang tab "Đã huỷ" để
-            xem khách đó từng huỷ đơn nào. Không giữ `q` thì cú bấm đó
-            ném họ về toàn bộ đơn đã huỷ của cửa hàng.
-
-            `page` phải BỎ: đang ở trang 3 của tab này thì trang 3 của
-            tab kia là một tập hoàn toàn khác, và thường là trang trống.
-        --}}
         @php($giuLoc = request()->except(['status', 'page']))
 
         <a href="{{ route('admin.orders.index', $giuLoc) }}"
@@ -45,15 +32,6 @@
 
     </div>
 
-    {{--
-        TÌM THEO MÃ ĐƠN / SỐ ĐIỆN THOẠI / TÊN NGƯỜI NHẬN.
-
-        Số điện thoại là ô hữu ích nhất: khách gọi tới thì nhớ số của
-        mình, ít khi nhớ mã đơn.
-
-        Ô trạng thái ẩn để giữ tab đang chọn khi bấm "Lọc" — không có nó
-        thì mọi lần lọc lại nhảy về tab "Tất cả".
-    --}}
     <x-admin.filter-bar
         :action="route('admin.orders.index')"
         placeholder="Tìm mã đơn, số điện thoại hoặc tên người nhận…"
@@ -70,11 +48,6 @@
             <option value="refunded" @selected(request('payment') === 'refunded')>Đã hoàn tiền</option>
         </select>
 
-        {{--
-            Ô này là đích của dòng "đơn đã nhận nhưng chưa có vận đơn" ở
-            trang tổng quan. Không có nó thì đường dẫn lọc sẵn kia tới
-            nơi mà màn hình không nói được là đang lọc theo cái gì.
-        --}}
         <select name="van_don" class="form-select" aria-label="Lọc theo vận đơn">
             <option value="">Mọi tình trạng vận đơn</option>
             <option value="cho-tao" @selected(request('van_don') === 'cho-tao')>Chờ tạo vận đơn</option>
@@ -91,13 +64,6 @@
 
         @if($orders->isEmpty())
 
-            {{--
-                BA CÂU KHÁC NHAU cho ba tình huống khác nhau.
-
-                "Chưa có đơn hàng nào" khi admin vừa tìm một số điện thoại
-                là câu SAI — cửa hàng có 39 đơn, chỉ là không đơn nào của
-                số đó. Admin đọc câu đó rồi tưởng mất dữ liệu.
-            --}}
             <div class="p-4 text-center admin-page-subtitle">
                 <p class="mb-0">
                     @if(request()->hasAny(['q', 'payment', 'van_don', 'hoan_tien', 'tu_ngay', 'den_ngay']))
@@ -122,8 +88,6 @@
                             <x-admin.sort-header khoa="ma" nhan="Mã đơn" />
                             <th>Khách hàng</th>
                             <th>Sản phẩm</th>
-                            {{-- Tiền và ngày mặc định GIẢM DẦN: bấm vào là
-                                 muốn xem đơn lớn nhất, mới nhất. --}}
                             <x-admin.sort-header khoa="tien" nhan="Tổng tiền" dau="giam" />
                             <x-admin.sort-header khoa="thanh-toan" nhan="Thanh toán" />
                             <x-admin.sort-header khoa="trang-thai" nhan="Trạng thái" />
@@ -138,16 +102,6 @@
                                 <td class="fw-bold">
                                     {{ $order->order_number }}
 
-                                    {{--
-                                        CỜ RỦI RO nằm ngay cạnh mã đơn, không
-                                        giấu trong trang chi tiết: nhân viên
-                                        quyết định làm đơn nào trước ngay trên
-                                        danh sách này. Cờ ở trang chi tiết thì
-                                        họ chỉ thấy sau khi đã cắt hoa xong.
-
-                                        title= liệt kê từng dấu hiệu — rê chuột
-                                        là biết vì sao, không phải bấm vào.
-                                    --}}
                                     @if($order->needsRiskReview())
                                         <span class="risk-flag"
                                               title="{{ collect($order->riskFlags())->pluck('label')->implode(' · ') }}">

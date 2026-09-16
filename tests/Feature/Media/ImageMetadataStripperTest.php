@@ -10,30 +10,11 @@ use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Tước metadata khỏi ảnh tải lên.
- * ============================================================
- * ĐÂY LÀ BÀI VỀ QUYỀN RIÊNG TƯ, KHÔNG PHẢI VỀ XỬ LÝ ẢNH.
- *
- * Ảnh chụp bằng điện thoại mang theo toạ độ GPS chính xác tới vài mét —
- * tức là địa chỉ nhà người chụp. Khách đăng ảnh cây trên ban công lên
- * mục "Góc cây của bạn" là đăng luôn chỗ mình ở, nếu không ai tước.
- *
- * Bài này dựng một tệp JPEG có khối EXIF GPS THẬT (không giả lập, không
- * mock) rồi khẳng định sau khi lưu qua `ImageStore` thì đọc lại không
- * còn toạ độ nào.
- */
+/** Tước metadata khỏi ảnh tải lên. */
 class ImageMetadataStripperTest extends TestCase
 {
     use RefreshDatabase;
 
-    /**
-     * Dựng một JPEG có EXIF GPS thật.
-     *
-     * PHP không có hàm GHI exif, nên khối APP1 được ghép bằng tay ở mức
-     * byte. Đổi lại là bài kiểm thử này đo trên một tệp giống hệt thứ
-     * điện thoại sinh ra, chứ không đo trên một giả định.
-     */
     private function anhCoGps(): string
     {
         $anh = imagecreatetruecolor(120, 80);
@@ -48,30 +29,14 @@ class ImageMetadataStripperTest extends TestCase
         return $tam;
     }
 
-    /**
-     * Chèn một khối APP1/EXIF tối thiểu có GPS vào ngay sau SOI của JPEG.
-     *
-     * Cấu trúc: SOI (FFD8) + APP1 (FFE1, dài, "Exif\0\0", TIFF header,
-     * IFD0 trỏ tới GPS IFD).
-     */
     private function chenExifGps(string $duongDan): void
     {
-        // --- TIFF header: little-endian, magic 42, IFD0 ở offset 8 ---
         $tiff = "II\x2A\x00" . pack('V', 8);
 
-        // IFD0: 1 mục — GPSInfoIFDPointer (0x8825), kiểu LONG, trỏ tới offset 26
         $ifd0 = pack('v', 1)
             . pack('v', 0x8825) . pack('v', 4) . pack('V', 1) . pack('V', 26)
             . pack('V', 0);
 
-        /*
-         * GPS IFD: 2 mục — vĩ độ và kinh độ, kiểu RATIONAL (5), mỗi cái
-         * 3 phân số (độ/phút/giây). Dữ liệu đặt sau bảng mục.
-         *
-         * Toạ độ dùng ở đây là 21°01'40"N 105°45'50"E — Trường Đại học
-         * Tài nguyên và Môi trường Hà Nội, tức là một địa điểm THẬT, để
-         * bài kiểm thử phản ánh đúng thứ nó phòng.
-         */
         $viTriDuLieu = 26 + 2 + 2 * 12 + 4;
 
         $gpsIfd = pack('v', 2)
@@ -93,16 +58,6 @@ class ImageMetadataStripperTest extends TestCase
     #[Test]
     public function anh_mau_dung_de_kiem_thu_THAT_SU_co_gps(): void
     {
-        /*
-         * BẢO HIỂM CHO CHÍNH BỘ BÀI NÀY.
-         *
-         * Nếu tệp mẫu không có GPS ngay từ đầu thì mọi bài "đã xoá GPS"
-         * bên dưới đều xanh một cách vô nghĩa — chúng sẽ xanh kể cả khi
-         * xoá sạch lớp tước metadata.
-         *
-         * Đây đúng là cái bẫy đã ghi ở QĐ-124: một bài chỉ đi qua nhánh
-         * không có gì để kiểm thì không bảo vệ ai.
-         */
         $tam = $this->anhCoGps();
 
         $exif = @exif_read_data($tam);
@@ -128,15 +83,6 @@ class ImageMetadataStripperTest extends TestCase
             'community',
         );
 
-        /*
-         * ĐO BẰNG `exif_read_data` THÔ, không chỉ bằng hàm kiểm của chính
-         * dự án.
-         *
-         * Bản đầu chỉ gọi `metadataConLai()`. Chèn đột biến cho hàm đó
-         * luôn trả về mảng rỗng thì bài VẪN XANH — nó đang tin vào chính
-         * thứ nó phải kiểm. Đọc thẳng bằng hàm của PHP thì không có
-         * đường nào lách.
-         */
         $exif = @exif_read_data(Storage::disk('public')->path($path));
 
         $this->assertFalse(
@@ -156,7 +102,6 @@ class ImageMetadataStripperTest extends TestCase
     #[Test]
     public function tuoc_xong_anh_van_mo_duoc_va_dung_kich_thuoc(): void
     {
-        // Tước metadata mà làm hỏng ảnh thì không phải là tước, là xoá.
         Storage::fake('public');
 
         $tam = $this->anhCoGps();
@@ -190,11 +135,6 @@ class ImageMetadataStripperTest extends TestCase
     #[Test]
     public function tep_khong_phai_anh_thi_bo_qua_chu_khong_vo(): void
     {
-        /*
-         * `tuoc()` được gọi cho MỌI tệp đi qua ImageStore. Định dạng lạ
-         * phải trả về false lặng lẽ — ném lỗi ở đây là làm hỏng cả việc
-         * tải ảnh lên vì một bước phụ.
-         */
         Storage::fake('public');
         Storage::disk('public')->put('community/khong-phai-anh.txt', 'xin chao');
 
@@ -205,11 +145,6 @@ class ImageMetadataStripperTest extends TestCase
     #[Test]
     public function png_trong_suot_khong_bi_bien_thanh_nen_den(): void
     {
-        /*
-         * Lỗi kinh điển khi ghi lại ảnh bằng GD: không giữ kênh alpha thì
-         * nền trong suốt thành ĐEN. Với ảnh sản phẩm tách nền, đó là một
-         * khối đen giữa trang.
-         */
         Storage::fake('public');
 
         $anh = imagecreatetruecolor(60, 60);

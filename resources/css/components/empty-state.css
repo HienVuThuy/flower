@@ -1,6 +1,4 @@
-/*
- * EMPTY / LOADING STATES
- */
+/* EMPTY / LOADING STATES */
 
 .empty-state {
     text-align: center;
@@ -30,7 +28,6 @@
     margin-top: var(--space-sm);
 }
 
-/* Skeleton loading */
 .skeleton {
     position: relative;
     overflow: hidden;

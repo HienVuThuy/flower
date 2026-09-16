@@ -8,11 +8,6 @@
 
     @if(! $sessionsSupported)
 
-        {{--
-            Nói thật vì sao trống, thay vì hiện một danh sách
-            rỗng trông như "không có ai đăng nhập" — kết luận
-            sai và có thể khiến khách yên tâm nhầm.
-        --}}
         <p class="text-caption mb-0">
             Máy chủ đang lưu phiên đăng nhập theo cách không liệt kê được
             (SESSION_DRIVER khác <code>database</code>), nên phần này tạm
@@ -58,25 +53,6 @@
             nên danh sách này có thể ngắn hơn số lần bạn thật sự đăng nhập.
         </p>
 
-        {{--
-            NÓI RÕ TÊN TRÌNH DUYỆT CHỈ LÀ PHỎNG ĐOÁN.
-
-            Tên này đọc từ chuỗi User-Agent — thứ do chính
-            trình duyệt tự khai. Nhiều trình duyệt nền
-            Chromium CỐ Ý khai mình là Chrome để khỏi bị
-            các trang web chặn nhầm: Cốc Cốc bản mới gửi
-            đúng chuỗi của Chrome, không còn mẩu nào phân
-            biệt được.
-
-            Không nói ra thì người dùng thấy "Chrome trên
-            Windows" trong khi mình đang dùng Cốc Cốc, và
-            kết luận hợp lý nhất họ rút ra là CÓ NGƯỜI LẠ
-            ĐANG ĐĂNG NHẬP — rồi đá nhầm phiên của chính
-            mình, hoặc hoảng lên đổi mật khẩu vô cớ.
-
-            Một dòng cảnh báo sai gây hại nhiều hơn hẳn
-            việc không có thông tin đó.
-        --}}
         <p class="text-caption mb-0">
             Tên trình duyệt chỉ là phỏng đoán từ thông tin trình duyệt tự khai,
             và nhiều trình duyệt (Cốc Cốc, Brave&hellip;) cố ý khai mình là Chrome.

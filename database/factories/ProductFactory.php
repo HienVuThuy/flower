@@ -9,9 +9,6 @@ use App\Models\Product;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-/**
- * @extends Factory<Product>
- */
 class ProductFactory extends Factory
 {
     protected $model = Product::class;
@@ -30,8 +27,6 @@ class ProductFactory extends Factory
             'product_type' => ProductType::Plant,
             'selling_form' => SellingForm::Pot,
 
-            // Giá tròn để phép cộng trong bài kiểm tra đọc ra là hiểu ngay,
-            // không phải bấm máy tính mới biết con số kỳ vọng ở đâu ra.
             'base_price' => '100000.00',
             'status' => 'active',
             'track_inventory' => true,
@@ -44,7 +39,6 @@ class ProductFactory extends Factory
         return $this->state(fn () => ['base_price' => $amount]);
     }
 
-    /** Hàng làm theo đơn: không quản lý tồn kho (khác hẳn "hết hàng"). */
     public function madeToOrder(): static
     {
         return $this->state(fn () => [

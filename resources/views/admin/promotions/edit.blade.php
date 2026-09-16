@@ -20,7 +20,6 @@
 
 </div>
 
-{{-- ============ 1. THÔNG TIN CHƯƠNG TRÌNH ============ --}}
 <form action="{{ route('admin.promotions.update', $promotion) }}" method="POST" enctype="multipart/form-data">
 
     @csrf
@@ -34,7 +33,6 @@
 
 </form>
 
-{{-- ============ 2. SẢN PHẨM ÁP DỤNG ============ --}}
 <form action="{{ route('admin.promotions.sync-products', $promotion) }}" method="POST" id="productsForm">
 
     @csrf
@@ -54,7 +52,6 @@
 
         <div class="admin-panel__body">
 
-            {{-- Thêm sản phẩm --}}
             <div class="d-flex gap-2 mb-3 flex-wrap">
                 <select id="productPicker" class="form-select" style="max-width: 420px;">
                     <option value="">— Chọn sản phẩm để thêm —</option>
@@ -172,7 +169,6 @@
 
 </form>
 
-{{-- Mẫu dòng cho sản phẩm mới thêm --}}
 <template id="promoRowTemplate">
     <tr data-row>
         <td>
@@ -207,37 +203,11 @@
     const tpl = document.getElementById('promoRowTemplate');
     const emptyBox = document.getElementById('emptyProducts');
 
-    // Mức chung của chương trình — dùng khi dòng không ghi đè.
     const promoType = @json($promotion->type->value);
     const promoValue = @json((float) $promotion->discount_value);
 
     let nextIndex = {{ $promotion->products->count() }};
 
-    /*
-     * ĐỊNH DẠNG TIỀN LẤY TỪ CẤU HÌNH, KHÔNG VIẾT CỨNG.
-     *
-     * Đây là đoạn xem trước giá sau khuyến mại, chạy ở trình duyệt nên
-     * không gọi được Money::format() của PHP. Nhưng viết cứng 'vi-VN' và
-     * '₫' ở đây thì đổi đơn vị tiền tệ ở trang Cấu hình xong, cả trang
-     * đổi mà riêng ô xem trước này vẫn hiện ký hiệu cũ — và admin sẽ tin
-     * vào con số sai đơn vị ngay lúc đang đặt giá.
-     *
-     * Truyền tham số xuống bằng Js::from() để hai bên luôn cùng một nguồn.
-     *
-     * ============================================================
-     * HAI CÁI BẪY CỦA CHỈ THỊ @@json — CẢ HAI ĐÃ LÀM TRANG NÀY LỖI 500.
-     *
-     * 1. Blade nhận diện chỉ thị KỂ CẢ trong chú thích JavaScript. Viết
-     *    tên chỉ thị trần trong đoạn văn này (không ngoặc) là nó biên
-     *    dịch thành `json_encode(, 15, 512)`. Nên ở đây viết `@@json`.
-     *
-     * 2. Chỉ thị đó CẮT BIỂU THỨC THEO DẤU PHẨY để lấy tham số thứ hai,
-     *    thứ ba. Đưa một mảng viết thẳng vào là mảng bị cắt làm đôi:
-     *    `json_encode(['code' => ..., 15, 512)` — thiếu dấu `]`.
-     *
-     * `Js::from()` không có cả hai bẫy đó, và còn thoát ký tự cho đúng
-     * ngữ cảnh JavaScript.
-     */
     const tienTe = {{ \Illuminate\Support\Js::from([
         'code' => \App\Services\Shop\Money::code(),
         'symbol' => \App\Services\Shop\Money::symbol(),
@@ -254,7 +224,6 @@
         return tienTe.position === 'before' ? tienTe.symbol + so : so + tienTe.symbol;
     };
 
-    /** Tính giá sau KM — phản chiếu logic PricingService để xem trước. */
     function computeFinal(base, type, value) {
         if (base === null || isNaN(base) || value === null || isNaN(value)) return null;
 
@@ -306,7 +275,6 @@
         refreshAll();
     });
 
-    // Uỷ quyền sự kiện: dòng được thêm động vẫn hoạt động.
     body.addEventListener('input', e => {
         const row = e.target.closest('[data-row]');
         if (row) refreshRow(row);

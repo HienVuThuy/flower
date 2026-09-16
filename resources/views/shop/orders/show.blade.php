@@ -8,21 +8,6 @@
     <div class="container-shop">
 
         @php
-            /*
-             * TIÊU ĐỀ PHẢI NÓI ĐÚNG TÌNH TRẠNG THẬT CỦA ĐƠN.
-             *
-             * LỖI ĐÃ SỬA: khối này trước đây luôn là một dấu tích xanh kèm câu
-             * "Đã nhận đơn hàng của bạn", cho MỌI đơn ở MỌI trạng thái.
-             *
-             * Đo được: khách bấm "Quay lại" ở trang MoMo để huỷ giao dịch, quay
-             * về đây và thấy dấu tích xanh báo mọi thứ ổn. Dòng đỏ giải thích có
-             * hiện, nhưng nó TỰ TẮT sau vài giây (xem resources/js/flash.js), nên
-             * thứ còn lại trên màn hình là một lời báo thành công cho một lần
-             * thanh toán vừa thất bại.
-             *
-             * Đơn đã huỷ cũng vậy: mở lại đơn của tháng trước vẫn thấy "Đã nhận
-             * đơn hàng của bạn".
-             */
             $daHuy = $order->status === \App\Enums\OrderStatus::Cancelled;
 
             $choTra = ! $daHuy
@@ -49,27 +34,10 @@
                     nhưng lần thanh toán {{ $order->payment_method->label() }} vừa rồi chưa hoàn tất.
                 </p>
 
-                {{--
-                    NÚT ĐẶT NGAY ĐÂY, không để tận cuối trang.
-
-                    Đây là chỗ mắt khách rơi vào đầu tiên khi quay lại từ cổng
-                    thanh toán. Bắt họ cuộn xuống tìm nút là bắt họ đoán rằng có
-                    một nút để tìm.
-                --}}
                 <p class="order-success__note mb-0">
                     Đơn hàng vẫn giữ nguyên — trả lại không tạo đơn mới.
                 </p>
 
-                {{--
-                    MỘT NÚT CHO MỖI CÁCH TRẢ TIỀN.
-
-                    Trước đây chỉ có một nút, và nó luôn mở dịch vụ mặc
-                    định. Ai đang ngồi trước máy tính mà mặc định là
-                    "quét QR" thì phải với lấy điện thoại; ai đang cầm
-                    điện thoại mà mặc định là "nhập thẻ" thì phải đi tìm
-                    cái thẻ. Lần trả lại là lúc lần trước đã hỏng — không
-                    được bắt họ đoán tiếp.
-                --}}
                 <div class="momo-retry mt-3">
                     @foreach(\App\Enums\MomoFlow::cases() as $cach)
                         <a href="{{ route('shop.orders.momo.pay', [$order, 'cach' => $cach->value]) }}"
@@ -89,18 +57,6 @@
                 </p>
             @endif
 
-            {{--
-                NÓI ĐÚNG THỜI ĐIỂM THƯ SẼ TỚI, không nói "đã gửi".
-
-                Thư chỉ đi khi admin chuyển đơn sang "Đã xác nhận", nên câu chữ
-                phải nói đúng vậy — nếu không, khách mở hộp thư tìm một lá thư
-                chưa được gửi rồi kết luận hệ thống hỏng.
-
-                Vẫn giữ deliversForReal(): dự án có thể đang chạy MAIL_MAILER=log,
-                khi đó thư chỉ ghi vào tệp và hứa hẹn gì cũng là nói dối.
-
-                Đơn đã huỷ thì không hứa thư nào cả.
-            --}}
             @if(! $daHuy && $order->recipient_email && app(\App\Services\Order\OrderMailer::class)->deliversForReal())
                 <p class="order-success__note mb-0">
                     Khi cửa hàng xác nhận đơn, thư báo sẽ được gửi tới
@@ -108,10 +64,6 @@
                 </p>
             @endif
 
-            {{--
-                Khách chưa đăng nhập không có trang "Đơn hàng của tôi". Đóng
-                trình duyệt là hết phiên, và họ mất luôn đường vào đơn này.
-            --}}
             @guest
                 <p class="order-success__note mb-0">
                     Hãy lưu lại mã đơn.
@@ -131,14 +83,9 @@
                         <h2 class="text-h4 mb-3">Sản phẩm</h2>
 
                         <ul class="checkout-items">
-                            {{--
-                                HÀNG BÁN trước, QUÀ KÈM nằm ngay dưới món đã sinh ra nó
-                                (parent_item_id), quà theo chương trình xuống cuối.
-                            --}}
                             @foreach($order->items->where('is_gift', false) as $item)
                                 <li class="checkout-items__row">
                                     <span>
-                                        {{-- Đọc tên từ BẢN CHỤP trong đơn, không từ bảng products --}}
                                         {{ $item->product_name }}
                                         @if($item->variant_name)
                                             <span class="text-muted">({{ $item->variant_name }})</span>
@@ -201,29 +148,10 @@
                         </span>
                     </p>
 
-                    {{--
-                        DÒNG THỜI GIAN — đặt ngay dưới nhãn trạng thái,
-                        TRÊN phần tiền.
-
-                        "Đơn của tôi đang ở đâu" là câu hỏi khách mở
-                        trang này để hỏi. Số tiền họ đã biết từ lúc đặt.
-                        Đẩy lịch sử xuống dưới bảng tiền nghĩa là bắt họ
-                        cuộn qua thứ đã biết để tới thứ đang cần.
-
-                        Không truyền showActor: khách không cần biết tên
-                        nhân viên nào bấm nút, với họ đó là "cửa hàng".
-                    --}}
                     <div class="mb-4">
                         <x-order.timeline :events="$order->statusEvents" />
                     </div>
 
-                    {{--
-                        TÌNH TRẠNG GIAO HÀNG — đặt NGAY DƯỚI dòng thời gian.
-
-                        Dòng thời gian nói cửa hàng đã làm gì; khối này nói
-                        kiện hàng đang ở đâu. Hai câu hỏi khác nhau, và câu
-                        thứ hai là câu người đang đợi hàng thật sự hỏi.
-                    --}}
                     <x-order.shipping-status :order="$order" />
 
                     @if($order->installmentPlan)
@@ -281,37 +209,10 @@
                             <dd><x-site.money :amount="(float) $order->grand_total" /></dd>
                         </div>
 
-                        {{--
-                            THUẾ GTGT ĐÃ NẰM TRONG SỐ TIỀN TRÊN.
-
-                            Trước đây khách không nhìn thấy con số này.
-                            Nay hiện ra vì hoá đơn GTGT phải ghi giá chưa
-                            thuế, thuế suất và tiền thuế — mà khách thì
-                            cần đối chiếu được đơn của mình với hoá đơn
-                            họ nhận. Giấu đi làm hai chứng từ có vẻ nói
-                            hai chuyện khác nhau.
-
-                            Đọc từ BẢN CHỤP trong đơn, không tính lại từ
-                            cấu hình hiện tại: mức thuế có thể đã đổi từ
-                            lúc đặt.
-                        --}}
                         <x-order.tax-lines :total="$order->tax_amount" :rows="$order->taxByRate()" />
 
                     </dl>
 
-                    {{--
-                        TIỀN CỬA HÀNG ĐÃ TRẢ LẠI — khách phải thấy được.
-
-                        Không có khối này thì một khách được hoàn một phần
-                        vẫn chỉ thấy "Đã thanh toán", và không có cách nào
-                        biết cửa hàng đã chuyển gì, lúc nào, qua đâu — nên
-                        họ gọi điện hỏi.
-
-                        CHỈ những lần ĐÃ HOÀN XONG và những lần đang chờ
-                        MoMo trả lời. Lần không thành công là chuyện nội bộ:
-                        báo cho khách "một lần hoàn thất bại" chỉ làm họ lo
-                        về một khoản tiền chưa từng rời cửa hàng.
-                    --}}
                     @php
                         $hoanHienThi = $order->refunds->filter(fn ($r) => $r->status !== \App\Enums\RefundStatus::Failed);
                     @endphp
@@ -324,7 +225,7 @@
                                     <li class="mb-1">
                                         <strong><x-site.money :amount="(string) $r->amount" /></strong>
                                         @if($r->status === \App\Enums\RefundStatus::Completed)
-                                            &middot; {{-- "qua MoMo", không phải "về ví MoMo": khách trả bằng thẻ thì tiền về thẻ. --}}
+                                            &middot;
                                             {{ $r->method === \App\Enums\RefundMethod::Momo ? 'qua MoMo' : ($r->method === \App\Enums\RefundMethod::Cash ? 'tiền mặt' : 'chuyển khoản') }}
                                             &middot; <x-site.time :at="$r->completed_at" format="d/m/Y" />
                                         @else
@@ -337,23 +238,8 @@
                         </div>
                     @endif
 
-                    {{--
-                        HOÁ ĐƠN GTGT — chỉ hiện khi khách đã yêu cầu.
-
-                        Không yêu cầu thì không hiện gì: một khối trống
-                        ghi "chưa có hoá đơn" chỉ làm khách tưởng mình
-                        thiếu một bước nào đó.
-                    --}}
                     <x-order.invoice-card :invoice="$order->invoice" />
 
-                    {{--
-                        HUỶ ĐƠN.
-
-                        Chỉ hiện khi khách thật sự huỷ được — không bày ra
-                        một nút rồi báo lỗi sau khi bấm. Ở các trạng thái
-                        muộn hơn thì hiện số điện thoại cửa hàng, vì lúc đó
-                        chuyện phải thương lượng với người thật.
-                    --}}
                     @if($order->isCancellableByCustomer())
                         <form method="POST"
                               action="{{ route('shop.orders.cancel', $order) }}"

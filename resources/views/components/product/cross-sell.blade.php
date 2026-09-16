@@ -5,18 +5,7 @@
     'source' => 'cross-sell',
 ])
 
-{{--
-    GỢI Ý MUA KÈM (phụ kiện).
-
-    KHÁC HẲN "Gợi ý cho bạn": khối kia đoán thứ khách CÓ THỂ thích thay
-    cho món đang xem. Khối này gợi thứ dùng CÙNG món đó — mua cây chậu
-    thì cần đĩa hứng nước, mua bó hoa thì cần gói dưỡng hoa. Là bổ sung
-    chứ không phải thay thế, nên hình thức cũng phải khác: hàng ngang
-    gọn, ảnh nhỏ, không tranh chỗ với hàng chính.
-
-    Không có gì để gợi thì KHÔNG render — thà thiếu một khối còn hơn có
-    một khối trống mang tiêu đề "Mua kèm".
---}}
+{{-- GỢI Ý MUA KÈM (phụ kiện). --}}
 @if($items->isNotEmpty())
 
     <div class="cross-sell">
@@ -40,9 +29,6 @@
                             <img src="{{ asset('storage/'.$item->main_image) }}"
                                  alt="" loading="lazy">
                         @else
-                            {{-- Phụ kiện thường chưa có ảnh chụp. Dùng đúng
-                                 hình giữ chỗ mà thẻ sản phẩm đang dùng, để
-                                 không sinh ra một kiểu "ảnh trống" thứ hai. --}}
                             <x-site.leaf-placeholder />
                         @endif
                     </a>
@@ -62,21 +48,7 @@
                         </span>
                     </div>
 
-                    {{--
-                        Nút thêm thẳng vào giỏ, không bắt mở trang chi tiết.
-
-                        Phụ kiện là món phụ, giá nhỏ, khách đã biết mình cần
-                        gì — bắt họ rời trang giỏ hàng để xem chi tiết một cái
-                        đĩa lót chậu là đủ phiền để họ bỏ luôn.
-
-                        Chỉ hiện khi module giỏ hàng đang bật; tắt cờ thì
-                        route không tồn tại và nút sẽ là nút giả.
-                    --}}
                     @if(config('features.cart') && $item->inStock())
-                        {{-- class="product-buy" + data-add-to-cart: đủ để
-                             add-to-cart.js nhận ra và thêm không tải lại
-                             trang. Không có JavaScript thì vẫn là một biểu
-                             mẫu bình thường. --}}
                         <form method="POST" action="{{ route('shop.cart.store') }}"
                               class="cross-sell__action product-buy">
                             @csrf

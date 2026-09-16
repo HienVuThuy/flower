@@ -7,12 +7,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Một loại hoa thu mua — thứ người ta gọi tên khi ra chợ.
- *
- * KHÔNG phải `plant_taxa`: cây đó là phân loại sinh học. Đây là trục thu
- * mua. Xem chú thích ở migration create_flower_lots_tables.
- */
+/** Một loại hoa thu mua — thứ người ta gọi tên khi ra chợ. */
 class FlowerKind extends Model
 {
     protected $fillable = [
@@ -35,7 +30,6 @@ class FlowerKind extends Model
         ];
     }
 
-    /** @return HasMany<FlowerLot, $this> */
     public function lots(): HasMany
     {
         return $this->hasMany(FlowerLot::class);

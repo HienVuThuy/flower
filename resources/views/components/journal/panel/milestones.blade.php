@@ -1,14 +1,6 @@
 @props(['journal'])
 
 @php
-    /*
-     * CÁC MỐC CẦN ĐẠT — khối làm nên sổ Mục tiêu.
-     * ============================================================
-     * Trước khi có khối này, sổ "Mục tiêu" chỉ khác sổ sinh trưởng ở chỗ
-     * có một thanh tiến độ. Mà một mục tiêu thật thì hiếm khi là một con
-     * số duy nhất: "nhân giống được 5 chậu trầu bà" gồm giâm cành, ra rễ,
-     * trồng chậu, sống qua tháng đầu — bốn việc, mỗi việc một hạn.
-     */
     $tienDo = $journal->milestoneProgress();
 @endphp
 
@@ -32,10 +24,6 @@
     @endif
 
     @if($journal->milestones->isEmpty())
-        {{--
-            CHƯA CÓ MỐC NÀO thì nói đúng như vậy, không hiện thanh 0%.
-            Cùng nguyên tắc với `goalProgress()` — xem QĐ-127.
-        --}}
         <p class="text-body-sm">
             Chưa đặt mốc nào. Chia mục tiêu thành vài bước nhỏ thì mỗi lần mở sổ ra
             là biết ngay mình đang ở đâu.
@@ -44,15 +32,6 @@
         <ul class="milestone-list">
             @foreach($journal->milestones as $moc)
                 <li class="milestone {{ $moc->isDone() ? 'is-done' : '' }} {{ $moc->isOverdue() ? 'is-overdue' : '' }}">
-                    {{--
-                        MỘT NÚT, KHÔNG PHẢI Ô TÍCH TỰ GỬI.
-
-                        Ô tích cần JavaScript để gửi đi; không có script thì
-                        nó tích được mà không lưu được — tệ hơn là không có ô
-                        nào, vì người dùng tưởng đã xong.
-
-                        Một form với nút bấm thì chạy ở mọi nơi.
-                    --}}
                     <form method="POST"
                           action="{{ route('shop.journals.milestones.toggle', [$journal, $moc]) }}"
                           class="milestone__toggle-form">
@@ -81,8 +60,6 @@
 
                         <span class="milestone__meta">
                             @if($moc->isDone())
-                                {{-- NGÀY XONG, không chỉ là "đã xong": đó là thứ
-                                     dựng được câu "mất ba tuần cho bước này". --}}
                                 Xong <x-site.time :at="$moc->done_at" format="d/m/Y" />
                             @elseif($moc->due_date)
                                 @if($moc->isOverdue())

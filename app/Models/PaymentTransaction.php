@@ -10,7 +10,6 @@ class PaymentTransaction extends Model
 {
     protected $fillable = [
         'order_id',
-        // Kỳ trả góp mà lượt này trả cho; NULL với đơn thường.
         'installment_payment_id',
         'gateway',
         'gateway_order_id',

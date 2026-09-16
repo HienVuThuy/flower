@@ -2,10 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Khách trả món chính thì quà đi đâu — chọn riêng cho từng món quà.
- * Chỉ là giá trị ĐIỀN SẴN trên phiếu trả; người lập phiếu vẫn sửa được.
- */
+/** Khách trả món chính thì quà đi đâu — chọn riêng cho từng món quà. */
 enum GiftReturnRule: string
 {
     case KemQua = 'kem_qua';

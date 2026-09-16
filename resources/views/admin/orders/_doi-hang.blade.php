@@ -1,16 +1,4 @@
-{{--
-    ĐỔI HÀNG của một đơn.
-    ============================================================
-    Biến cần có: $order (đã nạp items.product, exchanges.items),
-    $exchangeBlocked, $exchangeable, $exchangeWhyNot.
-
-    ============================================================
-    NÓI RA VÌ SAO KHÔNG ĐỔI ĐƯỢC, thay vì giấu cái biểu mẫu đi.
-
-    Người đứng ở quầy đang có khách trước mặt. "Không thấy nút đâu" bắt
-    họ đi hỏi người khác; "đã quá hạn đổi 7 ngày kể từ khi giao (hết hạn
-    12/09/2026)" là câu họ đọc thẳng cho khách nghe.
---}}
+{{-- ĐỔI HÀNG của một đơn. --}}
 
 @php
     $tien = fn ($v) => \App\Services\Shop\Money::format((string) $v);
@@ -25,7 +13,6 @@
         Hoa tươi không đổi được. Lỗi cửa hàng thì cửa hàng chịu phí ship, khách đổi ý thì khách trả.
     </p>
 
-    {{-- ===== Phiếu đã có ===== --}}
     @if($order->exchanges->isNotEmpty())
         <div class="table-responsive mb-3">
             <table class="table table-sm align-middle mb-0">
@@ -66,7 +53,6 @@
         </div>
     @endif
 
-    {{-- ===== Lập phiếu mới ===== --}}
     @if($exchangeBlocked)
         <p class="analytics-empty mb-0">{{ $exchangeBlocked }}</p>
     @else
@@ -108,7 +94,6 @@
                                 </td>
                                 <td>{{ $tien($item->unit_price) }}</td>
                                 <td>
-                                    {{-- Vì sao món này không đổi được, nói ngay tại dòng đó. --}}
                                     @if($exchangeWhyNot[$item->id])
                                         <span class="admin-page-subtitle">{{ $exchangeWhyNot[$item->id] }}</span>
                                     @else
@@ -138,13 +123,6 @@
 
             <h3 class="admin-section-title">Gửi cho khách</h3>
 
-            {{--
-                BA DÒNG CỐ ĐỊNH, không thêm bớt bằng JavaScript.
-
-                Một lần đổi thực tế là một hoặc hai món. Ba ô trống đủ cho
-                gần hết trường hợp, và không cần script nào — nên nó còn
-                chạy khi script hỏng.
-            --}}
             <div class="mb-3">
                 @for($i = 0; $i < 3; $i++)
                     <div class="d-flex flex-wrap align-items-end gap-2 mb-2">

@@ -6,16 +6,7 @@ use App\Models\Address;
 use App\Models\User;
 use PHPUnit\Framework\Attributes\Test;
 
-/**
- * Địa chỉ trong sổ điền sẵn ĐỦ BA CẤP ở bước thanh toán.
- * ============================================================
- * LỖI ĐÃ SỬA: ô ẩn của phường/xã không mang `data-cu`, nên JavaScript chỉ chọn
- * lại được tỉnh và quận; ô Phường/Xã bỏ trống. Kéo theo `to_ward_code` rỗng —
- * máy chủ không hỏi được cước GHN và không tạo được vận đơn.
- *
- * Bài này canh phần MÁY CHỦ phải cung cấp: cả ba cấp đều có tên chữ trong ô ẩn,
- * và cấp quận / phường có thêm `data-cu` để chọn lại sau khi danh mục GHN tải về.
- */
+/** Địa chỉ trong sổ điền sẵn ĐỦ BA CẤP ở bước thanh toán. */
 class DiaChiDaLuuTest extends CheckoutTestCase
 {
     #[Test]

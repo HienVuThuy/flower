@@ -32,7 +32,6 @@
 
     <div class="row g-4">
 
-        {{-- ---------- CỘT TRÁI: NỘI DUNG ---------- --}}
         <div class="col-lg-8">
             <div class="admin-panel p-4 mb-4">
                 <div class="mb-3">
@@ -44,13 +43,6 @@
                     <x-form-error name="title"/>
 
                     @if($suaBai)
-                        {{--
-                            SLUG KHÔNG TỰ ĐỔI THEO TIÊU ĐỀ.
-
-                            Sửa tiêu đề mà slug đổi theo là làm chết mọi link đã
-                            chia sẻ và mọi thứ hạng Google đã có — đúng thứ cả
-                            khu vực này sinh ra để xây.
-                        --}}
                         <p class="form-text">
                             Đường dẫn giữ nguyên <code>{{ $post->slug }}</code> dù đổi tiêu đề —
                             đổi đường dẫn là làm chết link cũ và mất thứ hạng đã có.
@@ -63,8 +55,6 @@
                     <textarea name="excerpt" id="excerpt" rows="2" class="form-control"
                               maxlength="300"
                               placeholder="Một hai câu nói bài này trả lời câu hỏi gì.">{{ old('excerpt', $post->excerpt) }}</textarea>
-                    {{-- Cắt tự động 160 ký tự đầu thường rơi vào giữa câu dẫn
-                         nhập — đúng phần không nói gì về nội dung bài. --}}
                     <p class="form-text">Hiện ở thẻ bài và làm mặc định cho mô tả trên Google.</p>
                     <x-form-error name="excerpt"/>
                 </div>
@@ -76,13 +66,6 @@
                               placeholder="&lt;h2&gt;Tiêu đề phụ&lt;/h2&gt;&#10;&lt;p&gt;Đoạn văn…&lt;/p&gt;">{{ old('body', $post->body) }}</textarea>
                     <x-form-error name="body"/>
 
-                    {{--
-                        NÓI RÕ THẺ NÀO ĐƯỢC GIỮ.
-
-                        Không nói thì admin dán cả khối HTML từ Word, thấy nó
-                        biến dạng sau khi lưu, và không hiểu vì sao. Danh sách
-                        này phải khớp với `HtmlSanitizer::THE_CHO_PHEP`.
-                    --}}
                     <p class="form-text">
                         Giữ được: <code>h2 h3 h4 p strong em ul ol li blockquote a table code hr</code>.
                         Mọi thẻ khác bị gỡ nhưng <strong>giữ lại phần chữ</strong> bên trong.
@@ -93,7 +76,6 @@
                 </div>
             </div>
 
-            {{-- ---------- SẢN PHẨM NHẮC TRONG BÀI ---------- --}}
             <div class="admin-panel p-4">
                 <h2 class="h6 fw-bold mb-1">Cây nhắc trong bài</h2>
                 <p class="admin-page-subtitle mb-3">
@@ -129,13 +111,10 @@
                     </div>
                 @endfor
 
-                {{-- Hàng chưa chọn sản phẩm bị bỏ qua lúc lưu, KHÔNG báo lỗi —
-                     cùng nguyên tắc với hàng chỉ số trống ở nhật ký (QĐ-128). --}}
                 <p class="form-text mb-0">Hàng nào không dùng thì để trống.</p>
             </div>
         </div>
 
-        {{-- ---------- CỘT PHẢI: XUẤT BẢN & SEO ---------- --}}
         <div class="col-lg-4">
             <div class="admin-panel p-4 mb-4">
                 <h2 class="h6 fw-bold mb-3">Xuất bản</h2>
@@ -146,10 +125,6 @@
                            class="form-control @error('published_at') is-invalid @enderror"
                            value="{{ old('published_at', \App\Services\Time\Gio::choO($post->published_at)) }}">
                     <x-form-error name="published_at"/>
-                    {{--
-                        Một ô trả lời ba câu: để trống là bản nháp, ngày quá khứ
-                        là đang hiển thị, ngày tương lai là đặt lịch.
-                    --}}
                     <p class="form-text">
                         Để trống = bản nháp. Đặt ngày ở tương lai = hẹn giờ đăng, bài tự hiện khi tới giờ.
                     </p>
@@ -167,8 +142,6 @@
                         @endforeach
                     </select>
 
-                    {{-- Chuyên mục chưa có thì phải tạo TRƯỚC khi viết bài: nói ra
-                         ngay cạnh ô chọn, không để người viết tự đi tìm. --}}
                     <div class="form-text">
                         @if($categories->isEmpty())
                             Chưa có chuyên mục nào.
@@ -231,8 +204,6 @@
 </form>
 
 @if($suaBai)
-    {{-- Xoá tách hẳn khỏi biểu mẫu chính — nút xoá cạnh nút lưu là công
-         thức để có người bấm nhầm (QĐ-130). --}}
     <div class="admin-panel p-4 mt-4">
         <h2 class="h6 fw-bold mb-2">Xoá bài này</h2>
         <p class="admin-page-subtitle">

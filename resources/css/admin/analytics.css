@@ -1,16 +1,5 @@
-/* ============================================================
-   TRANG PHÂN TÍCH
-   ============================================================
-   Tách thành tệp riêng thay vì nhồi tiếp vào admin.css: đây là màn
-   hình duy nhất dùng những khối này, và admin.css đã dài.
-   ============================================================ */
+/* TRANG PHÂN TÍCH */
 
-/* ---------- Trạng thái chưa có dữ liệu ---------- */
-
-/*
- * Dùng ở mọi khối có thể trống. Có kiểu dáng riêng để người xem thấy
- * ngay "chỗ này chưa có số" thay vì tưởng trang bị lỗi.
- */
 .analytics-empty {
     padding: var(--space-sm);
     border: 1px dashed var(--admin-border);
@@ -18,8 +7,6 @@
     background: color-mix(in srgb, var(--admin-border) 18%, transparent);
     font-size: 0.875rem;
 }
-
-/* ---------- Phễu chuyển đổi ---------- */
 
 .funnel {
     display: grid;
@@ -35,10 +22,6 @@
     text-align: center;
 }
 
-/*
- * Mũi tên nối giữa các bước — vẽ bằng ::after nên không cần phần tử
- * rỗng trong HTML. Bước cuối không có mũi tên.
- */
 .funnel__step:not(:last-child)::after {
     content: "›";
     position: absolute;
@@ -50,7 +33,6 @@
     color: var(--admin-ink-muted);
 }
 
-/* Màn hình hẹp: các bước xếp dọc nên mũi tên ngang không còn đúng. */
 @media (max-width: 575.98px) {
     .funnel__step:not(:last-child)::after {
         content: none;
@@ -73,8 +55,6 @@
     font-size: 0.75rem;
     color: var(--admin-ink-muted);
 }
-
-/* ---------- Danh sách chỉ số ---------- */
 
 .stat-list {
     margin: 0;
@@ -108,11 +88,7 @@
     font-size: 1.1rem;
 }
 
-/* ---------- Bảng xếp hạng ---------- */
-
 .rank-list {
-    /* Đánh số bằng counter thay vì list-style: cần đặt số ở đúng vị trí
-       và cùng màu với phần còn lại. */
     list-style: none;
     counter-reset: rank;
     margin: 0;
@@ -156,8 +132,6 @@
     white-space: nowrap;
 }
 
-/* ---------- Biểu đồ cột ---------- */
-
 .bar-chart {
     display: flex;
     align-items: flex-end;
@@ -175,11 +149,6 @@
     min-width: 0;
 }
 
-/*
- * Cột nằm trong một ô cao 100%, nên `height` theo phần trăm là so với
- * cột cao nhất. Ngày có dữ liệu luôn được vẽ tối thiểu 4% để không
- * biến mất hẳn — nhìn thấy một vạch mảnh khác hẳn nhìn thấy trống.
- */
 .bar-chart__bar {
     width: 100%;
     max-width: 2.25rem;
@@ -216,17 +185,6 @@
 }
 
 
-/*
- * SO SÁNH VỚI KỲ TRƯỚC
- * ============================================================
- * Nhãn nhỏ đi kèm mỗi chỉ số. Cỡ chữ nhỏ và màu nhạt có chủ đích: con số
- * chính vẫn phải là thứ đọc được trước, phần so sánh chỉ là chú thích.
- *
- * Màu KHÔNG gắn cứng với hướng mũi tên. Component tự quyết định tốt/xấu
- * (xem thuộc tính `invert`), vì số đơn huỷ tăng là tin xấu trong khi số
- * đơn tăng là tin tốt — cùng một mũi tên đi lên.
- */
-
 .admin-trend {
     display: block;
     margin-top: 0.25rem;
@@ -254,13 +212,6 @@
     color: var(--admin-ink-muted);
 }
 
-/* ---------- Tiêu đề phần ----------
- *
- * Trang phân tích nay dài và chia làm nhiều phần trả lời những câu hỏi
- * khác nhau (tiền, hành vi, sản phẩm). Không có mốc chia thì nó đọc ra
- * như một dãy khối rời rạc và người xem phải tự đoán khối nào thuộc câu
- * hỏi nào.
- */
 .admin-section-title {
     margin: var(--space-md) 0 var(--space-2xs);
     font-size: 0.8125rem;
@@ -273,8 +224,6 @@
 .admin-section-title:first-of-type {
     margin-top: 0;
 }
-
-/* ---------- Trang xuất dữ liệu ---------- */
 
 .export-list {
     display: grid;
@@ -305,8 +254,6 @@
 .export-item__body {
     display: flex;
     flex-direction: column;
-    /* min-width: 0 để phần chữ co được — ô lưới mặc định min-width: auto,
-       và khi ấy câu ghi chú dài đẩy cả hàng tràn ngang. */
     min-width: 0;
 }
 
@@ -320,24 +267,14 @@
     color: var(--admin-ink-muted);
 }
 
-/* Hai nút này chỉ chạy được nhờ JavaScript — không có JS thì ẩn đi,
-   thay vì bày ra một cái nút bấm vào không có gì xảy ra. */
 html:not(.has-js) .export-pick-all {
     display: none;
 }
 
-/* ============ THANH TAB CÁC TRANG PHÂN TÍCH ============
- *
- * Tab là LIÊN KẾT thật (mỗi trang một địa chỉ), không phải nút ẩn/hiện
- * nội dung bằng JavaScript: gửi được đường dẫn cho đồng nghiệp, bấm Back
- * ra đúng trang, và mỗi trang chỉ chạy truy vấn của chính nó.
- */
 .analytics-tabs {
     display: flex;
     gap: 0.25rem;
     overflow-x: auto;
-    /* Chỉ cuộn ngang. `overflow-x: auto` kéo theo `overflow-y: auto`, và
-       viền dưới -1px của tab đang chọn làm hiện mũi tên cuộn dọc thừa. */
     overflow-y: hidden;
     border-bottom: 1px solid var(--admin-border);
 }
@@ -363,13 +300,6 @@ html:not(.has-js) .export-pick-all {
     border-bottom-color: var(--admin-accent);
 }
 
-/* ---------- Thu mua ---------- */
-
-/*
- * Câu "rẻ nhất khác đáng tiền nhất" — chỉ hiện khi hai câu trả lời khác
- * nhau, nên nó phải đủ nổi để không lẫn vào phần chữ mô tả. Viền trái
- * thay cho màu nền đậm: vẫn đọc được ở cả giao diện sáng lẫn tối.
- */
 .purchasing-callout {
     padding: var(--space-xs) var(--space-sm);
     border-left: 3px solid var(--admin-accent);

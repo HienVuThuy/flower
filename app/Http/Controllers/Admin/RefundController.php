@@ -12,14 +12,7 @@ use App\Services\Refund\RefundService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
-/**
- * Hoàn tiền cho khách.
- *
- * KHÔNG CÓ SỬA HAY XOÁ. Một lần hoàn đã ghi là chứng từ tiền: ghi nhầm
- * thì chỉ có đường "chưa rõ kết quả → không thành công". Một khoản đã
- * hoàn xong mà xoá được là sổ sách mất dấu một khoản tiền đã ra khỏi cửa
- * hàng.
- */
+/** Hoàn tiền cho khách. */
 class RefundController extends Controller
 {
     public function __construct(
@@ -27,14 +20,6 @@ class RefundController extends Controller
     ) {
     }
 
-    /**
-     * Mọi khoản hoàn tiền, lọc theo trạng thái / cách hoàn / mã.
-     *
-     * CON SỐ "ĐÃ HOÀN" CHỈ CỘNG KHOẢN ĐÃ XONG. Khoản chưa rõ kết quả (MoMo
-     * chưa trả lời, chuyển khoản chưa xác nhận) chưa phải tiền đã rời cửa
-     * hàng; khoản thất bại thì không bao giờ rời. Cộng chung là con số đối
-     * soát lệch với sao kê ngân hàng.
-     */
     public function index(\Illuminate\Http\Request $request): \Illuminate\View\View
     {
         $q = Refund::query();
@@ -53,8 +38,6 @@ class RefundController extends Controller
                 ->orWhereHas('order', fn ($o) => $o->where('order_number', 'like', '%' . $tim . '%')));
         }
 
-        // Cộng bằng bcmath, không bằng SUM của cơ sở dữ liệu: cùng lý do
-        // với mọi báo cáo tiền khác trong dự án.
         $daHoan = '0.00';
 
         foreach ((clone $q)->where('status', \App\Enums\RefundStatus::Completed->value)->pluck('amount') as $tien) {
@@ -82,12 +65,6 @@ class RefundController extends Controller
             return back()->withInput()->with('error', $e->getMessage());
         }
 
-        /*
-         * BA KẾT CỤC, BA CÂU KHÁC NHAU.
-         *
-         * "Đã gửi yêu cầu" cho một lần MoMo từ chối là để admin báo khách
-         * "tiền sắp về" trong khi không có đồng nào đi.
-         */
         return match ($refund->status) {
             RefundStatus::Completed => back()->with('success', 'Đã ghi nhận hoàn ' . $refund->code . '.'),
 

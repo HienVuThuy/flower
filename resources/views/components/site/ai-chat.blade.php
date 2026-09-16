@@ -1,13 +1,4 @@
-{{--
-    KHUNG CHAT TRỢ LÝ AI — "Plant & Shopping Advisor".
-    ============================================================
-    <details> nên mở / đóng được không cần JavaScript. JS (resources/js/ai-chat.js)
-    gửi câu hỏi và chèn câu trả lời bằng textContent — chữ AI trả về KHÔNG
-    BAO GIỜ được chèn dạng HTML.
-
-    Chưa có khoá: nói "Trợ lý AI chưa được cấu hình", khoá ô nhập. Không gọi
-    ra ngoài, không có câu trả lời mẫu.
---}}
+{{-- KHUNG CHAT TRỢ LÝ AI — "Plant & Shopping Advisor". --}}
 @php
     $troLy = app(\App\Services\AI\ShoppingAdvisor::class);
     $daCauHinh = $troLy->configured();
@@ -15,7 +6,6 @@
 @endphp
 
 <details class="ai-chat" data-ai-chat>
-    {{-- Nút TRÒN, chỉ biểu tượng: dải chữ dài cố định ở góc che mất nội dung trang. Tên đọc được qua aria-label / title. --}}
     <summary class="ai-chat__toggle" aria-label="Tư vấn cây &amp; mua sắm" title="Tư vấn cây &amp; mua sắm">
         <x-site.icon name="flower2" />
         <span class="visually-hidden">Tư vấn cây &amp; mua sắm</span>

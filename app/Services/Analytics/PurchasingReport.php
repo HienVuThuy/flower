@@ -8,42 +8,9 @@ use App\Models\FlowerLot;
 use App\Models\StockReceiptItem;
 use Illuminate\Support\Collection;
 
-/**
- * Phân tích thu mua: lấy hàng ở đâu thì ĐÁNG TIỀN nhất.
- * ============================================================
- * CÂU HỎI KHÔNG PHẢI "CHỖ NÀO RẺ NHẤT".
- *
- * Vựa A bán 50.000 một bó nhưng về tới nơi hỏng 20%. Vựa B bán 55.000 và
- * hỏng 5%. Giá mỗi bó DÙNG ĐƯỢC: A là 62.500, B là 57.895. Vựa "rẻ hơn
- * 5.000" thật ra đắt hơn gần 5.000.
- *
- * Nên báo cáo này in HAI cột giá cạnh nhau, và khi hai cột chỉ về hai
- * vựa khác nhau thì nói thẳng ra. Một mình cột "đơn giá" là con số dẫn
- * người đọc tới quyết định sai mà vẫn thấy mình có số liệu.
- *
- *     Giá dùng được = tiền thật sự tốn / (số lấy về − hao hụt − đã trả)
- *
- * ============================================================
- * KHÔNG BAO GIỜ TRỘN HAI ĐƠN VỊ.
- *
- * Hồng đỏ mua theo bó ở chỗ này, theo cành ở chỗ kia. "Giá trung bình
- * của hồng đỏ" gộp cả hai là một con số không có nghĩa gì — và nó trông
- * y hệt một con số có nghĩa. Nên nhóm là (loại hoa + ĐƠN VỊ), hai đơn vị
- * là hai bảng riêng, không có dòng tổng nào bắc cầu giữa chúng.
- *
- * ============================================================
- * HAI LOẠI HÀNG, HAI NGUỒN SỐ.
- *
- * Hoa tươi đọc ở `flower_lots` — có hao hụt, vì hoa héo là chuyện thường
- * ngày. Hàng đếm được đọc ở phiếu nhập ĐÃ GHI SỔ — không có khái niệm
- * hao hụt, bù lại có tỉ lệ phải trả lại vựa.
- *
- * Phiếu còn nháp KHÔNG tính: hàng chưa vào kho, giá chưa vào nền giá
- * vốn. Đếm nó ở đây thì báo cáo thu mua nói một đằng, giá vốn một nẻo.
- */
+/** Phân tích thu mua: lấy hàng ở đâu thì ĐÁNG TIỀN nhất. */
 class PurchasingReport
 {
-    /** Dưới ngần này lần mua thì chưa đủ để kết luận về một nguồn. */
     public const DU_LIEU_MONG = 3;
 
     private KhoangThoiGian $khoang;
@@ -60,19 +27,10 @@ class PurchasingReport
         return $this;
     }
 
-    /**
-     * Hoa tươi, nhóm theo (loại hoa + đơn vị).
-     *
-     * @return Collection<int, array<string, mixed>>
-     */
     public function hoa(): Collection
     {
-        // Nạp sẵn cả hai quan hệ: vòng lặp dưới đọc tên loại hoa và tên
-        // vựa của TỪNG lô, và một truy vấn mỗi lô thì trang so giá của
-        // một mùa hoa thành vài trăm truy vấn.
         $q = FlowerLot::query()->with(['kind', 'supplier']);
 
-        // Cột DATE: phải lọc theo ngày địa phương, không phải mốc UTC.
         $this->khoang->apDungNgay($q, 'purchased_at');
 
         $nhom = [];
@@ -117,11 +75,6 @@ class PurchasingReport
         return $this->dongGoi($nhom, coHaoHut: true);
     }
 
-    /**
-     * Hàng đếm được, nhóm theo mặt hàng (kể cả biến thể).
-     *
-     * @return Collection<int, array<string, mixed>>
-     */
     public function hang(): Collection
     {
         $q = StockReceiptItem::query()
@@ -170,14 +123,6 @@ class PurchasingReport
             $ngay = substr((string) $d->received_at, 0, 10);
 
             if ($laTra) {
-                /*
-                 * DÒNG TRẢ: số lượng ÂM, và đơn giá của nó là TIỀN LẤY LẠI
-                 * ĐƯỢC chứ không phải giá đã mua (xem SupplierReturnService).
-                 *
-                 * Nên "đã trả" đếm bằng trị tuyệt đối của số lượng, còn
-                 * tiền thì CỘNG thẳng dòng âm vào — nó tự trừ đúng phần
-                 * vựa đã đền, và tự GIỮ LẠI phần vựa không đền.
-                 */
                 $n['tra'] = bcadd($n['tra'], (string) abs($sl), 2);
             } else {
                 $n['so_lan']++;
@@ -189,7 +134,6 @@ class PurchasingReport
             }
 
             if ($d->unit_cost === null) {
-                // Dòng chưa điền giá: đếm riêng, KHÔNG coi là 0 đồng.
                 if (! $laTra) {
                     $n['thieu_gia'] += $sl;
                 }
@@ -212,7 +156,6 @@ class PurchasingReport
                 $nhom[$khoa]['thang'][$thang]['tien'] = bcadd($nhom[$khoa]['thang'][$thang]['tien'], $thanhTien, 2);
             }
 
-            // Dòng âm cộng vào đây là tự trừ phần đã được đền.
             $n['tien_thuc'] = bcadd($n['tien_thuc'], $thanhTien, 2);
 
             unset($n);
@@ -221,15 +164,6 @@ class PurchasingReport
         return $this->dongGoi($nhom, coHaoHut: false);
     }
 
-    /**
-     * Tiền lấy hàng trong kỳ — cho trang Tổng quan.
-     *
-     * CÙNG BỘ LỌC với hoa() và hang(): phiếu nhập MỚI đã ghi sổ, lô hoa theo
-     * ngày lấy. Hai nơi hai định nghĩa thì con số ở Tổng quan và ở trang
-     * Thu mua lệch nhau. Dòng chưa điền giá không cộng — nó không phải 0đ.
-     *
-     * @return array{tien_hang: string, so_phieu: int, tien_hoa: string, so_lo: int, tong: string}
-     */
     public function tongQuan(): array
     {
         $dong = StockReceiptItem::query()
@@ -267,15 +201,6 @@ class PurchasingReport
         ];
     }
 
-    /**
-     * Những lần mua KHÔNG GHI NGUỒN — không so sánh được với gì cả.
-     *
-     * Hiện ra chứ không lặng lẽ bỏ: một báo cáo so giá mà một phần ba số
-     * lần mua rơi vào "không rõ ở đâu" thì kết luận của nó cũng chỉ đúng
-     * hai phần ba, và người đọc cần biết điều đó.
-     *
-     * @return array{lo_hoa: int, phieu: int}
-     */
     public function thieuNguon(): array
     {
         $lo = FlowerLot::query()->whereNull('supplier_id')->whereNull('supplier_name');
@@ -294,17 +219,6 @@ class PurchasingReport
         ];
     }
 
-    /* ================= BÊN TRONG ================= */
-
-    /**
-     * Khoá gom nhóm cho một nguồn hàng.
-     *
-     * Ưu tiên id: cùng một vựa được chọn từ danh sách thì luôn về một
-     * nhóm dù tên bản chụp trên phiếu có khác. Chỉ khi không có id mới
-     * gom theo tên đã gõ tay — và tên gõ tay thì chuẩn hoá khoảng trắng
-     * với chữ hoa chữ thường, chứ "Vựa Bình" và "vựa bình " tách thành
-     * hai nguồn là chia đôi số liệu của cùng một chỗ.
-     */
     private function khoaNguon(?int $id, ?string $ten): string
     {
         if ($id !== null) {
@@ -318,13 +232,11 @@ class PurchasingReport
             : 'ten:' . mb_strtolower(preg_replace('/\s+/u', ' ', $ten));
     }
 
-    /** Tên để hiển thị, hoặc null khi lần mua đó không ghi nguồn. */
     private function tenNguon(?string $ten): ?string
     {
         return trim((string) $ten) ?: null;
     }
 
-    /** @return array<string, mixed> */
     private function nguonRong(?string $ten): array
     {
         return [
@@ -341,12 +253,6 @@ class PurchasingReport
         ];
     }
 
-    /**
-     * Tính các con số dẫn xuất và xếp thứ tự.
-     *
-     * @param  array<string, array<string, mixed>>  $nhom
-     * @return Collection<int, array<string, mixed>>
-     */
     private function dongGoi(array $nhom, bool $coHaoHut): Collection
     {
         $ket = [];
@@ -358,13 +264,6 @@ class PurchasingReport
                 $nguon[] = $this->tinhNguon($n, $coHaoHut);
             }
 
-            /*
-             * XẾP THEO GIÁ DÙNG ĐƯỢC, không theo đơn giá.
-             *
-             * Đây là cả luận điểm của trang: dòng đầu bảng phải là chỗ
-             * đáng tiền nhất. Nguồn chưa tính được giá dùng được thì
-             * xuống cuối — không có số thì không đứng đầu bảng được.
-             */
             usort($nguon, function ($a, $b) {
                 if ($a['gia_dung_duoc'] === null || $b['gia_dung_duoc'] === null) {
                     return ($a['gia_dung_duoc'] === null ? 1 : 0) <=> ($b['gia_dung_duoc'] === null ? 1 : 0);
@@ -388,11 +287,6 @@ class PurchasingReport
                 're_nhat' => $reNhat,
                 'dang_tien_nhat' => $dangTien,
 
-                /*
-                 * CÓ ĐÁNG NÓI KHÔNG: chỉ khi có từ hai nguồn trở lên VÀ
-                 * hai câu trả lời khác nhau. Một nguồn thì "rẻ nhất" và
-                 * "đáng tiền nhất" luôn trùng, in ra là nói một câu rỗng.
-                 */
                 'khac_nhau' => count($nguon) > 1
                     && $reNhat !== null
                     && $dangTien !== null
@@ -402,19 +296,13 @@ class PurchasingReport
             ];
         }
 
-        // Nhiều lần mua nhất lên trước: đó là chỗ tiền của cửa hàng đi qua.
         usort($ket, fn ($a, $b) => $b['so_lan'] <=> $a['so_lan']);
 
         return collect($ket);
     }
 
-    /**
-     * @param  array<string, mixed>  $n
-     * @return array<string, mixed>
-     */
     private function tinhNguon(array $n, bool $coHaoHut): array
     {
-        // Hàng đếm được: chỉ phần có điền giá mới chia ra đơn giá được.
         $mau = $coHaoHut ? $n['so_luong'] : $n['so_luong_co_gia'];
 
         $n['co_hao_hut'] = $coHaoHut;
@@ -428,17 +316,6 @@ class PurchasingReport
             ? round((float) $n['tra'] / (float) $n['so_luong'] * 100, 1)
             : null;
 
-        /*
-         * GIÁ MỖI ĐƠN VỊ THẬT SỰ DÙNG ĐƯỢC.
-         *
-         * Tử số là tiền THẬT SỰ tốn — đã trừ phần vựa đền, và chỉ phần
-         * vựa đền. Mẫu số là số còn dùng để bán: trừ cả hao hụt lẫn phần
-         * đã trả lại.
-         *
-         * Mẫu số ≤ 0 thì trả null chứ không trả 0 hay một con số to: "giá
-         * mỗi bó dùng được của một lần mua không còn bó nào dùng được"
-         * không phải một câu có nghĩa.
-         */
         $dungDuoc = bcsub(bcsub($mau, $coHaoHut ? $n['hao'] : '0.00', 2), $n['tra'], 2);
 
         $n['dung_duoc'] = $dungDuoc;
@@ -446,20 +323,11 @@ class PurchasingReport
             ? bcdiv($n['tien_thuc'], $dungDuoc, 2)
             : null;
 
-        // Ít lần mua quá thì con số vẫn đúng, chỉ là chưa nói lên điều gì.
         $n['mong'] = $n['so_lan'] < self::DU_LIEU_MONG;
 
         return $n;
     }
 
-    /**
-     * Tên nguồn có chỉ số nhỏ nhất, hoặc null khi hoà / không đủ số.
-     *
-     * HOÀ THÌ KHÔNG CÓ QUÁN QUÂN: hai vựa cùng giá mà tô đậm một cái là
-     * dựng ra một sự khác biệt không có thật.
-     *
-     * @param  list<array<string, mixed>>  $nguon
-     */
     private function tenTotNhat(array $nguon, string $cot): ?string
     {
         $co = array_values(array_filter($nguon, fn ($n) => $n[$cot] !== null));
@@ -477,12 +345,6 @@ class PurchasingReport
         return $co[0]['ten'] ?? 'Không ghi nguồn';
     }
 
-    /**
-     * Giá bình quân theo tháng — để thấy giá đang lên hay xuống.
-     *
-     * @param  array<string, array{so_lan: int, so_luong: string, tien: string}>  $thang
-     * @return list<array<string, mixed>>
-     */
     private function theoThang(array $thang): array
     {
         $ket = [];
@@ -497,11 +359,6 @@ class PurchasingReport
                 'so_lan' => $t['so_lan'],
                 'gia' => $gia,
 
-                /*
-                 * SO VỚI THÁNG LIỀN TRƯỚC CÓ SỐ LIỆU, không phải với
-                 * tháng đầu kỳ: người đọc muốn biết "lần này so lần
-                 * trước", và tháng không mua gì thì không có mốc để so.
-                 */
                 'doi' => $gia !== null && $truoc !== null && bccomp($truoc, '0', 2) > 0
                     ? round((((float) $gia - (float) $truoc) / (float) $truoc) * 100, 1)
                     : null,

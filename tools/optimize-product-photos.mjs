@@ -1,25 +1,4 @@
-/*
- * Nén và cắt ảnh sản phẩm về đúng khung thẻ.
- * ============================================================
- * Ảnh tải từ Openverse có kích thước tuỳ nguồn — có ảnh 783KB, có ảnh
- * ngang, có ảnh vuông. Trang danh sách nạp cả chục ảnh một lúc nên đây
- * là thứ nặng nhất trên trang.
- *
- * BA VIỆC:
- *   1. cắt về 4:5 (khung đứng của .product-card__media), lấy phần giữa;
- *   2. thu về tối đa 900px chiều rộng — thẻ rộng nhất khoảng 300px, ×2
- *      cho màn hình retina là 600px, để 900 là đã dư;
- *   3. nén JPEG chất lượng 78 — cùng mức đã dùng cho ảnh danh mục.
- *
- * GHI ĐÈ TẠI CHỖ, và cố ý như vậy: cột products.main_image đã trỏ tới
- * đúng tên tệp này. Đổi tên là phải cập nhật cơ sở dữ liệu, thêm một
- * bước có thể sai mà không đổi lại được gì.
- *
- * CHẠY LẠI NHIỀU LẦN ĐƯỢC: ảnh đã đúng khung và đủ nhỏ thì bỏ qua, nên
- * không có chuyện nén chồng nén làm ảnh xấu dần.
- *
- *     node tools/optimize-product-photos.mjs
- */
+/* Nén và cắt ảnh sản phẩm về đúng khung thẻ. */
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -29,10 +8,9 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const DIR = path.join(ROOT, 'storage/app/public/products');
 
 const TARGET_W = 900;
-const TARGET_H = 1125; // 900 × 5/4
+const TARGET_H = 1125;
 const QUALITY = 78;
 
-/* Ảnh đã nhỏ hơn mức này thì nén lại cũng không lợi bao nhiêu. */
 const SKIP_UNDER_BYTES = 60_000;
 
 if (!fs.existsSync(DIR)) {
@@ -76,31 +54,10 @@ for (const file of files) {
     }
 
     try {
-        /*
-         * Ghi ra tệp tạm rồi mới thay thế.
-         *
-         * sharp không cho đọc và ghi cùng một tệp trong một lượt — làm
-         * vậy sẽ cắt cụt tệp gốc trước khi đọc xong. Ghi tạm rồi đổi tên
-         * cũng an toàn khi bị ngắt giữa chừng: hoặc còn ảnh cũ nguyên
-         * vẹn, hoặc đã có ảnh mới, không có trạng thái nửa vời.
-         */
         const tmp = full + '.tmp';
 
         await sharp(full)
-            .rotate() // Tôn trọng thẻ EXIF, nếu không ảnh chụp dọc bị nằm ngang.
-            /*
-             * withoutEnlargement: KHÔNG phóng to ảnh gốc nhỏ.
-             *
-             * Đo được ở lần chạy đầu: hai ảnh gốc nhỏ hơn 900px bị kéo
-             * lên và NẶNG THÊM 20–26% — thêm byte mà không thêm chi tiết,
-             * ảnh còn bị nhoè vì nội suy.
-             *
-             * Hệ quả: ảnh nhỏ hơn khung đích giữ nguyên tỉ lệ gốc thay vì
-             * được cắt về 4:5. Không sao — .product-card__image đã đặt
-             * aspect-ratio: 4/5 kèm object-fit: cover, nên trình duyệt cắt
-             * nốt phần thừa. Cắt sẵn trong tệp chỉ để tiết kiệm byte, chứ
-             * không phải điều kiện để hiển thị đúng.
-             */
+            .rotate()
             .resize(TARGET_W, TARGET_H, {
                 fit: 'cover',
                 position: 'attention',

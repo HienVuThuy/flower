@@ -17,30 +17,10 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Dữ liệu mẫu cho phần đánh giá.
- * ============================================================
  * ⚠️ DỮ LIỆU MẪU. Tên khách và lời nhận xét là do soạn ra, không phải
- * khách thật. Cửa hàng thật PHẢI xoá seeder này trước khi bán.
- *
- * VÌ SAO PHẢI TẠO CẢ ĐƠN HÀNG, không chèn thẳng vào bảng `reviews`:
- *
- * Đánh giá trong hệ thống này gắn với MỘT ĐƠN CỤ THỂ (`order_id`), và
- * chỉ viết được khi đơn đã ở trạng thái "Hoàn thành". Chèn thẳng review
- * với order_id = null là tạo ra thứ mà giao diện không bao giờ sinh ra
- * được — dữ liệu mẫu kiểu đó che mất chính cái ràng buộc đang cần thử.
- *
- * Phần thưởng kèm theo: trang thống kê của quản trị viên cũng có số để
- * hiện, thay vì "chưa có dữ liệu".
- *
- * LOGIC ĐIỂM SAO — đã kiểm bằng thực nghiệm:
- *   Khách mua lần 1, chấm 5 sao  -> điểm sản phẩm = 5.0 (1 đánh giá)
- *   CHÍNH khách đó mua lần 2, chấm 4 sao -> điểm = 4.5 (2 đánh giá)
- * Điểm là TRUNG BÌNH của mọi đánh giá đang hiển thị, KHÔNG phải điểm của
- * lần chấm gần nhất. Một khách mua nhiều lần thì có nhiều tiếng nói —
- * đúng như vậy, vì mỗi lần mua là một trải nghiệm riêng.
  */
 class ReviewSampleSeeder extends Seeder
 {
-    /** Khách mẫu: tên + email. Email dùng tên miền .test, không gửi được thật. */
     private const CUSTOMERS = [
         ['Lê Thị Mai Anh', 'maianh@khachmau.test'],
         ['Trần Quốc Bảo', 'quocbao@khachmau.test'],
@@ -49,13 +29,6 @@ class ReviewSampleSeeder extends Seeder
         ['Vũ Khánh Linh', 'khanhlinh@khachmau.test'],
     ];
 
-    /**
-     * Nhận xét theo mức sao.
-     *
-     * VIẾT NHƯ NGƯỜI THẬT VIẾT: có chỗ cụ thể (bao lâu thì nở, chậu có
-     * lỗ thoát nước không), có chỗ chê. Một trang toàn 5 sao với lời khen
-     * chung chung trông giả hơn là không có đánh giá nào.
-     */
     private const COMMENTS = [
         5 => [
             'Hoa tươi, gói kỹ, giao đúng giờ hẹn. Người nhận thích lắm.',
@@ -80,13 +53,6 @@ class ReviewSampleSeeder extends Seeder
 
     public function run(): void
     {
-        /*
-         * Chỉ đánh giá cây và hoa, KHÔNG đánh giá phụ kiện.
-         *
-         * Không phải vì phụ kiện không đáng đánh giá, mà vì dữ liệu mẫu
-         * nên giống cách khách thật dùng trang: người ta mua chậu kèm
-         * cây và nhận xét về cái cây.
-         */
         $products = Product::query()
             ->whereHas('category', fn ($q) => $q->where('kind', 'plant'))
             ->whereNotNull('base_price')
@@ -108,10 +74,6 @@ class ReviewSampleSeeder extends Seeder
         $soDanhGia = 0;
 
         foreach ($products as $i => $product) {
-            /*
-             * Sản phẩm đầu danh sách có nhiều đánh giá hơn — giống thật:
-             * hàng bán chạy thì nhiều người nói về nó.
-             */
             $soNguoi = max(1, 4 - intdiv($i, 4));
 
             foreach ($customers->take($soNguoi) as $j => $customer) {
@@ -131,13 +93,6 @@ class ReviewSampleSeeder extends Seeder
             }
         }
 
-        /*
-         * MỘT KHÁCH MUA HAI LẦN cùng một sản phẩm, chấm hai mức khác nhau.
-         *
-         * Đây chính là tình huống hay bị làm sai: điểm phải là TRUNG BÌNH
-         * của hai lần, không phải điểm lần sau đè lên lần trước. Có sẵn
-         * trong dữ liệu mẫu thì lỗi đó lộ ra ngay khi nhìn trang.
-         */
         $product = $products->first();
         $customer = $customers->first();
 
@@ -155,7 +110,6 @@ class ReviewSampleSeeder extends Seeder
         $this->command?->info("Đã tạo {$soDon} đơn đã hoàn thành và {$soDanhGia} đánh giá mẫu.");
     }
 
-    /** Tài khoản khách mẫu — đã xác thực email để dùng được mọi trang. */
     private function customer(string $name, string $email): User
     {
         $user = User::firstWhere('email', $email);
@@ -170,7 +124,6 @@ class ReviewSampleSeeder extends Seeder
             'password' => 'MatKhauMau@123',
         ]);
 
-        // role và email_verified_at nằm ngoài $fillable — gán trực tiếp.
         $user->role = UserRole::Customer;
         $user->email_verified_at = now();
         $user->save();
@@ -178,13 +131,6 @@ class ReviewSampleSeeder extends Seeder
         return $user;
     }
 
-    /**
-     * Một đơn đã hoàn thành, có thật trong bảng `orders` và `order_items`.
-     *
-     * Tính tiền bằng bcmath như OrderService, không dùng số thực: sai một
-     * đồng trong dữ liệu mẫu là trang thống kê hiện một con số không cộng
-     * lại được, và người đọc sẽ nghi ngờ cả những số đúng.
-     */
     private function completedOrder(User $user, Product $product, int $i, int $j): Order
     {
         $price = (string) $product->base_price;
@@ -195,7 +141,6 @@ class ReviewSampleSeeder extends Seeder
         $shipping = (string) app(ShippingRates::class)->feeFor($province);
         $grand = bcadd($lineTotal, $shipping, 2);
 
-        // Rải đơn ra trong 90 ngày gần đây để biểu đồ doanh thu có hình.
         $placedAt = now()->subDays(3 + (($i * 7 + $j * 3) % 87));
 
         return DB::transaction(function () use (
@@ -228,11 +173,6 @@ class ReviewSampleSeeder extends Seeder
                 'line_total' => $lineTotal,
             ]);
 
-            /*
-             * status và payment_status nằm NGOÀI $fillable — đó là chủ ý
-             * để không request nào ghi được vào. Seeder gán trực tiếp,
-             * đúng cách OrderService làm.
-             */
             $order->status = OrderStatus::Completed;
             $order->payment_status = PaymentStatus::Paid;
             $order->confirmed_at = $placedAt->copy()->addHours(2);
@@ -245,7 +185,6 @@ class ReviewSampleSeeder extends Seeder
         });
     }
 
-    /** Phân bố sao lệch về phía tốt, nhưng KHÔNG toàn 5 sao. */
     private function ratingFor(int $i, int $j): int
     {
         return [5, 5, 4, 5, 4, 3, 5, 4, 5, 2, 4, 5][($i * 5 + $j * 3) % 12];

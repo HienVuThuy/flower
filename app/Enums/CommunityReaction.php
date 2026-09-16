@@ -2,16 +2,7 @@
 
 namespace App\Enums;
 
-/**
- * Cảm xúc dưới một bài Góc cây.
- * ============================================================
- * NĂM LOẠI, KHÔNG BẢY như Facebook: "phẫn nộ" và "thương thương" ở một trang
- * bán cây gần như không có chỗ dùng, mà mỗi loại thêm vào là một ô nữa trong
- * bảng chọn trên màn hình điện thoại.
- *
- * Biểu tượng là SVG (bộ icon của trang), KHÔNG phải emoji: emoji là chữ khách
- * gõ, còn đây là nút bấm của giao diện — mỗi máy hiển thị emoji một kiểu.
- */
+/** Cảm xúc dưới một bài Góc cây. */
 enum CommunityReaction: string
 {
     case Thich = 'thich';
@@ -42,7 +33,6 @@ enum CommunityReaction: string
         };
     }
 
-    /** Lớp CSS cho màu của từng cảm xúc. */
     public function mau(): string
     {
         return 'cam-xuc--' . $this->value;
@@ -53,7 +43,6 @@ enum CommunityReaction: string
         return self::Thich;
     }
 
-    /** @return list<string> */
     public static function values(): array
     {
         return array_column(self::cases(), 'value');

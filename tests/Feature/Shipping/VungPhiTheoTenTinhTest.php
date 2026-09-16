@@ -6,14 +6,7 @@ use App\Services\Shipping\ShippingRates;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Một tỉnh có HAI cách gọi tên, phí phải như nhau.
- * ============================================================
- * Bảng `config/shipping.php` ghi "Thành phố Hà Nội" (danh mục của cửa hàng),
- * còn GHN trả về "Hà Nội" — và tên GHN chính là tên được lưu vào đơn khi khách
- * chọn địa chỉ bằng ba ô chọn. Khớp tuyệt đối thì đơn nội thành rơi về vùng xa
- * nhất và phí dự phòng (lúc không hỏi được GHN) tính sai, âm thầm.
- */
+/** Một tỉnh có HAI cách gọi tên, phí phải như nhau. */
 class VungPhiTheoTenTinhTest extends TestCase
 {
     #[Test]

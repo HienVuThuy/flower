@@ -1,7 +1,4 @@
-/*
- * FORMS
- * ============================================================
- */
+/* FORMS */
 
 .form-label {
     font-weight: 600;
@@ -19,28 +16,11 @@
     color: var(--ink-900);
 }
 
-/*
- * CHỮ GỢI Ý PHẢI NHẠT HƠN HẲN CHỮ ĐÃ NHẬP.
- *
- * Bootstrap 5.3 mặc định cho placeholder màu rgba(33, 37, 41, .75) —
- * gần như đen, chỉ nhạt hơn chữ thật rgb(26, 35, 29) một chút. Đo trực
- * tiếp trên trang thanh toán mới thấy: khách nhìn ô "0901234567" tưởng
- * mình đã điền số điện thoại rồi, trong khi đó chỉ là chữ gợi ý.
- *
- * Tương phản đo được trên nền trắng:
- *      chữ đã nhập  16.13 : 1
- *      chữ gợi ý     3.68 : 1   <- đủ đọc, nhưng không thể nhầm là đã nhập
- *
- * Đã thử 72% (2.90:1) — nhạt tới mức khó đọc. 85% là điểm cân bằng.
- *
- * Pha với --surface chứ không dùng transparent: ô nhập có thể nằm trên
- * nền không phải trắng, để trong suốt thì màu chữ đổi theo nền.
- */
 .form-control::placeholder,
 .form-select::placeholder,
 textarea::placeholder {
     color: color-mix(in srgb, var(--ink-500) 85%, var(--surface));
-    opacity: 1; /* Firefox tự hạ opacity xuống, chặn lại cho đồng nhất. */
+    opacity: 1;
 }
 
 .form-control:focus,
@@ -80,8 +60,6 @@ textarea::placeholder {
     box-shadow: 0 0 0 0.2rem rgba(var(--brand-500-rgb), 0.12);
 }
 
-/* Panel chia section trong form dài (CMS-style) — dùng trong admin
-   product form thay vì một khối input liên tục. */
 .form-panel {
     background: var(--surface);
     border: 1px solid var(--border-soft);
@@ -123,17 +101,10 @@ textarea::placeholder {
     content: "\2212";
 }
 
-/* ============ Ô MẬT KHẨU KÈM NÚT CON MẮT ============ */
-
 .password-field {
     position: relative;
 }
 
-/*
- * Chừa chỗ bên phải cho nút, nếu không chữ chạy xuống dưới con mắt.
- * Dùng padding-inline-end chứ không padding-right để còn đúng nếu sau
- * này có ngôn ngữ viết từ phải sang trái.
- */
 .password-field .form-control {
     padding-inline-end: 2.75rem;
 }
@@ -169,40 +140,6 @@ textarea::placeholder {
     font-size: 1.05rem;
 }
 
-/*
- * CHỌN NƠI NHẬN HÀNG (GHN)
- * ============================================================
- * Xem resources/js/ghn-address.js.
- */
-
-/*
- * PHẦN NHẬP TAY DỰ PHÒNG — ẩn khi JavaScript chạy được.
- *
- * `html.has-js` do một đoạn inline trong <head> đặt, TRƯỚC khung hình
- * đầu tiên (xem layouts/app.blade.php). Nhờ vậy người dùng bình thường
- * không bao giờ thấy khối này nhấp nháy rồi biến mất.
- *
- * Ẩn bằng CSS chứ KHÔNG bỏ khỏi HTML: người tắt JavaScript phải nhìn
- * thấy nó, vì với họ đây là cách duy nhất nhập được địa chỉ. Và khi GHN
- * hỏng, JavaScript tự cho nó hiện lại.
- */
-/*
- * ẨN/HIỆN HOÀN TOÀN DO JAVASCRIPT, KHÔNG DO `html.has-js`.
- *
- * Bản đầu dùng `html.has-js .ghn-fallback { display: none }`. Sai hai
- * lần:
- *
- *  1. `display:none` KHÔNG ngăn một ô được gửi lên. Khối nhập tay và
- *     khối GHN cùng có `name="shipping_province"`, nên biểu mẫu gửi cả
- *     hai và giá trị SAU đè giá trị TRƯỚC — ô nhập tay rỗng xoá mất
- *     lựa chọn GHN. Đo được: chọn xong tỉnh ở GHN mà đơn vẫn báo thiếu
- *     tỉnh.
- *  2. Có JavaScript không có nghĩa là GHN dùng được. GHN sập thì phải
- *     hiện lại khối nhập tay, mà một luật CSS tĩnh không biết điều đó.
- *
- * Nay JavaScript vừa ẩn vừa VÔ HIỆU HOÁ đúng khối không dùng — ô đã
- * `disabled` thì trình duyệt không gửi lên. Xem ghn-address.js.
- */
 [hidden] {
     display: none !important;
 }
@@ -214,14 +151,6 @@ textarea::placeholder {
     background: var(--surface-alt);
 }
 
-/*
- * DÒNG CƯỚC DỰ KIẾN.
- *
- * Nằm ngay dưới ô địa chỉ chứ không ở bảng tổng tiền bên phải: khách vừa
- * chọn xong phường/xã thì mắt còn ở đúng chỗ đó, và cước là hệ quả trực
- * tiếp của lựa chọn vừa rồi. Để mãi bên kia màn hình thì họ không nối
- * được hai việc với nhau.
- */
 .ghn-fee {
     display: flex;
     align-items: center;

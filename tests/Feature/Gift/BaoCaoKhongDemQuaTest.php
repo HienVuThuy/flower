@@ -23,10 +23,7 @@ use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Dòng quà tặng không phải hàng bán: không vào "đã bán", bán chạy, tốc độ bán,
- * nhu cầu cho Đề xuất giá, lãi theo sản phẩm. Giá vốn quà là một khoản riêng.
- */
+/** Dòng quà tặng không phải hàng bán: không vào "đã bán", bán chạy, tốc độ bán, nhu cầu cho Đề xuất giá, lãi… */
 class BaoCaoKhongDemQuaTest extends TestCase
 {
     use RefreshDatabase;
@@ -39,13 +36,11 @@ class BaoCaoKhongDemQuaTest extends TestCase
     {
         parent::setUp();
 
-        // 14/09/2026 10:00 giờ Việt Nam.
         $this->travelTo(Carbon::parse('2026-09-14 03:00:00', 'UTC'));
 
         $this->senDa = Product::factory()->for(Category::factory())->create(['name' => 'Sen đá A', 'status' => 'active']);
         $this->phanBon = Product::factory()->for(Category::factory())->create(['name' => 'Túi phân bón mini', 'status' => 'active']);
 
-        // Giá nhập túi phân bón: 10.000đ.
         $phieu = StockReceipt::create(['code' => 'NK-QUA-1', 'supplier' => 'Vựa thử', 'received_at' => '2026-09-01']);
         $phieu->forceFill(['status' => 'posted', 'kind' => 'nhap_moi'])->save();
         $phieu->items()->create(['product_id' => $this->phanBon->id, 'product_name' => 'Túi phân bón mini', 'quantity' => 50, 'unit_cost' => '10000.00']);

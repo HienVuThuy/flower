@@ -8,30 +8,7 @@ use App\Models\ProductVariant;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
-/**
- * Dữ liệu mẫu cho cửa hàng hoa - cây cảnh.
- * ============================================================
- * MỤC ĐÍCH: dữ liệu phải thể hiện được ĐẶC THÙ nghiệp vụ, không phải
- * chỉ để cho danh sách trông dài. Cụ thể phải kiểm tra được:
- *
- *  - Ba trục tách biệt: category / product_type / selling_form
- *    (xem docs/DOMAIN-DECISIONS.md — QĐ-01)
- *  - Bốn kiểu tồn kho khác nhau (Guide §4.1): có kho thật, bán theo
- *    mùa, làm theo đơn, và hàng chỉ nhận báo giá
- *  - Hai hồ sơ chăm sóc khác nhau (Guide §4.4): cây sống và hoa cắt
- *  - Biến thể đúng nghĩa (Guide §6): quy cách bó, loại chậu, kích cỡ
- *    chậu — TUYỆT ĐỐI không lấy chiều cao cây làm biến thể (§4.2)
- *
- * AN TOÀN KHI CHẠY LẠI:
- * Dùng slug làm khoá. Sản phẩm đã tồn tại thì KHÔNG ghi đè — admin có
- * thể đã sửa giá hoặc tải ảnh thật lên, seeder không được xoá công sức
- * đó. Chạy `php artisan db:seed --class=CatalogSeeder` bao nhiêu lần
- * cũng chỉ thêm phần còn thiếu.
- *
- * KHÔNG kèm ảnh sản phẩm: ảnh phải là ảnh chụp hàng thật của cửa hàng.
- * Sinh sẵn ảnh lấy trên mạng cho từng sản phẩm là tạo dữ liệu sai sự
- * thật. Trang sản phẩm tự hiện hình lá thay thế khi chưa có ảnh.
- */
+/** Dữ liệu mẫu cho cửa hàng hoa - cây cảnh. */
 class CatalogSeeder extends Seeder
 {
     public function run(): void
@@ -43,14 +20,6 @@ class CatalogSeeder extends Seeder
         }
     }
 
-    /**
-     * Danh mục = NHÓM SẢN PHẨM khách duyệt và tìm kiếm.
-     *
-     * Giữ nguyên 4 danh mục đang có (đã gắn ảnh và đã có sản phẩm),
-     * chỉ bổ sung những nhóm Guide §24 nêu mà chưa có.
-     *
-     * @return array<string, int> slug => id
-     */
     private function seedCategories(): array
     {
         $rows = [
@@ -83,15 +52,10 @@ class CatalogSeeder extends Seeder
         return $map;
     }
 
-    /**
-     * @param  array<string, mixed>  $data
-     * @param  array<string, int>  $categories
-     */
     private function seedProduct(array $data, array $categories): void
     {
         $slug = Str::slug($data['name']);
 
-        // Đã có thì bỏ qua hoàn toàn: không ghi đè dữ liệu admin đã sửa.
         if (Product::withTrashed()->where('slug', $slug)->exists()) {
             return;
         }
@@ -103,11 +67,6 @@ class CatalogSeeder extends Seeder
             'product_code' => $data['code'],
             'short_description' => $data['short'],
             'description' => $data['description'],
-            /*
-             * Chỉ nhận 'flower' | 'plant' | 'other' (App\Enums\ProductType).
-             * Dịp dùng ("cưới", "quà tặng") KHÔNG nằm ở đây mà ở Category —
-             * xem QĐ-08. Bản seeder cũ để 'event'/'wedding'/'gift' ở cột này.
-             */
             'product_type' => $data['type'],
             'selling_form' => $data['form'],
             'base_price' => $data['price'],
@@ -131,14 +90,9 @@ class CatalogSeeder extends Seeder
         }
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
     private function products(): array
     {
         return [
-            /* ---------- HOA CẮT CÀNH ---------- */
-
             [
                 'name' => 'Bó tulip Hà Lan',
                 'code' => 'TL-HL-001',
@@ -146,7 +100,6 @@ class CatalogSeeder extends Seeder
                 'type' => 'flower',
                 'form' => 'bouquet',
                 'price' => 520000,
-                // Có kho thật: nhập theo lô, đếm được từng bó.
                 'track' => true,
                 'stock' => 15,
                 'short' => 'Tulip nhập khẩu, bó giấy kraft kèm nơ lụa.',
@@ -160,7 +113,6 @@ class CatalogSeeder extends Seeder
                     'lifespan' => '5 - 7 ngày',
                     'notes' => 'Tulip vẫn dài thêm sau khi cắt, nên để bình cao.',
                 ],
-                // Biến thể = QUY CÁCH BÓ (Guide §6), không phải chiều cao.
                 'variants' => [
                     ['name' => 'Bó 20 cành', 'price' => 520000, 'track' => true, 'stock' => 8],
                     ['name' => 'Bó 30 cành', 'price' => 740000, 'track' => true, 'stock' => 5],
@@ -175,7 +127,6 @@ class CatalogSeeder extends Seeder
                 'type' => 'flower',
                 'form' => 'bouquet',
                 'price' => 380000,
-                // Bán theo mùa: không đếm kho, phụ thuộc vụ hoa.
                 'track' => false,
                 'short' => 'Hoa hướng dương theo mùa, bó tròn kèm lá phụ.',
                 'description' => "Hướng dương cắt trong ngày, bông to và cánh dày.\n\n"
@@ -229,15 +180,12 @@ class CatalogSeeder extends Seeder
                 ],
             ],
 
-            /* ---------- HOA SỰ KIỆN / CƯỚI: chỉ nhận báo giá ---------- */
-
             [
                 'name' => 'Lẵng hoa khai trương',
                 'code' => 'KT-LA-001',
                 'category' => 'hoa-khai-truong-su-kien',
                 'type' => 'flower',
                 'form' => 'arrangement',
-                // Giá NULL = hàng cần tư vấn, không bán qua giỏ hàng.
                 'price' => null,
                 'track' => false,
                 'short' => 'Lẵng cao trang trí khai trương, làm theo yêu cầu.',
@@ -257,8 +205,6 @@ class CatalogSeeder extends Seeder
                 'description' => "Hoa cầm tay thiết kế riêng, phối theo màu váy và tông tiệc.\n\n"
                     . "Cần đặt trước tối thiểu 5 ngày để chuẩn bị hoa đúng màu.",
             ],
-
-            /* ---------- QUÀ TẶNG ---------- */
 
             [
                 'name' => 'Hộp hoa hồng pastel',
@@ -300,8 +246,6 @@ class CatalogSeeder extends Seeder
                 ],
             ],
 
-            /* ---------- CÂY SỐNG ---------- */
-
             [
                 'name' => 'Kim tiền chậu sứ',
                 'code' => 'KT-SU-001',
@@ -325,7 +269,6 @@ class CatalogSeeder extends Seeder
                     'difficulty' => 'easy',
                     'notes' => 'Úng nước là nguyên nhân chết cây phổ biến nhất, thà để khô còn hơn tưới thừa.',
                 ],
-                // Biến thể = LOẠI CHẬU (Guide §6), không phải chiều cao cây.
                 'variants' => [
                     ['name' => 'Chậu sứ trắng', 'price' => 480000, 'track' => true, 'stock' => 9],
                     ['name' => 'Chậu sứ đen', 'price' => 480000, 'track' => true, 'stock' => 6],
@@ -417,7 +360,6 @@ class CatalogSeeder extends Seeder
                 'type' => 'plant',
                 'form' => 'original',
                 'price' => 2800000,
-                // Cây độc bản: mỗi cây một dáng, số lượng rất ít.
                 'track' => true,
                 'stock' => 2,
                 'short' => 'Bonsai dáng trực, gốc lũa, mỗi cây một dáng riêng.',

@@ -14,13 +14,6 @@
             {{ $receipt->laTonDauKy() ? 'Phiếu tồn đầu kỳ' : 'Phiếu nhập' }} {{ $receipt->code }}
         </h1>
 
-        {{--
-            NÓI RÕ LOẠI PHIẾU NGAY DƯỚI TIÊU ĐỀ.
-
-            Hai loại khác nhau ở một điểm sống còn: phiếu tồn đầu kỳ KHÔNG
-            cộng vào kho. Người ghi sổ phải biết điều đó trước khi bấm,
-            không phải sau.
-        --}}
         <p class="admin-page-subtitle mb-0">{{ $receipt->kind->hint() }}</p>
         <p class="admin-page-subtitle mb-0">
             <span class="status-pill status-pill--{{ $receipt->status->badge() }}">
@@ -32,13 +25,6 @@
 
     <div class="d-flex flex-wrap gap-2">
         @unless($receipt->isPosted())
-            {{--
-                GHI SỔ LÀ POST, và hỏi lại trước khi bấm.
-
-                Nó CỘNG vào kho và không có nút hoàn tác — nhầm thì phải
-                lập phiếu điều chỉnh. Một thao tác không lùi được thì
-                không được xảy ra chỉ vì một cú bấm nhầm.
-            --}}
             <form method="POST" action="{{ route('admin.stock-receipts.post', $receipt) }}"
                   onsubmit="return confirm('Ghi sổ phiếu {{ $receipt->code }}? {{ $receipt->laTonDauKy() ? 'Phiếu này chỉ khai giá vốn, KHÔNG cộng vào tồn.' : 'Tồn kho sẽ được cộng thêm và không hoàn tác được.' }}');">
                 @csrf
@@ -82,10 +68,6 @@
                             @foreach($receipt->items as $d)
                                 <tr>
                                     <td>
-                                        {{-- Đọc tên từ BẢN CHỤP trên phiếu, không
-                                             từ bảng sản phẩm: sản phẩm đổi tên hay
-                                             bị xoá thì chứng từ cũ vẫn kể đúng câu
-                                             chuyện của nó. --}}
                                         {{ $d->product_name }}
                                         @if($d->variant_name)
                                             <span class="text-muted">— {{ $d->variant_name }}</span>
@@ -101,7 +83,6 @@
                                     </td>
 
                                     <td>
-                                        {{-- NULL là "chưa biết giá", KHÁC 0₫ --}}
                                         {{ $d->unit_cost === null ? '— chưa điền' : $tien($d->unit_cost) }}
                                     </td>
 
@@ -135,12 +116,6 @@
             </dl>
 
             @if($receipt->hasUnpricedItems())
-                {{--
-                    NÓI RA CHỖ THIẾU.
-
-                    Tổng tiền bỏ qua dòng chưa điền giá. Im lặng thì con
-                    số đọc ra như đã đủ, và ai đó sẽ dùng nó để tính lãi.
-                --}}
                 <div class="alert alert-warning py-2 px-3 small mb-0">
                     Có dòng chưa điền giá vốn. Tổng tiền ở trên <strong>bỏ qua</strong> những dòng đó,
                     không tính chúng bằng 0₫.

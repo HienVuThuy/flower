@@ -18,23 +18,7 @@ use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Thanh toán MoMo.
- * ============================================================
- * ĐIỀU QUAN TRỌNG NHẤT: đơn CHỈ được ghi "đã thanh toán" từ một gói tin
- * ĐÚNG CHỮ KÝ. Đường quay về của trình duyệt là một URL ai cũng gõ được;
- * nếu chỉ cần khách có mặt ở đó là đủ thì bất kỳ ai cũng tự đánh dấu đơn
- * của mình đã trả tiền.
- *
- * Các bất biến được canh ở đây, mỗi cái là một cách hỏng:
- *
- *   1. Sai chữ ký  -> vứt, đơn không đổi.
- *   2. resultCode khác 0 -> lượt giao dịch hỏng, đơn vẫn chưa trả.
- *   3. Số tiền lệch -> không ghi nhận.
- *   4. Callback và IPN cùng về -> chỉ ghi một lần.
- *   5. Trả lại lần hai -> thêm lượt giao dịch, KHÔNG thêm đơn.
- *   6. Đơn của người khác -> 403.
- */
+/** Thanh toán MoMo. */
 class MomoPaymentTest extends TestCase
 {
     use RefreshDatabase;
@@ -55,16 +39,6 @@ class MomoPaymentTest extends TestCase
             'payment.gateways.momo.access_key' => self::ACCESS_KEY,
             'payment.gateways.momo.secret_key' => self::SECRET,
             'payment.gateways.momo.endpoint' => 'https://test-payment.momo.vn/v2/gateway/api/create',
-            /*
-             * PHẢI LÀ MỘT DỊCH VỤ CÓ TRONG MomoFlow.
-             *
-             * Trước đây đặt 'payWithATM'. Từ khi khách chọn được cách
-             * trả tiền, `requestType` do MomoFlow quyết định, và
-             * 'payWithATM' không ứng với case nào nên rơi về thẻ quốc
-             * tế — bài kiểm thử đỏ vì so con số cấu hình với con số thật
-             * sự gửi đi. Đúng ra nó phải đỏ: cấu hình đó không dùng được
-             * nữa, và nay macDinh() còn ghi log cảnh báo.
-             */
             'payment.gateways.momo.request_type' => 'payWithCC',
             'payment.gateways.momo.verify_ssl' => false,
             'payment.gateways.momo.redirect_url' => null,
@@ -81,7 +55,6 @@ class MomoPaymentTest extends TestCase
             ->create(['weight' => 500]);
     }
 
-    /** MoMo nhận yêu cầu và trả về một đường dẫn thanh toán. */
     private function momoNhan(): void
     {
         Http::fake([
@@ -111,15 +84,6 @@ class MomoPaymentTest extends TestCase
         return Order::latest('id')->firstOrFail();
     }
 
-    /**
-     * Gói tin MoMo gửi về, ký đúng như MoMo ký.
-     *
-     * Ký ngay trong bài kiểm thử chứ không gọi lớp cần kiểm: dùng chính
-     * hàm của lớp đó để dựng dữ liệu thì bài luôn xanh, kể cả khi công
-     * thức ký sai — nó chỉ chứng minh lớp đó khớp với chính nó.
-     *
-     * @return array<string, string>
-     */
     private function goiTin(PaymentTransaction $tx, array $ghiDe = []): array
     {
         $payload = array_merge([
@@ -156,8 +120,6 @@ class MomoPaymentTest extends TestCase
         return $payload;
     }
 
-    /* ================= ĐẶT HÀNG VÀ CHUYỂN SANG MOMO ================= */
-
     #[Test]
     public function momo_hien_ra_o_buoc_thanh_toan_khi_da_cau_hinh(): void
     {
@@ -167,10 +129,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function momo_KHONG_hien_ra_khi_thieu_khoa(): void
     {
-        /*
-         * Một cổng thiếu khoá mà vẫn hiện ra thì khách điền hết địa chỉ
-         * rồi mới gặp lỗi. Thà không hiện còn hơn hiện rồi hỏng.
-         */
         config(['payment.gateways.momo.enabled' => false]);
 
         $this->assertNotContains('momo', PaymentMethod::values());
@@ -213,7 +171,6 @@ class MomoPaymentTest extends TestCase
 
             return $d['partnerCode'] === self::PARTNER
                 && $d['requestType'] === config('payment.gateways.momo.request_type')
-                // MoMo chỉ nhận số nguyên VND: "500000", không phải "500000.00".
                 && $d['amount'] === '500000'
                 && $d['signature'] === hash_hmac('sha256', $rawHash, self::SECRET);
         });
@@ -259,24 +216,9 @@ class MomoPaymentTest extends TestCase
         );
     }
 
-    /* ================= KHÁCH CHỌN CÁCH TRẢ TIỀN ================= */
-
     #[Test]
     public function chon_quet_QR_thi_mo_dung_dich_vu_vi_MoMo(): void
     {
-        /*
-         * LỖI ĐÃ SỬA, đo được trên MoMo thật: chọn "quét mã QR" mà trang
-         * mở ra là ô nhập thẻ.
-         *
-         * Khối chuyển hướng ở cuối CheckoutController::place() đọc
-         * `$checkout['momo_flow']` — một biến KHÔNG TỒN TẠI trong hàm
-         * đó. Toán tử `??` nuốt luôn cảnh báo "undefined variable", nên
-         * lựa chọn của khách lặng lẽ rơi về mức mặc định.
-         *
-         * Bài này đi QUA CẢ LUỒNG (bước 1 → đặt hàng → chuyển sang MoMo)
-         * chứ không gọi thẳng gateway: lỗi nằm ở chỗ chuyền tay giữa
-         * biểu mẫu, phiên và chuyển hướng, không nằm trong phép tính.
-         */
         $this->momoNhan();
 
         $this->actingAs(User::factory()->create());
@@ -297,7 +239,6 @@ class MomoPaymentTest extends TestCase
 
         $order = Order::latest('id')->firstOrFail();
 
-        // Đơn phải được đẩy sang MoMo KÈM lựa chọn, không phải trần trụi.
         $this->get('/thanh-toan/momo/' . $order->order_number . '?cach=vi');
 
         Http::assertSent(fn ($r) => $r->data()['requestType'] === 'captureWallet');
@@ -306,11 +247,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function duong_chuyen_huong_sau_khi_dat_hang_mang_theo_lua_chon(): void
     {
-        /*
-         * Đo NGAY TẠI ĐƯỜNG CHUYỂN HƯỚNG. Bài trên tự gắn `?cach=vi` nên
-         * nó vẫn xanh kể cả khi place() đánh rơi lựa chọn — đã kiểm bằng
-         * cách bỏ. Chỉ phép đo này bắt được.
-         */
         $this->momoNhan();
 
         $this->actingAs(User::factory()->create());
@@ -336,7 +272,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function chon_the_quoc_te_thi_mo_dung_dich_vu_the(): void
     {
-        // Vế còn lại: đừng đẩy mọi người sang màn hình quét mã.
         $this->momoNhan();
 
         $this->actingAs(User::factory()->create());
@@ -360,11 +295,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function khong_gui_momo_flow_thi_dung_muc_mac_dinh_chu_khong_chan_don(): void
     {
-        /*
-         * ĐÃ THỬ BẮT BUỘC Ô NÀY, và 51 bài kiểm thử đỏ ngay: mọi đường
-         * đặt đơn MoMo không gửi kèm nó đều bị chặn ở cửa xác thực.
-         * Đây là một SỞ THÍCH, thiếu nó vẫn làm đúng được.
-         */
         $this->momoNhan();
         $order = $this->datHangMomo();
 
@@ -378,8 +308,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function tham_so_cach_la_tren_URL_thi_lui_ve_mac_dinh_chu_khong_404(): void
     {
-        // Người ta chép link cho nhau; một tham số hỏng không đáng để cả
-        // lượt thanh toán biến mất.
         $this->momoNhan();
         $order = $this->datHangMomo();
 
@@ -402,18 +330,9 @@ class MomoPaymentTest extends TestCase
             ->assertSee('name="momo_flow"', escape: false);
     }
 
-    /* ================= CHỮ KÝ LÀ RANH GIỚI TIN CẬY ================= */
-
     #[Test]
     public function callback_SAI_CHU_KY_thi_don_khong_doi(): void
     {
-        /*
-         * BÀI QUAN TRỌNG NHẤT CẢ TỆP.
-         *
-         * Đường dẫn này ai cũng gõ được. Nếu chỉ cần có mặt ở đó là đủ
-         * thì bất kỳ khách nào cũng tự đánh dấu đơn của mình đã trả tiền
-         * mà không mất một đồng.
-         */
         $this->momoNhan();
         $order = $this->datHangMomo();
         $this->get('/thanh-toan/momo/' . $order->order_number);
@@ -469,11 +388,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function chu_ky_dung_nhung_resultCode_khac_0_thi_van_chua_tra(): void
     {
-        /*
-         * MoMo cũng ký cho những lượt HỎNG — khách bấm huỷ, thẻ khoá,
-         * không đủ tiền. "Gói tin này có thật không" và "nó nói gì" là
-         * hai câu hỏi khác nhau.
-         */
         $this->momoNhan();
         $order = $this->datHangMomo();
         $this->get('/thanh-toan/momo/' . $order->order_number);
@@ -491,11 +405,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function so_tien_lech_thi_KHONG_ghi_nhan(): void
     {
-        /*
-         * MoMo báo thu 1.000₫ cho một đơn 500.000₫: hoặc gói tin bị sửa,
-         * hoặc có nhầm lẫn ở đâu đó. Ghi "đã thanh toán" lúc này là để
-         * phần mềm tự xác nhận một số tiền nó không kiểm được.
-         */
         $this->momoNhan();
         $order = $this->datHangMomo();
         $this->get('/thanh-toan/momo/' . $order->order_number);
@@ -510,27 +419,14 @@ class MomoPaymentTest extends TestCase
         $this->assertSame(PaymentTransactionStatus::Failed, $tx->fresh()->status);
     }
 
-    /* ================= IPN ================= */
-
     #[Test]
     public function duong_ipn_duoc_mien_kiem_csrf(): void
     {
-        /*
-         * ĐO TRÊN CẤU HÌNH, không đo bằng một request thử.
-         *
-         * Laravel TỰ TẮT kiểm CSRF khi đang chạy kiểm thử, nên một bài
-         * POST vào /ipn vẫn xanh kể cả khi quên khai miễn trừ — đã kiểm
-         * bằng cách xoá dòng khai đi. Trên máy thật thì mọi IPN bị 419
-         * và đơn không bao giờ được ghi nhận qua đường đáng tin nhất.
-         *
-         * Chỉ có phép đo trên chính danh sách miễn trừ mới bắt được.
-         */
         $mien = (new \ReflectionClass(\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class))
             ->getStaticPropertyValue('neverVerify');
 
         $this->assertContains('thanh-toan/momo/ipn', $mien);
 
-        // Và chỉ MỘT đường được miễn: mỗi dòng ở đây là một cánh cửa mở.
         $this->assertCount(1, $mien);
     }
 
@@ -553,8 +449,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function ipn_sai_chu_ky_van_tra_200_nhung_khong_ghi_gi(): void
     {
-        // Trả mã lỗi chỉ khiến MoMo gọi lại nhiều lần, mà gói tin sai
-        // chữ ký thì gọi bao nhiêu lần cũng vẫn sai.
         $this->momoNhan();
         $order = $this->datHangMomo();
         $this->get('/thanh-toan/momo/' . $order->order_number);
@@ -571,11 +465,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function callback_va_ipn_cung_ve_thi_chi_ghi_mot_lan(): void
     {
-        /*
-         * Hai đường về cho cùng một lượt. Không chống trùng thì lần thứ
-         * hai gọi setPaymentStatus() trên một đơn đã "đã thanh toán" và
-         * ném lỗi ra giữa mặt khách.
-         */
         $this->momoNhan();
         $order = $this->datHangMomo();
         $this->get('/thanh-toan/momo/' . $order->order_number);
@@ -589,21 +478,10 @@ class MomoPaymentTest extends TestCase
         $this->assertSame(PaymentStatus::Paid, $order->fresh()->payment_status);
         $this->assertSame(1, PaymentTransaction::where('status', 'paid')->count());
 
-        /*
-         * ĐO Ở CHỖ KHÁCH NHÌN THẤY.
-         *
-         * Hai khẳng định trên vẫn xanh kể cả khi bỏ hẳn chốt chống ghi
-         * trùng — đã kiểm bằng cách bỏ. Lần thứ hai khi đó vẫn chạy tiếp,
-         * gọi setPaymentStatus() trên một đơn đã trả rồi, ăn lỗi "đơn này
-         * đã ở trạng thái đó rồi", và khách quay lại trang đơn thấy một
-         * dòng đỏ báo đơn đã huỷ — trong khi họ vừa trả tiền xong.
-         */
         $this->get('/thanh-toan/momo/ket-qua?' . http_build_query($payload))
             ->assertSessionHas('success')
             ->assertSessionMissing('error');
     }
-
-    /* ================= THANH TOÁN LẠI ================= */
 
     #[Test]
     public function thanh_toan_lai_them_luot_giao_dich_chu_KHONG_them_don(): void
@@ -627,11 +505,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function moi_luot_mang_ma_gateway_khac_nhau(): void
     {
-        /*
-         * Cột (gateway, gateway_order_id) là UNIQUE, và MoMo cũng từ
-         * chối nhận lại một orderId đã dùng. Trùng mã là lượt trả lại
-         * thứ hai không bao giờ tạo được.
-         */
         $this->momoNhan();
         $order = $this->datHangMomo();
 
@@ -649,11 +522,6 @@ class MomoPaymentTest extends TestCase
         $this->momoNhan();
         $order = $this->datHangMomo();
 
-        /*
-         * MỘT NÚT CHO MỖI CÁCH TRẢ TIỀN, không còn một nút chung.
-         * Ai đang ngồi trước máy tính không nên bị đẩy sang màn hình quét
-         * mã QR, và ngược lại.
-         */
         $this->get('/don-hang/' . $order->order_number)
             ->assertOk()
             ->assertSee('Quét mã QR bằng ứng dụng MoMo')
@@ -675,30 +543,18 @@ class MomoPaymentTest extends TestCase
             ->assertDontSee('Quét mã QR bằng ứng dụng MoMo');
     }
 
-    /* ================= PHÂN QUYỀN ================= */
-
     #[Test]
     public function khong_tra_tien_ho_don_cua_nguoi_khac_duoc(): void
     {
         $this->momoNhan();
         $order = $this->datHangMomo();
 
-        /*
-         * PHIÊN PHẢI SẠCH.
-         *
-         * Mã đơn được ghi vào phiên lúc đặt để khách vãng lai còn xem
-         * lại được đơn của mình. Không xoá thì người thứ hai vẫn mang
-         * cái phiên đó, và bài này đo nhầm chính cơ chế ấy chứ không đo
-         * phân quyền.
-         */
         $this->flushSession();
         $this->actingAs(User::factory()->create());
 
         $this->get('/thanh-toan/momo/' . $order->order_number)->assertForbidden();
         $this->get('/don-hang/' . $order->order_number . '/thanh-toan-momo')->assertForbidden();
     }
-
-    /* ================= COD KHÔNG BỊ ĐỘNG TỚI ================= */
 
     #[Test]
     public function don_COD_van_ve_thang_trang_don_va_co_mot_dong_giao_dich(): void
@@ -747,20 +603,9 @@ class MomoPaymentTest extends TestCase
         $this->assertSame(0, PaymentTransaction::where('gateway', 'momo')->count());
     }
 
-    /* ================= TIÊU ĐỀ TRANG ĐƠN NÓI ĐÚNG SỰ THẬT ================= */
-
     #[Test]
     public function huy_giao_dich_o_momo_thi_trang_don_KHONG_bao_thanh_cong(): void
     {
-        /*
-         * LỖI ĐÃ SỬA, đo được trên MoMo thật.
-         *
-         * Khách bấm "Quay lại" ở trang MoMo, quay về đây và thấy một dấu
-         * tích xanh kèm "Đã nhận đơn hàng của bạn". Dòng đỏ giải thích
-         * CÓ hiện, nhưng nó tự tắt sau vài giây (resources/js/flash.js),
-         * nên thứ còn lại trên màn hình là lời báo thành công cho một
-         * lần thanh toán vừa thất bại.
-         */
         $this->momoNhan();
         $order = $this->datHangMomo();
         $this->get('/thanh-toan/momo/' . $order->order_number);
@@ -796,14 +641,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function don_COD_chua_tra_van_bao_da_nhan_don(): void
     {
-        /*
-         * COD chưa trả tiền là chuyện BÌNH THƯỜNG — tiền thu khi giao
-         * hàng. Báo "chưa thanh toán" ở đây là doạ khách vì một việc
-         * chưa đến lúc phải làm.
-         *
-         * Đây là lý do phép kiểm dùng `payment_method->isOnline()` chứ
-         * không chỉ nhìn `payment_status`.
-         */
         $this->actingAs(User::factory()->create());
         $this->post('/gio-hang', ['product_id' => $this->hang()->id, 'quantity' => 1]);
         $this->post('/thanh-toan', [
@@ -826,8 +663,6 @@ class MomoPaymentTest extends TestCase
     #[Test]
     public function don_da_huy_khong_con_bao_da_nhan_don(): void
     {
-        // Mở lại đơn của tháng trước cũng phải nói đúng nó đã huỷ, chứ
-        // không chào bằng một dấu tích xanh.
         $this->momoNhan();
         $order = $this->datHangMomo();
 
@@ -837,18 +672,12 @@ class MomoPaymentTest extends TestCase
             ->assertOk()
             ->assertSee('Đơn hàng đã huỷ')
             ->assertDontSee('Đã nhận đơn hàng của bạn')
-            // Đơn đã huỷ thì KHÔNG mời trả tiền nữa.
             ->assertDontSee('Thanh toán lại với MoMo');
     }
 
     #[Test]
     public function gui_di_dung_requestType_dang_cau_hinh(): void
     {
-        /*
-         * Chọn nhầm loại là trang MoMo mở ra không có ô nhập nào khớp
-         * với bộ thẻ đem thử — và không có lỗi nào báo, chỉ là khách
-         * không trả được tiền.
-         */
         config(['payment.gateways.momo.request_type' => 'payWithCC']);
 
         $this->momoNhan();
@@ -858,16 +687,9 @@ class MomoPaymentTest extends TestCase
         Http::assertSent(fn ($request) => $request->data()['requestType'] === 'payWithCC');
     }
 
-    /* ================= NHẬT KÝ CHO NGƯỜI TRỰC ================= */
-
     #[Test]
     public function admin_doc_duoc_tung_luot_thanh_toan(): void
     {
-        /*
-         * Đây là chỗ trả lời câu "khách bảo đã bị trừ tiền mà đơn chưa
-         * ghi nhận". Cột `payment_status` của đơn chỉ có một chữ, không
-         * nói được đã thử mấy lần và hỏng ở đâu.
-         */
         $this->momoNhan();
         $order = $this->datHangMomo();
         $this->get('/thanh-toan/momo/' . $order->order_number);

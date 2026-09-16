@@ -1,24 +1,5 @@
-/*
- * ============================================================
- * NHẬT KÝ CÁ NHÂN
- * ============================================================
- */
+/* NHẬT KÝ CÁ NHÂN */
 
-/*
- * MÀU ĐƯỜNG BIỂU ĐỒ — TOKEN RIÊNG, KHÔNG DÙNG THẲNG --brand-500.
- *
- * ĐO ĐƯỢC bằng bộ kiểm tra tương phản, không phải chọn theo cảm giác:
- *
- *   nền sáng  #33513f trên #fffdf9  ->  đạt (>= 3:1)
- *   nền tối   #3f6b4c trên #262c24  ->  2,84:1  KHÔNG ĐẠT
- *   nền tối   #6b9878 trên #262c24  ->  đạt
- *
- * Dùng thẳng --brand-500 cho cả hai chế độ thì đường biểu đồ ở nền tối
- * chìm vào nền — mà nền tối chính là chế độ người ta bật lúc đêm, tức là
- * lúc mắt kém phân biệt nhất.
- *
- * Vì thế đây là một token riêng: sáng lấy bậc 500, tối lấy bậc 400.
- */
 :root {
     --chart-line: var(--brand-500);
     --chart-grid: var(--border-soft);
@@ -27,8 +8,6 @@
 :root[data-scheme="toi"] {
     --chart-line: var(--brand-400);
 }
-
-/* ---------- Danh sách sổ ---------- */
 
 .journal-card {
     display: flex;
@@ -73,8 +52,6 @@
     color: var(--ink-500);
 }
 
-/* ---------- Biểu đồ chỉ số ---------- */
-
 .journal-chart {
     border: 1px solid var(--border-soft);
     border-radius: var(--radius-md);
@@ -94,13 +71,6 @@
     font-weight: 700;
 }
 
-/*
- * Khung vẽ tự co theo bề ngang.
- *
- * `width: 100%` + `height: auto` trên SVG có viewBox: tỉ lệ giữ nguyên,
- * và mọi toạ độ bên trong tính theo hệ viewBox nên không phải tính lại
- * gì khi màn hình đổi cỡ.
- */
 .journal-chart__svg {
     display: block;
     width: 100%;
@@ -108,7 +78,6 @@
     overflow: visible;
 }
 
-/* Lưới và trục PHẢI MỜ hơn dữ liệu — chúng là nền, không phải nội dung. */
 .journal-chart__grid {
     stroke: var(--chart-grid);
     stroke-width: 1;
@@ -118,17 +87,12 @@
     fill: none;
     stroke: var(--chart-line);
     stroke-width: 2;
-    /* Đầu và khớp bo tròn: đường gấp khúc với đầu vuông trông như bị cắt cụt. */
     stroke-linecap: round;
     stroke-linejoin: round;
 }
 
 .journal-chart__dot {
     fill: var(--chart-line);
-    /*
-     * Vòng nền quanh chấm: khi hai điểm gần nhau, không có vòng này thì
-     * chúng dính thành một vệt.
-     */
     stroke: var(--surface);
     stroke-width: 2;
 }
@@ -138,12 +102,6 @@
     font-size: 11px;
 }
 
-/*
- * NHÃN GIÁ TRỊ chỉ ở vài điểm, KHÔNG phải mọi điểm.
- *
- * Ghi số lên tất cả thì biểu đồ thành một bảng số xếp cong — mất luôn
- * cái mà biểu đồ giỏi hơn bảng: nhìn ra HÌNH DẠNG của thay đổi.
- */
 .journal-chart__value {
     fill: var(--ink-900);
     font-size: 11px;
@@ -155,8 +113,6 @@
     text-align: center;
     color: var(--ink-500);
 }
-
-/* ---------- Dòng thời gian ---------- */
 
 .journal-entry {
     display: grid;
@@ -172,12 +128,6 @@
     justify-self: center;
 }
 
-/*
- * Chấm mốc nằm ĐÈ lên đường kẻ dọc.
- *
- * `outline` chứ không `border`: border làm chấm to ra và lệch khỏi tâm
- * đường kẻ, còn outline vẽ ra ngoài mà không đổi kích thước hộp.
- */
 .journal-entry__rail::before {
     content: "";
     position: absolute;
@@ -240,8 +190,6 @@
     font-weight: 700;
 }
 
-/* ---------- Thanh tiến độ mục tiêu ---------- */
-
 .goal-bar {
     height: 0.6rem;
     border-radius: 999px;
@@ -254,8 +202,6 @@
     border-radius: 999px;
     background: var(--chart-line);
 }
-
-/* ---------- Hàng nhập chỉ số ---------- */
 
 .metric-row {
     display: grid;
@@ -270,20 +216,6 @@
     }
 }
 
-/* ============================================================
- * GIAO DIỆN SỔ — sáu bộ, mỗi bộ một màu giấy và một màu nhấn.
- * ============================================================
- * MÀU ĐỊNH NGHĨA BẰNG TOKEN, ĐỔI THEO NỀN SÁNG/TỐI.
- *
- * Bộ giao diện chỉ đặt ba biến: nền giấy, màu nhấn, màu hoa văn. Mọi thứ
- * bên trong sổ đọc ba biến đó. Nhờ vậy thêm một bộ mới là thêm một khối
- * ba dòng, không phải sửa hai chục luật.
- *
- * Nền tối KHÔNG phải phép lật tự động: mỗi bộ khai lại ba biến của riêng
- * nó, vì "giấy trắng" ở nền tối không thể là màu trắng — nó phải là một
- * sắc xám ấm đủ tối để chữ sáng nổi lên.
- * ============================================================ */
-
 .journal-book {
     position: relative;
     padding: 1.4rem;
@@ -293,7 +225,6 @@
     overflow: hidden;
 }
 
-/* Hoa văn nằm dưới cùng và KHÔNG chắn chuột của các nút bên trên. */
 .journal-pattern {
     position: absolute;
     inset: 0;
@@ -311,8 +242,6 @@
 .journal-book__head {
     margin-bottom: 1rem;
 }
-
-/* --- Sáu bộ, nền sáng --- */
 
 .journal-theme--paper {
     --journal-paper: #fffdf9;
@@ -356,8 +285,6 @@
     --journal-pattern: #a3bdb0;
 }
 
-/* --- Sáu bộ, nền tối --- */
-
 :root[data-scheme="toi"] .journal-theme--paper {
     --journal-paper: #24262a;
     --journal-edge: #3a3d43;
@@ -400,10 +327,6 @@
     --journal-pattern: #43594f;
 }
 
-/* ============================================================
- * KHỐI TRONG TRANG SỔ
- * ============================================================ */
-
 .journal-panel {
     margin-bottom: 1.5rem;
 }
@@ -433,8 +356,6 @@
     background: color-mix(in srgb, var(--journal-accent, var(--brand-500)) 6%, transparent);
 }
 
-/* ---------- Nhãn dán ---------- */
-
 .journal-sticker {
     color: var(--journal-accent, var(--brand-500));
     vertical-align: -0.15em;
@@ -444,8 +365,6 @@
 .journal-entry__sticker {
     margin-right: 0.35rem;
 }
-
-/* ---------- Mốc mục tiêu ---------- */
 
 .milestone-list {
     list-style: none;
@@ -507,11 +426,6 @@
     word-break: break-word;
 }
 
-/*
- * Mốc đã xong: gạch ngang VÀ giảm độ đậm — không chỉ giảm độ đậm.
- * Chỉ làm nhạt đi thì ở nền tối gần như không phân biệt được, mà đó
- * chính là thứ cần thấy ngay khi lướt qua danh sách.
- */
 .milestone.is-done .milestone__title {
     text-decoration: line-through;
     color: var(--text-muted);
@@ -544,8 +458,6 @@
         grid-template-columns: 1fr;
     }
 }
-
-/* ---------- Thống kê giá ---------- */
 
 .price-stats {
     display: grid;
@@ -600,13 +512,6 @@
     background: var(--journal-accent, var(--brand-500));
 }
 
-/* ---------- Dải ảnh theo thời gian ---------- */
-
-/*
- * CUỘN NGANG TRONG KHUNG CỦA CHÍNH NÓ.
- * Thân trang không bao giờ được cuộn ngang — đó là lỗi đã sửa một lần ở
- * khung hero, và dải ảnh là chỗ dễ tái phạm nhất.
- */
 .photo-strip {
     display: flex;
     gap: 0.7rem;
@@ -637,8 +542,6 @@
     color: var(--text-muted);
 }
 
-/* ---------- Tổng hợp chăm sóc ---------- */
-
 .care-tally {
     list-style: none;
     margin: 0;
@@ -648,18 +551,6 @@
     gap: 0.5rem;
 }
 
-/*
- * HAI DÒNG CÓ CHỦ Ý, không để chữ tự xuống dòng.
- *
- * Bản đầu xếp cả bốn phần trên một dòng ngang. Đo được: ba thẻ cao 64px
- * (chữ tự tràn xuống dòng hai) và một thẻ cao 41px (vừa đúng một dòng) —
- * bốn ô cùng loại mà cao thấp so le, và độ cao phụ thuộc vào việc tên
- * việc dài mấy chữ.
- *
- * Chia sẵn thành hai dòng thì mọi thẻ cao bằng nhau ở mọi bề rộng, và
- * dòng dưới ("6 ngày trước") vốn là thông tin phụ nên nằm dưới là đúng
- * thứ tự đọc.
- */
 .care-tally__item {
     display: grid;
     grid-template-columns: auto 1fr auto;
@@ -713,8 +604,6 @@
     font-size: 0.78rem;
 }
 
-/* ---------- Đánh giá ---------- */
-
 .rating-summary {
     display: flex;
     align-items: baseline;
@@ -751,8 +640,6 @@
     height: 0.8rem;
 }
 
-/* Năm ô radio chấm điểm — xem chú thích trong entry-form.blade.php về
-   lý do không dùng thanh trượt. */
 .rating-input {
     display: flex;
     flex-wrap: wrap;
@@ -793,11 +680,6 @@
     background: color-mix(in srgb, var(--brand-500) 12%, transparent);
 }
 
-/*
- * VIỀN TIÊU ĐIỂM cho mọi ô radio/checkbox đã giấu.
- * Giấu ô gốc mà quên viền này thì người dùng bàn phím mất dấu hoàn toàn:
- * họ Tab qua mà không thấy mình đang ở đâu.
- */
 .rating-input__option input:focus-visible + .rating-input__box,
 .care-picker__option input:focus-visible + .care-picker__box,
 .sticker-picker__option input:focus-visible + .sticker-picker__box,
@@ -811,8 +693,6 @@
     margin-top: 0.5rem;
     font-size: 0.9rem;
 }
-
-/* ---------- Được / chưa được ---------- */
 
 .findings {
     display: grid;
@@ -848,8 +728,6 @@
     font-size: 0.75rem;
     color: var(--text-muted);
 }
-
-/* ---------- Chọn việc đã chăm & nhãn dán ---------- */
 
 .care-picker {
     display: flex;
@@ -915,8 +793,6 @@
     text-align: center;
     color: var(--text-muted);
 }
-
-/* ---------- Chọn kiểu sổ & giao diện ---------- */
 
 .kind-picker {
     display: grid;
@@ -1011,16 +887,12 @@
     font-weight: 600;
 }
 
-/* Ô ghi thêm dính theo màn hình chỉ ở màn rộng — ở màn hẹp nó chiếm
-   nguyên chiều cao và che mất phần đang đọc. */
 @media (min-width: 992px) {
     .journal-compose {
         position: sticky;
         top: 1rem;
     }
 }
-
-/* ---------- Khối "sổ này hoạt động thế nào" ---------- */
 
 .journal-form-block {
     border: 1px solid var(--border-soft);
@@ -1044,8 +916,6 @@
     border-radius: 999px;
     font-size: 0.78rem;
 }
-
-/* ---------- Ảnh bìa sổ ---------- */
 
 .journal-book__cover {
     display: block;
@@ -1073,8 +943,6 @@
 .journal-cover-current__remove {
     font-size: 0.85rem;
 }
-
-/* ---------- Thẻ sổ mang giao diện của chính nó ---------- */
 
 .journal-card.journal-theme--paper,
 .journal-card.journal-theme--leaf,

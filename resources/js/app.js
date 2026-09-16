@@ -33,10 +33,6 @@ import { initAiChat } from './ai-chat';
 import { initCommunity } from './community';
 import { initVideoEmbed } from './components/video-embed';
 
-/*
- * Header đổi trạng thái khi cuộn — glass chỉ bật lúc cần (accent),
- * không phải trạng thái mặc định của navigation.
- */
 const header = document.querySelector('.site-header');
 
 if (header) {
@@ -48,17 +44,6 @@ if (header) {
     window.addEventListener('scroll', onScroll, { passive: true });
 }
 
-/*
- * MỘT HÀM KHỞI TẠO, GỌI LẠI ĐƯỢC.
- *
- * Trước đây đây là một dãy lời gọi trần. Điều hướng quản trị nay thay
- * ruột trang bằng JavaScript (xem admin/nav.js), nên phần nội dung mới
- * cần được khởi tạo lại — mà muốn gọi lại thì phải có tên để gọi.
- *
- * MỌI HÀM TRONG DANH SÁCH NÀY PHẢI GỌI LẠI ĐƯỢC NHIỀU LẦN. Cái nào gắn
- * sự kiện lên phần tử thì phải tự đánh dấu phần tử đã gắn — gọi hai lần
- * mà gắn hai lần thì một cú bấm chạy hai lượt.
- */
 export function bootUi() {
     initProductDetail();
     initHeroCarousel();
@@ -94,6 +79,4 @@ export function bootUi() {
 
 bootUi();
 
-// Điều hướng quản trị: khởi tạo SAU bootUi() và nhận chính nó làm tham
-// số, để mỗi lần thay ruột trang thì phần nội dung mới được dựng lại.
 initAdminNav(bootUi);

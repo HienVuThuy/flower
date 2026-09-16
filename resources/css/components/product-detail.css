@@ -1,9 +1,4 @@
-/*
- * PRODUCT DETAIL
- * ============================================================
- */
-
-/* ============ GALLERY ============ */
+/* PRODUCT DETAIL */
 
 .product-gallery__main {
     border-radius: var(--radius-lg);
@@ -67,8 +62,6 @@
     border-color: var(--brand-500);
 }
 
-/* ============ THÔNG TIN ============ */
-
 .product-info__eyebrow {
     font-size: var(--text-label);
     font-weight: 600;
@@ -94,8 +87,6 @@
 .product-info__price {
     margin-bottom: 0.75rem;
 }
-
-/* ============ VARIANT ============ */
 
 .variant-picker {
     display: flex;
@@ -142,8 +133,6 @@
     color: var(--ink-500);
     font-variant-numeric: tabular-nums;
 }
-
-/* ============ SỐ LƯỢNG ============ */
 
 .qty-control {
     display: inline-flex;
@@ -194,8 +183,6 @@
     margin: 0;
 }
 
-/* ============ CTA ============ */
-
 .product-actions {
     display: flex;
     flex-wrap: wrap;
@@ -229,8 +216,6 @@
     font-weight: 600;
     text-decoration: underline;
 }
-
-/* ============ CARE GUIDE ============ */
 
 .care-guide {
     display: grid;
@@ -266,8 +251,6 @@
     color: var(--ink-900);
 }
 
-/* ============ THÔNG SỐ ============ */
-
 .spec-list {
     display: grid;
     gap: 0.5rem;
@@ -291,8 +274,6 @@
     color: var(--ink-900);
 }
 
-/* ============ STICKY CTA (mobile) ============ */
-
 .product-sticky-cta {
     display: none;
 }
@@ -315,47 +296,14 @@
     }
 }
 
-/*
- * TÔ SÁNG QUY CÁCH ĐANG CHỌN — hai đường, một khối khai báo.
- * ============================================================
- * `.is-selected` do máy chủ dựng sẵn và do JavaScript dời đi khi khách
- * bấm. `:has(input:checked)` để CSS tự làm việc đó mà không cần
- * JavaScript nào — nhờ nó, hộp chọn quy cách dựng động (variant-dialog.js)
- * không phải chép lại logic tô sáng.
- *
- * Gộp vào MỘT khối khai báo chứ không viết hai lần: hai bản sao của
- * cùng một bộ màu thì sớm muộn sẽ lệch, và lúc đó hai chỗ trên trang
- * hiện hai kiểu "đang chọn" khác nhau.
- */
 .variant-option:has(input:checked) {
     border-color: var(--brand-500);
     background: var(--brand-50);
 }
 
-/*
- * HỘP CHỌN QUY CÁCH mở từ thẻ sản phẩm ở trang danh sách.
- * ============================================================
- * Xem resources/js/variant-dialog.js. Dùng <dialog> của trình duyệt chứ
- * không tự dựng lớp phủ: nó khoá tiêu điểm bàn phím bên trong, đóng
- * được bằng phím Esc, và chặn tương tác với phần nền — ba việc mà một
- * <div> tự chế phải viết tay và thường viết thiếu.
- */
 .variant-dialog {
     width: min(26rem, calc(100vw - 2rem));
 
-    /*
-     * CUỘN DỌC KHI CẦN, KHÔNG BAO GIỜ CUỘN NGANG.
-     *
-     * Mặc định <dialog> để overflow: auto cho cả hai chiều. Trên màn
-     * hình thấp — điện thoại nằm ngang, hoặc sản phẩm có bảy tám quy
-     * cách — nội dung vượt chiều cao, thanh cuộn dọc hiện ra và ăn mất
-     * 15px bề ngang, đủ để đẩy hàng nút tràn và sinh thêm một thanh
-     * cuộn NGANG. Hai thanh cuộn trong một hộp thoại nhỏ trông như giao
-     * diện bị vỡ.
-     *
-     * Chiều ngang không bao giờ cần cuộn: mọi thứ bên trong đều co giãn
-     * theo bề rộng hộp.
-     */
     max-height: min(85vh, calc(100% - 2rem));
     overflow-x: hidden;
     overflow-y: auto;
@@ -402,21 +350,10 @@
     gap: var(--space-2xs);
 }
 
-/* Hai nút chia đôi chiều ngang: không nút nào "chính" hơn nút kia —
-   khách đã quyết định mua, chỉ còn chọn đi tiếp bằng đường nào. */
 .variant-dialog__actions .btn {
     flex: 1 1 0;
 }
 
-
-/* ============================================================
-   VIDEO SẢN PHẨM
-   ============================================================
-   Nút "xem video" là một LIÊN KẾT thật tới trang gốc; JavaScript chỉ thay nó
-   bằng trình phát khi khách bấm (xem components/product/videos.blade.php).
-   Nhờ vậy trang không kéo theo ~1MB JavaScript của YouTube cho người chỉ lướt
-   qua, và người tắt JavaScript vẫn xem được video.
-   ============================================================ */
 
 .product-videos__list {
     display: grid;
@@ -457,8 +394,6 @@
     color: var(--ink-500);
 }
 
-/* Khung 16:9 cho cả trình phát nhúng lẫn tệp MP4: không đặt tỉ lệ thì trang
-   nhảy một nhịp đúng lúc video hiện ra. */
 .product-video--playing,
 .product-video__file {
     display: block;
@@ -481,8 +416,6 @@
 }
 
 
-/* ============ KHỐI MÔ TẢ CHI TIẾT ============ */
-
 .product-blocks__text + .product-blocks__figure,
 .product-blocks__figure + .product-blocks__text {
     margin-top: var(--space-md);
@@ -504,7 +437,6 @@
     color: var(--ink-500);
 }
 
-/* ---------- Bằng chứng mua hàng: đánh giá + đã bán (số liệu thật) ---------- */
 .product-info__proof {
     display: flex;
     flex-wrap: wrap;
@@ -518,7 +450,6 @@
     color: var(--ink-500);
 }
 
-/* Nhãn "Phổ biến nhất" trên quy cách bán chạy thật. */
 .variant-option__tag {
     display: inline-block;
     margin-top: 2px;

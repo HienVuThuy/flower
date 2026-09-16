@@ -101,7 +101,6 @@
                     Loại sản phẩm
                 </span>
 
-                {{-- Trước đây in giá trị thô ('plant'), không phải nhãn tiếng Việt. --}}
                 <div class="fw-semibold">
                     {{ $product->product_type?->label() ?? '—' }}
                 </div>
@@ -114,7 +113,6 @@
                     Hình thức bán
                 </span>
 
-                {{-- Trước đây in giá trị thô ('bouquet'), không phải nhãn tiếng Việt. --}}
                 <div class="fw-semibold">
                     {{ $product->selling_form?->label() ?? '—' }}
                 </div>
@@ -373,14 +371,6 @@
 </div>
 
 
-{{--
-    ============================================================
-    BÁN HÀNG — thứ trang này trước đây không nói
-    ============================================================
-    Trước bản này, trang xem sản phẩm chỉ lặp lại những gì admin đã gõ vào.
-    Người mở nó ra thường đang hỏi: món này bán được không, có ai chê không,
-    còn hàng không. Đó là những câu chỉ trả lời được bằng dữ liệu bán hàng.
---}}
 <div class="row g-3 mt-1">
     <div class="col-6 col-lg-3">
         <x-admin.kpi label="Đã bán" note="Chỉ đơn đã giao.">
@@ -400,7 +390,6 @@
                      :href="$product->so_danh_gia > 0 ? route('admin.reviews.index', ['q' => $product->name]) : null"
                      :note="$product->so_danh_gia . ' bài · ' . number_format($product->view_count) . ' lượt xem trang'">
             @if($product->so_danh_gia === 0)
-                {{-- null khác 0 sao: chưa ai đánh giá thì không có điểm nào. --}}
                 <span class="admin-page-subtitle">chưa có</span>
             @else
                 {{ number_format((float) $product->diem_trung_binh, 2, ',', '.') }} / 5
@@ -423,7 +412,6 @@
     </p>
 @endif
 
-{{-- ============ THƯ VIỆN: ẢNH VÀ VIDEO ============ --}}
 <div class="admin-panel p-4 mt-4">
 
     <h2 class="h5 fw-bold mb-1">Thư viện</h2>
@@ -459,7 +447,6 @@
 
 </div>
 
-{{-- ============ KHỐI MÔ TẢ CHI TIẾT ============ --}}
 @if($product->blocks->isNotEmpty())
     <div class="admin-panel p-4 mt-4">
         <h2 class="h5 fw-bold mb-1">Mô tả chi tiết theo khối</h2>
@@ -481,7 +468,6 @@
     </div>
 @endif
 
-{{-- ============ SEO VÀ ĐƯỜNG DẪN ============ --}}
 <div class="admin-panel p-4 mt-4">
 
     <h2 class="h5 fw-bold mb-3">Đường dẫn và SEO</h2>

@@ -22,9 +22,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Quà tặng: quà kèm sản phẩm (luật riêng từng món), quà theo chương trình, quà trong giỏ và đơn.
- */
+/** Quà tặng: quà kèm sản phẩm (luật riêng từng món), quà theo chương trình, quà trong giỏ và đơn. */
 class QuaTangTest extends TestCase
 {
     use RefreshDatabase;
@@ -63,13 +61,11 @@ class QuaTangTest extends TestCase
         ], $ghiDeCt));
     }
 
-    /** @param list<array{0: Product, 1: ?ProductVariant, 2: int}> $dong */
     private function gio(array $dong): CheckoutBasket
     {
         return new CheckoutBasket(collect(array_map(fn ($d) => new CheckoutLine($d[0], $d[1], $d[2]), $dong)));
     }
 
-    /** @return list<string> "nguon-id:soLuong" */
     private function nhan(CheckoutBasket $gio, ?User $u = null): array
     {
         return app(GiftResolver::class)->choGio($gio, $u)
@@ -112,13 +108,10 @@ class QuaTangTest extends TestCase
         return $u;
     }
 
-    /** Dữ liệu tối thiểu hợp lệ cho biểu mẫu luật quà. */
     private function luatHopLe(array $ghiDe = []): array
     {
         return array_merge(['per_quantity' => 1, 'gift_quantity' => 1, 'khi_thieu_kho' => 'tang_phan_con', 'tra_hang' => 'kem_qua'], $ghiDe);
     }
-
-    /* ================= TÍNH QUÀ KÈM SẢN PHẨM ================= */
 
     #[Test]
     public function mua_moi_n_tang_m_va_toi_da_moi_don(): void
@@ -152,7 +145,6 @@ class QuaTangTest extends TestCase
             $this->nhan($this->gio([[$senDa, $nho, 2], [$senDa, $lon, 3]])),
         );
 
-        // Quà theo quy cách nằm dưới đúng dòng quy cách đó; quà mọi quy cách dưới dòng đầu tiên.
         $theoDong = app(GiftResolver::class)->theoDong($this->gio([[$senDa, $nho, 2], [$senDa, $lon, 3]]));
         $this->assertSame([$chiLon->id], array_map(fn ($d) => $d['product_gift']->id, $theoDong[GiftResolver::khoaDong($senDa->id, $lon->id)]));
         $this->assertSame([$moiQc->id], array_map(fn ($d) => $d['product_gift']->id, $theoDong[GiftResolver::khoaDong($senDa->id, $nho->id)]));
@@ -165,19 +157,15 @@ class QuaTangTest extends TestCase
         $tangPhanCon = $this->quaKem($senDa, $this->vat(['stock_quantity' => 2]));
         $doi = $this->quaKem($senDa, $this->vat(['name' => 'Bộ quà đôi', 'stock_quantity' => 2]), ['khi_thieu_kho' => 'khong_tang']);
 
-        // Cần 5, còn 2: món "tặng phần còn lại" tặng 2; món "không tặng" thì bỏ.
         $this->assertSame(['san_pham-' . $tangPhanCon->id . ':2'], $this->nhan($this->gio([[$senDa, null, 5]])));
 
         $tangPhanCon->giftItem->update(['stock_quantity' => 0]);
         $this->assertSame([], $this->nhan($this->gio([[$senDa, null, 5]])));
 
-        // Tắt một dòng thì chỉ dòng đó thôi tặng; bộ quà đôi cần 1, còn 2 → vẫn tặng.
         $tangPhanCon->giftItem->update(['stock_quantity' => 9]);
         $tangPhanCon->update(['is_active' => false]);
         $this->assertSame(['san_pham-' . $doi->id . ':1'], $this->nhan($this->gio([[$senDa, null, 1]])));
     }
-
-    /* ================= GIỎ HÀNG ================= */
 
     #[Test]
     public function gio_hang_hien_qua_duoi_mon_va_tu_tinh_lai_khi_doi_so_luong_hay_xoa(): void
@@ -193,12 +181,6 @@ class QuaTangTest extends TestCase
             ->assertSee('data-qua-dong="' . $dong->id . '"', false)
             ->assertSee('<span data-so-qua>3</span>', false);
 
-        /*
-         * KIỂM ĐÚNG KHỐI GIỎ MÀ YÊU CẦU CẬP NHẬT TRẢ VỀ — đường cart-live.js dùng
-         * để thay khối giỏ ngay sau khi khách đổi số lượng. (Mở lại trang bằng
-         * GET trong CÙNG bài kiểm thử đọc giỏ CartService đã nạp ở lần trước —
-         * hiện tượng của môi trường kiểm thử, máy chủ thật mỗi yêu cầu một tiến trình.)
-         */
         $sauKhiSua = $this->patchJson(route('shop.cart.update', $dong), ['quantity' => 1])->assertOk()->json('html');
         $this->assertSame(1, $dong->fresh()->quantity);
         $this->assertStringContainsString('<span data-so-qua>1</span>', $sauKhiSua);
@@ -207,8 +189,6 @@ class QuaTangTest extends TestCase
         $sauKhiXoa = $this->deleteJson(route('shop.cart.destroy', $dong))->assertOk()->json('html');
         $this->assertStringNotContainsString('data-qua-dong', (string) $sauKhiXoa);
     }
-
-    /* ================= ĐƠN HÀNG ================= */
 
     #[Test]
     public function dat_hang_qua_duoi_mon_0d_chup_sku_tru_kho_huy_don_tra_kho(): void
@@ -262,8 +242,6 @@ class QuaTangTest extends TestCase
 
         $this->get(route('shop.products.show', $this->sp()))->assertDontSee('data-qua-san-pham', false);
     }
-
-    /* ================= QUÀ THEO CHƯƠNG TRÌNH ================= */
 
     #[Test]
     public function chuong_trinh_don_toi_thieu_va_hang_thanh_vien(): void
@@ -370,8 +348,6 @@ class QuaTangTest extends TestCase
         $this->assertSame(10, $ct->giftItem->fresh()->stock_quantity);
     }
 
-    /* ================= QUẢN TRỊ ================= */
-
     #[Test]
     public function trang_quan_tri_them_quà_dung_truoc_danh_sach_va_trong_thi_nhe_nhang(): void
     {
@@ -394,12 +370,10 @@ class QuaTangTest extends TestCase
         $khac = $this->sp();
         $qcKhac = $this->quyCach($khac, 'Của sản phẩm khác');
 
-        // Quy cách của MÓN QUÀ thuộc sản phẩm khác.
         $this->post(route('admin.product-gifts.store', $senDa), $this->luatHopLe([
             'nguon' => 'san_pham', 'gift_product_id' => $phanBon->id, 'gift_variant_id' => $qcKhac->id,
         ]))->assertSessionHasErrors('gift_variant_id');
 
-        // Quy cách KÍCH HOẠT thuộc sản phẩm khác.
         $this->post(route('admin.product-gifts.store', $senDa), $this->luatHopLe([
             'nguon' => 'san_pham', 'gift_product_id' => $phanBon->id, 'trigger_variant_id' => $qcKhac->id,
         ]))->assertSessionHasErrors('trigger_variant_id');
@@ -417,19 +391,16 @@ class QuaTangTest extends TestCase
 
         $this->post(route('admin.product-gifts.store', $senDa), $this->luatHopLe(['nguon' => 'san_pham', 'gift_product_id' => $phanBon->id]))
             ->assertSessionHasNoErrors();
-        // Thêm lại đúng quà đó cho mọi quy cách: cập nhật, không nhân đôi.
         $this->post(route('admin.product-gifts.store', $senDa), $this->luatHopLe(['nguon' => 'san_pham', 'gift_product_id' => $phanBon->id, 'gift_quantity' => 2]));
         $this->assertSame(1, ProductGift::count());
         $this->assertSame(2, ProductGift::sole()->gift_quantity);
 
-        // Cùng quà nhưng cho riêng quy cách 18cm: là cấu hình khác.
         $this->post(route('admin.product-gifts.store', $senDa), $this->luatHopLe(['nguon' => 'san_pham', 'gift_product_id' => $phanBon->id, 'trigger_variant_id' => $lon->id]))
             ->assertSessionHasNoErrors();
         $this->assertSame(2, ProductGift::count());
 
         $pg = ProductGift::whereNull('product_variant_id')->sole();
 
-        // Sửa MỌI luật; bỏ tích "đang tặng" và "cho đổi".
         $this->put(route('admin.product-gifts.update', [$senDa, $pg]), [
             'per_quantity' => 2, 'gift_quantity' => 1, 'max_quantity' => 3,
             'khi_thieu_kho' => 'khong_tang', 'tra_hang' => 'khong_thu_hoi', 'cho_doi_hang' => '1',
@@ -442,11 +413,9 @@ class QuaTangTest extends TestCase
         $this->assertTrue($pg->cho_doi_hang);
         $this->assertFalse($pg->is_active);
 
-        // Đổi sang quy cách đã có dòng khác cho cùng quà: chặn, không tạo trùng.
         $this->put(route('admin.product-gifts.update', [$senDa, $pg]), $this->luatHopLe(['trigger_variant_id' => $lon->id]))
             ->assertSessionHasErrors('trigger_variant_id');
 
-        // Quà của sản phẩm khác không sửa được qua đường dẫn sản phẩm này.
         $this->put(route('admin.product-gifts.update', [$phanBon, $pg]), $this->luatHopLe())->assertNotFound();
 
         $this->delete(route('admin.product-gifts.destroy', [$senDa, $pg]))->assertRedirect();

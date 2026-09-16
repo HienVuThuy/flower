@@ -14,12 +14,6 @@
 @endphp
 
 @unless($loi['co_phieu_nhap_co_gia'])
-    {{--
-        CHƯA CÓ GIÁ VỐN NÀO THÌ NÓI THẲNG, VÀ NÓI CÁCH CÓ.
-
-        In "lãi gộp 0₫, biên —" mà không giải thích thì người đọc tưởng cửa
-        hàng bán hoà vốn.
-    --}}
     <div class="alert alert-warning">
         <strong>Chưa tính được lãi.</strong>
         Chưa có phiếu nhập kho nào đã ghi sổ mà có điền giá vốn, nên hệ thống không biết cửa hàng đã mua hàng với giá bao nhiêu.
@@ -129,7 +123,6 @@
                             <span>
                                 {{ $d['ten'] }} <span class="text-muted">× {{ $d['so_luong'] }}</span>
                                 @if($d['khong_theo_doi'] ?? false)
-                                    {{-- Không có đường nhập kho cho món này — chỉ đúng chỗ phải sửa. --}}
                                     <span class="d-block text-muted" data-khong-theo-doi>
                                         Đang tắt theo dõi tồn kho nên chưa lập phiếu nhập được —
                                         <a data-admin-link href="{{ route('admin.products.edit', $d['product_id']) }}">bật ở trang sản phẩm</a>.
@@ -143,13 +136,6 @@
             @endif
         </div>
 
-        {{--
-            CHI PHÍ CÓ SỐ LIỆU — ĐỨNG CẠNH, KHÔNG TRỪ VÀO.
-
-            Trừ hai khoản này rồi gọi kết quả là "lãi ròng" là bỏ qua mặt bằng,
-            nhân công, phí cổng thanh toán — những khoản hệ thống không có số.
-            Con số đó trông như lãi ròng mà không phải.
-        --}}
         <div class="admin-panel p-4">
             <h3 class="h6 fw-bold mb-1">Chi phí khác có số liệu</h3>
             <p class="admin-page-subtitle small">Hiện ra để đối chiếu, <strong>không</strong> trừ vào lãi gộp.</p>
@@ -169,9 +155,6 @@
                         @endif
                     </dd>
                 </div>
-                {{-- Lương, mặt bằng, server… — chỉ có số khi đã ghi ở Sổ thu chi. Chưa ghi khoản
-                     nào thì nói "chưa ghi", không in 0đ: 0đ nghĩa là cửa hàng không tốn gì. --}}
-                {{-- Quà tặng là hàng thật đi ra kèm đơn, doanh thu 0 — không nằm trong bảng lãi theo sản phẩm. --}}
                 <div data-dong="chi-phi-qua">
                     <dt>Giá vốn quà tặng</dt>
                     <dd>
@@ -202,20 +185,6 @@
     </div>
 </div>
 
-{{--
-    ============================================================
-    HOA TƯƠI — TÍNH THEO LÔ, Ở MỨC KỲ
-    ============================================================
-    Đặt thành khối riêng, có chủ ý. Bảng lãi theo sản phẩm ở trên ghép
-    giá vốn vào TỪNG DÒNG ĐƠN; hoa không làm được thế, và không phải vì
-    hệ thống thiếu sót:
-
-        Không ai biết bó hoa bán hôm qua dùng cành của lô nào.
-
-    Gộp hai thứ vào một bảng là bịa ra một độ chính xác không có. Để hoa
-    nằm im trong phần "chưa có giá vốn" thì lại mất con số lãi của mảng
-    chiếm phần lớn doanh thu một cửa hàng hoa.
---}}
 <h2 class="admin-section-title mt-4">Hoa tươi — tính theo lô</h2>
 
 <div class="admin-panel p-4 mb-3">
@@ -242,9 +211,6 @@
         <div class="col-6 col-lg-3">
             <x-admin.kpi label="Lãi gộp hoa" note="Doanh thu hoa trừ tiền lô đã đóng.">
                 @if($hoa['lai_gop'] === null)
-                    {{-- null khác 0: chưa đóng lô nào thì KHÔNG CÓ lãi để nói.
-                         In ra "lãi = doanh thu" là câu sai hoàn toàn, và là câu
-                         dễ tin nhất vì trông như cửa hàng lãi 100%. --}}
                     <span class="admin-page-subtitle">chưa tính được</span>
                 @else
                     <x-site.money :amount="$hoa['lai_gop']" />
@@ -274,12 +240,6 @@
     @endif
 
     @if($hoa['lo_qua_han'] > 0)
-        {{--
-            NÓI RA CHIỀU SAI CỦA CON SỐ.
-
-            Quên đóng lô làm giá vốn thấp hơn sự thật và lãi cao hơn sự thật.
-            Sai theo hướng dễ chịu là hướng không ai tự đi tìm.
-        --}}
         <div class="alert alert-warning mt-3 mb-0">
             <strong>{{ $hoa['lo_qua_han'] }} lô mở quá lâu chưa đóng.</strong>
             Chừng nào chưa đóng, giá vốn hoa đang <em>thấp hơn</em> sự thật và lãi gộp hoa

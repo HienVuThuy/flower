@@ -67,11 +67,6 @@
 
                     </form>
 
-                    {{--
-                        KHÔNG điền sẵn số điện thoại vào ô này cho khách đã
-                        đăng nhập: họ có sẵn trang "Đơn hàng của tôi", còn
-                        trang này để tra đơn đặt bằng số của người khác.
-                    --}}
                     @auth
                         <p class="text-caption text-center mb-0 mt-3">
                             Bạn đang đăng nhập —
@@ -81,8 +76,6 @@
 
                 </div>
 
-                {{-- Bảo khách "gọi cho cửa hàng" mà không đưa số là một chỉ dẫn
-                     không làm theo được. Chưa có hotline thì đưa email. --}}
                 @php
                     $hotline = \App\Services\Shop\StoreProfile::hotline();
                     $emailCuaHang = \App\Services\Shop\StoreProfile::email();

@@ -7,7 +7,6 @@
 @section('content')
 
 @php
-    // Gọi một lần, dùng cho cả nhãn trên đầu bài lẫn khu bình luận bên dưới.
     $khoaBinhLuan = $post->khoaBinhLuan();
 @endphp
 
@@ -91,12 +90,10 @@
                 </details>
             </header>
 
-            {{-- Chữ người lạ gửi lên: luôn escape, cùng luật với bảng tin. --}}
             @if(trim((string) $post->body) !== '')
                 <p class="gc-bai__text">{{ $post->body }}</p>
             @endif
 
-            {{-- Trang một bài xem ĐỦ tệp, cỡ lớn, video có nút điều khiển. --}}
             @if($post->media->isNotEmpty())
                 <div class="media-full">
                     @foreach($post->media as $m)
@@ -120,7 +117,6 @@
             @endif
 
             @if($post->tuAn())
-                {{-- Bài chính chủ tạm ẩn: chỉ họ vào được đường này, nên nói thẳng. --}}
                 <p class="gc-bai__note" data-tu-an>
                     Bài này đang được bạn tạm ẩn nên không ai khác thấy.
                     Bấm menu ⋯ ở trên để đăng lại cho mọi người.
@@ -149,7 +145,6 @@
 
             @auth
                 @if($khoaBinhLuan)
-                    {{-- Bình luận cũ vẫn đọc được; chỉ không viết thêm được. --}}
                     <p class="text-caption mb-4" data-khong-binh-luan>
                         <x-site.icon name="lock" />
                         {{ auth()->id() === $post->user_id
@@ -169,7 +164,6 @@
                     </form>
                     <x-form-error name="body" />
                 @else
-                    {{-- Nói luật ngay tại chỗ, không để khách tìm ô bình luận không có. --}}
                     <p class="text-caption mb-4" data-khong-binh-luan>
                         Xác thực email của tài khoản để bình luận.
                         <a href="{{ route('verification.notice') }}">Gửi lại thư xác thực</a>.

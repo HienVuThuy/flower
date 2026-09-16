@@ -7,12 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Phiếu kiểm kê kho.
- *
- * `status`, `posted_at`, `created_by`, `created_by_name` KHÔNG nằm trong
- * $fillable: chỉ StockCountService ghi, đúng lúc việc tương ứng xảy ra.
- */
+/** Phiếu kiểm kê kho. */
 class StockCount extends Model
 {
     protected $fillable = [
@@ -54,7 +49,6 @@ class StockCount extends Model
         return $this->createdBy?->name ?? $this->created_by_name ?? 'Không rõ';
     }
 
-    /** Số dòng có lệch (đếm khác hệ thống). */
     public function soDongLech(): int
     {
         return $this->items->filter(fn (StockCountItem $i) => $i->chenhLech() !== 0)->count();

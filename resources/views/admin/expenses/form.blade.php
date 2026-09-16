@@ -42,7 +42,6 @@
                     </select>
                     <x-form-error name="category" />
 
-                    {{-- Nói ngay tại chỗ chọn những loại dễ ghi trùng với số hệ thống đã có. --}}
                     <ul class="form-text mb-0 ps-3">
                         @foreach(\App\Enums\ExpenseCategory::cases() as $loai)
                             @if($loai->hint() !== '')

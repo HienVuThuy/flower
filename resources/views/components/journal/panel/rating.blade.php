@@ -1,13 +1,6 @@
 @props(['journal'])
 
 @php
-    /*
-     * ĐIỂM ĐÁNH GIÁ — khối của sổ Phân tích.
-     *
-     * `ratingSummary()` trả null khi chưa chấm lần nào. Không hiện "0/5":
-     * đó là điểm tệ nhất có thể, còn sự thật là chưa chấm — hai chuyện
-     * khác hẳn nhau (cùng nguyên tắc với QĐ-127).
-     */
     $tk = $journal->ratingSummary();
 @endphp
 
@@ -22,7 +15,6 @@
             <span class="rating-summary__value">{{ number_format($tk['avg'], 1, ',', '.') }}</span>
             <span class="rating-summary__max">/ 5</span>
 
-            {{-- Sao vẽ bằng SVG có sẵn của hệ thống, không dùng emoji ★. --}}
             <span class="rating-summary__stars" role="img"
                   aria-label="Trung bình {{ number_format($tk['avg'], 1, ',', '.') }} trên 5">
                 @for($i = 1; $i <= 5; $i++)

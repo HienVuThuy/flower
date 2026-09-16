@@ -8,30 +8,6 @@
 <section class="hero-section">
     <div class="container-shop">
 
-        {{--
-            HERO LÀ MỘT CSS GRID RIÊNG, KHÔNG DÙNG .row/.col CỦA BOOTSTRAP.
-            ============================================================
-            LỖI ĐÃ SỬA — và đây là hậu quả đo được của việc trộn hai hệ
-            thống lưới:
-
-            `.hero-section__grid` đã là `display: grid` với
-            `grid-template-columns: 0.95fr 1.05fr` từ 992px trở lên. Bọc
-            thêm `.row` + `.col-lg-6` vào giữa thì mỗi cột Bootstrap trở
-            thành một GRID ITEM, và `width: 50%` của nó được tính trên
-            chiều rộng của LÀN grid chứ không phải của cả hàng.
-
-            Đo được ở khổ 1400px trước khi sửa:
-
-                khối chữ   269px  (max-width cho phép 494px)
-                ảnh        290px
-                chỗ trống giữa hai cột  360px
-
-            Tiêu đề bị ép xuống bốn dòng và cụm chữ nghiêng "gần hơn" bị
-            ngắt làm đôi giữa hai dòng.
-
-            Hai con TRỰC TIẾP của grid, đúng như CSS được viết ra để
-            dùng: `.hero-section__copy` và `.hero-section__visual`.
-        --}}
         <div class="hero-section__grid">
 
             <div class="hero-section__copy">
@@ -41,18 +17,6 @@
 
                 <h1 class="text-h1 hero-section__title">
                     Vẻ đẹp tự nhiên,
-                    {{--
-                        KHÔNG CHO NGẮT DÒNG GIỮA "gần hơn".
-
-                        Chữ nghiêng ở đây là một CỤM có nghĩa, không phải
-                        hai từ rời. Để nó vắt qua hai dòng thì mắt đọc
-                        thành "gần" ở cuối dòng này và "hơn" ở đầu dòng
-                        sau — nhấn mạnh bị vỡ làm đôi, và đó đúng là chỗ
-                        câu tiêu đề muốn nhấn.
-
-                        &nbsp; giữa hai từ là cách giữ chúng liền nhau mà
-                        vẫn cho phép xuống dòng TRƯỚC hoặc SAU cả cụm.
-                    --}}
                     <em>gần&nbsp;hơn</em> mỗi ngày
                 </h1>
 
@@ -72,17 +36,6 @@
                 </div>
             </div>
 
-            {{--
-                ẢNH HERO LUÂN PHIÊN theo theme đang bật.
-
-                `heroImages` do View Composer chia sẻ sẵn (xem
-                AppServiceProvider) — bộ ảnh đổi theo theme mùa vụ, và
-                admin thay được từng ảnh ở trang Cấu hình.
-
-                Ảnh ĐẦU TIÊN mang `is-active`: không có nó thì trước khi
-                JavaScript chạy, cả chồng ảnh cùng ẩn và khung hero trống
-                một nhịp.
-            --}}
             @if(!empty($heroImages))
                 <div class="hero-section__visual hero-carousel"
                      data-hero-carousel
@@ -92,9 +45,6 @@
                             src="{{ $image['url'] }}"
                             alt="{{ $image['alt'] }}"
                             class="hero-carousel__slide {{ $i === 0 ? 'is-active' : '' }}"
-                            {{-- Ảnh đầu tải ngay (nó nằm trong màn hình đầu
-                                 tiên), những ảnh sau để lazy — chúng chỉ hiện
-                                 sau 6 giây. --}}
                             loading="{{ $i === 0 ? 'eager' : 'lazy' }}"
                             @if($i === 0) fetchpriority="high" @endif
                         >
@@ -106,15 +56,6 @@
     </div>
 </section>
 
-{{-- ============ 2. MUA THEO NHU CẦU ============ --}}
-{{--
-    Đặt NGAY SAU hero, trước cả danh mục.
-
-    Danh mục là cách CỬA HÀNG xếp hàng ("Hoa cưới", "Cây để bàn"); nhu
-    cầu là cách KHÁCH nghĩ khi vừa vào ("tôi cần quà tặng", "tôi mới
-    trồng cây lần đầu"). Người chưa biết mình muốn gì thì câu hỏi thứ hai
-    dễ trả lời hơn nhiều.
---}}
 <section class="section-sm">
     <div class="container-shop">
 
@@ -144,7 +85,6 @@
     </div>
 </section>
 
-{{-- ============ 3. DANH MỤC NỔI BẬT ============ --}}
 <section class="section-sm">
     <div class="container-shop">
 
@@ -166,30 +106,12 @@
     </div>
 </section>
 
-{{-- ============ 4. HÀNG MỚI VỀ ============ --}}
-{{--
-    KHÔNG CÓ HÀNG MỚI THÌ ẨN HẲN CẢ KHỐI.
-
-    Trước đây khối này luôn hiện, và khi rỗng thì hiện "Chưa có sản phẩm
-    để hiển thị". Nhưng nó chỉ rỗng khi cửa hàng đã lâu không nhập hàng —
-    tức là đúng lúc KHÔNG nên chiếm một màn hình đầu trang để nói rằng
-    không có gì. Nhường chỗ cho khối gợi ý bên dưới thì khách được xem
-    thứ có ích hơn.
-
-    Khác với các khối khác trong trang: ở đó "rỗng" nghĩa là dữ liệu chưa
-    được dựng và màn hình trống là một lời nhắc cho người quản trị. Ở đây
-    "rỗng" là một sự thật bình thường về nhịp nhập hàng.
-
-    Ngưỡng ngày ở config/catalog.php.
---}}
 @if($featuredProducts->isNotEmpty())
 <section class="section-sm">
     <div class="container-shop">
 
         <div class="section-header">
             <div>
-                {{-- Bỏ nhãn nhỏ "Mới về": nó chép lại đúng tiêu đề ngay
-                     bên dưới, cùng lỗi lặp chữ đã dọn ở các trang khác. --}}
                 <h2 class="text-h2 section-header__title">Hàng mới về</h2>
             </div>
             <a href="{{ route('shop.products.index') }}" class="btn btn-ghost">Xem tất cả</a>
@@ -207,27 +129,12 @@
 </section>
 @endif
 
-{{--
-    ============ 5. GỢI Ý CÁ NHÂN HOÁ ============
-    Đặt NGAY SAU khối hàng mới về: khách vừa lướt qua một loạt sản phẩm
-    do cửa hàng chọn, đây là lúc hợp lý để đưa thứ hợp với riêng họ.
-    Component tự ẩn hoàn toàn khi không có gì để gợi ý.
---}}
 <x-product.recommendations
     :items="$recommendations"
     :personalized="$recommendationsArePersonal"
     ref="home"
 />
 
-{{-- ============ 6. ĐƯỢC YÊU THÍCH GẦN ĐÂY ============ --}}
-{{--
-    DỰNG TỪ BẢNG `wishlists` THẬT, xếp theo LẦN THÍCH MỚI NHẤT.
-
-    Chưa ai thích gì thì khối này KHÔNG hiện. Đây là chỗ dễ bịa nhất trên
-    cả trang chủ: rất dễ đổ đại vài sản phẩm vào cho đỡ trống, và khách
-    sẽ tin rằng chúng được yêu thích. Thà thiếu một khối còn hơn một khối
-    nói sai — xem HomeController::mostWished().
---}}
 @if($mostWished->isNotEmpty())
 <section class="section-sm">
     <div class="container-shop">
@@ -253,19 +160,12 @@
 </section>
 @endif
 
-{{-- ============ 7. BANNER KHUYẾN MẠI & SỰ KIỆN ============ --}}
-{{--
-    Component tự lo phần nội dung: nó gộp "Chương trình đang diễn ra" và
-    "Sự kiện & số lượng lớn" thành một khối luân phiên, và tự ẩn khi
-    không có chương trình nào.
---}}
 <section class="section-sm">
     <div class="container-shop">
         <x-site.banner-carousel />
     </div>
 </section>
 
-{{-- ============ 8. CÂU CHUYỆN CỬA HÀNG ============ --}}
 <section class="section-sm">
     <div class="container-shop">
         <div class="story-section">
@@ -302,12 +202,6 @@
     </div>
 </section>
 
-{{-- ============ 9. CAM KẾT DỊCH VỤ ============ --}}
-{{--
-    Danh sách do admin tự nhập ở trang Cấu hình. Chưa nhập gì thì
-    component không in ra gì cả — cố ý không cài sẵn câu mẫu nào, vì chỉ
-    chủ cửa hàng mới biết mình làm được gì.
---}}
 <section class="section-sm">
     <div class="container-shop">
         <x-site.commitments />

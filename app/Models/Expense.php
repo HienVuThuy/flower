@@ -6,12 +6,7 @@ use App\Enums\ExpenseCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Một khoản chi phí vận hành. Xem migration create_expenses_table.
- *
- * `created_by`, `created_by_name` KHÔNG nằm trong $fillable: người ghi là
- * người đang đăng nhập, không phải thứ biểu mẫu gửi lên.
- */
+/** Một khoản chi phí vận hành. */
 class Expense extends Model
 {
     protected $fillable = [

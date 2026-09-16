@@ -21,11 +21,6 @@
         </div>
 
         @forelse($thongBao as $tb)
-            {{--
-                CẢ DÒNG LÀ MỘT LIÊN KẾT: bấm vào là đánh dấu đã đọc rồi đi tới
-                đúng bài / bình luận. Thông báo mà bấm vào không dẫn đi đâu thì
-                khách phải tự đi tìm, và cái chấm "chưa đọc" nằm lại mãi.
-            --}}
             <a href="{{ route('shop.notifications.open', $tb->id) }}"
                class="thong-bao {{ $tb->daDoc() ? '' : 'thong-bao--moi' }}"
                data-thong-bao="{{ $tb->id }}">

@@ -7,10 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * Thứ được tặng: một sản phẩm đang có, hoặc một vật phẩm tặng riêng.
- * Xem migration create_gift_tables.
- */
+/** Thứ được tặng: một sản phẩm đang có, hoặc một vật phẩm tặng riêng. */
 class GiftItem extends Model
 {
     protected $fillable = [
@@ -53,12 +50,6 @@ class GiftItem extends Model
         return $this->product_id !== null;
     }
 
-    /**
-     * Số lượng còn tặng được; null = không giới hạn (sản phẩm tắt quản lý kho).
-     *
-     * Trỏ sản phẩm thì đọc ĐÚNG tồn kho của sản phẩm / quy cách — một món
-     * không có hai con số tồn.
-     */
     public function tonKhoCon(): ?int
     {
         if (! $this->laSanPham()) {

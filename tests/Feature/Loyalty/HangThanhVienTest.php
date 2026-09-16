@@ -16,9 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Hạng thành viên: theo chi tiêu hợp lệ (không theo điểm), cấu hình được, thưởng điểm theo hạng.
- */
+/** Hạng thành viên: theo chi tiêu hợp lệ (không theo điểm), cấu hình được, thưởng điểm theo hạng. */
 class HangThanhVienTest extends TestCase
 {
     use RefreshDatabase;
@@ -47,13 +45,13 @@ class HangThanhVienTest extends TestCase
     public function chi_tieu_hop_le_chi_don_da_giao_tru_ship_tru_hoan(): void
     {
         $u = User::factory()->create();
-        $a = $this->don($u, '1030000.00', '30000.00');          // 1.000.000 tiền hàng
-        $this->don($u, '800000.00');                             // 800.000
+        $a = $this->don($u, '1030000.00', '30000.00');
+        $this->don($u, '800000.00');
         $this->don($u, '5000000.00', '0.00', OrderStatus::Cancelled);
         $this->don($u, '5000000.00', '0.00', OrderStatus::Shipping);
         $this->hoan($a, '200000.00');
 
-        $this->don(User::factory()->create(), '9000000.00');     // của người khác
+        $this->don(User::factory()->create(), '9000000.00');
 
         $this->assertSame('1600000.00', app(QualifiedSpending::class)->cua($u));
     }
@@ -81,7 +79,6 @@ class HangThanhVienTest extends TestCase
         $this->assertMatchesRegularExpression('#Còn <strong>500\.000[^<]*</strong> nữa để lên hạng Lá#', $html);
         $this->assertMatchesRegularExpression('#data-hang-header[^>]*>.*?<strong>Mầm</strong>#s', $html);
 
-        // Tiêu điểm không làm tụt hạng — hạng không đọc sổ điểm.
         app(PointLedger::class)->tru($u, 999, \App\Enums\PointReason::DoiVoucher, 'thu');
         $this->assertSame('mam', app(MemberTierResolver::class)->cua($u)['hang']->code);
     }
@@ -90,12 +87,11 @@ class HangThanhVienTest extends TestCase
     public function don_duoc_giao_thuong_them_diem_theo_hang(): void
     {
         $u = User::factory()->create();
-        $this->don($u, '5000000.00');                            // đã ở hạng Hoa (+10%)
+        $this->don($u, '5000000.00');
 
         $moi = $this->don($u, '1000000.00', '0.00', OrderStatus::Shipping);
         app(OrderService::class)->changeStatus($moi->fresh(), OrderStatus::Completed);
 
-        // 100 điểm + 10% hạng Hoa.
         $this->assertSame(110, app(PointLedger::class)->soDu($u));
     }
 
@@ -120,7 +116,6 @@ class HangThanhVienTest extends TestCase
 
         $this->actingAs($admin)->put(route('admin.member-tiers.update'), $bo([0 => ['min_spend' => 100000]]))
             ->assertSessionHasErrors('hang');
-        // Lá và Hoa cùng ngưỡng 3 triệu.
         $this->actingAs($admin)->put(route('admin.member-tiers.update'), $bo([1 => ['min_spend' => 3000000], 2 => ['min_spend' => 3000000]]))
             ->assertSessionHasErrors('hang');
         $this->assertSame('5000000.00', (string) MemberTier::where('code', 'hoa')->value('min_spend'));

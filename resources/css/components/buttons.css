@@ -1,10 +1,4 @@
-/*
- * BUTTONS
- * ============================================================
- * Radius vừa phải (--radius-md) mặc định. Pill KHÔNG còn là radius
- * default của button — pill chỉ dành cho .tag/.badge/.status-chip
- * (xem badges.css). CTA có phân cấp: primary / secondary / ghost.
- */
+/* BUTTONS */
 
 .btn {
     font-weight: 600;
@@ -31,7 +25,6 @@
     font-size: 0.875rem;
 }
 
-/* Primary — CTA chính, tối đa 1 trên mỗi khu vực nội dung */
 .btn-primary-brand {
     background: var(--brand-500);
     border: 1px solid var(--brand-500);
@@ -46,7 +39,6 @@
     color: #fff;
 }
 
-/* Secondary — outline, dùng cho CTA phụ */
 .btn-secondary-brand {
     background: transparent;
     border: 1px solid var(--border-strong);
@@ -60,7 +52,6 @@
     color: var(--brand-700);
 }
 
-/* Ghost — không viền, dùng trong card/nav */
 .btn-ghost {
     background: transparent;
     border: 1px solid transparent;
@@ -73,7 +64,6 @@
     background: var(--brand-50);
 }
 
-/* Trên nền ảnh/artwork — kính mờ có chủ đích (accent, không mặc định) */
 .btn-on-media {
     background: var(--glass-bg);
     -webkit-backdrop-filter: blur(var(--glass-blur));
@@ -86,7 +76,6 @@
     background: var(--surface);
 }
 
-/* Icon button — chỉ cho hành động chức năng (search/menu/close) */
 .btn-icon {
     display: inline-flex;
     align-items: center;
@@ -106,9 +95,6 @@
     color: var(--brand-700);
 }
 
-/* Bootstrap semantic buttons — reskin qua biến cấp component, vì
-   Bootstrap hard-code giá trị vào --bs-btn-* thay vì tham chiếu
-   --bs-success trực tiếp (không remap được ở gốc). */
 .btn-outline-primary {
     --bs-btn-color: var(--brand-600);
     --bs-btn-border-color: var(--border-strong);

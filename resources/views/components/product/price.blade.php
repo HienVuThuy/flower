@@ -1,8 +1,6 @@
 @props(['product', 'size' => 'md'])
 
 @php
-    // Mọi nơi hiển thị giá đều đi qua đây, nên luật hiển thị
-    // (gạch giá gốc, nhãn %, "liên hệ báo giá") chỉ tồn tại một chỗ.
     $price = $product->price();
 
     $finalClass = $size === 'lg' ? 'text-price' : 'text-price-sm';

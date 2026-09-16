@@ -3,24 +3,12 @@
 @php
     $product = $item->product;
     $stock = $item->availableStock();
-    // Số lượng đang giữ vượt quá tồn kho: xảy ra khi admin giảm tồn kho
-    // sau lúc khách bỏ vào giỏ. Phải báo chứ không im lặng.
     $overStock = $stock !== null && $item->quantity > $stock;
 @endphp
 
 <div class="cart-line {{ $item->is_selected === false ? 'is-unselected' : '' }}">
 
-    {{--
-        Ô CHỌN — thuộc biểu mẫu `cart-select` nằm NGOÀI dòng này.
-
-        Dòng giỏ hàng đã có hai <form> riêng (sửa số lượng, xoá), mà HTML
-        không cho lồng form. Thuộc tính form="" gắn ô này vào biểu mẫu ở
-        ngoài — đúng cách đã dùng cho ô nhập mã giảm giá ở trang thanh
-        toán.
-
-        Không có JavaScript thì khách tích xong bấm nút "Cập nhật lựa
-        chọn"; có JavaScript thì tự gửi ngay khi tích.
-    --}}
+    {{-- Ô CHỌN — thuộc biểu mẫu `cart-select` nằm NGOÀI dòng này. --}}
     <div class="cart-line__pick">
         <input
             type="checkbox"
@@ -65,11 +53,6 @@
             </p>
         @endif
 
-        {{--
-            QUÀ KÈM — suy ra từ số lượng của chính dòng này (GiftResolver), không
-            phải món khách tự thêm: không có nút sửa hay xoá quà. Đổi số lượng
-            món là quà tự đổi theo.
-        --}}
         @if(! empty($qua))
             <ul class="cart-line__gifts list-unstyled mb-0" data-qua-dong="{{ $item->id }}">
                 @foreach($qua as $q)
@@ -83,11 +66,6 @@
 
     </div>
 
-    {{--
-        data-cart-form: cart-live.js gửi biểu mẫu này bằng fetch rồi thay
-        lại cả khối giỏ bằng HTML máy chủ vẽ. Không có JavaScript thì nó
-        vẫn là biểu mẫu POST bình thường và trang tải lại như trước.
-    --}}
     <form method="POST" action="{{ route('shop.cart.update', $item) }}" class="cart-line__qty" data-cart-form>
         @csrf
         @method('PATCH')

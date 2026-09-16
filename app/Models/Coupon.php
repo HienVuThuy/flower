@@ -10,13 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-/**
- * Mã giảm giá khách tự nhập.
- *
- * Dùng lại PromotionStatus cho cột status: vòng đời giống hệt
- * (nháp → hẹn lịch → đang chạy → tạm dừng → kết thúc), tạo thêm một
- * enum trùng ý nghĩa chỉ làm hệ thống rối.
- */
+/** Mã giảm giá khách tự nhập. */
 class Coupon extends Model
 {
     use HasFactory;
@@ -41,11 +35,6 @@ class Coupon extends Model
         'min_member_tier_id',
     ];
 
-    /*
-     * used_count nằm ngoài $fillable: chỉ được tăng bởi
-     * CouponService::redeem() khi đơn hàng tạo thành công.
-     */
-
     protected function casts(): array
     {
         return [
@@ -64,26 +53,11 @@ class Coupon extends Model
         ];
     }
 
-    /**
-     * Chương trình khuyến mại mà mã này thuộc về, nếu có.
-     *
-     * Mã "của sự kiện" chỉ hiện ở trang sự kiện đó. Mã không thuộc sự
-     * kiện nào (chào bạn mới, sinh nhật) trả về null và hiện ở trang
-     * Voucher chung.
-     */
     public function promotion(): BelongsTo
     {
         return $this->belongsTo(Promotion::class);
     }
 
-    /**
-     * Hình thức thanh toán được phép, dạng enum.
-     *
-     * Mảng RỖNG nghĩa là không giới hạn — cùng ý nghĩa với null. Gộp hai
-     * trường hợp lại ở đây để nơi gọi không phải nhớ phân biệt.
-     *
-     * @return list<PaymentMethod>
-     */
     public function allowedPaymentMethods(): array
     {
         if (! is_array($this->payment_methods) || $this->payment_methods === []) {
@@ -96,33 +70,13 @@ class Coupon extends Model
         )));
     }
 
-    /**
-     * Mã CÓ khai giới hạn hình thức thanh toán hay không.
-     *
-     * Hỏi trên DỮ LIỆU THÔ, không hỏi trên danh sách đã lọc — và đây là
-     * cả lý do hàm này tồn tại.
-     *
-     * LỖI ĐÃ SỬA: bản trước coi "danh sách sau khi lọc rỗng" là "không
-     * có giới hạn nào". Hai thứ đó khác nhau. Một mã lưu
-     * `["bank_transfer"]` sau khi hình thức chuyển khoản bị gỡ khỏi hệ
-     * thống sẽ lọc ra mảng rỗng — và mã vốn CHỈ dành cho đơn trả trước
-     * bỗng áp dụng được cho MỌI đơn, kể cả COD. Nới lỏng một điều kiện
-     * về tiền, âm thầm, không lỗi, không cảnh báo.
-     *
-     * Nay: có khai giới hạn mà không giá trị nào còn hiệu lực thì mã
-     * KHÔNG dùng được với hình thức nào cả. Chặt hơn là hướng an toàn —
-     * cùng lắm là một mã không dùng được và có người báo; hướng kia là
-     * mất tiền mà không ai biết.
-     */
     public function hasPaymentRestriction(): bool
     {
         return is_array($this->payment_methods) && $this->payment_methods !== [];
     }
 
-    /** Mã này có dùng được với hình thức thanh toán đó không. */
     public function acceptsPayment(PaymentMethod $method): bool
     {
-        // Không khai giới hạn nào = chấp nhận tất cả.
         if (! $this->hasPaymentRestriction()) {
             return true;
         }
@@ -130,13 +84,11 @@ class Coupon extends Model
         return in_array($method, $this->allowedPaymentMethods(), true);
     }
 
-    /** Mã luôn lưu và so sánh ở dạng CHỮ HOA để khách gõ kiểu gì cũng khớp. */
     public function setCodeAttribute(string $value): void
     {
         $this->attributes['code'] = mb_strtoupper(trim($value));
     }
 
-    /** Đang trong thời gian hiệu lực và đang bật. */
     public function scopeUsableNow(Builder $query): Builder
     {
         return $query
@@ -163,7 +115,6 @@ class Coupon extends Model
         return $this->usage_limit !== null && $this->used_count >= $this->usage_limit;
     }
 
-    /** Số lượt còn lại, null nghĩa là không giới hạn. */
     public function remainingUses(): ?int
     {
         return $this->usage_limit === null
@@ -171,7 +122,6 @@ class Coupon extends Model
             : max(0, $this->usage_limit - $this->used_count);
     }
 
-    /** Mô tả điều kiện cho khách đọc. */
     public function conditionText(): string
     {
         $parts = [];
@@ -184,7 +134,6 @@ class Coupon extends Model
             $parts[] = 'Giảm tối đa ' . number_format((float) $this->max_discount_amount, 0, ',', '.') . 'đ';
         }
 
-        // Nói điều kiện hạng ngay trên thẻ mã — khách không phải bấm áp mới biết mình không đủ hạng.
         if ($this->min_member_tier_id !== null && ($hang = MemberTier::find($this->min_member_tier_id)) !== null) {
             $parts[] = 'Dành cho hạng ' . $hang->name . ' trở lên';
         }
@@ -192,13 +141,6 @@ class Coupon extends Model
         return $parts ? implode(' · ', $parts) : 'Không kèm điều kiện';
     }
 
-    /**
-     * Mô tả giới hạn lượt dùng của MỘT khách, cho giao diện đọc.
-     *
-     * Tách khỏi conditionText() vì hai câu trả lời hai câu hỏi khác nhau:
-     * conditionText nói về ĐƠN HÀNG (tối thiểu bao nhiêu, giảm tối đa
-     * bao nhiêu), câu này nói về NGƯỜI DÙNG.
-     */
     public function perUserText(): ?string
     {
         return match ($this->per_user_limit) {

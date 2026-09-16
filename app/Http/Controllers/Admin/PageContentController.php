@@ -10,19 +10,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/**
- * Sửa nội dung các trang giới thiệu / chính sách.
- * ============================================================
- * Ô SOẠN ĐIỀN SẴN NỘI DUNG ĐANG HIỆN — bản đã sửa, hoặc bản viết sẵn nếu
- * chưa sửa. Sửa một câu thì sửa đúng câu đó, không phải chép lại cả trang.
- *
- * LƯU Y NGUYÊN BẢN VIẾT SẴN = KHÔNG LƯU GÌ. Bấm Lưu mà không đổi chữ nào
- * thì trang vẫn đi theo bản viết sẵn; nếu ghi chép đè vào cài đặt, lần sau
- * bản viết sẵn được cập nhật thì trang này đứng yên ở bản cũ mà không ai
- * biết vì sao. Xoá trắng ô cũng quay về bản viết sẵn.
- *
- * Định dạng và cách chống XSS: xem App\Services\Content\TrangNoiDung.
- */
+/** Sửa nội dung các trang giới thiệu / chính sách. */
 class PageContentController extends Controller
 {
     public const KHOA = 'trang_noi_dung.';
@@ -62,8 +50,6 @@ class PageContentController extends Controller
 
         $data = $request->validate($quyTac);
 
-        // Chỉ ghi đúng những khoá đã biết: ô gửi lên tuỳ tiện không tạo được
-        // khoá cài đặt lạ trong bảng `settings`.
         foreach ($slugs as $slug) {
             $giaTri = $this->noiDung->chuanHoa((string) ($data['noi_dung'][$slug] ?? ''));
             $giongBanGoc = $giaTri === $this->noiDung->banVietSan($slug);

@@ -10,12 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Quản lý chuyên mục Cẩm nang.
- * ============================================================
- * Trước đây ba chuyên mục đến từ dữ liệu mẫu và không có chỗ nào thêm
- * hay sửa.
- */
+/** Quản lý chuyên mục Cẩm nang. */
 class ChuyenMucCamNangTest extends TestCase
 {
     use RefreshDatabase;
@@ -60,7 +55,6 @@ class ChuyenMucCamNangTest extends TestCase
     #[Test]
     public function sua_chuyen_muc_giu_duoc_dia_chi_cua_chinh_no(): void
     {
-        // Luật "không trùng" phải bỏ qua chính bản ghi đang sửa.
         $cm = $this->cm('Chăm cây', 'cham-cay');
 
         $this->actingAs($this->nguoi())
@@ -79,10 +73,6 @@ class ChuyenMucCamNangTest extends TestCase
     #[Test]
     public function KHONG_xoa_chuyen_muc_con_bai_ke_ca_bai_da_xoa_mem(): void
     {
-        /*
-         * Khôi phục bài đã xoá mềm về sau là nó trỏ vào một chuyên mục
-         * không còn.
-         */
         $cm = $this->cm('Chăm cây', 'cham-cay');
         $bai = BlogPost::create([
             'title' => 'Tưới cây mùa hè',
@@ -140,13 +130,6 @@ class ChuyenMucCamNangTest extends TestCase
             'title' => 'Bài', 'slug' => 'bai', 'body' => '<p>x</p>', 'blog_category_id' => $coBai->id,
         ]);
 
-        /*
-         * TÌM ĐÚNG FORM XOÁ, không chỉ địa chỉ.
-         *
-         * Form SỬA của cùng chuyên mục trỏ tới đúng địa chỉ đó (PUT thay vì
-         * DELETE) — tìm mỗi `action="..."` thì chuỗi luôn có mặt, và bài
-         * này đỏ dù nút xoá đã ẩn đúng.
-         */
         $xoa = fn ($cm) => 'action="' . route('admin.blog-categories.destroy', $cm) . '" class="d-inline"';
 
         $this->actingAs($this->nguoi())

@@ -1,7 +1,4 @@
 @php
-    // Nội dung chiến dịch lấy TỪ DATABASE (bảng promotions), không
-    // hard-code theo theme nữa — sang mùa sau admin chỉ cần tạo
-    // chương trình mới, không phải sửa code.
     $promotion = app(\App\Services\Promotion\ActivePromotionProvider::class)->featured();
 @endphp
 

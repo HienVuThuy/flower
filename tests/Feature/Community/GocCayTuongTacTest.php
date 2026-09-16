@@ -13,9 +13,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Góc cây: thích, bình luận, trang một bài, và bài khoe cây trên trang sản phẩm.
- */
+/** Góc cây: thích, bình luận, trang một bài, và bài khoe cây trên trang sản phẩm. */
 class GocCayTuongTacTest extends TestCase
 {
     use RefreshDatabase;
@@ -87,12 +85,10 @@ class GocCayTuongTacTest extends TestCase
         $this->actingAs($b)->post(route('shop.community.like', $p->id));
         $this->assertSame(2, $this->soDu($tacGia));
 
-        // Bỏ thích rồi thích lại: không cộng lần hai.
         $this->actingAs($b)->post(route('shop.community.like', $p->id));
         $this->actingAs($b)->post(route('shop.community.like', $p->id));
         $this->assertSame(2, $this->soDu($tacGia));
 
-        // Tự thích và người chưa xác thực email: không cộng.
         $this->actingAs($tacGia)->post(route('shop.community.like', $p->id));
         $chuaXacThuc = User::factory()->unverified()->create();
         app(\App\Services\Community\CommunityInteraction::class)->doiThich($chuaXacThuc, $p);
@@ -117,11 +113,6 @@ class GocCayTuongTacTest extends TestCase
     #[Test]
     public function moi_tai_khoan_da_xac_thuc_email_deu_binh_luan_duoc(): void
     {
-        /*
-         * LUẬT CŨ (chỉ khách đã nhận hàng) chặn đúng người cần hỏi nhất: người
-         * chưa mua, thấy cây đẹp và muốn hỏi cách chăm. Chống rác bằng cách
-         * khác: xác thực email, giới hạn tốc độ, báo cáo và ẩn bình luận.
-         */
         $p = $this->bai(User::factory()->create());
 
         $chuaXacThuc = User::factory()->unverified()->create();
@@ -158,10 +149,8 @@ class GocCayTuongTacTest extends TestCase
         $this->get(route('shop.community.index'))
             ->assertSee('data-so-binh-luan="' . $p->id . '"', false)
             ->assertSee('1 bình luận')
-            // Bình luận đã ẩn cũng không được lọt vào phần xem trước dưới bài ở bảng tin.
             ->assertDontSee('Liên hệ zalo');
 
-        // Khách thường không ẩn được bình luận của người khác.
         $this->actingAs($khach)->patch(route('admin.community.comments.toggle', $rac))->assertForbidden();
     }
 
@@ -195,7 +184,6 @@ class GocCayTuongTacTest extends TestCase
         $html = $this->get(route('shop.community.index'))->getContent();
         $this->assertLessThan(strpos($html, 'Bài nhiều lượt thích nhất'), strpos($html, 'Bài mới hơn mà ít thích'));
 
-        // Đường dẫn cũ ?sap-xep= vẫn chạy, và tab mới cũng vậy.
         foreach ([['sap-xep' => 'thich-nhieu'], ['tab' => 'thich-nhieu']] as $thamSo) {
             $html = $this->get(route('shop.community.index', $thamSo))->getContent();
             $this->assertLessThan(strpos($html, 'Bài mới hơn mà ít thích'), strpos($html, 'Bài nhiều lượt thích nhất'));

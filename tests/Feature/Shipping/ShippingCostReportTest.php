@@ -16,20 +16,7 @@ use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Cước ship: ai trả GHN, và cửa hàng bù bao nhiêu.
- * ============================================================
- * HAI NHÓM KIỂM THỬ, và nhóm đầu quan trọng hơn:
- *
- *   1. VẬN ĐƠN GỬI ĐI ĐÚNG. Bản đầu gửi GHN `payment_type_id = 2` —
- *      người nhận trả cước — trong khi khách đã trả phí ship cho cửa
- *      hàng. Shipper thu thêm của người nhận là thu hai lần.
- *
- *   2. BÁO CÁO KHÔNG BỊA. Chỉ tính vận đơn cửa hàng thật sự trả cước;
- *      "GHN không báo cước" là NULL chứ không phải 0₫.
- *
- * Dùng Http::fake(), không gọi GHN thật.
- */
+/** Cước ship: ai trả GHN, và cửa hàng bù bao nhiêu. */
 class ShippingCostReportTest extends TestCase
 {
     use RefreshDatabase;
@@ -52,12 +39,6 @@ class ShippingCostReportTest extends TestCase
         return $user;
     }
 
-    /**
-     * Một đơn đã có vận đơn, với phí thu, cước GHN và người trả cho trước.
-     *
-     * forceFill vì `status`, `created_at` và `ghn_fee_payer` cố ý nằm ngoài
-     * $fillable — đưa vào create() thì bị bỏ qua im lặng.
-     */
     private function vanDon(
         string $thu,
         ?int $tra,
@@ -98,8 +79,6 @@ class ShippingCostReportTest extends TestCase
         return app(AnalyticsService::class)->forPeriod($ky);
     }
 
-    /* ================= 1. VẬN ĐƠN GỬI ĐI ĐÚNG ================= */
-
     private function donChoTaoVanDon(): Order
     {
         $order = Order::create([
@@ -126,11 +105,6 @@ class ShippingCostReportTest extends TestCase
     #[Test]
     public function van_don_gui_GHN_voi_CUA_HANG_tra_cuoc(): void
     {
-        /*
-         * `grand_total` đã gồm phí ship khách trả cho cửa hàng, và shipper
-         * thu hộ đúng `grand_total`. Để GHN thu cước của người nhận nữa
-         * (payment_type_id = 2) là khách trả phí ship HAI LẦN.
-         */
         Http::fake([
             '*/v2/shipping-order/create' => Http::response([
                 'code' => 200,
@@ -163,28 +137,18 @@ class ShippingCostReportTest extends TestCase
         ]);
 
         $order = $this->donChoTaoVanDon();
-        $order->forceFill(['ghn_total_fee' => 64900])->save(); // báo giá lúc đặt
+        $order->forceFill(['ghn_total_fee' => 64900])->save();
 
         app(GHNOrderService::class)->create($order);
 
-        /*
-         * NULL, và ĐÈ LÊN báo giá lúc đặt. Báo giá cũ không phải cước của
-         * vận đơn này; giữ lại là để một con số đoán trông như số liệu
-         * thật trong báo cáo.
-         */
         $this->assertNull($order->refresh()->ghn_total_fee);
     }
-
-    /* ================= 2. BÁO CÁO KHÔNG BỊA ================= */
 
     #[Test]
     public function cong_dung_tung_dong_thu_tra_va_chenh(): void
     {
-        // Đơn miễn phí giao: thu 0, trả 42.900 → bù 42.900.
         $this->vanDon('0.00', 42900);
-        // Tỉnh xa: thu 50.000, trả 64.900 → bù 14.900.
         $this->vanDon('50000.00', 64900);
-        // Thu dư: thu 35.000, trả 30.000 → -5.000.
         $this->vanDon('35000.00', 30000);
 
         $r = $this->bao()->shippingCost();
@@ -199,10 +163,6 @@ class ShippingCostReportTest extends TestCase
     #[Test]
     public function van_don_NGUOI_NHAN_tra_cuoc_khong_tinh_vao_khoan_bu(): void
     {
-        /*
-         * Với vận đơn người nhận trả, cửa hàng không trả GHN đồng nào. Tính
-         * nó vào là bịa ra một khoản chi 64.900₫ không có thật.
-         */
         $this->vanDon('50000.00', 64900, GhnFeePayer::Buyer);
 
         $r = $this->bao()->shippingCost();
@@ -227,10 +187,6 @@ class ShippingCostReportTest extends TestCase
     #[Test]
     public function thieu_so_lieu_cuoc_KHONG_bi_coi_la_0d(): void
     {
-        /*
-         * Coi NULL là 0 thì đơn này thành "thu 25.000, trả 0" — cửa hàng
-         * lãi 25.000₫ tiền ship, và khoản bù của cả tháng bị kéo xuống.
-         */
         $this->vanDon('50000.00', 64900);
         $this->vanDon('25000.00', null);
 
@@ -254,11 +210,6 @@ class ShippingCostReportTest extends TestCase
     #[Test]
     public function bang_thang_cong_lai_dung_bang_tong(): void
     {
-        /*
-         * Tổng và bảng tháng dùng CHUNG một điều kiện lọc. Bài này bắt
-         * trường hợp một bên quên loại vận đơn huỷ hay người nhận trả:
-         * hai con số vẫn hiện bình thường, chỉ là không cộng lại khớp.
-         */
         $this->vanDon('0.00', 42900, ngayTruoc: 2);
         $this->vanDon('50000.00', 64900, ngayTruoc: 40);
         $this->vanDon('25000.00', 30000, GhnFeePayer::Buyer, ngayTruoc: 5);
@@ -293,8 +244,6 @@ class ShippingCostReportTest extends TestCase
         $this->assertSame('42900.00', $ds->first()['chenh']);
     }
 
-    /* ================= 3. GIAO DIỆN NÓI ĐÚNG ================= */
-
     #[Test]
     public function trang_phan_tich_hien_khoan_bu_bang_chu(): void
     {
@@ -310,11 +259,6 @@ class ShippingCostReportTest extends TestCase
     #[Test]
     public function chi_co_van_don_nguoi_nhan_tra_thi_KHONG_in_bu_0d(): void
     {
-        /*
-         * "Thu 0₫ / trả 0₫ / bù 0₫" nói "cửa hàng không bù đồng nào" — một
-         * câu khác hẳn với "không có số liệu để biết". Đây đúng là tình
-         * trạng dữ liệu thật lúc sửa: 3 vận đơn, cả 3 người nhận trả.
-         */
         $this->vanDon('50000.00', 64900, GhnFeePayer::Buyer);
 
         $this->actingAs($this->admin())
@@ -363,11 +307,6 @@ class ShippingCostReportTest extends TestCase
     #[Test]
     public function tep_xuat_ghi_ca_so_van_don_bi_loai(): void
     {
-        /*
-         * Tệp xuất ra được mở ở chỗ không có giao diện giải thích. Không
-         * ghi phần bị loại vào tệp thì người đọc bảng tính tưởng tổng là
-         * của cả kỳ.
-         */
         $this->vanDon('0.00', 42900);
         $this->vanDon('25000.00', 30000, GhnFeePayer::Buyer);
 

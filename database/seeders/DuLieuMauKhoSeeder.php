@@ -35,47 +35,13 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Dữ liệu mẫu cho kho, thu mua, lô hoa, trả hàng, đổi hàng, hoàn tiền.
- * ============================================================
- * CHẠY BẰNG TAY, SAU KHI ĐÃ CÓ SẢN PHẨM VÀ ĐƠN HÀNG:
- *
- *     php artisan db:seed --class=DuLieuMauKhoSeeder
- *
- * Không nằm trong DatabaseSeeder: nó dựng chứng từ KHỚP VỚI đơn hàng đã
- * có, nên chạy trên cơ sở dữ liệu trống thì không có gì để khớp.
- *
- * ============================================================
- * VÌ SAO KHÔNG ĐƯỢC BỊA CON SỐ CỐ ĐỊNH.
- *
- * Đơn hàng cũ được tạo khi chưa có kho và chưa có nhà cung cấp. Nhét
- * thêm "nhập 50 cái" vào là trang Tồn kho, Lãi gộp, Thu mua nói ba câu
- * chuyện không khớp nhau. Nên mọi con số ở đây SUY RA từ dữ liệu đã có:
- *
- *   - TỒN KHO HIỆN TẠI GIỮ NGUYÊN. Tồn đầu kỳ tính ngược sao cho
- *         đầu kỳ + nhập − trả NCC − đã bán − hàng đổi gửi đi
- *                + hàng đổi nhận về bán lại được  =  tồn hiện tại
- *   - GIÁ VỐN HOA theo tháng bám doanh thu hoa thật của tháng đó
- *     (khoảng 44%), lô đóng trong đúng tháng hoa được bán.
- *   - ĐỔI HÀNG / HOÀN TIỀN gắn vào đơn đã giao có thật, lập trong hạn.
- *
- * ============================================================
- * ĐI QUA ĐÚNG CÁC SERVICE THẬT (ghi sổ, đóng lô, trả hàng, đổi hàng,
- * hoàn tiền), với đồng hồ đặt lùi về đúng ngày chứng từ — nên mọi ràng
- * buộc nghiệp vụ được kiểm y như khi nhân viên thao tác, và nhật ký ghi
- * đúng ngày. Tất cả trong MỘT transaction: lỗi giữa chừng thì không để
- * lại nửa bộ dữ liệu.
- *
- * Mọi bản ghi mẫu mang dấu "[dữ liệu mẫu]" trong ghi chú. Chạy lại thì
- * bỏ qua.
- */
+/** Dữ liệu mẫu cho kho, thu mua, lô hoa, trả hàng, đổi hàng, hoàn tiền. */
 class DuLieuMauKhoSeeder extends Seeder
 {
     public const DAU = '[dữ liệu mẫu]';
 
     public const EMAIL = 'anaorin229@gmail.com';
 
-    /** Từ khoá trong tên sản phẩm hoa → [loại hoa, đơn vị, giá mỗi đơn vị ở vựa]. */
     private const LOAI_HOA = [
         'đào' => ['Cành đào phai', 'canh', 400000],
         'cẩm tú cầu' => ['Cẩm tú cầu xanh', 'canh', 55000],
@@ -89,7 +55,6 @@ class DuLieuMauKhoSeeder extends Seeder
 
     private const LOAI_HOA_KHAC = ['Hoa phối tổng hợp', 'bo', 100000];
 
-    /** @var array<string, Supplier> */
     private array $ncc = [];
 
     public function run(): void
@@ -119,8 +84,6 @@ class DuLieuMauKhoSeeder extends Seeder
         }
     }
 
-    /* ================= KỊCH BẢN ================= */
-
     private function dung(string $homNay): void
     {
         $donDau = Order::min('created_at');
@@ -139,18 +102,13 @@ class DuLieuMauKhoSeeder extends Seeder
         $donVi = $this->donViKho();
         $daBan = $this->daBan($dauKy, $donVi);
 
-        // ---- 1. Đổi hàng: lập kế hoạch TRƯỚC, vì nó giới hạn số được nhập.
         [$doiHang, $guiDi, $nhanVe] = $this->keHoachDoiHang($donVi);
 
-        // ---- 2. Phiếu nhập và trả nhà cung cấp.
         [$phieuNhap, $tongNhap] = $this->keHoachNhap($donVi, $daBan, $nhanVe, $ngay);
         [$traNcc, $tongTra] = $this->keHoachTraNcc($phieuNhap);
 
-        // ---- 3. Tồn đầu kỳ (không cộng vào kho).
         $this->lapTonDauKy($donVi, $daBan, $tongNhap, $tongTra, $guiDi, $nhanVe, $dauKy);
 
-        // ---- 4. Đặt tồn về số trước khi có các chứng từ làm đổi tồn, rồi
-        //         cho các service thật cộng/trừ — cuối cùng về đúng số hiện tại.
         foreach ($donVi as $khoa => $u) {
             $truoc = $u['ton'] - ($tongNhap[$khoa] ?? 0) + ($tongTra[$khoa] ?? 0)
                 + ($guiDi[$khoa] ?? 0) - ($nhanVe[$khoa] ?? 0);
@@ -176,8 +134,6 @@ class DuLieuMauKhoSeeder extends Seeder
         ));
     }
 
-    /* ================= NHÀ CUNG CẤP ================= */
-
     private function taoNhaCungCap(): void
     {
         $ds = [
@@ -202,9 +158,6 @@ class DuLieuMauKhoSeeder extends Seeder
         }
     }
 
-    /* ================= KHO HÀNG ĐẾM ĐƯỢC ================= */
-
-    /** @return array<string, array<string, mixed>> khoá "productId:variantId" */
     private function donViKho(): array
     {
         $ra = [];
@@ -227,7 +180,6 @@ class DuLieuMauKhoSeeder extends Seeder
         return $ra;
     }
 
-    /** @return array<string, int> */
     private function daBan(string $dauKy, array $donVi): array
     {
         $ra = [];
@@ -266,7 +218,6 @@ class DuLieuMauKhoSeeder extends Seeder
         foreach ($donVi as $khoa => $u) {
             $coTheBan = $u['ton'] + ($daBan[$khoa] ?? 0);
 
-            // Không nhập quá tồn hiện tại (trừ phần hàng đổi nhận về): tồn đầu kỳ không được âm.
             $tran = max(0, $u['ton'] - ($nhanVe[$khoa] ?? 0));
 
             if ($u['loai'] === ProductType::Plant) {
@@ -316,7 +267,6 @@ class DuLieuMauKhoSeeder extends Seeder
         $tra = [];
         $tong = [];
 
-        // Vựa rẻ hơn mà có cây dập (không được đền); vật tư giao nhầm được hoàn tiền.
         foreach ([['vua', 4, 2, ReturnSettlement::KhongDuocGi], ['vattu', 5, 3, ReturnSettlement::HoanTien]] as [$ma, $toiThieu, $sl, $cach]) {
             if (! isset($phieuNhap[$ma])) {
                 continue;
@@ -443,9 +393,6 @@ class DuLieuMauKhoSeeder extends Seeder
         }
     }
 
-    /* ================= ĐỔI HÀNG, HOÀN TIỀN ================= */
-
-    /** Đơn đã giao, một món, món đó là hàng đếm được không có quy cách. */
     private function donDonGian(array $donVi): \Illuminate\Support\Collection
     {
         return Order::query()
@@ -473,7 +420,6 @@ class DuLieuMauKhoSeeder extends Seeder
         $guiDi = [];
         $nhanVe = [];
 
-        // Phiếu 1: hàng hỏng, gửi lại đúng món đó; món hỏng không bán lại.
         if ($don = $ung->get(0)) {
             $khoa = $don->items->first()->product_id . ':';
             $doi[] = ['don' => $don, 'ly_do' => ExchangeReason::HangHong, 'moi' => $khoa, 'ban_lai' => false,
@@ -481,7 +427,6 @@ class DuLieuMauKhoSeeder extends Seeder
             $guiDi[$khoa] = ($guiDi[$khoa] ?? 0) + 1;
         }
 
-        // Phiếu 2: khách đổi ý sang món đắt hơn; món cũ còn nguyên, bán lại được.
         if ($don = $ung->first(fn ($o) => $o->items->first()->product_id !== $ung->get(0)?->items->first()->product_id)) {
             $cu = $don->items->first();
             $khoaCu = $cu->product_id . ':';
@@ -531,7 +476,6 @@ class DuLieuMauKhoSeeder extends Seeder
         }
     }
 
-    /** @param list<int> $boQua đơn đã dùng cho đổi hàng */
     private function ghiHoanTien(array $boQua): void
     {
         $dv = app(RefundService::class);
@@ -544,7 +488,6 @@ class DuLieuMauKhoSeeder extends Seeder
             ->orderByDesc('completed_at')
             ->get();
 
-        // Hoa dập khi giao: hoàn một phần bằng tiền mặt.
         $donHoa = $daGiao
             ->filter(fn ($o) => $o->items->contains(fn ($i) => $i->product?->product_type === ProductType::Flower))
             ->sortByDesc(fn ($o) => (float) $o->subtotal)
@@ -561,7 +504,6 @@ class DuLieuMauKhoSeeder extends Seeder
             ]);
         }
 
-        // Giao trễ hẹn: hoàn phí giao bằng chuyển khoản.
         $donCay = $daGiao->first(fn ($o) => $o->id !== $donHoa?->id && (float) $o->shipping_fee > 0
             && $o->items->every(fn ($i) => $i->product?->product_type !== ProductType::Flower));
 
@@ -579,13 +521,10 @@ class DuLieuMauKhoSeeder extends Seeder
         }
     }
 
-    /* ================= HOA TƯƠI ================= */
-
     private function loHoa(string $dauKy, string $homNay): void
     {
         $dv = app(FlowerLotService::class);
 
-        // Doanh thu hoa đã giao, gom theo (tháng, loại hoa).
         $nhom = [];
 
         $dong = OrderItem::query()
@@ -627,7 +566,6 @@ class DuLieuMauKhoSeeder extends Seeder
 
                 $lo = $this->taoLo($kind, $ma, $mua, $sl, $g['loai'][1], $sl * $donGia);
 
-                // Một lô ở chợ phải trả lại vựa mà không được đền — để trang Thu mua có câu chuyện thật.
                 if ($ma === 'quangan' && ! $daTraMotLo && $sl - $hao >= 2) {
                     $this->lucDo(Carbon::parse($mua)->addDay()->toDateString(), '09:00');
                     app(SupplierReturnService::class)->traHangHoa($lo, [
@@ -644,7 +582,6 @@ class DuLieuMauKhoSeeder extends Seeder
             }
         }
 
-        // Lô đang dùng: một lô mới lấy, một lô mở quá lâu (quên đóng) — đúng như ngoài đời.
         $this->taoLo($this->kind(self::LOAI_HOA['hồng']), 'dalat', Carbon::parse($homNay)->subDays(3)->toDateString(), 4, 'bo', 4 * 170000);
         $this->taoLo($this->kind(self::LOAI_HOA['cúc']), 'quangan', Carbon::parse($homNay)->subDays(FlowerLotService::NGAY_NHAC_DONG + 2)->toDateString(), 3, 'bo', 3 * 79000);
     }
@@ -701,9 +638,6 @@ class DuLieuMauKhoSeeder extends Seeder
         return $lo;
     }
 
-    /* ================= ĐỒNG HỒ ================= */
-
-    /** Một giờ địa phương của một ngày, đổi về giờ lưu. */
     private function luc(string $ngay, string $gio): Carbon
     {
         return Carbon::parse($ngay . ' ' . $gio, Gio::mui())->setTimezone((string) config('app.timezone'));

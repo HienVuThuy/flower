@@ -1,15 +1,4 @@
-/*
- * ADMIN — visual language RIÊNG so với public site.
- * ============================================================
- * Không glass-card, không pill khắp nơi, không emoji. Đây là công
- * cụ vận hành: trung tính, rõ ràng, mật độ thông tin cao, dùng màu
- * có chủ đích.
- *
- * QUY TẮC: file này CHỈ được dùng token --admin-*. Tuyệt đối không
- * tham chiếu --brand-*, --accent-*, --surface*, --ink-* vì đó là các
- * token theme mùa vụ ghi đè — dùng chúng thì đổi theme cửa hàng sẽ
- * đổi luôn màu trang quản trị.
- */
+/* ADMIN — visual language RIÊNG so với public site. */
 
 .admin-shell {
     min-height: 100vh;
@@ -126,7 +115,6 @@
     padding: 0.1rem 0.45rem;
 }
 
-/* Panel — thay glass-card trong admin: đục, viền mảnh, không blur */
 .admin-panel {
     background: var(--admin-surface);
     border: 1px solid var(--admin-border);
@@ -145,7 +133,6 @@
     padding: var(--space-sm);
 }
 
-/* Table */
 .admin-table {
     width: 100%;
     font-size: 0.875rem;
@@ -208,7 +195,6 @@
     font-size: 0.9rem;
 }
 
-/* Theme picker cards trong Cài đặt */
 .theme-option-card {
     display: flex;
     flex-direction: column;
@@ -230,8 +216,6 @@
     border-radius: var(--radius-sm);
     margin-bottom: 0.5rem;
 }
-
-/* ============ NÚT MỞ MENU (chỉ có ở màn hẹp) ============ */
 
 .admin-nav-toggle {
     display: inline-flex;
@@ -257,12 +241,6 @@
 }
 
 @media (max-width: 991.98px) {
-    /*
-     * Sidebar thành ngăn kéo: mặc định đóng (Bootstrap .collapse), mở
-     * bằng nút trong topbar. Trước đây nó luôn hiện dạng khối tĩnh cao
-     * gần một màn hình, nên mọi trang quản trị trên điện thoại đều phải
-     * cuộn qua hết menu mới tới nội dung.
-     */
     .admin-sidebar {
         position: static;
         width: 100%;
@@ -275,17 +253,10 @@
         margin-left: 0;
     }
 
-    /*
-     * Bảng đã nằm trong .table-responsive của Bootstrap (tự cuộn ngang).
-     * Chỉ cần đặt bề rộng tối thiểu để các cột không bị bóp nát thành
-     * một cột chữ dựng đứng trên màn hẹp.
-     */
     .table-responsive > .admin-table {
         min-width: 44rem;
     }
 }
-
-/* ============ THƯ VIỆN ẢNH SẢN PHẨM ============ */
 
 .gallery-manager {
     display: grid;
@@ -330,8 +301,6 @@
     transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
-/* Khi tích chọn xoá: làm mờ ảnh và hiện nhãn, để admin thấy rõ
-   ảnh nào sắp bị xoá trước khi bấm lưu. */
 .gallery-manager__item:has(.gallery-manager__check:checked) {
     border-color: var(--admin-danger);
 }
@@ -344,11 +313,6 @@
     opacity: 1;
 }
 
-/* ============ NÚT HÀNH ĐỘNG TRONG ADMIN ============
- * .btn-primary-brand là nút của storefront, màu lấy từ --brand-*.
- * Trong khu quản trị nó phải theo accent riêng của admin, nếu không
- * một trang có hai hệ màu: sidebar xanh đá còn nút xanh lá.
- */
 .admin-main .btn-primary-brand {
     background: var(--admin-accent);
     border-color: var(--admin-accent);
@@ -362,10 +326,6 @@
     color: #fff;
 }
 
-/*
- * Dưới 576px topbar không đủ chỗ cho nhãn chữ: ẩn nhãn, giữ lại icon
- * và nút Đăng xuất. Trước đây nhãn đẩy nút ra ngoài mép màn hình.
- */
 @media (max-width: 575.98px) {
     .admin-topbar__label {
         display: none;
@@ -376,10 +336,6 @@
     }
 }
 
-/* ============ KHỐI THÔNG BÁO TRẠNG THÁI HỆ THỐNG ============
- * Dùng để nói rõ phần nào của hệ thống chưa chạy. Cố tình KHÔNG dùng
- * màu cảnh báo đỏ/vàng: đây không phải lỗi, chỉ là thông tin.
- */
 .admin-notice {
     border: 1px solid var(--admin-border);
     border-left: 3px solid var(--admin-accent);
@@ -400,8 +356,6 @@
     max-width: 68ch;
 }
 
-/* Nút phụ trong admin — thay cho .btn-outline-success của Bootstrap,
-   vốn dùng bảng màu riêng của Bootstrap chứ không theo token dự án. */
 .btn-outline-admin {
     border: 1px solid var(--admin-border);
     background: var(--admin-surface);
@@ -415,8 +369,6 @@
     background: var(--admin-accent-soft);
     color: var(--admin-accent-ink);
 }
-
-/* ============ TAB LỌC (danh sách đơn hàng) ============ */
 
 .admin-filter-tabs {
     display: flex;
@@ -449,7 +401,6 @@
     color: #fff;
 }
 
-/* Con số đếm nằm trong tab, nền mờ để không tranh với nhãn. */
 .admin-filter-tab__count {
     padding-inline: 0.4rem;
     border-radius: var(--radius-pill);
@@ -460,8 +411,6 @@
 .admin-filter-tab.is-active .admin-filter-tab__count {
     background: rgba(255, 255, 255, 0.22);
 }
-
-/* ============ DANH SÁCH THÔNG TIN CHI TIẾT ============ */
 
 .admin-detail-list > div {
     display: flex;
@@ -479,19 +428,6 @@
     font-weight: 400;
     color: var(--admin-ink-muted);
 
-    /*
-     * NHÃN RỘNG THEO CHỮ, TỐI ĐA 60% DÒNG; Ô GIÁ TRỊ LẤY PHẦN CÒN LẠI.
-     *
-     * Bản đầu đặt `flex-shrink: 0` cho nhãn. Với nhãn dài như "Trong đó
-     * thuế VAT (8%, đã gồm trong tổng)", nhãn giữ nguyên bề rộng và đẩy
-     * SỐ TIỀN THUẾ ra ngoài khung 127px — đo trên trang đơn thật, con số
-     * thuế không nhìn thấy được.
-     *
-     * Hai cách vá thử trước đều hỏng ở chỗ khác, ghi lại để khỏi thử lại:
-     *   - cho nhãn co đều: "Địa chỉ" gãy làm hai dòng cạnh địa chỉ dài;
-     *   - đặt sàn 7rem cho nhãn: nhãn "Email" cũng chiếm 112px, và email
-     *     dài tràn khung trên màn điện thoại.
-     */
     max-width: 60%;
 }
 
@@ -499,16 +435,8 @@
     margin: 0;
     text-align: right;
 
-    /*
-     * Bề rộng gốc 0, giãn lấp phần còn lại. Nhãn ngắn thì ô giá trị rộng
-     * gần hết dòng (địa chỉ xuống dòng trong đó, nhãn vẫn một dòng); nhãn
-     * dài thì dừng ở 60% và ô giá trị vẫn không bao giờ hẹp hơn chính nội
-     * dung không gãy được của nó — số tiền luôn nằm trọn trong khung.
-     */
     flex: 1 1 0;
 }
-
-/* ============ CON SỐ LỚN (doanh thu) ============ */
 
 .admin-stat-figure {
     font-size: clamp(1.75rem, 1.2rem + 2vw, 2.5rem);
@@ -516,8 +444,6 @@
     color: var(--admin-ink);
     margin-bottom: 0.25rem;
 }
-
-/* ============ DANH SÁCH NGẮN (đơn gần đây) ============ */
 
 .admin-list {
     display: flex;
@@ -542,28 +468,16 @@
     color: var(--admin-accent-ink);
 }
 
-/*
- * HAI CỘT, MỖI CỘT HAI TẦNG.
- *
- * Khối "Đơn gần đây" nằm trong cột hẹp (5/12 trên máy tính, trọn bề
- * ngang trên điện thoại). Bản đầu xếp bốn thứ trên một hàng: đo trên màn
- * 366px thì mã đơn gãy ba dòng ở dấu gạch, tên người nhận co về 0px, và
- * số tiền tràn 6-21px ra ngoài khung; trên màn 1280px mỗi dòng cao 74px.
- */
 .admin-list__main {
     display: flex;
     flex-direction: column;
 
-    /* Cột co giãn; không có min-width: 0 thì tên dài đẩy cột phải ra
-       ngoài khung thay vì bị cắt bằng dấu ba chấm. */
     flex: 1;
     min-width: 0;
 }
 
 .admin-list__main > span,
 .admin-list__side > span {
-    /* Hai tầng chữ là một khối thông tin, không phải hai đoạn văn: giãn
-       dòng 1.6 mặc định làm mỗi dòng đơn cao 73px. */
     line-height: 1.35;
 }
 
@@ -582,8 +496,6 @@
     white-space: nowrap;
 }
 
-/* ============ QUẢN LÝ ẢNH HERO THEO THEME ============ */
-
 .hero-manager {
     border: 1px solid var(--admin-border);
     border-radius: var(--radius-sm);
@@ -600,7 +512,6 @@
     list-style: none;
 }
 
-/* Bỏ tam giác mặc định của <details> ở WebKit để tự vẽ mũi tên bên dưới. */
 .hero-manager__summary::-webkit-details-marker {
     display: none;
 }
@@ -648,17 +559,6 @@
 }
 
 
-/*
- * CẢNH BÁO RỦI RO ĐƠN HÀNG
- * ============================================================
- * Màu cảnh báo (vàng) chứ KHÔNG phải màu nguy hiểm (đỏ).
- *
- * Đỏ trong hệ thống này nghĩa là "đã hỏng, phải sửa". Điểm rủi ro không
- * phải vậy — nó là "hãy nhìn kỹ trước khi làm". Dùng đỏ thì nhân viên
- * hoặc hoảng và từ chối oan khách thật, hoặc quen mắt rồi bỏ qua cả
- * những cảnh báo đỏ thật sự ở chỗ khác.
- */
-
 .risk-flag {
     display: inline-block;
     margin-inline-start: 0.35rem;
@@ -668,8 +568,6 @@
     color: #8a6316;
     font-size: 0.7rem;
     font-weight: 700;
-    /* cursor: help báo cho người dùng biết có thông tin khi rê chuột —
-       không có nó thì cái nhãn trông như một huy hiệu trang trí. */
     cursor: help;
 }
 
@@ -711,57 +609,15 @@
     line-height: 1.5;
 }
 
-/*
- * ============================================================
- * LỀ TRONG CỦA PANEL — sửa lỗi chữ dính sát viền
- * ============================================================
- * LỖI: `.admin-panel` vốn KHÔNG có padding. Lề trong do nơi gọi tự thêm
- * bằng tiện ích Bootstrap (`p-4`, `p-3`) hoặc bằng `.admin-panel__body`.
- *
- * Đếm được trong resources/views/admin: 35 chỗ có `p-*`, 1 chỗ dùng
- * `__body`, và **16 chỗ không có gì cả** — ở 16 chỗ đó chữ nằm sát viền.
- * Không phải ai cũng nhớ thêm một lớp mà tên panel không hề gợi ý.
- *
- * SỬA Ở PANEL, KHÔNG SỬA 16 TỆP: đặt lề trong làm MẶC ĐỊNH.
- *
- * KHÔNG cần loại trừ `p-*` bằng :not(): tiện ích khoảng cách của
- * Bootstrap khai kèm `!important` nên nó luôn thắng, dù admin.css nạp
- * sau. Bản đầu tôi viết chuỗi `:not(.p-1)...:not(.p-5)` cho "chắc" — và
- * chính chuỗi đó đẩy độ ưu tiên lên 0,6,0, cao hơn ngoại lệ `:has()`
- * bên dưới (0,2,0), nên panel chứa bảng vẫn ăn padding và lề bị CỘNG
- * ĐÔI: đo được 33px thay vì 16px.
- */
 .admin-panel {
     padding: var(--space-md);
 }
 
-/*
- * NGOẠI LỆ DUY NHẤT: panel tự chia `__header` / `__body`.
- *
- * Hai phần đó đã có lề riêng; để panel ngoài giữ lề nữa là cộng đôi.
- *
- * CỐ Ý KHÔNG có ngoại lệ cho panel chứa BẢNG.
- *
- * Bản trước tôi cho bảng chạm mép panel (padding: 0) để dải nền khi rê
- * chuột phủ trọn dòng. Nhưng phần lớn panel đó còn có một tiêu đề <h2>
- * đứng trước bảng — và tiêu đề ấy dính sát viền, đúng cái lỗi đang sửa.
- * Đo được: "Sản phẩm" cách viền 1px.
- *
- * Bảng nằm gọn trong lề panel thì mất chút "chạm mép", đổi lại MỌI thứ
- * trong panel — tiêu đề, mô tả, nút, bảng — đều thẳng hàng theo một lề
- * duy nhất. Không có trường hợp riêng nào để quên.
- */
 .admin-panel:has(> .admin-panel__header),
 .admin-panel:has(> .admin-panel__body) {
     padding: 0;
 }
 
-/*
- * Ô đầu và ô cuối của bảng KHÔNG cộng thêm lề nữa.
- *
- * Bảng đã nằm trong lề của panel; cộng thêm ở đây là chữ trong bảng lùi
- * sâu hơn tiêu đề phía trên nó, và hai thứ lệch hàng.
- */
 .admin-table > thead > tr > *:first-child,
 .admin-table > tbody > tr > *:first-child {
     padding-inline-start: 0.75rem;
@@ -772,20 +628,11 @@
     padding-inline-end: 0.75rem;
 }
 
-/* Trên màn hình hẹp thì lề rộng ăn mất chỗ của nội dung. */
 @media (max-width: 575.98px) {
     .admin-panel {
         padding: var(--space-sm);
     }
 }
-
-/*
- * ============================================================
- * THANH TÌM KIẾM + LỌC
- * ============================================================
- * Nằm giữa tiêu đề trang và bảng dữ liệu. Cuốn theo một hàng trên màn
- * hình rộng, xuống dòng trên màn hình hẹp.
- */
 
 .admin-filters {
     display: flex;
@@ -795,11 +642,6 @@
     margin-bottom: var(--space-sm);
 }
 
-/*
- * Ô tìm kiếm co giãn chiếm chỗ trống, các ô lọc giữ nguyên bề rộng.
- * Ngược lại thì ô tìm bị bóp còn một khe hẹp trong khi ô chọn trạng
- * thái — chỉ chứa vài chữ — lại rộng thênh thang.
- */
 .admin-filters__search {
     position: relative;
     flex: 1 1 14rem;
@@ -825,14 +667,6 @@
     min-width: 9rem;
 }
 
-/*
- * Ô chọn NGÀY cũng phải giữ bề rộng như ô chọn khác.
- *
- * `.form-control` của Bootstrap là width:100%, nên hai ô ngày mỗi cái
- * chiếm trọn một hàng và đẩy nút Lọc xuống hàng thứ tư — thanh lọc cao
- * gấp ba mà không chứa thêm thông tin nào. Ô tìm kiếm thì vẫn phải co
- * giãn, nên nhắm đúng input[type=date] chứ không nhắm cả .form-control.
- */
 .admin-filters input[type="date"] {
     flex: 0 0 auto;
     width: auto;
@@ -846,21 +680,12 @@
     white-space: nowrap;
 }
 
-/* Màn hình hẹp: số kết quả xuống dòng riêng thay vì chen vào cuối hàng. */
 @media (max-width: 575.98px) {
     .admin-filters__count {
         margin-inline-start: 0;
         flex-basis: 100%;
     }
 }
-
-/*
- * ============================================================
- * VIỆC CẦN LÀM (dashboard)
- * ============================================================
- * Mỗi dòng là một liên kết dẫn thẳng tới danh sách đã lọc sẵn — không
- * bắt admin đọc con số rồi tự đi lọc lại.
- */
 
 .admin-todo {
     display: flex;
@@ -884,12 +709,6 @@
     background: var(--admin-surface-alt);
 }
 
-/*
- * Con số đứng trước và to hơn chữ.
- *
- * Admin quét trang bằng mắt để tìm "có gì khác không" — con số là thứ
- * đổi mỗi ngày, nên nó phải là thứ bắt mắt trước.
- */
 .admin-todo__count {
     flex: none;
     min-width: 2.2rem;
@@ -901,24 +720,9 @@
 .admin-todo__label {
     flex: 1;
 
-    /*
-     * min-width: 0 BẮT BUỘC trên một flex item.
-     *
-     * Mặc định của flexbox là min-width: auto, nghĩa là item không co
-     * nhỏ hơn nội dung của nó. Câu chú thích dài bên dưới sẽ đẩy mũi
-     * tên ra ngoài khung thay vì tự xuống dòng.
-     */
     min-width: 0;
 }
 
-/*
- * CÂU CHÚ THÍCH DƯỚI MỖI DÒNG VIỆC.
- *
- * "3 đơn đã nhận nhưng chưa có vận đơn" nói ĐANG CÓ GÌ. Câu dưới nói
- * VÌ SAO ĐÁNG QUAN TÂM ("đơn COD không tự tạo vận đơn — chưa tạo thì
- * hàng chưa đi"). Thiếu vế thứ hai thì người mới vào làm đọc con số mà
- * không biết bỏ qua thì mất gì.
- */
 .admin-todo__hint {
     display: block;
     margin-top: 0.1rem;
@@ -928,13 +732,6 @@
     color: var(--admin-ink-muted);
 }
 
-/*
- * THẺ CHỈ SỐ ở đầu trang Tổng quan.
- * ============================================================
- * Khác `stat-card` (một dòng, có icon, để đếm thứ tĩnh): thẻ này xếp
- * dọc để chừa chỗ cho phần SO VỚI KỲ TRƯỚC — thứ biến con số thành một
- * câu trả lời thay vì một con số.
- */
 .admin-kpi {
     display: flex;
     flex-direction: column;
@@ -959,15 +756,11 @@ a.admin-kpi:focus-visible {
 }
 
 .admin-kpi__value {
-    /* "7.450.000₫" không có chỗ gãy tự nhiên; thẻ hẹp thì cho gãy
-       giữa chữ số còn hơn tràn ra ngoài khung. */
     overflow-wrap: anywhere;
     font-size: 1.4rem;
     font-weight: 700;
     line-height: 1.2;
 
-    /* Chữ số cùng bề rộng: bốn thẻ xếp cạnh nhau thì các con số thẳng
-       hàng, mắt so được ngay mà không phải đọc từng chữ số. */
     font-variant-numeric: tabular-nums;
 }
 
@@ -983,7 +776,6 @@ a.admin-kpi:focus-visible {
     color: var(--admin-ink-muted);
 }
 
-/* Ba mức khẩn: nợ tiền khách > việc tồn > việc mới tới. */
 .admin-todo--danger { border-inline-start-color: var(--admin-danger); }
 .admin-todo--danger .admin-todo__count { color: var(--admin-danger); }
 
@@ -991,19 +783,8 @@ a.admin-kpi:focus-visible {
 .admin-todo--warning .admin-todo__count { color: var(--admin-warning); }
 
 .admin-todo--info { border-inline-start-color: var(--admin-accent); }
-/* --admin-accent-ink, không phải --brand-500: màu cửa hàng ở nền tối chỉ đạt
-   2,84:1 — đo trên trang Tổng quan chế độ tối. */
 .admin-todo--info .admin-todo__count { color: var(--admin-accent-ink); }
 
-/*
- * ĐẦU CỘT SẮP XẾP ĐƯỢC
- * ============================================================
- * Xem resources/views/components/admin/sort-header.blade.php.
- *
- * Liên kết nhưng KHÔNG trông như liên kết: nó nằm trong hàng tiêu đề
- * bảng, và một hàng tiêu đề toàn chữ xanh gạch chân trông như bảng bị
- * hỏng. Thừa hưởng màu chữ của <th>, chỉ đổi khi rê chuột.
- */
 .admin-sort {
     display: inline-flex;
     align-items: center;
@@ -1018,7 +799,6 @@ a.admin-kpi:focus-visible {
     text-decoration: underline;
 }
 
-/* Cột đang sắp: đậm lên để nhận ra ngay giữa hàng tiêu đề. */
 .admin-sort.is-active {
     font-weight: 700;
     color: var(--semantic-primary);
@@ -1029,22 +809,10 @@ a.admin-kpi:focus-visible {
     transition: transform var(--duration-fast) var(--ease-standard);
 }
 
-/* Một icon duy nhất, xoay 180° cho hướng ngược lại — thay vì hai icon
-   khác nhau, để chuyển hướng có chuyển động liên tục thay vì nhảy cóc. */
 .admin-sort__icon.is-up {
     transform: rotate(180deg);
 }
 
-/*
- * THANH THAO TÁC HÀNG LOẠT
- * ============================================================
- * Xem resources/views/components/admin/bulk-bar.blade.php.
- *
- * DÍNH LÊN ĐẦU khi cuộn: bảng sản phẩm dài hơn màn hình, và người dùng
- * tích chọn trong lúc cuộn xuống. Thanh cuộn mất theo thì họ phải cuộn
- * ngược lên mới bấm được — mỗi lần, và với danh sách dài thì đó là
- * quãng đường thật.
- */
 .admin-bulk {
     position: sticky;
     top: 0;
@@ -1068,45 +836,20 @@ a.admin-kpi:focus-visible {
     font-size: var(--text-body-sm);
 }
 
-/* Ô tích trong bảng: vùng bấm rộng hơn chính cái ô, vì tích nhầm dòng
-   là lỗi tốn công nhất ở màn hình này. */
 .admin-check {
     width: 1.05rem;
     height: 1.05rem;
     cursor: pointer;
 }
 
-/*
- * DÒNG CỦA TÀI KHOẢN ĐANG BỊ KHOÁ
- * ============================================================
- * Làm mờ NHẸ, không gạch ngang và không tô đỏ cả dòng.
- *
- * Tài khoản bị khoá không phải là dữ liệu hỏng hay bị xoá — nó vẫn là
- * một khách hàng thật, có đơn hàng thật, và rất có thể sẽ được mở lại.
- * Tô như một cảnh báo đỏ làm mắt người đọc dừng lại ở đó mỗi lần lướt
- * danh sách, cho một thông tin không cần chú ý đến thế. Huy hiệu "Đã
- * khoá" ở cột vai trò đã nói đủ.
- */
 .admin-row--locked {
     opacity: 0.72;
 }
 
-/* Tên vẫn giữ độ tương phản đầy đủ: đó là thứ người ta đang tìm khi
-   cuộn danh sách, kể cả ở một dòng bị làm mờ. */
 .admin-row--locked td:first-child {
     opacity: 1;
 }
 
-/* ============ THANH BÊN: BỎ THANH CUỘN ============
- *
- * `overflow-y: auto` vẽ một thanh cuộn nằm ngay giữa các mục điều hướng
- * và khung nội dung. Nó chiếm chỗ, cắt ngang mắt nhìn, và với danh sách
- * mục hiện tại thì gần như không bao giờ cần dùng tới.
- *
- * ẨN THANH, KHÔNG TẮT CUỘN: `scrollbar-width: none` chỉ giấu thanh đi,
- * lăn chuột và vuốt vẫn cuộn được. Tắt hẳn `overflow` thì màn hình thấp
- * hoặc menu dài thêm là mất luôn mấy mục cuối, không cách nào tới được.
- */
 .admin-sidebar {
     scrollbar-width: none;
 }
@@ -1116,41 +859,12 @@ a.admin-kpi:focus-visible {
     height: 0;
 }
 
-/* ============ THAY RUỘT KHÔNG TẢI LẠI TRANG ============
- *
- * Chỉ làm mờ nhẹ trong lúc chờ. KHÔNG che bằng lớp phủ hay vòng xoay:
- * lấy về đúng phần nội dung thường xong trong vài trăm mili giây, và
- * một vòng xoay chớp qua nhanh hơn mắt kịp nhận ra chỉ làm màn hình
- * giật.
- */
 .admin-content.is-loading {
     opacity: 0.55;
     transition: opacity 120ms ease-out;
     pointer-events: none;
 }
 
-
-/* ============================================================
-   CHẾ ĐỘ TỐI CỦA TRANG QUẢN TRỊ
-   ============================================================
-   CHỈ ĐỔI TOKEN, không sửa từng component — cùng cách làm với core/dark.css
-   của cửa hàng. Mọi thành phần quản trị đọc --admin-*, nên đổi token là cả
-   khu đổi theo; thành phần Bootstrap (bảng, ô nhập, thông báo) đổi nhờ
-   data-bs-theme="dark" ở thẻ <html>.
-
-   MÀU ĐÃ TÍNH TƯƠNG PHẢN, không chọn bằng mắt (WCAG, tỉ lệ):
-
-     chữ chính      #e6e8e3 / nền khung #1a1a19   14.11  (cần >= 7)
-     chữ phụ        #a8afa4 / nền khung           7.74   (cần >= 4.5)
-     chữ trắng      / nhấn #3d7c82                4.77   (nút chính)
-     chữ trắng      / nhấn đậm #336d73            5.87   (nút khi rê chuột)
-     nhấn #3d7c82   / nền khung                   3.65   (viền, cần >= 3)
-     chữ nhấn       #6fb0b6 / nền khung           7.10
-     đỏ #f08a82 · xanh #7bc393 · cam #e0a54a      7.18 · 8.35 · 8.00
-
-   NỀN KHUNG = #1a1a19, ĐÚNG BẰNG --viz-surface tối của biểu đồ: bộ màu biểu
-   đồ được kiểm trên đúng nền đó. Khác nền là kết quả kiểm không còn giá trị.
-   ============================================================ */
 
 :root[data-admin][data-scheme="toi"] {
     --admin-bg: #121311;
@@ -1173,15 +887,9 @@ a.admin-kpi:focus-visible {
     --admin-warning: #e0a54a;
 }
 
-/*
- * Lớp chữ màu của Bootstrap: `.text-danger` ở nền tối chỉ đạt 4,02:1 (đo trên
- * trang chi tiết đơn). Dùng màu đã tính của khu quản trị. `!important` vì
- * chính Bootstrap khai các lớp tiện ích này bằng `!important`.
- */
 :root[data-admin][data-scheme="toi"] .text-danger { color: var(--admin-danger) !important; }
 :root[data-admin][data-scheme="toi"] .text-success { color: var(--admin-success) !important; }
 
-/* Hai khối vàng cảnh báo rủi ro đơn: màu nền sáng viết cứng, phải đổi riêng. */
 :root[data-admin][data-scheme="toi"] .risk-flag {
     background: #2e2715;
     color: #f0c46e;
@@ -1196,20 +904,11 @@ a.admin-kpi:focus-visible {
     color: #f0c46e;
 }
 
-/*
- * Ô ĐANG KHOÁ — thấy được là khoá, không chỉ "gõ vào không ăn".
- *
- * Một ô readonly trông y hệt ô bình thường: người dùng gõ, không thấy chữ
- * hiện ra, và tưởng bàn phím hỏng. Nền mờ và con trỏ "not-allowed" nói
- * trước điều đó.
- */
 .form-control.is-locked {
     background: var(--admin-surface-alt);
     color: var(--admin-ink-muted);
     cursor: not-allowed;
 }
-
-/* ============ KHỐI MÔ TẢ CHI TIẾT (biểu mẫu sản phẩm) ============ */
 
 .block-row {
     border: 1px solid var(--admin-border);
@@ -1241,7 +940,6 @@ a.admin-kpi:focus-visible {
     gap: 0.15rem;
 }
 
-/* Ảnh xem trước vừa đủ để nhận ra là ảnh nào, không chiếm hết biểu mẫu. */
 .block-row__preview {
     display: block;
     max-height: 7rem;
@@ -1250,8 +948,6 @@ a.admin-kpi:focus-visible {
     margin-bottom: 0.4rem;
 }
 
-/* Video trong lưới quản lý thư viện: không có ảnh nhỏ để xem trước, nên
-   hiện một ô chữ cho biết đó là video dạng gì. */
 .gallery-manager__item--video .gallery-manager__video {
     display: flex;
     align-items: center;
@@ -1266,11 +962,6 @@ a.admin-kpi:focus-visible {
     text-align: center;
 }
 
-/* ============================================================
-   CHỌN KỲ — mốc dựng sẵn + khoảng ngày tự chọn
-   ============================================================
-   Hai nhóm nằm cùng một hàng khi còn chỗ, xuống dòng khi hết.
-   Không dùng khoảng cách cố định vì số mốc dựng sẵn có thể đổi. */
 .chon-ky {
     display: flex;
     flex-wrap: wrap;
@@ -1291,7 +982,6 @@ a.admin-kpi:focus-visible {
     gap: .35rem;
 }
 
-/* Đang xem một khoảng tự chọn: cả nhóm sáng lên, vì nút "Xem" đã ẩn. */
 .chon-ky__khoang.is-active {
     border: 1px solid var(--admin-accent);
     border-radius: .5rem;
@@ -1305,17 +995,11 @@ a.admin-kpi:focus-visible {
     color: var(--admin-ink-muted);
 }
 
-/* Ô ngày mặc định rộng quá mức cần thiết trên desktop.
-   8.5rem — bằng ô ngày ở trang Xuất dữ liệu. 9.5rem làm cả hàng lọc rộng
-   1118px, lố khung chứa 5px ở màn 1440px, và nút "Xuất dữ liệu…" rớt
-   xuống một dòng riêng. */
 .chon-ky__khoang input[type="date"] {
     width: auto;
     min-width: 8.5rem;
 }
 
-/* Có JavaScript thì đổi ngày là tự gửi, nút Xem thành thừa.
-   Không có JS thì nút ở lại — xem chú thích trong component. */
 html.has-js .chon-ky__xem {
     display: none;
 }
@@ -1332,9 +1016,6 @@ html.has-js .chon-ky__xem {
     min-width: 8.5rem;
 }
 
-/* ============================================================
-   TUỔI SỐ LIỆU — trang này tính lúc nào
-   ============================================================ */
 .tuoi-so-lieu {
     display: flex;
     flex-wrap: wrap;
@@ -1356,7 +1037,6 @@ html.has-js .chon-ky__xem {
     white-space: nowrap;
 }
 
-/* Công tắc không làm được gì nếu không có JavaScript, nên chỉ hiện khi có. */
 .tuoi-so-lieu__tu-dong {
     display: none;
 }
@@ -1365,16 +1045,6 @@ html.has-js .tuoi-so-lieu__tu-dong {
     display: flex;
 }
 
-/* ============================================================
-   ĐẦU TRANG PHÂN TÍCH — bộ lọc phải giống hệt nhau ở mọi tab
-   ============================================================
-   Lỗi đã sửa: khối lọc nằm chung hàng với tiêu đề nên bị phần chữ ép.
-   Mô tả mỗi tab một độ dài -> khối lọc rộng 503..592px tuỳ tab, và các
-   nút xuống dòng khác nhau. Chuyển tab thấy bộ lọc "nhảy".
-
-   Cách khoá: phần chữ được phép co (min-width: 0 là bắt buộc — không có
-   nó thì mục flex không co xuống dưới kích thước nội dung), còn khối lọc
-   thì KHÔNG co, và xuống hẳn một dòng khi hết chỗ. */
 .analytics-header {
     display: flex;
     flex-wrap: wrap;
@@ -1393,21 +1063,11 @@ html.has-js .tuoi-so-lieu__tu-dong {
     flex-direction: column;
     gap: .5rem;
 
-    /* Không co: đây chính là thứ đã gây lỗi. */
     flex: 0 0 auto;
 
-    /*
-     * NHƯNG KHÔNG ĐƯỢC RỘNG HƠN KHUNG CHỨA — ở màn 1024px, thiếu dòng này
-     * là trang tràn ngang 1406px.
-     */
     max-width: 100%;
 }
 
-/*
- * Hàng trên của khối lọc: giờ số liệu bên trái, nút Xuất bên phải.
- * Chữ "· cách đây N phút" dài ra chỉ ăn vào khoảng trống ở giữa — xem
- * chú thích trong _header.blade.php.
- */
 .analytics-header__hang {
     display: flex;
     flex-wrap: wrap;
@@ -1420,8 +1080,6 @@ html.has-js .tuoi-so-lieu__tu-dong {
     margin-left: auto;
 }
 
-/* Khoảng ngày thật của kỳ — một dòng block dưới hàng nút.
-   KHÔNG dùng flex-basis phần trăm: xem chú thích trong component. */
 .chon-ky-boc {
     max-width: 100%;
 }

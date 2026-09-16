@@ -49,7 +49,6 @@
     </div>
 
     <div class="col-lg-4">
-        {{-- Bảng quy ước đứng cạnh ô soạn: người sửa không phải nhớ cú pháp. --}}
         <div class="admin-panel p-4">
             <h2 class="h6 fw-bold mb-3">Cách viết</h2>
             <p class="admin-page-subtitle small">Các khối cách nhau bằng <strong>một dòng trống</strong>.</p>

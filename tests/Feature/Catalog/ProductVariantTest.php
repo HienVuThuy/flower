@@ -11,20 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/**
- * Quy cách sản phẩm (biến thể).
- * ============================================================
- * LỖI GỐC: thẻ sản phẩm ở trang danh sách gửi thẳng biểu mẫu "Thêm vào
- * giỏ" mà không có ô chọn quy cách, và không tầng nào chặn.
- *
- * Đo được trên dữ liệu thật trước khi sửa — "Lưỡi hổ mini để bàn" có hai
- * quy cách (Chậu sứ trắng 180.000₫, Chậu gốm nâu 195.000₫); thêm vào giỏ
- * không kèm quy cách cho ra một dòng `product_variant_id = NULL`, giá
- * 180.000₫. Hai hỏng hóc:
- *
- *   1. Cửa hàng KHÔNG BIẾT GIAO CHẬU NÀO.
- *   2. Ai bỏ qua bước chọn cũng mua được quy cách đắt với giá quy cách rẻ.
- */
+/** Quy cách sản phẩm (biến thể). */
 class ProductVariantTest extends TestCase
 {
     use RefreshDatabase;
@@ -34,7 +21,6 @@ class ProductVariantTest extends TestCase
         return app(CartService::class);
     }
 
-    /** Một sản phẩm có hai quy cách, giá khác nhau. */
     private function coQuyCach(): Product
     {
         $product = Product::factory()
@@ -65,10 +51,6 @@ class ProductVariantTest extends TestCase
         return $product->load('variants');
     }
 
-    // ================================================================
-    // Chặn ở tầng máy chủ
-    // ================================================================
-
     #[Test]
     public function khong_them_duoc_vao_gio_neu_chua_chon_quy_cach(): void
     {
@@ -84,8 +66,6 @@ class ProductVariantTest extends TestCase
     #[Test]
     public function mua_ngay_cung_bi_chan_y_het(): void
     {
-        // "Mua ngay" đi đường khác nhưng KHÔNG được lỏng hơn: nó dẫn
-        // thẳng tới trang thanh toán, tức là gần đơn thật hơn.
         $product = $this->coQuyCach();
 
         $this->post('/mua-ngay', ['product_id' => $product->id, 'quantity' => 1])
@@ -122,11 +102,6 @@ class ProductVariantTest extends TestCase
     #[Test]
     public function san_pham_khong_co_quy_cach_van_mua_binh_thuong(): void
     {
-        /*
-         * Mặt còn lại. Một luật chặn chỉ đáng tin khi đã chứng minh nó
-         * không chặn nhầm đường đi bình thường — nếu không thì "chặn
-         * được mọi thứ" cũng làm mọi bài kia xanh.
-         */
         $product = Product::factory()
             ->for(Category::factory())
             ->price('300000.00')
@@ -151,21 +126,11 @@ class ProductVariantTest extends TestCase
         $this->cart()->assertPurchasable($a, $b->variants->first());
     }
 
-    // ================================================================
-    // Cổng cuối: lúc ghi đơn
-    // ================================================================
-
     #[Test]
     public function dong_gio_cu_khong_quy_cach_khong_thanh_don_duoc(): void
     {
-        /*
-         * Giỏ có thể mang sẵn dòng được thêm TRƯỚC khi có phép kiểm, và
-         * cửa hàng có thể mới thêm quy cách cho một sản phẩm trước đây
-         * bán trơn. Cổng cuối phải tự kiểm chứ không dựa vào cửa trước.
-         */
         $this->actingAs(User::factory()->create());
 
-        // Thêm khi sản phẩm CHƯA có quy cách nào.
         $product = Product::factory()
             ->for(Category::factory())
             ->price('180000.00')
@@ -177,7 +142,6 @@ class ProductVariantTest extends TestCase
 
         $this->assertDatabaseCount('cart_items', 1);
 
-        // Cửa hàng thêm quy cách SAU đó.
         $product->variants()->create([
             'name' => 'Chậu sứ trắng',
             'price' => '180000.00',
@@ -202,19 +166,9 @@ class ProductVariantTest extends TestCase
         $this->assertDatabaseCount('orders', 0);
     }
 
-    // ================================================================
-    // Còn hàng phải xét cả quy cách
-    // ================================================================
-
     #[Test]
     public function het_sach_quy_cach_thi_coi_nhu_het_hang(): void
     {
-        /*
-         * `inStock()` chỉ nhìn cột tồn kho của chính sản phẩm — với hàng
-         * có quy cách thì đó không phải thứ khách mua. Bỏ qua thì trang
-         * hiện "Còn hàng", nút vẫn sáng, mà mọi ô chọn quy cách đều bị
-         * vô hiệu hoá: khách bấm mãi không được, không gì giải thích.
-         */
         $product = $this->coQuyCach();
 
         $product->variants()->update(['stock_quantity' => 0]);
@@ -235,10 +189,6 @@ class ProductVariantTest extends TestCase
         $this->assertTrue($product->refresh()->load('variants')->isPurchasable());
     }
 
-    // ================================================================
-    // Thẻ sản phẩm ở trang danh sách
-    // ================================================================
-
     #[Test]
     public function the_san_pham_co_quy_cach_dua_khach_qua_buoc_chon(): void
     {
@@ -246,15 +196,9 @@ class ProductVariantTest extends TestCase
 
         $html = $this->get('/san-pham?q='.urlencode('Lưỡi hổ'))->assertOk()->getContent();
 
-        // Có khối dữ liệu cho hộp chọn quy cách...
         $this->assertStringContainsString('data-variant-choice', $html);
         $this->assertStringContainsString('Chậu gốm nâu', $html);
 
-        /*
-         * ...và KHÔNG có JavaScript thì hai nút vẫn là liên kết thật dẫn
-         * tới bảng chọn quy cách ở trang sản phẩm. Bấm vào một nút gửi
-         * biểu mẫu chắc chắn bị từ chối là bắt khách đi một vòng vô ích.
-         */
         $this->assertStringContainsString(
             route('shop.products.show', $product).'#chon-quy-cach',
             $html,
@@ -264,11 +208,6 @@ class ProductVariantTest extends TestCase
     #[Test]
     public function chu_tren_nut_KHONG_doi_thanh_xem_chi_tiet(): void
     {
-        /*
-         * Khách vẫn đang mua hàng, chỉ là còn một lựa chọn phải nêu.
-         * "Xem chi tiết" nói sai việc đó và làm nút mất hẳn ý nghĩa
-         * thương mại.
-         */
         $this->coQuyCach();
 
         $this->get('/san-pham?q='.urlencode('Lưỡi hổ'))

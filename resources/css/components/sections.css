@@ -1,9 +1,4 @@
-/*
- * HOMEPAGE / EDITORIAL SECTION PATTERNS
- * ============================================================
- * Composition có chủ đích — không phải "container > row > col-md-4"
- * lặp lại cho mọi section.
- */
+/* HOMEPAGE / EDITORIAL SECTION PATTERNS */
 
 .hero-section {
     position: relative;
@@ -44,21 +39,12 @@
     gap: 0.75rem;
 }
 
-/*
- * position + z-index là bắt buộc, không phải trang trí: artwork của
- * theme mùa vụ vẽ bằng .hero-section::before/::after ở --z-decoration.
- * Nếu khối chữ này để static, nó nằm dưới artwork trong thứ tự vẽ và
- * sẽ bị che ngay khi hero thấp đi (ít chữ, ảnh nhỏ, màn hình ngắn).
- * Nâng lên --z-content để nội dung LUÔN nằm trên trang trí.
- */
 .hero-section__copy {
     position: relative;
     z-index: var(--z-content);
     animation: heroReveal 0.7s var(--ease-standard) both;
 }
 
-/* Ảnh hero — khối bo lệch một phía, tạo cảm giác biên tập
-   (editorial) thay vì một khung ảnh chữ nhật thông thường. */
 .hero-section__visual {
     position: relative;
     aspect-ratio: 4 / 5;
@@ -99,47 +85,12 @@
     .hero-section__visual {
         border-radius: 260px 24px 24px 24px;
 
-        /*
-         * BỀ NGANG PHẢI KHAI RÕ, KHÔNG ĐỂ TỈ LỆ TỰ TÍNH RA.
-         * ============================================================
-         * LỖI ĐÃ SỬA, và nó là hệ quả trực tiếp của dòng `max-height`
-         * bên dưới.
-         *
-         * Khi khung ảnh CHỈ có `aspect-ratio` mà không có bề ngang khai
-         * rõ, trình duyệt lấy chiều cao làm gốc: chặn cao ở 560px thì nó
-         * tính ngược ra bề ngang 560 × 4/5 = 448px, dù làn grid dành cho
-         * nó rộng tới 615px.
-         *
-         * Đo được: ảnh co lại còn 435px và bỏ trống ~180px bên phải —
-         * ảnh nhỏ hẳn đi, lệch khỏi mép phải của trang, và khoảng trống
-         * thừa nằm ngay giữa hero.
-         *
-         * `width: 100%` bắt khung LUÔN lấp đầy làn của nó. Chiều cao mới
-         * là thứ bị chặn, đúng như ý định — và `object-fit: cover` ở thẻ
-         * <img> lo phần cắt ảnh nên không có gì bị méo.
-         */
         width: 100%;
 
-        /*
-         * CHẶN CHIỀU CAO — hero không được cao hơn màn hình.
-         *
-         * `aspect-ratio: 4/5` là tỉ lệ đẹp cho khung dựng đứng, nhưng ở
-         * màn rộng thì làn ảnh rộng ~615px, và 615 × 5/4 = 769px. Cộng
-         * khoảng đệm của section thì cả hero cao 921px — đo trên màn
-         * 1400×900.
-         *
-         * Hậu quả: màn hình đầu tiên CHỈ có mỗi hero. Khách phải cuộn
-         * mới biết cửa hàng bán gì, mà người ta đánh giá một trang trong
-         * vài giây đầu.
-         *
-         * `min()` để vừa cả màn thấp (laptop 768px) vừa không phình vô
-         * hạn trên màn rất cao.
-         */
         max-height: min(72vh, 620px);
     }
 }
 
-/* Shop by intent — thẻ điều hướng theo nhu cầu, không phải thống kê */
 .intent-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -169,11 +120,6 @@
     transition: transform 0.5s var(--ease-standard);
 }
 
-/*
- * Lớp phủ tối dần về đáy. BẮT BUỘC phải có: ảnh do nguồn ngoài cung
- * cấp nên độ sáng không đoán trước được, thiếu lớp này thì chữ trắng
- * sẽ chìm mất trên ảnh sáng.
- */
 .intent-card::before {
     content: "";
     position: absolute;
@@ -211,7 +157,6 @@
     }
 }
 
-/* Editorial split — ảnh/artwork một bên, nội dung một bên */
 .editorial-split {
     display: grid;
     gap: var(--space-md);
@@ -245,7 +190,6 @@
     }
 }
 
-/* Story / philosophy — nền tối, ảnh thật, dùng 1 lần trên trang chủ */
 .story-section {
     background: var(--brand-700);
     color: #fff;
@@ -290,7 +234,6 @@
     }
 }
 
-/* Care/editorial content tiles */
 .care-tip {
     display: flex;
     gap: 0.9rem;
@@ -316,11 +259,6 @@
     margin-bottom: 0.2rem;
 }
 
-/* ============ KHỐI MỜI BÁO GIÁ SỰ KIỆN ============
- * Tách hẳn khỏi .campaign-banner (chương trình khuyến mại). Hai thứ
- * trông na ná nhau nhưng khác bản chất, và mỗi theme trang trí chúng
- * theo cách khác nhau.
- */
 .event-banner {
     position: relative;
     overflow: hidden;
@@ -340,10 +278,6 @@
     color: var(--brand-600);
 }
 
-/* ============ KHUNG ẢNH HERO LUÂN PHIÊN ============
- * Các ảnh xếp chồng tuyệt đối, chỉ ảnh .is-active hiện. Không dùng
- * display:none để chuyển được mượt bằng opacity.
- */
 .hero-carousel {
     position: relative;
 }
@@ -362,20 +296,12 @@
     opacity: 1;
 }
 
-/*
- * Ảnh đặt absolute nên khung mất chiều cao tự nhiên. .hero-section__visual
- * đã có aspect-ratio 4/5 nên khung vẫn giữ đúng kích thước.
- */
-
 @media (prefers-reduced-motion: reduce) {
     .hero-carousel__slide {
         transition: none;
     }
 }
 
-/* ============ CAM KẾT DỊCH VỤ ============
- * Nội dung do admin nhập trong Cài đặt, không viết cứng ở đây.
- */
 .commitments {
     margin-top: var(--space-md);
     padding-top: var(--space-sm);
@@ -429,19 +355,10 @@
     }
 }
 
-/* ============ KHUNG BANNER LUÂN PHIÊN ============ */
-
 .banner-rotator {
     position: relative;
 }
 
-/*
- * Các slide xếp CHỒNG lên nhau chứ không trượt ngang.
- *
- * Dùng grid 1 ô: mọi slide vào cùng một ô, nên chiều cao khung tự bằng
- * slide CAO NHẤT và không nhảy giật khi đổi slide — thứ mà position:
- * absolute không làm được (khung sẽ sập về 0).
- */
 .banner-rotator__track {
     display: grid;
 }
@@ -458,12 +375,6 @@
     visibility: visible;
 }
 
-/*
- * Slide đang ẩn KHÔNG được bấm hay tab vào.
- * visibility: hidden đã lo phần đó — dùng nó thay vì chỉ opacity: 0,
- * nếu không bàn phím vẫn tab được vào nút của banner đang không hiện.
- */
-
 .banner-rotator__dots {
     display: flex;
     justify-content: center;
@@ -471,7 +382,6 @@
     margin-top: var(--space-sm);
 }
 
-/* Chấm hình THOI: hình vuông xoay 45 độ. */
 .banner-rotator__dot {
     width: 0.6rem;
     height: 0.6rem;
@@ -506,14 +416,6 @@
     }
 }
 
-
-/*
- * TRANG "CHỌN THEO NHU CẦU"
- * ============================================================
- * Bài viết hướng dẫn ở cột trái, ảnh + lối đi tiếp ở cột phải. Hướng dẫn
- * đi TRƯỚC lưới sản phẩm: khách bấm vào đây vì chưa biết chọn gì, đưa
- * hàng ra trước là trả lời câu hỏi họ chưa kịp hỏi.
- */
 
 .intent-page {
     max-width: 62ch;
@@ -552,13 +454,6 @@
     margin-top: 0.35rem;
 }
 
-/*
- * Cột phải BÁM THEO khi cuộn.
- *
- * Bài hướng dẫn dài hơn ảnh nhiều; không sticky thì cuộn tới giữa bài là
- * cột phải trống trơn, và ba lối đi tiếp trôi mất khỏi màn hình đúng lúc
- * khách đọc xong và sẵn sàng bấm.
- */
 .intent-page__aside {
     position: sticky;
     top: calc(var(--space-lg) + 3rem);
@@ -572,17 +467,12 @@
     margin-bottom: var(--space-sm);
 }
 
-/* Dưới 992px hai cột xếp chồng, sticky không còn nghĩa gì. */
 @media (max-width: 991.98px) {
     .intent-page__aside {
         position: static;
     }
 }
 
-/*
- * Câu dẫn ngắn trên thẻ nhu cầu ở trang chủ.
- * Chỉ có nhãn thì khách phải đoán bấm vào sẽ được gì.
- */
 .intent-card__tagline {
     display: block;
     margin-top: 0.15rem;
@@ -591,14 +481,6 @@
     line-height: 1.35;
     opacity: 0.85;
 }
-
-/*
- * TRANG NỘI DUNG TĨNH (giới thiệu, liên hệ, chính sách)
- * ============================================================
- * Chữ dài để đọc, không phải để lướt. Giãn dòng rộng hơn phần còn lại
- * của trang và giới hạn bề ngang — dòng quá dài thì mắt lạc hàng khi
- * xuống dòng.
- */
 
 .static-page {
     font-size: var(--text-body);
@@ -631,7 +513,6 @@
     margin-bottom: 0.35rem;
 }
 
-/* Bảng thông tin dạng "nhãn — giá trị". */
 .static-page__facts {
     display: grid;
     gap: 0.1rem;
@@ -656,7 +537,6 @@
     color: var(--ink-500);
 }
 
-/* Trên điện thoại thì hai cột chồng lên nhau, không bóp cột nhãn. */
 @media (max-width: 575.98px) {
     .static-page__facts > div {
         grid-template-columns: 1fr;
@@ -684,13 +564,6 @@
     font-weight: 600;
 }
 
-/*
- * Khối "đây là bài tập lớn".
- *
- * Phải khác hẳn phần chữ còn lại: nếu nó trông giống một đoạn văn nữa
- * thì người đọc lướt qua, và cả điểm của việc nói ra là để họ KHÔNG lướt
- * qua.
- */
 .static-page__notice {
     margin-top: var(--space-lg);
     padding: var(--space-md);
@@ -705,7 +578,6 @@
     font-size: 1rem;
 }
 
-/* Lối ra ở cuối trang — trang chính sách là ngõ cụt nếu không có nó. */
 .static-page__more {
     display: flex;
     flex-wrap: wrap;

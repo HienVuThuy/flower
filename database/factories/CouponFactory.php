@@ -8,9 +8,6 @@ use App\Models\Coupon;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
-/**
- * @extends Factory<Coupon>
- */
 class CouponFactory extends Factory
 {
     protected $model = Coupon::class;
@@ -25,12 +22,6 @@ class CouponFactory extends Factory
             'status' => PromotionStatus::Active,
             'is_public' => true,
 
-            /*
-             * Khoảng thời gian bao quanh HIỆN TẠI.
-             *
-             * Để null thì mã cũng "đang chạy", nhưng khi ấy bài kiểm tra
-             * không còn chứng minh được rằng cửa sổ thời gian có tác dụng.
-             */
             'starts_at' => now()->subDay(),
             'ends_at' => now()->addDays(30),
         ];
@@ -58,7 +49,6 @@ class CouponFactory extends Factory
         return $this->state(fn () => ['min_order_amount' => $amount]);
     }
 
-    /** Mã riêng: nhập tay được, nhưng không hiện ở trang voucher chung. */
     public function private(): static
     {
         return $this->state(fn () => ['is_public' => false]);

@@ -9,21 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-/**
- * Lập và ghi sổ phiếu kiểm kê.
- * ============================================================
- * BA LUẬT, cùng tinh thần với phiếu nhập:
- *
- *   1. TỒN HỆ THỐNG CHỤP Ở MÁY CHỦ, không nhận từ biểu mẫu. Con số "hệ thống
- *      đang ghi" trên màn hình có thể đã cũ; và một con số gửi lên từ trình
- *      duyệt thì ai cũng sửa được để chênh lệch ra bằng bao nhiêu tuỳ ý.
- *
- *   2. GHI SỔ CỘNG CHÊNH LỆCH, không gán số đếm (xem migration).
- *
- *   3. KHÔNG ĐỂ TỒN ÂM. Chênh lệch cộng vào mà ra số âm nghĩa là giữa lúc đếm
- *      và lúc ghi sổ đã có đơn bán mà hàng thật không còn — sổ sách mâu
- *      thuẫn. Kẹp về 0 là bịa một con số; từ chối và yêu cầu đếm lại.
- */
+/** Lập và ghi sổ phiếu kiểm kê. */
 class StockCountService
 {
     public function __construct(
@@ -33,20 +19,8 @@ class StockCountService
     ) {
     }
 
-    /**
-     * Lập phiếu nháp từ những dòng người dùng đã nhập số đếm.
-     *
-     * @param  array<string, array{counted?: mixed, reason?: mixed}>  $dem  khoá là "idSảnPhẩm:idQuyCách"
-     *
-     * @throws InventoryException
-     */
     public function lap(array $dem, string $ngayDem, ?string $ghiChu): StockCount
     {
-        /*
-         * CHỈ NHẬN KHOÁ CÓ TRONG DANH SÁCH ĐƠN VỊ KHO THẬT. Khoá lạ từ biểu mẫu
-         * (sản phẩm không theo dõi tồn, id bịa) bị bỏ, không đưa thẳng vào
-         * khoá ngoại.
-         */
         $donVi = $this->donVi->danhSach()->keyBy('value');
 
         $dong = [];
@@ -54,7 +28,6 @@ class StockCountService
         foreach ($dem as $khoa => $d) {
             $so = $d['counted'] ?? null;
 
-            // Để trống = không đếm món này. Khác với đếm được 0.
             if ($so === null || $so === '') {
                 continue;
             }
@@ -98,11 +71,6 @@ class StockCountService
         });
     }
 
-    /**
-     * Ghi sổ: cộng chênh lệch từng dòng vào kho, cả phiếu một transaction.
-     *
-     * @throws InventoryException
-     */
     public function ghiSo(StockCount $phieu): void
     {
         DB::transaction(function () use ($phieu) {
@@ -152,7 +120,6 @@ class StockCountService
         );
     }
 
-    /** KK-260930-A3F2. */
     private function sinhMa(): string
     {
         for ($lan = 0; $lan < 5; $lan++) {

@@ -13,17 +13,7 @@ use App\Services\Analytics\SalesBreakdown;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
-/**
- * Các trang con của Phân tích: Doanh thu, Khách hàng, Đánh giá, Lợi nhuận.
- * ============================================================
- * VÌ SAO TÁCH TRANG: trang Phân tích đã dài 638 dòng. Nhồi thêm bốn nhóm
- * báo cáo vào là một trang chạy hàng chục truy vấn cho mỗi lần mở, và người
- * cần xem "tỉnh nào mua nhiều" phải cuộn qua phễu chuyển đổi để tới.
- *
- * Mỗi trang chỉ chạy truy vấn của chính nó. Kỳ lấy từ
- * AnalyticsService::khoang() — cùng một định nghĩa "7 ngày qua" với trang
- * Tổng hợp.
- */
+/** Các trang con của Phân tích: Doanh thu, Khách hàng, Đánh giá, Lợi nhuận. */
 class AnalyticsPagesController extends Controller
 {
     public function __construct(
@@ -76,32 +66,10 @@ class AnalyticsPagesController extends Controller
             'buShip' => $this->analytics->shippingCost(),
             'chiPhi' => \App\Services\Analytics\CashFlowReport::chiPhi($khoang),
 
-            /*
-             * HOA TƯƠI CÓ BÁO CÁO RIÊNG, ở mức KỲ.
-             *
-             * Không ai biết bó hoa bán hôm qua dùng cành của lô nào, nên
-             * hoa không ghép giá vốn vào từng dòng đơn được. Gộp nó vào
-             * bảng lãi theo sản phẩm là bịa; để nó nằm im trong phần
-             * "chưa có giá vốn" thì mất luôn con số lãi của mảng chiếm
-             * phần lớn doanh thu một cửa hàng hoa.
-             */
             'hoa' => app(\App\Services\Analytics\FlowerCostReport::class)->trong($khoang)->baoCao(),
         ]);
     }
 
-    /**
-     * Thu mua: lấy hàng ở đâu thì đáng tiền nhất.
-     *
-     * ============================================================
-     * TRANG NÀY THUỘC QUYỀN `kho`, KHÔNG PHẢI `bao-cao`.
-     *
-     * Người trả lời câu "kỳ sau lấy hoa ở đâu" là người đi lấy hàng, và
-     * người đó đã thấy giá nhập ở biểu mẫu nhập kho rồi — giấu bảng so
-     * giá với chính họ thì bảng này không tới được tay ai dùng nó.
-     *
-     * Trang cũng KHÔNG có giá bán và không có lãi: nó chỉ nói về tiền
-     * bỏ ra, nên không mở thêm gì mà `kho` chưa thấy.
-     */
     public function purchasing(Request $request, PurchasingReport $bao): View
     {
         [$ky, $khoang] = $this->ky($request);
@@ -115,7 +83,6 @@ class AnalyticsPagesController extends Controller
         ]);
     }
 
-    /** @return array{0: ChonKy, 1: \App\Services\Analytics\KhoangThoiGian} */
     private function ky(Request $request): array
     {
         $ky = ChonKy::tuRequest($request);

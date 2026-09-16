@@ -11,23 +11,7 @@ use App\Models\User;
 use App\Services\Checkout\CheckoutBasket;
 use Illuminate\Support\Facades\DB;
 
-/**
- * Ghi quà vào đơn và trả lại khi đơn huỷ. GỌI TRONG TRANSACTION CỦA ĐƠN.
- * ============================================================
- * AI ĐƯỢC QUÀ do GiftResolver quyết định — ở đây chỉ GIỮ CHỖ cho đúng:
- *
- *   - suất của chương trình: một câu UPDATE có điều kiện
- *     (used_count < total_limit), cùng cách với lượt mã giảm giá;
- *   - tồn kho của quà: khoá dòng rồi mới trừ, cùng cách với hàng bán —
- *     không có cơ chế tồn kho thứ hai.
- *
- * HẾT GIỮA CHỪNG THÌ BỎ QUÀ, KHÔNG HỎNG ĐƠN: quà là thứ cho thêm, cuộn một đơn
- * mua cây vì túi vải tặng kèm vừa hết là phạt khách vì món họ không trả tiền.
- *
- * CHỤP vào dòng quà: tên, quy cách, mã SKU, trị giá — lịch sử đơn không phụ
- * thuộc dữ liệu sản phẩm / vật phẩm hiện tại. Quà kèm sản phẩm nằm dưới
- * đúng dòng hàng (đúng quy cách) đã sinh ra nó.
- */
+/** Ghi quà vào đơn và trả lại khi đơn huỷ. */
 class GiftGranter
 {
     public function __construct(
@@ -35,16 +19,13 @@ class GiftGranter
     ) {
     }
 
-    /** @return list<string> tên các quà đã ghi vào đơn */
     public function tangChoDon(Order $order, CheckoutBasket $basket, ?User $user): array
     {
         $daTang = [];
 
         foreach ($this->resolver->choGio($basket, $user) as $dong) {
-            /** @var GiftItem $vat */
             $vat = $dong['item'];
             $soLuong = $dong['quantity'];
-            /** @var GiftCampaign|null $ct */
             $ct = $dong['campaign'];
 
             if ($ct !== null && ! $this->giuSuat($ct)) {
@@ -52,7 +33,6 @@ class GiftGranter
             }
 
             if (! $this->truKho($vat, $soLuong)) {
-                // Trả lại suất vừa giữ — quà không đi thì suất không mất.
                 if ($ct !== null) {
                     $this->traSuatMot($ct->id);
                 }
@@ -67,7 +47,6 @@ class GiftGranter
                 'product_sku' => $vat->variant?->code ?? $vat->product?->product_code,
                 'variant_name' => $vat->variant?->name,
                 'promotion_name' => $ct?->name ?? 'Quà miễn phí',
-                // Trị giá tham khảo để khách biết quà đáng bao nhiêu; tiền thật của dòng là 0.
                 'unit_base_price' => $vat->value ?? '0.00',
                 'unit_price' => '0.00',
                 'quantity' => $soLuong,
@@ -86,10 +65,6 @@ class GiftGranter
         return $daTang;
     }
 
-    /**
-     * Đơn huỷ: trả suất chương trình. Kho của dòng quà đi chung đường hoàn
-     * kho với hàng bán (StockReturn), không trả ở đây.
-     */
     public function traSuatCuaDon(Order $order): void
     {
         $order->items()
@@ -99,7 +74,6 @@ class GiftGranter
             ->each(fn ($id) => $this->traSuatMot((int) $id));
     }
 
-    /** Dòng hàng đã sinh ra quà — đúng sản phẩm, và đúng quy cách của dòng đầu tiên khớp. */
     private function dongCha(Order $order, array $dong): ?int
     {
         if ($dong['for_product_id'] === null) {
@@ -150,7 +124,6 @@ class GiftGranter
             return true;
         }
 
-        // Không bao giờ để quà miễn phí làm âm kho.
         if ((int) $dong->stock_quantity < $soLuong) {
             return false;
         }

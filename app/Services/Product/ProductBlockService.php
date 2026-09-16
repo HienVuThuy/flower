@@ -9,21 +9,7 @@ use App\Services\Media\ImageStore;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
-/**
- * Dựng lại phần mô tả chi tiết theo khối, đúng như biểu mẫu vừa gửi.
- * ============================================================
- * BIỂU MẪU LÀ TOÀN BỘ SỰ THẬT: những khối không có trong lần gửi này bị xoá,
- * kèm cả tệp ảnh của chúng. Cách còn lại — chỉ thêm và sửa — là mỗi lần admin
- * xoá một khối thì ảnh của nó ở lại trên đĩa mãi mãi, không ai trỏ tới.
- *
- * THỨ TỰ LẤY THEO THỨ TỰ GỬI LÊN, không lấy con số người dùng nhập: ô "số thứ
- * tự" gõ tay là chỗ để hai khối cùng mang số 3, và lúc đó thứ tự hiện ra do
- * database quyết định.
- *
- * CHỮ ĐI QUA HtmlSanitizer — cùng bộ lọc với mô tả cũ. Không có ngoại lệ nào
- * cho "admin thì tin được": tài khoản admin bị chiếm là lúc người ta cần cái
- * bộ lọc này nhất.
- */
+/** Dựng lại phần mô tả chi tiết theo khối, đúng như biểu mẫu vừa gửi. */
 class ProductBlockService
 {
     public function __construct(
@@ -32,10 +18,6 @@ class ProductBlockService
     ) {
     }
 
-    /**
-     * @param  array<int, array<string, mixed>>  $rows  mỗi dòng: kind, body, caption, id, image (UploadedFile)
-     * @return list<string> tệp vừa lưu, để rollback nếu transaction hỏng
-     */
     public function sync(Product $product, array $rows): array
     {
         $daCo = $product->blocks()->get()->keyBy('id');
@@ -59,7 +41,6 @@ class ProductBlockService
             $giuLai[] = $khoi->id;
         }
 
-        // Khối cũ không còn trong lần gửi này: xoá cả bản ghi lẫn tệp ảnh.
         foreach ($daCo as $khoi) {
             if (in_array($khoi->id, $giuLai, true)) {
                 continue;
@@ -83,7 +64,6 @@ class ProductBlockService
     {
         $chu = $this->locHtml->lamSach((string) ($row['body'] ?? ''));
 
-        // Khối chữ rỗng là khối người dùng để trống — bỏ, và xoá bản cũ nếu có.
         if (trim(strip_tags($chu)) === '') {
             if ($cu) {
                 $this->xoaAnh($cu);
@@ -109,9 +89,6 @@ class ProductBlockService
         return $product->blocks()->create(['kind' => ProductBlock::CHU, 'body' => $chu]);
     }
 
-    /**
-     * @param  list<string>  $stored
-     */
     private function khoiAnh(Product $product, array $row, ?ProductBlock $cu, array &$stored): ?ProductBlock
     {
         $file = $row['image'] ?? null;
@@ -120,8 +97,6 @@ class ProductBlockService
         $duong = $cu?->image_path;
 
         if ($file instanceof UploadedFile) {
-            // Ảnh mới thay ảnh cũ: lưu trước, xoá sau — hỏng giữa chừng thì
-            // khối vẫn còn một ảnh dùng được.
             $moi = $this->anh->luu($file, 'products/blocks');
             $stored[] = $moi;
 
@@ -132,7 +107,6 @@ class ProductBlockService
             $duong = $moi;
         }
 
-        // Khối ảnh mà không có ảnh nào thì không phải một khối.
         if ($duong === null) {
             if ($cu) {
                 $cu->delete();

@@ -10,26 +10,7 @@ use App\Services\Media\HtmlSanitizer;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
-/**
- * Bài mẫu cho Cẩm nang.
- * ============================================================
- * NỘI DUNG VIẾT THẬT, KHÔNG PHẢI "Lorem ipsum".
- *
- * Ba bài dưới đây là hướng dẫn chăm cây đúng nghiệp vụ, viết theo đúng
- * loại câu hỏi khách hỏi trước khi mua. Lý do không dùng chữ giả:
- *
- *   - trang Cẩm nang trống hoặc đầy chữ giả thì không đánh giá được bố
- *     cục có đọc nổi không — mà đó là cả điểm của việc dựng nó;
- *   - bài mẫu là chỗ admin nhìn vào để biết một bài "đúng chuẩn" trông
- *     thế nào: có tiêu đề phụ, có danh sách, có gắn sản phẩm.
- *
- * ============================================================
- * NỐI VỚI SẢN PHẨM CÓ THẬT TRONG CƠ SỞ DỮ LIỆU.
- *
- * Tìm theo slug và BỎ QUA nếu không thấy, thay vì tạo sản phẩm mới. Một
- * seeder tự tạo sản phẩm để bài của mình có cái mà trỏ tới là seeder
- * đang bịa dữ liệu bán hàng.
- */
+/** Bài mẫu cho Cẩm nang. */
 class BlogSeeder extends Seeder
 {
     public function run(): void
@@ -39,7 +20,6 @@ class BlogSeeder extends Seeder
             ?? User::orderBy('id')->first();
 
         foreach ($this->bai() as $i => $bai) {
-            // Chạy lại seeder không được sinh bài trùng.
             if (BlogPost::withTrashed()->where('slug', $bai['slug'])->exists()) {
                 continue;
             }
@@ -49,9 +29,6 @@ class BlogSeeder extends Seeder
                 'title' => $bai['title'],
                 'slug' => $bai['slug'],
                 'excerpt' => $bai['excerpt'],
-                // Đi qua đúng lớp làm sạch mà trang quản trị dùng — nếu
-                // không thì bài mẫu có thể chứa thẻ mà bài thật không
-                // được phép có, và admin sẽ tưởng mình cũng dùng được.
                 'body' => app(HtmlSanitizer::class)->lamSach($bai['body']),
                 'published_at' => now()->subDays((count($this->bai()) - $i) * 6),
             ]);
@@ -63,7 +40,6 @@ class BlogSeeder extends Seeder
         }
     }
 
-    /** @return array<string, BlogCategory> */
     private function chuyenMuc(): array
     {
         $danhSach = [
@@ -84,7 +60,6 @@ class BlogSeeder extends Seeder
         return $ket;
     }
 
-    /** @param array<string, string> $canhBao slug sản phẩm => ghi chú */
     private function ganSanPham(BlogPost $post, array $canhBao): void
     {
         $rows = [];
@@ -93,7 +68,6 @@ class BlogSeeder extends Seeder
         foreach ($canhBao as $slug => $ghiChu) {
             $sp = Product::where('slug', $slug)->first();
 
-            // Không có thì bỏ qua — KHÔNG tạo sản phẩm mới cho vừa bài.
             if ($sp) {
                 $rows[$sp->id] = ['note' => $ghiChu, 'sort_order' => $thuTu++];
             }
@@ -104,7 +78,6 @@ class BlogSeeder extends Seeder
         }
     }
 
-    /** @return list<array<string, mixed>> */
     private function bai(): array
     {
         return [

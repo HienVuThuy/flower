@@ -1,12 +1,4 @@
-/*
- * THEME: tet — Layer 1 (màu sắc/identity).
- * Layer 2 (artwork) ở resources/css/seasonal/tet.css,
- * Layer 3 (chuyển động) ở resources/js/theme/effects/tet-effect.js.
- *
- * Semantic (success/danger/warning/info) giữ nguyên từ theme mặc
- * định để ý nghĩa trạng thái luôn nhất quán — chỉ đổi brand/accent/
- * surface/ink, tức bản sắc thị giác của theme.
- */
+/* THEME: tet — Layer 1 (màu sắc/identity). */
 
 [data-theme="tet"] {
     --brand-50:  #fdf1e9;
