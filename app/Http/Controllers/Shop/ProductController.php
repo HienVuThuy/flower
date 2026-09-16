@@ -499,10 +499,10 @@ class ProductController extends Controller
          */
         $baiKhoe = \App\Models\CommunityPost::approved()
             ->where('product_id', $product->id)
-            ->with('user:id,name')
+            ->with(['user:id,name', 'media'])
             ->latest('approved_at')
             ->limit(4)
-            ->get(['id', 'user_id', 'body', 'photo', 'approved_at']);
+            ->get(['id', 'user_id', 'body', 'approved_at']);
 
         // Quà tặng kèm khi mua sản phẩm này — nói TRƯỚC khi khách bỏ vào giỏ.
         $quaKem = app(\App\Services\Gift\GiftResolver::class)->choSanPham($product);

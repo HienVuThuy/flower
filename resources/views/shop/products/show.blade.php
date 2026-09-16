@@ -290,8 +290,8 @@
                     @foreach($baiKhoe as $bai)
                         <div class="col-6 col-md-3">
                             <a href="{{ route('shop.community.show', $bai->id) }}" class="community-card d-block text-reset text-decoration-none">
-                                @if($bai->photo)
-                                    <x-site.image :path="$bai->photo" :alt="'Ảnh do ' . $bai->user?->name . ' chia sẻ'" class="community-card__img" />
+                                @if($bai->anhDau())
+                                    <x-site.image :path="$bai->anhDau()->path" :alt="'Ảnh do ' . $bai->user?->name . ' chia sẻ'" class="community-card__img" />
                                 @endif
                                 <div class="community-card__body">
                                     <p class="community-card__text mb-1">{{ \Illuminate\Support\Str::limit($bai->body, 80) }}</p>

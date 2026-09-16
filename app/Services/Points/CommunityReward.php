@@ -83,7 +83,8 @@ class CommunityReward
         }
 
         $diem = self::CO_BAN
-            + ($post->photo ? self::CO_ANH : 0)
+            // Có ít nhất một ảnh hoặc video — nhiều tệp không cộng thêm (không thưởng đăng dồn ảnh).
+            + ($post->media()->exists() ? self::CO_ANH : 0)
             + ($noiBat ? self::NOI_BAT : 0);
 
         $ghiChu = ($noiBat ? 'Bài nổi bật' : 'Bài được duyệt') . ': ' . Str::limit($post->body, 60);

@@ -30,6 +30,7 @@ import { initProductBlocks } from './admin/product-blocks';
 import { initGiftVariantPicker } from './admin/gift-variant-picker';
 import { initRefundGiftAutofill } from './admin/refund-gift-autofill';
 import { initAiChat } from './ai-chat';
+import { initCommunity } from './community';
 import { initVideoEmbed } from './components/video-embed';
 
 /*
@@ -87,6 +88,7 @@ export function bootUi() {
     initGiftVariantPicker();
     initRefundGiftAutofill();
     initAiChat();
+    initCommunity();
     initVideoEmbed();
 }
 

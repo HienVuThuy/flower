@@ -33,11 +33,17 @@ class ThuongBaiGocCayTest extends TestCase
         $this->admin->save();
     }
 
-    private function bai(User $u, array $ghiDe = []): CommunityPost
+    private function bai(User $u, array $ghiDe = [], bool $coAnh = false): CommunityPost
     {
         $p = new CommunityPost(array_merge(['body' => 'Cây monstera nhà mình ra thêm bốn lá mới.'], $ghiDe));
         $p->user_id = $u->id;
         $p->save();
+
+        if ($coAnh) {
+            (new \App\Models\CommunityPostMedia())->forceFill([
+                'community_post_id' => $p->id, 'kind' => 'image', 'path' => 'community/anh-' . $p->id . '.jpg', 'sort_order' => 0,
+            ])->save();
+        }
 
         return $p;
     }
@@ -62,10 +68,10 @@ class ThuongBaiGocCayTest extends TestCase
         $this->duyet($this->bai($u))->assertSessionHas('success', fn ($m) => str_contains($m, 'Cộng 20 điểm'));
         $this->assertSame(20, $this->soDu($u));
 
-        $this->duyet($this->bai($u, ['photo' => 'community/anh.jpg']));
+        $this->duyet($this->bai($u, coAnh: true));
         $this->assertSame(50, $this->soDu($u), 'Có ảnh: 20 + 10');
 
-        $this->duyet($this->bai($u, ['photo' => 'community/anh2.jpg']), noiBat: true);
+        $this->duyet($this->bai($u, coAnh: true), noiBat: true);
         $this->assertSame(110, $this->soDu($u), 'Có ảnh và nổi bật: 20 + 10 + 30');
     }
 
@@ -138,7 +144,7 @@ class ThuongBaiGocCayTest extends TestCase
         $this->duyet($coThuong, noiBat: true);
         $choDuyet = $this->bai($u, ['body' => 'Bài hai còn chờ duyệt.']);
 
-        $html = $this->actingAs($u)->get(route('shop.community.index'))->assertOk()->getContent();
+        $html = $this->actingAs($u)->get(route('shop.community.index', ['tab' => 'cua-toi']))->assertOk()->getContent();
 
         /*
          * SO THEO THUỘC TÍNH CỦA ĐÚNG BÀI, không theo chữ "điểm" ở đâu đó sau

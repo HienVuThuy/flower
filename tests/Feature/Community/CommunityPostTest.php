@@ -92,11 +92,15 @@ class CommunityPostTest extends TestCase
         $user = User::factory()->create();
         $this->bai($user, ['body' => 'Bài của chính tôi']);
 
+        // Bài chưa duyệt nằm ở mục "Bài của tôi" — chỗ trang đưa họ tới ngay sau khi gửi.
         $this->actingAs($user)
-            ->get('/goc-cay')
+            ->get('/goc-cay?tab=cua-toi')
             ->assertOk()
             ->assertSee('Bài của chính tôi')
             ->assertSee('Đang chờ duyệt');
+
+        // Và KHÔNG lẫn vào bảng tin chung.
+        $this->actingAs($user)->get('/goc-cay')->assertOk()->assertDontSee('Bài của chính tôi');
     }
 
     #[Test]
@@ -160,7 +164,7 @@ class CommunityPostTest extends TestCase
             ->patch('/admin/goc-cay/' . $post->id . '/tu-choi', ['reject_reason' => 'Ảnh không liên quan tới cây']);
 
         $this->actingAs($user)
-            ->get('/goc-cay')
+            ->get('/goc-cay?tab=cua-toi')
             ->assertOk()
             ->assertSee('Ảnh không liên quan tới cây');
     }
@@ -191,17 +195,18 @@ class CommunityPostTest extends TestCase
 
         $this->actingAs($user)->post('/goc-cay', [
             'body' => 'Cây monstera nhà mình sau ba tháng.',
-            'photo' => new UploadedFile($tam, 'ban-cong.jpg', 'image/jpeg', null, true),
+            'media' => [new UploadedFile($tam, 'ban-cong.jpg', 'image/jpeg', null, true)],
         ])->assertRedirect();
 
         $post = CommunityPost::where('user_id', $user->id)->firstOrFail();
 
-        $this->assertNotNull($post->photo);
-        Storage::disk('public')->assertExists($post->photo);
+        $anh = $post->media()->sole();
+        $this->assertSame('image', $anh->kind);
+        Storage::disk('public')->assertExists($anh->path);
 
         // Đọc bằng exif_read_data THÔ, không chỉ bằng hàm kiểm của dự án.
         $this->assertFalse(
-            $this->conGps(Storage::disk('public')->path($post->photo)),
+            $this->conGps(Storage::disk('public')->path($anh->path)),
             'TOẠ ĐỘ GPS VẪN CÒN trong ảnh công khai — đây là địa chỉ nhà của khách.',
         );
     }
@@ -215,11 +220,11 @@ class CommunityPostTest extends TestCase
 
         $this->actingAs($user)->post('/goc-cay', [
             'body' => 'Cây monstera nhà mình sau ba tháng.',
-            'photo' => UploadedFile::fake()->image('ban-cong.jpg'),
+            'media' => [UploadedFile::fake()->image('ban-cong.jpg')],
         ]);
 
         $post = CommunityPost::where('user_id', $user->id)->firstOrFail();
-        $anh = $post->photo;
+        $anh = $post->media()->sole()->path;
 
         $this->actingAs($user)->delete('/goc-cay/' . $post->id)->assertRedirect();
 

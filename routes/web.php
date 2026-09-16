@@ -643,22 +643,45 @@ Route::get('trang/{slug}', [PageController::class, 'show'])
 Route::middleware(['auth', 'verified'])->group(function () {
     // Đăng bài và xoá bài của chính mình — cần đăng nhập.
     Route::post('goc-cay', [CommunityController::class, 'store'])
+        ->middleware('throttle:10,1')
         ->name('shop.community.store');
+
+    Route::get('goc-cay/{post}/sua', [CommunityController::class, 'edit'])
+        ->whereNumber('post')
+        ->name('shop.community.edit');
+
+    Route::patch('goc-cay/{post}', [CommunityController::class, 'update'])
+        ->whereNumber('post')
+        ->middleware('throttle:20,1')
+        ->name('shop.community.update');
 
     Route::delete('goc-cay/{post}', [CommunityController::class, 'destroy'])
         ->name('shop.community.destroy');
 
-    // Thích / bình luận — cần email đã xác thực (xem CommunityInteraction cho điều kiện bình luận).
+    // Thích / lưu / bình luận — cần email đã xác thực.
     Route::post('goc-cay/{post}/thich', [CommunityController::class, 'like'])
         ->middleware('throttle:60,1')
         ->name('shop.community.like');
+
+    Route::post('goc-cay/{post}/luu', [CommunityController::class, 'save'])
+        ->middleware('throttle:60,1')
+        ->name('shop.community.save');
 
     Route::post('goc-cay/{post}/binh-luan', [CommunityController::class, 'comment'])
         ->middleware('throttle:10,1')
         ->name('shop.community.comment');
 
+    Route::patch('goc-cay/binh-luan/{comment}', [CommunityController::class, 'updateComment'])
+        ->middleware('throttle:20,1')
+        ->name('shop.community.comment.update');
+
     Route::delete('goc-cay/binh-luan/{comment}', [CommunityController::class, 'destroyComment'])
         ->name('shop.community.comment.destroy');
+
+    // Báo cáo bài / bình luận vi phạm cho cửa hàng.
+    Route::post('goc-cay/bao-cao', [CommunityController::class, 'report'])
+        ->middleware('throttle:20,1')
+        ->name('shop.community.report');
 
     Route::post('voucher/{coupon}/luu', [VoucherController::class, 'claim'])
         ->name('shop.vouchers.claim');
@@ -1083,6 +1106,15 @@ Route::prefix('admin')
         Route::patch('goc-cay/binh-luan/{comment}/an', [CommunityModerationController::class, 'toggleComment'])
             ->middleware('quyen:danh-gia')
             ->name('community.comments.toggle');
+
+        /* Ẩn / bỏ ẩn một bài đã đăng, và xử lý báo cáo của khách. */
+        Route::patch('goc-cay/{post}/an', [CommunityModerationController::class, 'toggleHidden'])
+            ->middleware('quyen:danh-gia')
+            ->name('community.hide');
+
+        Route::post('goc-cay/bao-cao', [CommunityModerationController::class, 'handleReport'])
+            ->middleware('quyen:danh-gia')
+            ->name('community.reports.handle');
 
         /*
          * XUẤT DỮ LIỆU — hai bước: chọn rồi mới tải.

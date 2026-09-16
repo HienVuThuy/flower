@@ -2,13 +2,10 @@
 
 namespace Tests\Feature\Community;
 
-use App\Enums\OrderStatus;
-use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\CommunityComment;
 use App\Models\CommunityPost;
-use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\Points\PointLedger;
@@ -33,20 +30,6 @@ class GocCayTuongTacTest extends TestCase
         return $p;
     }
 
-    private function daNhanDon(User $u): User
-    {
-        $don = Order::create([
-            'order_number' => 'FP-GC-' . strtoupper(bin2hex(random_bytes(3))),
-            'recipient_name' => 'Khách', 'recipient_phone' => '0912345678',
-            'shipping_address' => '1 Đường', 'shipping_province' => 'Thành phố Hà Nội',
-            'payment_method' => 'cod', 'subtotal' => '100000.00', 'discount_total' => '0.00',
-            'shipping_fee' => '0.00', 'coupon_discount' => '0.00', 'grand_total' => '100000.00',
-        ]);
-        $don->forceFill(['user_id' => $u->id, 'status' => OrderStatus::Completed, 'payment_status' => PaymentStatus::Paid])->save();
-
-        return $u;
-    }
-
     private function soDu(User $u): int
     {
         return app(PointLedger::class)->soDu($u);
@@ -57,7 +40,7 @@ class GocCayTuongTacTest extends TestCase
     {
         $tacGia = User::factory()->create();
         $cho = $this->bai($tacGia, duyet: false);
-        $khach = $this->daNhanDon(User::factory()->create());
+        $khach = User::factory()->create();
 
         $this->get(route('shop.community.show', $cho->id))->assertNotFound();
         $this->actingAs($tacGia)->get(route('shop.community.show', $cho->id))->assertNotFound();
@@ -81,6 +64,17 @@ class GocCayTuongTacTest extends TestCase
 
         $this->actingAs($u)->post(route('shop.community.like', $p->id));
         $this->assertDatabaseCount('community_post_likes', 0);
+    }
+
+    #[Test]
+    public function thich_bang_fetch_tra_ve_json_de_khong_tai_lai_trang(): void
+    {
+        $p = $this->bai(User::factory()->create());
+
+        $this->actingAs(User::factory()->create())
+            ->postJson(route('shop.community.like', $p->id))
+            ->assertOk()
+            ->assertJson(['thich' => true, 'so' => 1]);
     }
 
     #[Test]
@@ -121,19 +115,23 @@ class GocCayTuongTacTest extends TestCase
     }
 
     #[Test]
-    public function binh_luan_danh_cho_khach_da_nhan_don(): void
+    public function moi_tai_khoan_da_xac_thuc_email_deu_binh_luan_duoc(): void
     {
+        /*
+         * LUẬT CŨ (chỉ khách đã nhận hàng) chặn đúng người cần hỏi nhất: người
+         * chưa mua, thấy cây đẹp và muốn hỏi cách chăm. Chống rác bằng cách
+         * khác: xác thực email, giới hạn tốc độ, báo cáo và ẩn bình luận.
+         */
         $p = $this->bai(User::factory()->create());
 
-        $moi = User::factory()->create();
-        $this->actingAs($moi)->post(route('shop.community.comment', $p->id), ['body' => 'Mua ở đâu vậy bạn?'])
-            ->assertSessionHas('error');
+        $chuaXacThuc = User::factory()->unverified()->create();
+        $this->actingAs($chuaXacThuc)->post(route('shop.community.comment', $p->id), ['body' => 'Cây này tên gì vậy bạn?'])
+            ->assertRedirect(route('verification.notice'));
         $this->assertDatabaseCount('community_comments', 0);
-        $this->actingAs($moi)->get(route('shop.community.show', $p->id))->assertSee('data-khong-binh-luan', false);
 
-        $khach = $this->daNhanDon(User::factory()->create(['name' => 'Chị Lan']));
-        $this->actingAs($khach)->post(route('shop.community.comment', $p->id), ['body' => 'Cây nhà bạn đẹp quá!'])
-            ->assertRedirect(route('shop.community.show', $p->id) . '#binh-luan');
+        $khachMoi = User::factory()->create(['name' => 'Chị Lan']);
+        $this->actingAs($khachMoi)->post(route('shop.community.comment', $p->id), ['body' => 'Cây nhà bạn đẹp quá!'])
+            ->assertRedirect();
 
         $this->get(route('shop.community.show', $p->id))->assertSee('Cây nhà bạn đẹp quá!')->assertSee('Chị Lan');
     }
@@ -142,7 +140,7 @@ class GocCayTuongTacTest extends TestCase
     public function cua_hang_an_binh_luan_thi_khong_hien_va_khong_dem(): void
     {
         $p = $this->bai(User::factory()->create());
-        $khach = $this->daNhanDon(User::factory()->create());
+        $khach = User::factory()->create();
         $this->actingAs($khach)->post(route('shop.community.comment', $p->id), ['body' => 'Liên hệ zalo 09xx mua cây rẻ']);
         $this->actingAs($khach)->post(route('shop.community.comment', $p->id), ['body' => 'Cây xinh ghê']);
         $rac = CommunityComment::where('body', 'like', 'Liên hệ%')->sole();
@@ -157,9 +155,13 @@ class GocCayTuongTacTest extends TestCase
 
         $this->assertNotNull($rac->fresh()->hidden_at);
         $this->get(route('shop.community.show', $p->id))->assertDontSee('Liên hệ zalo')->assertSee('Cây xinh ghê');
-        $this->get(route('shop.community.index'))->assertSee('data-so-binh-luan="' . $p->id . '">1 bình luận', false);
+        $this->get(route('shop.community.index'))
+            ->assertSee('data-so-binh-luan="' . $p->id . '"', false)
+            ->assertSee('1 bình luận')
+            // Bình luận đã ẩn cũng không được lọt vào phần xem trước dưới bài ở bảng tin.
+            ->assertDontSee('Liên hệ zalo');
 
-        // Nhân viên không có quyền đánh giá thì không ẩn được — nhân viên mặc định CÓ quyền này, nên kiểm khách.
+        // Khách thường không ẩn được bình luận của người khác.
         $this->actingAs($khach)->patch(route('admin.community.comments.toggle', $rac))->assertForbidden();
     }
 
@@ -167,7 +169,7 @@ class GocCayTuongTacTest extends TestCase
     public function chi_go_duoc_binh_luan_cua_chinh_minh(): void
     {
         $p = $this->bai(User::factory()->create());
-        $a = $this->daNhanDon(User::factory()->create());
+        $a = User::factory()->create();
         $this->actingAs($a)->post(route('shop.community.comment', $p->id), ['body' => 'Bình luận của A']);
         $bl = CommunityComment::sole();
 
@@ -193,8 +195,11 @@ class GocCayTuongTacTest extends TestCase
         $html = $this->get(route('shop.community.index'))->getContent();
         $this->assertLessThan(strpos($html, 'Bài nhiều lượt thích nhất'), strpos($html, 'Bài mới hơn mà ít thích'));
 
-        $html = $this->get(route('shop.community.index', ['sap-xep' => 'thich-nhieu']))->getContent();
-        $this->assertLessThan(strpos($html, 'Bài mới hơn mà ít thích'), strpos($html, 'Bài nhiều lượt thích nhất'));
+        // Đường dẫn cũ ?sap-xep= vẫn chạy, và tab mới cũng vậy.
+        foreach ([['sap-xep' => 'thich-nhieu'], ['tab' => 'thich-nhieu']] as $thamSo) {
+            $html = $this->get(route('shop.community.index', $thamSo))->getContent();
+            $this->assertLessThan(strpos($html, 'Bài mới hơn mà ít thích'), strpos($html, 'Bài nhiều lượt thích nhất'));
+        }
     }
 
     #[Test]

@@ -8194,3 +8194,32 @@ có thanh bên.
 - Mọi ngưỡng (đơn tối thiểu, số ngày mỗi kỳ, ân hạn, điểm tối thiểu / mức
   tốt, số kỳ và % trả trước từng mức) admin sửa được; kế hoạch chụp điều
   kiện lúc tạo.
+
+## QĐ-298. Góc cây thành bảng tin: nhiều ảnh / video, trả lời lồng một tầng, lưu bài, báo cáo
+
+- Khung đăng bài vào HỘP THOẠI, bảng tin chiếm chỗ chính. Trước đây biểu mẫu
+  chiếm nguyên cột phải còn bài viết nằm trong lưới hai cột hẹp.
+- BÌNH LUẬN MỞ CHO MỌI TÀI KHOẢN ĐÃ XÁC THỰC EMAIL (trước: chỉ khách đã nhận
+  hàng). Luật cũ chặn đúng người cần hỏi nhất — người chưa mua, thấy cây đẹp và
+  muốn hỏi cách chăm. Chống rác bằng: xác thực email, giới hạn tốc độ, báo cáo
+  của khách, và nút ẩn một chạm của cửa hàng.
+- TRẢ LỜI LỒNG ĐÚNG MỘT TẦNG như Facebook: trả lời một câu trả lời vẫn gắn vào
+  bình luận gốc, kèm `reply_to_user_id` để hiện "trả lời Tên". Lồng vô hạn tầng
+  thì trên điện thoại thụt lề tới hết màn hình.
+- NHIỀU ẢNH / VIDEO trong bảng `community_post_media` thay cột `photo`. Ảnh qua
+  ImageStore (tước metadata); VIDEO qua VideoMetadataStripper — máy chủ không có
+  ffmpeg nên tự đọc cấu trúc hộp MP4 và ghi đè chuỗi toạ độ ISO 6709 bằng khoảng
+  trắng cùng độ dài (không đổi kích thước hộp nào nên video vẫn phát). Giới hạn
+  10 tệp, 2 video, ảnh 6MB, video 30MB — dưới `post_max_size` 40MB của máy chủ.
+- SỬA BÀI ĐÃ ĐĂNG THÌ QUAY LẠI HÀNG CHỜ DUYỆT: "duyệt trước khi hiện" là luật
+  của Góc cây, và sửa sau khi duyệt không được thành cửa sau. Điểm thưởng không
+  cộng lại (khoá theo bài).
+- BÁO CÁO: mỗi người báo một nội dung một lần (UNIQUE), không báo nội dung của
+  chính mình. KHÔNG tự ẩn theo số lượt báo — vài tài khoản cùng báo là đủ gỡ bài
+  người khác. Nhân viên có quyền duyệt đọc rồi quyết: ẩn (bài có `hidden_at` +
+  lý do tác giả đọc được) hoặc kết luận không vi phạm; một quyết định đóng mọi
+  báo cáo đang chờ của nội dung đó.
+- LƯU BÀI (`community_post_saves`) và tab "Đã lưu", "Bài của tôi". Thích và lưu
+  gửi bằng fetch trả JSON: bấm giữa bảng tin không tải lại trang rồi nhảy về đầu.
+- Emoji là NỘI DUNG khách gõ (bảng chọn emoji trong ô soạn), khác với icon giao
+  diện — icon vẫn là SVG.

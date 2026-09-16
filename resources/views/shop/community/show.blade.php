@@ -9,83 +9,157 @@
 <section class="section-sm">
     <div class="container-shop community-post">
 
-        <x-site.breadcrumb :items="[['label' => 'Góc cây của bạn']]" />
+        <x-site.breadcrumb :items="[['label' => 'Góc cây của bạn', 'url' => route('shop.community.index')], ['label' => 'Bài viết']]" />
 
         <p class="mb-3"><a href="{{ route('shop.community.index') }}">&larr; Quay lại Góc cây</a></p>
 
-        <article class="community-card">
-            @if($post->photo)
-                <x-site.image :path="$post->photo" :alt="'Ảnh do ' . $post->user?->name . ' chia sẻ'" class="community-post__img" />
+        <article class="post-card post-card--don" id="bai-{{ $post->id }}" data-bai="{{ $post->id }}">
+
+            <header class="post-card__head">
+                <span class="avatar" aria-hidden="true">{{ mb_substr($post->user?->name ?? 'K', 0, 1) }}</span>
+
+                <div class="post-card__who">
+                    <span class="post-card__author">{{ $post->user?->name ?? 'Người dùng đã xoá' }}</span>
+                    <p class="post-card__meta mb-0">
+                        <x-site.time :at="$post->approved_at" relative />
+                        @if($post->edited_at)
+                            <span>· đã chỉnh sửa</span>
+                        @endif
+                    </p>
+                </div>
+
+                <details class="post-menu">
+                    <summary class="post-menu__toggle" title="Tuỳ chọn bài">
+                        <x-site.icon name="three-dots" label="Tuỳ chọn bài" />
+                    </summary>
+
+                    <div class="post-menu__list">
+                        <button type="button" class="post-menu__item" data-copy="{{ route('shop.community.show', $post->id) }}">
+                            <x-site.icon name="link-45deg" /> Sao chép liên kết
+                        </button>
+
+                        @auth
+                            <form method="POST" action="{{ route('shop.community.save', $post->id) }}" data-toggle-json data-loai="luu">
+                                @csrf
+                                <button type="submit" class="post-menu__item" data-luu="{{ $post->id }}">
+                                    <x-site.icon :name="$daLuu ? 'bookmark-fill' : 'bookmark'" data-icon-luu />
+                                    <span data-nhan-luu>{{ $daLuu ? 'Bỏ lưu bài' : 'Lưu bài' }}</span>
+                                </button>
+                            </form>
+
+                            @if(auth()->id() === $post->user_id)
+                                <a href="{{ route('shop.community.edit', $post->id) }}" class="post-menu__item">
+                                    <x-site.icon name="pencil" /> Sửa bài
+                                </a>
+                                <form method="POST" action="{{ route('shop.community.destroy', $post->id) }}"
+                                      onsubmit="return confirm('Xoá bài này? Ảnh, video và bình luận của bài cũng bị xoá.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="post-menu__item post-menu__item--danger">
+                                        <x-site.icon name="trash" /> Xoá bài
+                                    </button>
+                                </form>
+                            @else
+                                <button type="button" class="post-menu__item" data-bao-cao data-loai="post" data-id="{{ $post->id }}"
+                                        data-bs-toggle="modal" data-bs-target="#hop-bao-cao">
+                                    <x-site.icon name="flag" /> Báo cáo bài
+                                </button>
+                            @endif
+                        @endauth
+                    </div>
+                </details>
+            </header>
+
+            {{-- Chữ người lạ gửi lên: luôn escape, cùng luật với bảng tin. --}}
+            @if(trim((string) $post->body) !== '')
+                <p class="post-card__text">{{ $post->body }}</p>
             @endif
 
-            <div class="community-card__body">
-                {{-- Chữ người lạ gửi lên: luôn escape, cùng luật với trang danh sách. --}}
-                <p class="community-card__text">{{ $post->body }}</p>
-
-                @if($post->product)
-                    <a href="{{ route('shop.products.show', $post->product) }}" class="community-card__product">
-                        Cây trong ảnh: {{ $post->product->name }}
-                    </a>
-                @endif
-
-                <p class="community-card__meta">
-                    {{ $post->user?->name ?? 'Khách' }} &middot; <x-site.time :at="$post->approved_at" relative />
-                </p>
-
-                <div class="community-card__actions">
-                    <x-community.like-button :post="$post" :liked="$daThich" :count="$post->likers_count" />
+            {{-- Trang một bài xem ĐỦ tệp, cỡ lớn, video có nút điều khiển. --}}
+            @if($post->media->isNotEmpty())
+                <div class="media-full">
+                    @foreach($post->media as $m)
+                        @if($m->laVideo())
+                            <video class="media-full__item" controls preload="metadata" playsinline
+                                   src="{{ $m->url() }}"
+                                   aria-label="Video do {{ $post->user?->name ?? 'khách' }} chia sẻ"></video>
+                        @else
+                            <x-site.image :path="$m->path"
+                                          :alt="'Ảnh do ' . ($post->user?->name ?? 'khách') . ' chia sẻ'"
+                                          class="media-full__item" />
+                        @endif
+                    @endforeach
                 </div>
+            @endif
+
+            @if($post->product)
+                <a href="{{ route('shop.products.show', $post->product) }}" class="post-card__product">
+                    <x-site.icon name="flower2" /> Cây trong bài: {{ $post->product->name }}
+                </a>
+            @endif
+
+            <div class="post-card__stats">
+                <span>{{ $post->likers_count }} lượt thích</span>
+                <span>{{ $post->so_binh_luan }} bình luận</span>
+            </div>
+
+            <div class="post-card__actions">
+                <x-community.like-button :post="$post" :liked="$daThich" :count="$post->likers_count" />
+
+                <a href="#binh-luan" class="post-action">
+                    <x-site.icon name="chat" />
+                    <span class="post-action__nhan">Bình luận</span>
+                </a>
+
+                <x-community.save-button :post="$post" :saved="$daLuu" />
             </div>
         </article>
 
         <div class="surface-card p-4 mt-3" id="binh-luan">
-            <h2 class="text-h4 mb-3">Bình luận ({{ $comments->count() }})</h2>
-
-            @forelse($comments as $bl)
-                <div class="community-comment" data-binh-luan="{{ $bl->id }}">
-                    <p class="community-comment__meta mb-1">
-                        <strong>{{ $bl->user?->name ?? 'Khách' }}</strong>
-                        &middot; <x-site.time :at="$bl->created_at" relative />
-                    </p>
-                    <p class="community-comment__text mb-0">{{ $bl->body }}</p>
-
-                    @if(auth()->id() === $bl->user_id)
-                        <form method="POST" action="{{ route('shop.community.comment.destroy', $bl->id) }}"
-                              onsubmit="return confirm('Gỡ bình luận này?')">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="btn btn-ghost btn-sm">Gỡ</button>
-                        </form>
-                    @endif
-                </div>
-            @empty
-                <p class="text-caption">Chưa có bình luận nào.</p>
-            @endforelse
+            <h2 class="text-h4 mb-3">Bình luận ({{ $post->so_binh_luan }})</h2>
 
             @auth
                 @if($coTheBinhLuan)
-                    <form method="POST" action="{{ route('shop.community.comment', $post->id) }}" class="mt-3">
+                    <form method="POST" action="{{ route('shop.community.comment', $post->id) }}" class="comment-form comment-form--nhanh mb-4">
                         @csrf
-                        <label class="form-label" for="binh-luan-body">Viết bình luận</label>
-                        <textarea name="body" id="binh-luan-body" rows="2" maxlength="500" required
-                                  class="form-control @error('body') is-invalid @enderror">{{ old('body') }}</textarea>
-                        <x-form-error name="body" />
-                        <button type="submit" class="btn btn-primary-brand btn-sm mt-2">Gửi</button>
+                        <label class="visually-hidden" for="binh-luan-moi">Viết bình luận</label>
+                        <textarea id="binh-luan-moi" name="body" rows="2" required
+                                  maxlength="{{ \App\Services\Community\CommunityInteraction::DO_DAI_BINH_LUAN }}"
+                                  class="form-control @error('body') is-invalid @enderror"
+                                  placeholder="Hỏi cách chăm, khen cây, hoặc kể chuyện của bạn…">{{ old('body') }}</textarea>
+                        <x-community.emoji-picker target="#binh-luan-moi" />
+                        <button type="submit" class="btn btn-primary-brand btn-sm">Gửi</button>
                     </form>
+                    <x-form-error name="body" />
                 @else
                     {{-- Nói luật ngay tại chỗ, không để khách tìm ô bình luận không có. --}}
-                    <p class="text-caption mt-3 mb-0" data-khong-binh-luan>
-                        Bình luận dành cho khách đã nhận ít nhất một đơn hàng ở cửa hàng.
+                    <p class="text-caption mb-4" data-khong-binh-luan>
+                        Xác thực email của tài khoản để bình luận.
+                        <a href="{{ route('verification.notice') }}">Gửi lại thư xác thực</a>.
                     </p>
                 @endif
             @else
-                <p class="text-caption mt-3 mb-0">
-                    <a href="{{ route('login') }}">Đăng nhập</a> để bình luận.
+                <p class="text-caption mb-4">
+                    <a href="{{ route('login', ['redirect' => route('shop.community.show', $post->id, false)]) }}">Đăng nhập</a>
+                    để bình luận — ai có tài khoản cũng hỏi đáp được.
                 </p>
             @endauth
+
+            @forelse($comments as $bl)
+                @include('shop.community.partials.comment', [
+                    'bl' => $bl,
+                    'traLoi' => $bl->replies,
+                    'post' => $post,
+                    'coTheBinhLuan' => $coTheBinhLuan,
+                ])
+            @empty
+                <p class="text-caption mb-0">Chưa có bình luận nào. Bạn mở lời trước nhé.</p>
+            @endforelse
         </div>
 
     </div>
 </section>
+
+@include('shop.community.partials.report-modal')
 
 @endsection
