@@ -4,7 +4,7 @@ return [
 
     /*
      * | THUẾ GIÁ TRỊ GIA TĂNG (VAT)
-     * | ⚠️ MỨC THUẾ SUẤT NÀY LÀ GIÁ TRỊ MẶC ĐỊNH KỸ THUẬT, KHÔNG PHẢI
+     * ⚠️ MỨC THUẾ SUẤT NÀY LÀ GIÁ TRỊ MẶC ĐỊNH KỸ THUẬT, KHÔNG PHẢI LỜI TƯ VẤN THUẾ.
      */
 
     'default_rate' => (float) env('TAX_DEFAULT_RATE', 0.08),

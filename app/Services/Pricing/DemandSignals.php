@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Số liệu nhu cầu THẬT của từng sản phẩm trong một khoảng thời gian.
- * ⚠️ KHÔNG ĐỌC BẢNG NHẬT KÝ CÁ NHÂN. Lớp này chỉ đọc `user_events`,
+ * ⚠️ KHÔNG ĐỌC BẢNG NHẬT KÝ CÁ NHÂN.
  */
 class DemandSignals
 {

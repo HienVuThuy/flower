@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Một trang trong quyển sổ nhật ký.
- * ⚠️ DỮ LIỆU RIÊNG TƯ — xem chú thích ở Journal và ở migration.
+ * ⚠️ DỮ LIỆU RIÊNG TƯ
  */
 class JournalEntry extends Model
 {

@@ -72,7 +72,7 @@ class PlantAdvisorSeeder extends Seeder
         'huong-duong-ruc-ro' => [FengShuiElement::Tho, FengShuiElement::Hoa],
     ];
 
-    /** ⚠️ Là dữ liệu mẫu do dự án đặt ra để trang tư vấn có đủ lựa chọn */
+    /** ⚠️ Là dữ liệu mẫu do dự án đặt ra để trang tư vấn có đủ lựa chọn cho mọi vị trí và mọi mệnh. */
     private const NEW_PLANTS = [
         [
             'name' => 'Dương xỉ Boston treo',

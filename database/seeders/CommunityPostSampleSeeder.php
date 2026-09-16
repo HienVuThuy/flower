@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Storage;
 
 /**
  * Dữ liệu mẫu cho "Góc cây của bạn".
- * ⚠️ DỮ LIỆU MẪU. Người đăng là các tài khoản mẫu (@khachmau.test, cùng bộ với
+ * ⚠️ DỮ LIỆU MẪU.
  */
 class CommunityPostSampleSeeder extends Seeder
 {

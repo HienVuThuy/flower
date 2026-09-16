@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Nhật ký: trang trí sổ, và cấu trúc riêng cho từng loại sổ.
- * ⚠️ VẪN LÀ DỮ LIỆU RIÊNG TƯ. Ba bảng nhật ký cũ và bảng mới ở đây đều
+ * ⚠️ VẪN LÀ DỮ LIỆU RIÊNG TƯ.
  */
 return new class extends Migration
 {

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * Một chỉ số đo được trong một trang nhật ký.
- * ⚠️ DỮ LIỆU RIÊNG TƯ — xem chú thích ở Journal và ở migration.
+ * ⚠️ DỮ LIỆU RIÊNG TƯ
  */
 class JournalMetric extends Model
 {

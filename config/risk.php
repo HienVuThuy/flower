@@ -2,7 +2,7 @@
 
 /*
  * CHẤM ĐIỂM RỦI RO ĐƠN HÀNG
- * ⚠️ SỐ ĐIỂM VÀ NGƯỠNG DƯỚI ĐÂY LÀ ĐIỂM KHỞI ĐẦU, KHÔNG PHẢI KẾT QUẢ
+ * ⚠️ SỐ ĐIỂM VÀ NGƯỠNG DƯỚI ĐÂY LÀ ĐIỂM KHỞI ĐẦU, KHÔNG PHẢI KẾT QUẢ PHÂN TÍCH DỮ LIỆU.
  */
 
 return [

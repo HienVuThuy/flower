@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Gợi ý sản phẩm cá nhân hoá (Guide §11 "User → Gợi ý cá nhân hoá", §9, §25).
- * ⚠️ KHÔNG ĐƯỢC ĐỌC BẢNG NHẬT KÝ CÁ NHÂN. Xem chú thích đầu
+ * ⚠️ KHÔNG ĐƯỢC ĐỌC BẢNG NHẬT KÝ CÁ NHÂN.
  */
 class RecommendationService
 {

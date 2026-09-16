@@ -26,7 +26,7 @@ use Illuminate\View\View;
 
 /**
  * "Góc cây của bạn" — bảng tin khoe cây kiểu mạng xã hội, cố ý gọn.
- * ⚠️ HAI LUẬT KHÔNG ĐƯỢC NỚI:
+ * ⚠️ HAI LUẬT KHÔNG ĐƯỢC NỚI
  */
 class CommunityController extends Controller
 {

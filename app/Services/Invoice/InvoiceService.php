@@ -10,7 +10,7 @@ use Illuminate\Support\Str;
 
 /**
  * NƠI DUY NHẤT dựng dữ liệu hoá đơn từ một đơn hàng.
- * ⚠️ DỰNG DỮ LIỆU, KHÔNG PHÁT HÀNH. Hoá đơn điện tử hợp lệ phải được
+ * ⚠️ DỰNG DỮ LIỆU, KHÔNG PHÁT HÀNH.
  */
 class InvoiceService
 {

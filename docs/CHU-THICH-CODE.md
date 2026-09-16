@@ -8096,7 +8096,7 @@ cứ cái nào cũng là chưa qua bước 1.
 ## app/Http/Controllers/Shop/CommunityController.php
 
 **[1] dòng 27–41** — ngay trước: class CommunityController extends Controller
-_Giữ lại trong code:_ "Góc cây của bạn" — bảng tin khoe cây kiểu mạng xã hội, cố ý gọn. / ⚠️ HAI LUẬT KHÔNG ĐƯỢC NỚI:
+_Giữ lại trong code:_ "Góc cây của bạn" — bảng tin khoe cây kiểu mạng xã hội, cố ý gọn. / ⚠️ HAI LUẬT KHÔNG ĐƯỢC NỚI
 
 ```text
 "Góc cây của bạn" — bảng tin khoe cây kiểu mạng xã hội, cố ý gọn.
@@ -12461,7 +12461,7 @@ Bình luận hiện ra ngoài: chưa bị cửa hàng ẩn.
 ## app/Models/CommunityPost.php
 
 **[1] dòng 11–19** — ngay trước: class CommunityPost extends Model
-_Giữ lại trong code:_ Một bài trong "Góc cây của bạn". / ⚠️ NỘI DUNG CÔNG KHAI DO NGƯỜI LẠ ĐĂNG. Hai luật không được nới:
+_Giữ lại trong code:_ Một bài trong "Góc cây của bạn". / ⚠️ NỘI DUNG CÔNG KHAI DO NGƯỜI LẠ ĐĂNG.
 
 ```text
 Một bài trong "Góc cây của bạn".
@@ -12996,7 +12996,7 @@ còn sửa được, con số trên chứng từ thì không.
 ## app/Models/Journal.php
 
 **[1] dòng 14–24** — ngay trước: class Journal extends Model
-_Giữ lại trong code:_ Một quyển sổ nhật ký của một người dùng. / ⚠️ DỮ LIỆU RIÊNG TƯ. Xem chú thích ở migration
+_Giữ lại trong code:_ Một quyển sổ nhật ký của một người dùng. / ⚠️ DỮ LIỆU RIÊNG TƯ.
 
 ```text
 Một quyển sổ nhật ký của một người dùng.
@@ -13188,7 +13188,7 @@ thứ tự giảm dần vào thì cây trông như đang teo lại.
 ## app/Models/JournalEntry.php
 
 **[1] dòng 12–21** — ngay trước: class JournalEntry extends Model
-_Giữ lại trong code:_ Một trang trong quyển sổ nhật ký. / ⚠️ DỮ LIỆU RIÊNG TƯ — xem chú thích ở Journal và ở migration.
+_Giữ lại trong code:_ Một trang trong quyển sổ nhật ký. / ⚠️ DỮ LIỆU RIÊNG TƯ
 
 ```text
 Một trang trong quyển sổ nhật ký.
@@ -13252,7 +13252,7 @@ trị không còn tồn tại trong enum.
 ## app/Models/JournalMetric.php
 
 **[1] dòng 9–18** — ngay trước: class JournalMetric extends Model
-_Giữ lại trong code:_ Một chỉ số đo được trong một trang nhật ký. / ⚠️ DỮ LIỆU RIÊNG TƯ — xem chú thích ở Journal và ở migration.
+_Giữ lại trong code:_ Một chỉ số đo được trong một trang nhật ký. / ⚠️ DỮ LIỆU RIÊNG TƯ
 
 ```text
 Một chỉ số đo được trong một trang nhật ký.
@@ -22363,7 +22363,7 @@ gõ thì tính theo đúng đơn giá đã mua.
 ## app/Services/Invoice/InvoiceService.php
 
 **[1] dòng 11–26** — ngay trước: class InvoiceService
-_Giữ lại trong code:_ NƠI DUY NHẤT dựng dữ liệu hoá đơn từ một đơn hàng. / ⚠️ DỰNG DỮ LIỆU, KHÔNG PHÁT HÀNH. Hoá đơn điện tử hợp lệ phải được
+_Giữ lại trong code:_ NƠI DUY NHẤT dựng dữ liệu hoá đơn từ một đơn hàng. / ⚠️ DỰNG DỮ LIỆU, KHÔNG PHÁT HÀNH.
 
 ```text
 NƠI DUY NHẤT dựng dữ liệu hoá đơn từ một đơn hàng.
@@ -25079,7 +25079,7 @@ hiện con số cũ như thể nó vẫn còn.
 ## app/Services/Pricing/DemandSignals.php
 
 **[1] dòng 14–43** — ngay trước: class DemandSignals
-_Giữ lại trong code:_ Số liệu nhu cầu THẬT của từng sản phẩm trong một khoảng thời gian. / ⚠️ KHÔNG ĐỌC BẢNG NHẬT KÝ CÁ NHÂN. Lớp này chỉ đọc `user_events`,
+_Giữ lại trong code:_ Số liệu nhu cầu THẬT của từng sản phẩm trong một khoảng thời gian. / ⚠️ KHÔNG ĐỌC BẢNG NHẬT KÝ CÁ NHÂN.
 
 ```text
 Số liệu nhu cầu THẬT của từng sản phẩm trong một khoảng thời gian.
@@ -25229,7 +25229,7 @@ quyết định tín hiệu.
 ## app/Services/Pricing/PricingAdvisor.php
 
 **[1] dòng 9–44** — ngay trước: class PricingAdvisor
-_Giữ lại trong code:_ Đề xuất giá cho admin, dựa trên nhu cầu THẬT đo được. / ⚠️ KHÔNG ĐỌC BẢNG NHẬT KÝ CÁ NHÂN — xem QĐ-123. Nhật ký có thể chứa
+_Giữ lại trong code:_ Đề xuất giá cho admin, dựa trên nhu cầu THẬT đo được. / ⚠️ KHÔNG ĐỌC BẢNG NHẬT KÝ CÁ NHÂN — xem QĐ-123.
 
 ```text
 Đề xuất giá cho admin, dựa trên nhu cầu THẬT đo được.
@@ -26120,7 +26120,7 @@ sở hữu duy nhất, vì trang sản phẩm cũng lọc theo độ khó.
 ## app/Services/Recommendation/RecommendationService.php
 
 **[1] dòng 9–38** — ngay trước: class RecommendationService
-_Giữ lại trong code:_ Gợi ý sản phẩm cá nhân hoá (Guide §11 "User → Gợi ý cá nhân hoá", §9, §25). / ⚠️ KHÔNG ĐƯỢC ĐỌC BẢNG NHẬT KÝ CÁ NHÂN. Xem chú thích đầu
+_Giữ lại trong code:_ Gợi ý sản phẩm cá nhân hoá (Guide §11 "User → Gợi ý cá nhân hoá", §9, §25). / ⚠️ KHÔNG ĐƯỢC ĐỌC BẢNG NHẬT KÝ CÁ NHÂN.
 
 ```text
 Gợi ý sản phẩm cá nhân hoá (Guide §11 "User → Gợi ý cá nhân hoá", §9, §25).
@@ -30112,7 +30112,7 @@ App\Services\Shop\Provinces::shortName() là đường dùng.
 ## config/risk.php
 
 **[1] dòng 3–26** — ngay trước: return [
-_Giữ lại trong code:_ CHẤM ĐIỂM RỦI RO ĐƠN HÀNG / ⚠️ SỐ ĐIỂM VÀ NGƯỠNG DƯỚI ĐÂY LÀ ĐIỂM KHỞI ĐẦU, KHÔNG PHẢI KẾT QUẢ
+_Giữ lại trong code:_ CHẤM ĐIỂM RỦI RO ĐƠN HÀNG / ⚠️ SỐ ĐIỂM VÀ NGƯỠNG DƯỚI ĐÂY LÀ ĐIỂM KHỞI ĐẦU, KHÔNG PHẢI KẾT QUẢ PHÂN TÍCH DỮ LIỆU.
 
 ```text
 CHẤM ĐIỂM RỦI RO ĐƠN HÀNG
@@ -30437,7 +30437,7 @@ là miễn phí giao" phải nói được ngay từ trang giỏ hàng.
 ## config/tax.php
 
 **[1] dòng 5–51** — ngay trước: 'default_rate' =&gt; (float) env('TAX_DEFAULT_RATE', 0.08),
-_Giữ lại trong code:_ | THUẾ GIÁ TRỊ GIA TĂNG (VAT) / | ⚠️ MỨC THUẾ SUẤT NÀY LÀ GIÁ TRỊ MẶC ĐỊNH KỸ THUẬT, KHÔNG PHẢI
+_Giữ lại trong code:_ | THUẾ GIÁ TRỊ GIA TĂNG (VAT) / ⚠️ MỨC THUẾ SUẤT NÀY LÀ GIÁ TRỊ MẶC ĐỊNH KỸ THUẬT, KHÔNG PHẢI LỜI TƯ VẤN THUẾ.
 
 ```text
 | THUẾ GIÁ TRỊ GIA TĂNG (VAT)
@@ -32769,7 +32769,7 @@ trang của một sổ. Chỉ mục ghép phủ đúng câu đó.
 ## database/migrations/2026_09_22_010000_add_journal_design_tables.php
 
 **[1] dòng 7–46** — ngay trước: return new class extends Migration
-_Giữ lại trong code:_ Nhật ký: trang trí sổ, và cấu trúc riêng cho từng loại sổ. / ⚠️ VẪN LÀ DỮ LIỆU RIÊNG TƯ. Ba bảng nhật ký cũ và bảng mới ở đây đều
+_Giữ lại trong code:_ Nhật ký: trang trí sổ, và cấu trúc riêng cho từng loại sổ. / ⚠️ VẪN LÀ DỮ LIỆU RIÊNG TƯ.
 
 ```text
 Nhật ký: trang trí sổ, và cấu trúc riêng cho từng loại sổ.
@@ -35024,7 +35024,7 @@ Cây độc bản: mỗi cây một dáng, số lượng rất ít.
 ## database/seeders/CommunityPostSampleSeeder.php
 
 **[1] dòng 16–35** — ngay trước: class CommunityPostSampleSeeder extends Seeder
-_Giữ lại trong code:_ Dữ liệu mẫu cho "Góc cây của bạn". / ⚠️ DỮ LIỆU MẪU. Người đăng là các tài khoản mẫu (@khachmau.test, cùng bộ với
+_Giữ lại trong code:_ Dữ liệu mẫu cho "Góc cây của bạn". / ⚠️ DỮ LIỆU MẪU.
 
 ```text
 Dữ liệu mẫu cho "Góc cây của bạn".
@@ -35330,7 +35330,7 @@ Một giờ địa phương của một ngày, đổi về giờ lưu.
 ## database/seeders/ExtraCatalogSeeder.php
 
 **[1] dòng 14–37** — ngay trước: class ExtraCatalogSeeder extends Seeder
-_Giữ lại trong code:_ DỮ LIỆU MẪU BỔ SUNG — làm đầy những danh mục đang quá mỏng. / ⚠️ CỬA HÀNG PHẢI RÀ LẠI TRƯỚC KHI BÁN THẬT. Giá, mô tả và quy cách ở
+_Giữ lại trong code:_ DỮ LIỆU MẪU BỔ SUNG — làm đầy những danh mục đang quá mỏng. / ⚠️ CỬA HÀNG PHẢI RÀ LẠI TRƯỚC KHI BÁN THẬT.
 
 ```text
 DỮ LIỆU MẪU BỔ SUNG — làm đầy những danh mục đang quá mỏng.
@@ -35537,7 +35537,7 @@ chủ đạo để áp quy ước. Gán bừa một mệnh sẽ là thông tin s
 ```
 
 **[13] dòng 129–141** — trong PlantAdvisorSeeder · ngay trước: private const NEW_PLANTS = [
-_Giữ lại trong code:_ ⚠️ Là dữ liệu mẫu do dự án đặt ra để trang tư vấn có đủ lựa chọn
+_Giữ lại trong code:_ ⚠️ Là dữ liệu mẫu do dự án đặt ra để trang tư vấn có đủ lựa chọn cho mọi vị trí và mọi mệnh.
 
 ```text
 CÂY MẪU BỔ SUNG.
@@ -35963,7 +35963,7 @@ vì sao nó không lên trong bộ lọc nào cả.
 ## database/seeders/ReviewSampleSeeder.php
 
 **[1] dòng 18–40** — ngay trước: class ReviewSampleSeeder extends Seeder
-_Giữ lại trong code:_ Dữ liệu mẫu cho phần đánh giá. / ⚠️ DỮ LIỆU MẪU. Tên khách và lời nhận xét là do soạn ra, không phải
+_Giữ lại trong code:_ Dữ liệu mẫu cho phần đánh giá. / ⚠️ DỮ LIỆU MẪU.
 
 ```text
 Dữ liệu mẫu cho phần đánh giá.

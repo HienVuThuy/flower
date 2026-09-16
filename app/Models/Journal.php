@@ -13,7 +13,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Một quyển sổ nhật ký của một người dùng.
- * ⚠️ DỮ LIỆU RIÊNG TƯ. Xem chú thích ở migration
+ * ⚠️ DỮ LIỆU RIÊNG TƯ.
  */
 class Journal extends Model
 {

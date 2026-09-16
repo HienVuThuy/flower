@@ -8,7 +8,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Đề xuất giá cho admin, dựa trên nhu cầu THẬT đo được.
- * ⚠️ KHÔNG ĐỌC BẢNG NHẬT KÝ CÁ NHÂN — xem QĐ-123. Nhật ký có thể chứa
+ * ⚠️ KHÔNG ĐỌC BẢNG NHẬT KÝ CÁ NHÂN — xem QĐ-123.
  */
 class PricingAdvisor
 {

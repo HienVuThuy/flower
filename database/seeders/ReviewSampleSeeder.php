@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Dữ liệu mẫu cho phần đánh giá.
- * ⚠️ DỮ LIỆU MẪU. Tên khách và lời nhận xét là do soạn ra, không phải
+ * ⚠️ DỮ LIỆU MẪU.
  */
 class ReviewSampleSeeder extends Seeder
 {

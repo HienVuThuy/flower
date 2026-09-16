@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * Một bài trong "Góc cây của bạn".
- * ⚠️ NỘI DUNG CÔNG KHAI DO NGƯỜI LẠ ĐĂNG. Hai luật không được nới:
+ * ⚠️ NỘI DUNG CÔNG KHAI DO NGƯỜI LẠ ĐĂNG.
  */
 class CommunityPost extends Model
 {

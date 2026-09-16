@@ -13,7 +13,7 @@ use Illuminate\Database\Seeder;
 
 /**
  * DỮ LIỆU MẪU BỔ SUNG — làm đầy những danh mục đang quá mỏng.
- * ⚠️ CỬA HÀNG PHẢI RÀ LẠI TRƯỚC KHI BÁN THẬT. Giá, mô tả và quy cách ở
+ * ⚠️ CỬA HÀNG PHẢI RÀ LẠI TRƯỚC KHI BÁN THẬT.
  */
 class ExtraCatalogSeeder extends Seeder
 {
