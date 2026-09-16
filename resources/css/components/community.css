@@ -29,12 +29,29 @@
 
 /* ---------- Điều hướng ---------- */
 
+/*
+ * CẢ CỘT LÀ MỘT KHỐI DÍNH, KHÔNG PHẢI TỪNG THẺ MỘT.
+ *
+ * LỖI ĐÃ SỬA: chỉ thanh điều hướng và thẻ điểm thưởng được `sticky`, còn thẻ
+ * "Quy tắc ngắn" nằm dưới thì cuộn bình thường — cuộn xuống là nó trượt LÊN
+ * ĐÈ chồng chữ vào thanh điều hướng đang đứng yên.
+ *
+ * `top` phải trừ chiều cao thanh đầu trang (thanh đó cũng sticky), nếu không
+ * khối này chui xuống dưới nó. Cột cao hơn màn hình thì tự cuộn bên trong.
+ */
+.goc-cay__cot {
+    position: sticky;
+    top: calc(var(--goc-cay-header, 5.25rem) + 0.75rem);
+    max-height: calc(100vh - var(--goc-cay-header, 5.25rem) - 1.5rem);
+    overflow-y: auto;
+    /* Chừa chỗ cho bóng đổ của thẻ bên trong khi cuộn. */
+    padding-right: 0.15rem;
+}
+
 .goc-cay-nav {
     display: flex;
     flex-direction: column;
     gap: 0.25rem;
-    position: sticky;
-    top: 1rem;
 }
 
 .goc-cay-nav__item {
@@ -80,9 +97,9 @@
     color: var(--ink-500);
 }
 
+/* Thẻ điểm thưởng nằm trong khối dính của cột phải — không tự dính nữa. */
 .goc-cay-thuong {
-    position: sticky;
-    top: 1rem;
+    margin-bottom: 0;
 }
 
 /* ---------- Ô mở hộp soạn bài ---------- */
@@ -774,4 +791,86 @@
 
 .cam-xuc--buon {
     color: #4a6fa5;
+}
+
+/* ---------- Cảm xúc dưới bình luận (bản nhỏ) ---------- */
+
+.cam-xuc--nho {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.1rem;
+    flex: 0 0 auto;
+}
+
+.cam-xuc--nho .comment__tool.is-on {
+    font-weight: 700;
+}
+
+.cam-xuc-chon--nho .cam-xuc-chon__nut {
+    padding: 0 0.15rem;
+    font-size: 0.7rem;
+}
+
+.cam-xuc-chon--nho .cam-xuc-chon__item {
+    padding: 0.3rem;
+    font-size: 1rem;
+}
+
+.cam-xuc-tomtat--nho {
+    font-size: 0.78rem;
+    color: var(--ink-500);
+}
+
+/* ---------- Trang cá nhân ở Góc cây ---------- */
+
+.trang-ca-nhan__dau {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar--lon {
+    width: 4rem;
+    height: 4rem;
+    font-size: 1.6rem;
+}
+
+.trang-ca-nhan__so {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 1rem 0;
+}
+
+.trang-ca-nhan__so dt {
+    font-size: 0.8rem;
+    color: var(--ink-500);
+    font-weight: 400;
+}
+
+.trang-ca-nhan__so dd {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+}
+
+/* Bài trên trang cá nhân hẹp như bảng tin: dòng chữ dài quá 75 ký tự khó đọc. */
+.trang-ca-nhan__bai {
+    max-width: 680px;
+}
+
+.comment__author {
+    color: inherit;
+    text-decoration: none;
+}
+
+.comment__author:hover,
+.gc-bai__author:hover {
+    text-decoration: underline;
+}
+
+.gc-bai__author {
+    color: inherit;
+    text-decoration: none;
 }

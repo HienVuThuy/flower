@@ -38,6 +38,8 @@
 
             {{-- ---------- CỘT TRÁI: ĐIỀU HƯỚNG ---------- --}}
             <div class="col-lg-3 d-none d-lg-block">
+                {{-- Cả cột là MỘT khối dính: từng thẻ dính riêng thì thẻ dưới trượt đè lên thẻ trên. --}}
+                <div class="goc-cay__cot">
                 <nav class="goc-cay-nav" aria-label="Mục Góc cây">
                     @foreach($cacTab as $ma => $nhan)
                         <a href="{{ route('shop.community.index', ['tab' => $ma]) }}"
@@ -58,6 +60,7 @@
                         <li>Không quảng cáo, không rao bán, không số điện thoại.</li>
                         <li>Thấy nội dung xấu thì bấm <strong>Báo cáo</strong> ở menu "⋯".</li>
                     </ul>
+                </div>
                 </div>
             </div>
 
@@ -111,6 +114,7 @@
 
             {{-- ---------- CỘT PHẢI: ĐIỂM THƯỞNG ---------- --}}
             <div class="col-lg-3 d-none d-lg-block">
+                <div class="goc-cay__cot">
                 <div class="surface-card p-3 goc-cay-thuong">
                     <h2 class="text-h5 mb-2">Đăng bài được điểm</h2>
                     {{-- Luật thưởng đọc từ đúng hằng số đang tính — không ghi tay con số. --}}
@@ -123,6 +127,7 @@
                         (tối đa {{ $thuong::THICH_TOI_DA_MOI_TUAN }} điểm mỗi tuần).
                         <a href="{{ route('shop.profile.edit', ['muc' => 'diem-thuong']) }}">Đổi điểm lấy voucher</a>.
                     </p>
+                </div>
                 </div>
             </div>
 

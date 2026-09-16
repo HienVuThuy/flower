@@ -9,6 +9,7 @@ use App\Models\CommunityComment;
 use App\Models\CommunityPost;
 use App\Models\CommunityReport;
 use App\Models\Product;
+use App\Models\User;
 use App\Services\Community\CommunityException;
 use App\Services\Community\CommunityInteraction;
 use App\Services\Community\CommunityMediaStore;
@@ -83,16 +84,77 @@ class CommunityController extends Controller
 
         $ids = $posts->pluck('id')->all();
 
+        // Bình luận xem trước dưới mỗi bài cũng có cảm xúc riêng.
+        $idBinhLuan = $posts->getCollection()
+            ->flatMap(fn ($p) => $p->relationLoaded('comments') ? $p->comments->pluck('id') : collect())
+            ->all();
+
         return view('shop.community.index', [
             'posts' => $posts,
             'tab' => $tab,
             'camXucCuaToi' => $this->camXucCuaToi($ids),
             'tomTatCamXuc' => $this->tomTatCamXuc($ids),
+            'camXucBL' => $this->camXucBinhLuan($idBinhLuan),
             'daLuu' => $this->cuaToiTrong('community_post_saves', $ids),
             'diemBai' => $tab === 'cua-toi' ? $thuong->daThuong($posts->getCollection()) : [],
             'cayDaMua' => Auth::check() ? $this->cayDaMua() : collect(),
             'coTheBinhLuan' => app(CommunityInteraction::class)->coTheBinhLuan(Auth::user()),
             'soChoDuyetCuaToi' => Auth::check() ? CommunityPost::where('user_id', Auth::id())->pending()->count() : 0,
+        ]);
+    }
+
+    /**
+     * Trang cá nhân ở Góc cây: bài của một người, kèm vài con số.
+     *
+     * Người khác xem thì CHỈ thấy bài đã duyệt; chính chủ xem thì thấy cả bài
+     * chờ duyệt, bị từ chối và bị ẩn — đúng như mục "Bài của tôi".
+     */
+    public function profile(int $user, CommunityReward $thuong): View
+    {
+        $nguoi = User::select(['id', 'name', 'created_at'])->findOrFail($user);
+        $laToi = Auth::id() === $nguoi->id;
+
+        $query = CommunityPost::query()->where('user_id', $nguoi->id);
+
+        if (! $laToi) {
+            $query->approved();
+        }
+
+        $posts = $query
+            ->with([
+                'user:id,name',
+                'product:id,name,slug,main_image',
+                'media',
+                'comments' => fn ($q) => $q->visible()->root()->with('user:id,name')->latest()->limit(2),
+            ])
+            ->withCount(['likers', 'comments as so_binh_luan' => fn ($q) => $q->visible()])
+            ->latest('id')
+            ->paginate(self::MOI_TRANG)
+            ->withQueryString();
+
+        $ids = $posts->pluck('id')->all();
+        $idBinhLuan = $posts->getCollection()
+            ->flatMap(fn ($p) => $p->relationLoaded('comments') ? $p->comments->pluck('id') : collect())
+            ->all();
+
+        // Con số đếm từ BÀI ĐANG HIỆN của người đó — không tính bài chờ duyệt hay bị ẩn.
+        $baiHien = CommunityPost::approved()->where('user_id', $nguoi->id)->select('id');
+
+        return view('shop.community.profile', [
+            'nguoi' => $nguoi,
+            'laToi' => $laToi,
+            'posts' => $posts,
+            'thongKe' => [
+                'bai' => (clone $baiHien)->count(),
+                'cam_xuc' => DB::table('community_post_likes')->whereIn('community_post_id', $baiHien)->count(),
+                'binh_luan' => CommunityComment::visible()->whereIn('community_post_id', $baiHien)->count(),
+            ],
+            'camXucCuaToi' => $this->camXucCuaToi($ids),
+            'tomTatCamXuc' => $this->tomTatCamXuc($ids),
+            'camXucBL' => $this->camXucBinhLuan($idBinhLuan),
+            'daLuu' => $this->cuaToiTrong('community_post_saves', $ids),
+            'diemBai' => $laToi ? $thuong->daThuong($posts->getCollection()) : [],
+            'coTheBinhLuan' => app(CommunityInteraction::class)->coTheBinhLuan(Auth::user()),
         ]);
     }
 
@@ -104,18 +166,23 @@ class CommunityController extends Controller
             ->withCount(['likers', 'comments as so_binh_luan' => fn ($q) => $q->visible()])
             ->findOrFail($post);
 
+        $binhLuan = $bai->comments()
+            ->visible()
+            ->root()
+            ->with([
+                'user:id,name',
+                'replies' => fn ($q) => $q->visible()->with(['user:id,name', 'replyTo:id,name']),
+            ])
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get();
+
+        $idBinhLuan = $binhLuan->flatMap(fn ($bl) => [$bl->id, ...$bl->replies->pluck('id')])->all();
+
         return view('shop.community.show', [
             'post' => $bai,
-            'comments' => $bai->comments()
-                ->visible()
-                ->root()
-                ->with([
-                    'user:id,name',
-                    'replies' => fn ($q) => $q->visible()->with(['user:id,name', 'replyTo:id,name']),
-                ])
-                ->orderBy('created_at')
-                ->orderBy('id')
-                ->get(),
+            'comments' => $binhLuan,
+            'camXucBL' => $this->camXucBinhLuan($idBinhLuan),
             'camXucCuaToi' => $this->camXucCuaToi([$bai->id]),
             'tomTatCamXuc' => $this->tomTatCamXuc([$bai->id]),
             'daLuu' => $this->cuaToiTrong('community_post_saves', [$bai->id]) !== [],
@@ -180,6 +247,37 @@ class CommunityController extends Controller
         }
 
         return redirect()->to(route('shop.community.show', $bai->id) . '#binh-luan-' . $bl->id);
+    }
+
+    /** Cảm xúc cho một bình luận đang hiện (bình luận bị ẩn hoặc bài chưa duyệt: 404). */
+    public function reactComment(Request $request, int $comment, CommunityInteraction $tuongTac): JsonResponse|RedirectResponse
+    {
+        $bl = CommunityComment::visible()
+            ->whereIn('community_post_id', CommunityPost::approved()->select('id'))
+            ->findOrFail($comment);
+
+        $data = $request->validate(
+            ['cam_xuc' => ['nullable', Rule::enum(CommunityReaction::class)]],
+            [],
+            ['cam_xuc' => 'cảm xúc'],
+        );
+
+        $ket = $tuongTac->doiCamXucBinhLuan(
+            Auth::user(),
+            $bl,
+            isset($data['cam_xuc']) ? CommunityReaction::from($data['cam_xuc']) : null,
+        );
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'thich' => $ket['co'],
+                'loai' => $ket['loai']?->value,
+                'so' => DB::table('community_comment_reactions')->where('community_comment_id', $bl->id)->count(),
+                'tom_tat' => $this->camXucBinhLuan([$bl->id])['tom_tat'][$bl->id] ?? [],
+            ]);
+        }
+
+        return back();
     }
 
     public function updateComment(Request $request, int $comment, CommunityInteraction $tuongTac): RedirectResponse
@@ -378,6 +476,47 @@ class CommunityController extends Controller
     private function veBai(CommunityPost $bai): RedirectResponse
     {
         return redirect()->to(strtok(url()->previous(), '#') . '#bai-' . $bai->id);
+    }
+
+    /**
+     * Cảm xúc dưới các BÌNH LUẬN: của tôi, tổng số, và gộp theo loại.
+     *
+     * Ba truy vấn cho cả trang, không phải mỗi bình luận một lần.
+     *
+     * @param  list<int>  $ids
+     * @return array{cua_toi: array<int, string>, so: array<int, int>, tom_tat: array<int, list<array{loai: string, so: int}>>}
+     */
+    private function camXucBinhLuan(array $ids): array
+    {
+        $rong = ['cua_toi' => [], 'so' => [], 'tom_tat' => []];
+
+        if ($ids === []) {
+            return $rong;
+        }
+
+        $gop = DB::table('community_comment_reactions')
+            ->selectRaw('community_comment_id, reaction, COUNT(*) as so')
+            ->whereIn('community_comment_id', $ids)
+            ->groupBy('community_comment_id', 'reaction')
+            ->orderByDesc('so')
+            ->get();
+
+        return [
+            'cua_toi' => Auth::check()
+                ? DB::table('community_comment_reactions')
+                    ->where('user_id', Auth::id())
+                    ->whereIn('community_comment_id', $ids)
+                    ->pluck('reaction', 'community_comment_id')
+                    ->map(fn ($r) => (string) $r)
+                    ->all()
+                : [],
+
+            'so' => $gop->groupBy('community_comment_id')->map(fn ($n) => (int) $n->sum('so'))->all(),
+
+            'tom_tat' => $gop->groupBy('community_comment_id')
+                ->map(fn ($n) => $n->map(fn ($d) => ['loai' => (string) $d->reaction, 'so' => (int) $d->so])->values()->all())
+                ->all(),
+        ];
     }
 
     /**

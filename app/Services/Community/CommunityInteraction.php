@@ -92,6 +92,37 @@ class CommunityInteraction
         return true;
     }
 
+    /**
+     * Cảm xúc cho một BÌNH LUẬN — cùng luật với bài: bấm lại thì bỏ, bấm loại
+     * khác thì đổi dòng đã có.
+     *
+     * KHÔNG thưởng điểm (xem migration community_comment_reactions).
+     *
+     * @return array{co: bool, loai: ?CommunityReaction}
+     */
+    public function doiCamXucBinhLuan(User $user, CommunityComment $binhLuan, ?CommunityReaction $camXuc = null): array
+    {
+        $camXuc ??= CommunityReaction::macDinh();
+        $dieuKien = ['community_comment_id' => $binhLuan->id, 'user_id' => $user->id];
+        $dangCo = DB::table('community_comment_reactions')->where($dieuKien)->first();
+
+        if ($dangCo) {
+            if ($dangCo->reaction === $camXuc->value) {
+                DB::table('community_comment_reactions')->where($dieuKien)->delete();
+
+                return ['co' => false, 'loai' => null];
+            }
+
+            DB::table('community_comment_reactions')->where($dieuKien)->update(['reaction' => $camXuc->value]);
+
+            return ['co' => true, 'loai' => $camXuc];
+        }
+
+        DB::table('community_comment_reactions')->insertOrIgnore($dieuKien + ['reaction' => $camXuc->value, 'created_at' => now()]);
+
+        return ['co' => true, 'loai' => $camXuc];
+    }
+
     public function coTheBinhLuan(?User $user): bool
     {
         return $user !== null && $user->hasVerifiedEmail();

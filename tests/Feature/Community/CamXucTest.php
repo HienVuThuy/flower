@@ -110,6 +110,64 @@ class CamXucTest extends TestCase
     }
 
     #[Test]
+    public function cam_xuc_cho_binh_luan_doi_va_bo_duoc(): void
+    {
+        $bai = $this->bai(User::factory()->create());
+        $nguoiBinhLuan = User::factory()->create();
+        $this->actingAs($nguoiBinhLuan)->post(route('shop.community.comment', $bai->id), ['body' => 'Cây đẹp quá!']);
+        $bl = \App\Models\CommunityComment::sole();
+
+        $u = User::factory()->create();
+        $dong = fn () => DB::table('community_comment_reactions')
+            ->where('community_comment_id', $bl->id)->where('user_id', $u->id)->first();
+
+        $this->actingAs($u)->postJson(route('shop.community.comment.react', $bl->id), ['cam_xuc' => 'haha'])
+            ->assertOk()
+            ->assertJson(['thich' => true, 'loai' => 'haha', 'so' => 1, 'tom_tat' => [['loai' => 'haha', 'so' => 1]]]);
+
+        $this->actingAs($u)->post(route('shop.community.comment.react', $bl->id), ['cam_xuc' => 'yeu']);
+        $this->assertSame('yeu', $dong()->reaction);
+        $this->assertDatabaseCount('community_comment_reactions', 1);
+
+        $this->actingAs($u)->post(route('shop.community.comment.react', $bl->id), ['cam_xuc' => 'yeu']);
+        $this->assertNull($dong());
+
+        // Cảm xúc dưới bình luận KHÔNG thưởng điểm cho ai (bình luận vốn không được thưởng).
+        $this->assertSame(0, app(PointLedger::class)->soDu($nguoiBinhLuan));
+    }
+
+    #[Test]
+    public function khong_bay_to_cam_xuc_voi_binh_luan_da_an(): void
+    {
+        $bai = $this->bai(User::factory()->create());
+        $this->actingAs(User::factory()->create())->post(route('shop.community.comment', $bai->id), ['body' => 'Bình luận sẽ bị ẩn.']);
+        $bl = \App\Models\CommunityComment::sole();
+        $bl->forceFill(['hidden_at' => now()])->save();
+
+        $this->actingAs(User::factory()->create())
+            ->post(route('shop.community.comment.react', $bl->id), ['cam_xuc' => 'thich'])
+            ->assertNotFound();
+
+        $this->assertDatabaseCount('community_comment_reactions', 0);
+    }
+
+    #[Test]
+    public function trang_mot_bai_hien_nut_cam_xuc_cua_binh_luan(): void
+    {
+        $bai = $this->bai(User::factory()->create());
+        $u = User::factory()->create();
+        $this->actingAs($u)->post(route('shop.community.comment', $bai->id), ['body' => 'Bình luận có cảm xúc.']);
+        $bl = \App\Models\CommunityComment::sole();
+
+        $this->actingAs($u)->post(route('shop.community.comment.react', $bl->id), ['cam_xuc' => 'wow']);
+
+        $html = $this->actingAs($u)->get(route('shop.community.show', $bai->id))->assertOk()->getContent();
+
+        $this->assertStringContainsString('data-thich="bl-' . $bl->id . '"', $html);
+        $this->assertStringContainsString('data-nhan-thich>Wow<', $html);
+    }
+
+    #[Test]
     public function bang_tin_hien_bang_chon_va_cam_xuc_dang_co(): void
     {
         $bai = $this->bai(User::factory()->create());

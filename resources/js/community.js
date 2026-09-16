@@ -50,6 +50,14 @@ function nhanThich(form, data) {
     const khoi = form.closest('.cam-xuc');
     const nut = khoi?.querySelector('[data-thich]') || form.querySelector('[data-thich]');
 
+    /*
+     * PHẠM VI CẬP NHẬT: bình luận trước, bài sau.
+     *
+     * Cảm xúc của một bình luận nằm BÊN TRONG thẻ bài, nên nếu tìm dòng tóm tắt
+     * theo thẻ bài thì bấm thích một bình luận sẽ đổi số cảm xúc của cả bài.
+     */
+    const khung = form.closest('[data-binh-luan]') || form.closest('[data-bai]');
+
     if (!nut) return;
 
     const loai = data.thich && CAM_XUC[data.loai] ? data.loai : null;
@@ -82,11 +90,11 @@ function nhanThich(form, data) {
 
     if (bangChon) bangChon.open = false;
 
-    // Dòng tóm tắt phía trên nút (bảng tin) cũng phải khớp.
-    const bai = form.closest('[data-bai]');
-    const tomTat = bai?.querySelector('[data-tom-tat-thich]');
+    // Dòng tóm tắt (dưới bài hoặc cạnh bình luận) cũng phải khớp.
+    const tomTat = khung?.querySelector('[data-tom-tat-thich]');
 
     if (tomTat) {
+        tomTat.hidden = data.so < 1;
         /*
          * Dựng lại mấy biểu tượng: loại cảm xúc đến từ enum của máy chủ và được
          * lọc qua CAM_XUC, nên chuỗi dưới đây không mang dữ liệu người dùng.
@@ -260,7 +268,47 @@ export function initCommunity() {
         if (input) xemTruocMedia(input);
     });
 
-    // 5. Gửi bài lỗi thì mở lại hộp soạn.
+    /*
+     * 5. RÊ CHUỘT VÀO NÚT THÍCH THÌ BẢNG CẢM XÚC TỰ HIỆN — như Facebook.
+     *
+     * Chỉ trên máy CÓ chuột thật: trên cảm ứng, "rê" là chạm, và bảng sẽ bật ra
+     * mỗi lần khách định bấm Thích. Ở đó vẫn còn mũi tên để mở bằng một chạm.
+     *
+     * Có độ trễ hai chiều: mở sau 320ms để lướt chuột ngang qua không bật bảng
+     * lên, đóng sau 260ms để còn kịp đưa chuột từ nút sang bảng.
+     */
+    if (window.matchMedia?.('(hover: hover)').matches) {
+        let hen = null;
+
+        document.addEventListener('mouseover', (e) => {
+            const khoi = e.target.closest?.('.cam-xuc');
+
+            if (!khoi) return;
+
+            clearTimeout(hen);
+            hen = setTimeout(() => {
+                const bang = khoi.querySelector('details.cam-xuc-chon');
+
+                if (bang) bang.open = true;
+            }, 320);
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            const khoi = e.target.closest?.('.cam-xuc');
+
+            // Rê sang phần tử con vẫn là còn trong khối — chưa đóng.
+            if (!khoi || khoi.contains(e.relatedTarget)) return;
+
+            clearTimeout(hen);
+            hen = setTimeout(() => {
+                khoi.querySelectorAll('details.cam-xuc-chon[open]').forEach((d) => {
+                    d.open = false;
+                });
+            }, 260);
+        });
+    }
+
+    // 6. Gửi bài lỗi thì mở lại hộp soạn.
     const moLai = document.querySelector('[data-mo-lai]');
 
     if (moLai && window.bootstrap?.Modal) {

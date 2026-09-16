@@ -18,7 +18,11 @@
 
     <div class="comment__body">
         <div class="comment__bubble">
-            <span class="comment__author">{{ $bl->user?->name ?? 'Người dùng đã xoá' }}</span>
+            @if($bl->user)
+                <a href="{{ route('shop.community.profile', $bl->user->id) }}" class="comment__author">{{ $bl->user->name }}</a>
+            @else
+                <span class="comment__author">Người dùng đã xoá</span>
+            @endif
             @if($bl->replyTo)
                 <span class="comment__reply-to">trả lời {{ $bl->replyTo->name }}</span>
             @endif
@@ -30,6 +34,12 @@
             @if($bl->edited_at)
                 <span class="comment__edited">· đã sửa</span>
             @endif
+
+            <x-community.comment-reaction
+                :comment="$bl"
+                :cam-xuc="($camXucBL['cua_toi'] ?? [])[$bl->id] ?? null"
+                :count="($camXucBL['so'] ?? [])[$bl->id] ?? 0"
+                :tom-tat="($camXucBL['tom_tat'] ?? [])[$bl->id] ?? []" />
 
             @auth
                 @if($coTheBinhLuan)
@@ -87,6 +97,7 @@
                         'traLoi' => [],
                         'post' => $post,
                         'coTheBinhLuan' => $coTheBinhLuan,
+                        'camXucBL' => $camXucBL ?? [],
                     ])
                 @endforeach
             </div>

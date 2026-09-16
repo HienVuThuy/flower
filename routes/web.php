@@ -574,6 +574,16 @@ Route::post('tro-ly-ai', [\App\Http\Controllers\Shop\AiChatController::class, 's
     ->name('shop.ai.ask');
 Route::delete('tro-ly-ai', [\App\Http\Controllers\Shop\AiChatController::class, 'destroy'])
     ->name('shop.ai.reset');
+/*
+ * TRANG CÁ NHÂN Ở GÓC CÂY — công khai, và chỉ có bài ĐÃ DUYỆT của người đó.
+ *
+ * Khai TRƯỚC `goc-cay/{post}` vì "thanh-vien" sẽ khớp vào chỗ tham số nếu đứng
+ * sau (đường dẫn kia đã chặn bằng whereNumber, nhưng thứ tự rõ ràng vẫn hơn).
+ */
+Route::get('goc-cay/thanh-vien/{user}', [CommunityController::class, 'profile'])
+    ->whereNumber('user')
+    ->name('shop.community.profile');
+
 // Trang một bài — chỉ bài đã duyệt (404 với bài chưa duyệt, kể cả với chính người đăng).
 Route::get('goc-cay/{post}', [CommunityController::class, 'show'])->whereNumber('post')->name('shop.community.show');
 
@@ -670,6 +680,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('goc-cay/{post}/binh-luan', [CommunityController::class, 'comment'])
         ->middleware('throttle:10,1')
         ->name('shop.community.comment');
+
+    Route::post('goc-cay/binh-luan/{comment}/cam-xuc', [CommunityController::class, 'reactComment'])
+        ->middleware('throttle:60,1')
+        ->name('shop.community.comment.react');
 
     Route::patch('goc-cay/binh-luan/{comment}', [CommunityController::class, 'updateComment'])
         ->middleware('throttle:20,1')

@@ -22,7 +22,11 @@
         <span class="avatar" aria-hidden="true">{{ mb_substr($post->user?->name ?? 'K', 0, 1) }}</span>
 
         <div class="gc-bai__who">
-            <span class="gc-bai__author">{{ $post->user?->name ?? 'Người dùng đã xoá' }}</span>
+            @if($post->user)
+                <a href="{{ route('shop.community.profile', $post->user->id) }}" class="gc-bai__author">{{ $post->user->name }}</a>
+            @else
+                <span class="gc-bai__author">Người dùng đã xoá</span>
+            @endif
             <p class="gc-bai__meta mb-0">
                 <a href="{{ route('shop.community.show', $post->id) }}" class="gc-bai__time">
                     <x-site.time :at="$post->approved_at ?? $post->created_at" relative />
@@ -135,6 +139,7 @@
                         'traLoi' => [],
                         'post' => $post,
                         'coTheBinhLuan' => $coTheBinhLuan ?? false,
+                        'camXucBL' => $camXucBL ?? [],
                     ])
                 @endforeach
 

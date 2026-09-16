@@ -19,7 +19,11 @@
                 <span class="avatar" aria-hidden="true">{{ mb_substr($post->user?->name ?? 'K', 0, 1) }}</span>
 
                 <div class="gc-bai__who">
-                    <span class="gc-bai__author">{{ $post->user?->name ?? 'Người dùng đã xoá' }}</span>
+                    @if($post->user)
+                        <a href="{{ route('shop.community.profile', $post->user->id) }}" class="gc-bai__author">{{ $post->user->name }}</a>
+                    @else
+                        <span class="gc-bai__author">Người dùng đã xoá</span>
+                    @endif
                     <p class="gc-bai__meta mb-0">
                         <x-site.time :at="$post->approved_at" relative />
                         @if($post->edited_at)
@@ -151,6 +155,7 @@
                     'traLoi' => $bl->replies,
                     'post' => $post,
                     'coTheBinhLuan' => $coTheBinhLuan,
+                    'camXucBL' => $camXucBL,
                 ])
             @empty
                 <p class="text-caption mb-0">Chưa có bình luận nào. Bạn mở lời trước nhé.</p>

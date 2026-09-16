@@ -8247,3 +8247,25 @@ có thanh bên.
   bỏ. Dòng cũ mặc định "thích" — đúng với việc đã xảy ra.
 - Bảng chọn cảm xúc mở bằng <details> chứ không bằng hover: hover thì điện thoại
   không có và bàn phím không tới được.
+
+## QĐ-300. Góc cây: cột bên dính thành một khối, cảm xúc cho bình luận, trang cá nhân
+
+- HAI CỘT BÊN LÀ MỘT KHỐI DÍNH, không phải từng thẻ dính riêng. Trước đây chỉ
+  thanh điều hướng và thẻ điểm thưởng `sticky`, còn thẻ "Quy tắc ngắn" cuộn bình
+  thường — cuộn xuống là nó trượt lên ĐÈ chồng chữ vào thanh đang đứng yên. Mốc
+  `top` trừ chiều cao thanh đầu trang (thanh đó cũng sticky), và cột cao hơn màn
+  hình thì tự cuộn bên trong.
+- CẢM XÚC CHO BÌNH LUẬN ở bảng riêng `community_comment_reactions`, không gộp
+  chung bảng cảm xúc của bài: gộp thì phải thêm cột "loại đối tượng" và mọi phép
+  đếm đều phải nhớ lọc thêm — quên một chỗ là đếm nhầm. KHÔNG thưởng điểm cho
+  cảm xúc dưới bình luận: bình luận vốn không được thưởng, thưởng ở đây là mời
+  bình luận rác để xin cảm xúc.
+- RÊ CHUỘT VÀO NÚT THÍCH thì bảng cảm xúc tự hiện (như Facebook), CHỈ trên máy
+  có chuột thật (`hover: hover`): trên cảm ứng "rê" chính là chạm, bảng sẽ bật ra
+  mỗi lần khách định bấm Thích. Có độ trễ hai chiều (mở 320ms, đóng 260ms) để
+  lướt ngang qua không bật bảng và còn kịp đưa chuột sang bảng. Mũi tên mở bằng
+  một chạm vẫn còn cho cảm ứng và bàn phím.
+- TRANG CÁ NHÂN `goc-cay/thanh-vien/{id}`: công khai, chỉ bài ĐÃ DUYỆT của người
+  đó; chính chủ xem thì thấy cả bài chờ duyệt / bị từ chối / bị ẩn kèm trạng
+  thái. Các con số (bài, cảm xúc, bình luận nhận được) đếm từ bài đang hiện —
+  không tính bài chờ duyệt hay bị ẩn.
