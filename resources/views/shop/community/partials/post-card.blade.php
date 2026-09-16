@@ -12,7 +12,8 @@
     $laCuaToi = auth()->id() === $post->user_id;
     $camXucBai = ($camXucCuaToi ?? [])[$post->id] ?? null;
     $daLuuBai = in_array($post->id, $daLuu ?? [], true);
-    $dangHien = $post->isApproved() && ! $post->isHidden();
+    // Bài chủ tự ẩn cũng coi như không hiện: chỉ mình họ thấy, kèm nhãn trạng thái.
+    $dangHien = $post->isApproved() && ! $post->isHidden() && ! $post->tuAn();
     $binhLuanXemTruoc = $post->relationLoaded('comments') ? $post->comments->sortBy('created_at') : collect();
 @endphp
 
@@ -36,6 +37,12 @@
                 @endif
                 @if(! $dangHien)
                     <span class="status-pill status-pill--{{ $post->statusBadge() }}">{{ $post->statusText() }}</span>
+                @endif
+                @if($post->daGhim())
+                    <span class="gc-bai__nhan" data-ghim><x-site.icon name="pin-angle-fill" /> Đã ghim</span>
+                @endif
+                @if($post->khoaBinhLuan())
+                    <span class="gc-bai__nhan" data-khoa-bl><x-site.icon name="lock" /> Đã khoá bình luận</span>
                 @endif
             </p>
         </div>
@@ -68,6 +75,9 @@
                     <a href="{{ route('shop.community.edit', $post->id) }}" class="post-menu__item">
                         <x-site.icon name="pencil" /> Sửa bài
                     </a>
+
+                    @include('shop.community.partials.owner-menu', ['post' => $post])
+
                     <form method="POST" action="{{ route('shop.community.destroy', $post->id) }}"
                           onsubmit="return confirm('Xoá bài này? Ảnh, video và bình luận của bài cũng bị xoá.')">
                         @csrf
@@ -152,7 +162,12 @@
         @endif
 
         @auth
-            @if($coTheBinhLuan ?? false)
+            @if($post->khoaBinhLuan())
+                {{-- Chủ bài đã khoá: nói rõ tại chỗ thay vì để ô trống gửi lên rồi báo lỗi. --}}
+                <p class="text-caption mb-0" data-khong-binh-luan>
+                    <x-site.icon name="lock" /> Chủ bài đã khoá bình luận cho bài này.
+                </p>
+            @elseif($coTheBinhLuan ?? false)
                 <form method="POST" action="{{ route('shop.community.comment', $post->id) }}" class="comment-form comment-form--nhanh">
                     @csrf
                     <label class="visually-hidden" for="bl-nhanh-{{ $post->id }}">Viết bình luận</label>

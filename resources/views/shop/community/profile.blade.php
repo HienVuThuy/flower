@@ -44,11 +44,24 @@
                     <dt>Bình luận nhận được</dt>
                     <dd data-so-binh-luan-nhan>{{ $thongKe['binh_luan'] }}</dd>
                 </div>
+                @if($laToi)
+                    {{-- Hai con số này chỉ chính chủ thấy: người khác không cần biết bạn đang ẩn mấy bài. --}}
+                    <div>
+                        <dt>Đang chờ duyệt</dt>
+                        <dd data-so-cho-duyet>{{ $thongKe['cho_duyet'] }}</dd>
+                    </div>
+                    <div>
+                        <dt>Đang ẩn</dt>
+                        <dd data-so-dang-an>{{ $thongKe['dang_an'] }}</dd>
+                    </div>
+                @endif
             </dl>
 
             @if($laToi)
                 <p class="text-caption mb-0">
                     Bài chờ duyệt, bị từ chối hoặc bị ẩn chỉ mình bạn thấy ở đây.
+                    Bấm menu <strong>⋯</strong> trên mỗi bài để <strong>ghim</strong>, <strong>tạm ẩn</strong>,
+                    <strong>khoá bình luận</strong>, sửa hoặc xoá.
                     <a href="{{ route('shop.community.index') }}">Về bảng tin để đăng bài mới</a>.
                 </p>
             @endif

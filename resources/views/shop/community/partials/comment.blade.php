@@ -9,11 +9,15 @@
 --}}
 @php
     $laCuaToi = auth()->id() === $bl->user_id;
+    $laChuBai = auth()->check() && auth()->id() === (int) $post->user_id;
+    // Bình luận đã ẩn chỉ lọt tới đây khi CHÍNH CHỦ BÀI xem (xem CommunityController::show).
+    $blDaAn = $bl->hidden_at !== null;
+    $choPhepTraLoi = ($coTheBinhLuan ?? false) && ! $post->khoaBinhLuan() && ! $blDaAn;
     $cacTraLoi = $traLoi ?? [];
     $doDai = \App\Services\Community\CommunityInteraction::DO_DAI_BINH_LUAN;
 @endphp
 
-<div class="comment" id="binh-luan-{{ $bl->id }}" data-binh-luan="{{ $bl->id }}">
+<div class="comment {{ $blDaAn ? 'comment--an' : '' }}" id="binh-luan-{{ $bl->id }}" data-binh-luan="{{ $bl->id }}">
     <span class="avatar avatar--sm" aria-hidden="true">{{ mb_substr($bl->user?->name ?? 'K', 0, 1) }}</span>
 
     <div class="comment__body">
@@ -29,6 +33,10 @@
             <p class="comment__text">{{ $bl->body }}</p>
         </div>
 
+        @if($blDaAn)
+            <p class="comment__an-note" data-bl-an>Bạn đang ẩn bình luận này — chỉ mình bạn thấy.</p>
+        @endif
+
         <div class="comment__tools">
             <x-site.time :at="$bl->created_at" relative />
             @if($bl->edited_at)
@@ -42,7 +50,7 @@
                 :tom-tat="($camXucBL['tom_tat'] ?? [])[$bl->id] ?? []" />
 
             @auth
-                @if($coTheBinhLuan)
+                @if($choPhepTraLoi)
                     <details class="comment-form-toggle">
                         <summary class="comment__tool">Trả lời</summary>
                         <form method="POST" action="{{ route('shop.community.comment', $post->id) }}" class="comment-form">
@@ -82,9 +90,25 @@
                         <button type="submit" class="comment__tool comment__tool--nut">Gỡ</button>
                     </form>
                 @else
-                    <button type="button" class="comment__tool comment__tool--nut" data-bao-cao
-                            data-loai="comment" data-id="{{ $bl->id }}"
-                            data-bs-toggle="modal" data-bs-target="#hop-bao-cao">Báo cáo</button>
+                    @if(! $blDaAn)
+                        <button type="button" class="comment__tool comment__tool--nut" data-bao-cao
+                                data-loai="comment" data-id="{{ $bl->id }}"
+                                data-bs-toggle="modal" data-bs-target="#hop-bao-cao">Báo cáo</button>
+                    @endif
+
+                    {{--
+                        CHỦ BÀI dọn bình luận trên bài của mình: ẩn khỏi mắt người khác,
+                        bật lại được. Không phải "gỡ" — gỡ là việc của người viết ra nó.
+                    --}}
+                    @if($laChuBai)
+                        <form method="POST" action="{{ route('shop.community.owner.comment-hide', $bl->id) }}">
+                            @csrf
+                            @method('PATCH')
+                            <button type="submit" class="comment__tool comment__tool--nut">
+                                {{ $blDaAn ? 'Hiện lại' : 'Ẩn khỏi bài' }}
+                            </button>
+                        </form>
+                    @endif
                 @endif
             @endauth
         </div>
@@ -96,7 +120,7 @@
                         'bl' => $tl,
                         'traLoi' => [],
                         'post' => $post,
-                        'coTheBinhLuan' => $coTheBinhLuan,
+                        'coTheBinhLuan' => $coTheBinhLuan ?? false,
                         'camXucBL' => $camXucBL ?? [],
                     ])
                 @endforeach

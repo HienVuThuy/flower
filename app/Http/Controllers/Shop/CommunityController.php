@@ -128,6 +128,8 @@ class CommunityController extends Controller
                 'comments' => fn ($q) => $q->visible()->root()->with('user:id,name')->latest()->limit(2),
             ])
             ->withCount(['likers', 'comments as so_binh_luan' => fn ($q) => $q->visible()])
+            // Bài ghim lên đầu TRANG CÁ NHÂN (không đụng bảng tin chung).
+            ->orderByRaw('CASE WHEN pinned_at IS NULL THEN 1 ELSE 0 END')
             ->latest('id')
             ->paginate(self::MOI_TRANG)
             ->withQueryString();
@@ -146,6 +148,9 @@ class CommunityController extends Controller
             'posts' => $posts,
             'thongKe' => [
                 'bai' => (clone $baiHien)->count(),
+                'cho_duyet' => $laToi ? CommunityPost::where('user_id', $nguoi->id)->pending()->count() : 0,
+                'dang_an' => $laToi ? CommunityPost::where('user_id', $nguoi->id)
+                    ->where(fn ($q) => $q->whereNotNull('author_hidden_at')->orWhereNotNull('hidden_at'))->count() : 0,
                 'cam_xuc' => DB::table('community_post_likes')->whereIn('community_post_id', $baiHien)->count(),
                 'binh_luan' => CommunityComment::visible()->whereIn('community_post_id', $baiHien)->count(),
             ],
@@ -161,17 +166,33 @@ class CommunityController extends Controller
     public function show(int $post, CommunityInteraction $tuongTac): View
     {
         $bai = CommunityPost::query()
-            ->approved()
+            ->where(function ($q) {
+                $q->approved();
+
+                // Chính chủ vẫn mở được bài mình tạm ẩn, để còn bấm "Hiện lại bài".
+                if (Auth::check()) {
+                    $q->orWhere(fn ($w) => $w->authorHidden(Auth::id()));
+                }
+            })
             ->with(['user:id,name', 'product:id,name,slug,main_image', 'media'])
             ->withCount(['likers', 'comments as so_binh_luan' => fn ($q) => $q->visible()])
             ->findOrFail($post);
 
+        /*
+         * CHỦ BÀI VẪN THẤY BÌNH LUẬN CHÍNH HỌ ĐÃ ẨN (mờ đi, kèm nút hiện lại) —
+         * ẩn xong mà nó biến mất hẳn thì không còn đường bật lại.
+         * Bình luận do CỬA HÀNG ẩn thì không ai thấy, kể cả chủ bài.
+         */
+        $tuAn = fn ($q) => Auth::id() === (int) $bai->user_id
+            ? $q->where(fn ($w) => $w->whereNull('hidden_at')->orWhere('hidden_by', Auth::id()))
+            : $q->visible();
+
         $binhLuan = $bai->comments()
-            ->visible()
+            ->where(fn ($q) => $tuAn($q))
             ->root()
             ->with([
                 'user:id,name',
-                'replies' => fn ($q) => $q->visible()->with(['user:id,name', 'replyTo:id,name']),
+                'replies' => fn ($q) => $tuAn($q)->with(['user:id,name', 'replyTo:id,name']),
             ])
             ->orderBy('created_at')
             ->orderBy('id')

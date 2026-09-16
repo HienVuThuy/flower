@@ -51,6 +51,13 @@
                             @endif
                         </a>
                     @endforeach
+
+                    @auth
+                        {{-- Không nằm trong $cacTab vì đây là đường khác hẳn, không phải một tab của bảng tin. --}}
+                        <a href="{{ route('shop.community.profile', auth()->id()) }}" class="goc-cay-nav__item">
+                            <span><x-site.icon name="person" /> Trang cá nhân của tôi</span>
+                        </a>
+                    @endauth
                 </nav>
 
                 <div class="surface-card p-3 mt-3 goc-cay-quytac">
@@ -91,6 +98,9 @@
                         <a href="{{ route('shop.community.index', ['tab' => $ma]) }}"
                            class="goc-cay-nav__item {{ $tab === $ma ? 'is-active' : '' }}">{{ $nhan }}</a>
                     @endforeach
+                    @auth
+                        <a href="{{ route('shop.community.profile', auth()->id()) }}" class="goc-cay-nav__item">Trang cá nhân</a>
+                    @endauth
                 </nav>
 
                 @forelse($posts as $post)

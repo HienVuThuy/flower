@@ -6,6 +6,11 @@
 
 @section('content')
 
+@php
+    // Gọi một lần, dùng cho cả nhãn trên đầu bài lẫn khu bình luận bên dưới.
+    $khoaBinhLuan = $post->khoaBinhLuan();
+@endphp
+
 <section class="section-sm">
     <div class="container-shop community-post">
 
@@ -28,6 +33,15 @@
                         <x-site.time :at="$post->approved_at" relative />
                         @if($post->edited_at)
                             <span>· đã chỉnh sửa</span>
+                        @endif
+                        @if($post->tuAn())
+                            <span class="status-pill status-pill--{{ $post->statusBadge() }}">{{ $post->statusText() }}</span>
+                        @endif
+                        @if($post->daGhim())
+                            <span class="gc-bai__nhan" data-ghim><x-site.icon name="pin-angle-fill" /> Đã ghim</span>
+                        @endif
+                        @if($khoaBinhLuan)
+                            <span class="gc-bai__nhan" data-khoa-bl><x-site.icon name="lock" /> Đã khoá bình luận</span>
                         @endif
                     </p>
                 </div>
@@ -55,6 +69,9 @@
                                 <a href="{{ route('shop.community.edit', $post->id) }}" class="post-menu__item">
                                     <x-site.icon name="pencil" /> Sửa bài
                                 </a>
+
+                                @include('shop.community.partials.owner-menu', ['post' => $post])
+
                                 <form method="POST" action="{{ route('shop.community.destroy', $post->id) }}"
                                       onsubmit="return confirm('Xoá bài này? Ảnh, video và bình luận của bài cũng bị xoá.')">
                                     @csrf
@@ -102,6 +119,14 @@
                 </a>
             @endif
 
+            @if($post->tuAn())
+                {{-- Bài chính chủ tạm ẩn: chỉ họ vào được đường này, nên nói thẳng. --}}
+                <p class="gc-bai__note" data-tu-an>
+                    Bài này đang được bạn tạm ẩn nên không ai khác thấy.
+                    Bấm menu ⋯ ở trên để đăng lại cho mọi người.
+                </p>
+            @endif
+
             <div class="gc-bai__stats">
                 <x-community.reaction-summary :tom-tat="$tomTatCamXuc[$post->id] ?? []" :count="$post->likers_count" />
                 <span>{{ $post->so_binh_luan }} bình luận</span>
@@ -123,7 +148,15 @@
             <h2 class="text-h4 mb-3">Bình luận ({{ $post->so_binh_luan }})</h2>
 
             @auth
-                @if($coTheBinhLuan)
+                @if($khoaBinhLuan)
+                    {{-- Bình luận cũ vẫn đọc được; chỉ không viết thêm được. --}}
+                    <p class="text-caption mb-4" data-khong-binh-luan>
+                        <x-site.icon name="lock" />
+                        {{ auth()->id() === $post->user_id
+                            ? 'Bạn đang khoá bình luận cho bài này. Mở lại ở menu ⋯ phía trên.'
+                            : 'Chủ bài đã khoá bình luận cho bài này.' }}
+                    </p>
+                @elseif($coTheBinhLuan)
                     <form method="POST" action="{{ route('shop.community.comment', $post->id) }}" class="comment-form comment-form--nhanh mb-4">
                         @csrf
                         <label class="visually-hidden" for="binh-luan-moi">Viết bình luận</label>
@@ -142,7 +175,7 @@
                         <a href="{{ route('verification.notice') }}">Gửi lại thư xác thực</a>.
                     </p>
                 @endif
-            @else
+            @elseif(! $khoaBinhLuan)
                 <p class="text-caption mb-4">
                     <a href="{{ route('login', ['redirect' => route('shop.community.show', $post->id, false)]) }}">Đăng nhập</a>
                     để bình luận — ai có tài khoản cũng hỏi đáp được.

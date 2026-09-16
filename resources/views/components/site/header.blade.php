@@ -330,6 +330,15 @@
                                 <x-site.icon name="gear" /> Hồ sơ tài khoản
                             </a>
 
+                            {{--
+                                TRANG CÁ NHÂN Ở GÓC CÂY — khác "Hồ sơ tài khoản":
+                                hồ sơ là chỗ sửa tên, mật khẩu, địa chỉ; trang cá nhân
+                                là chỗ xem lại bài mình đã đăng và tự quản lý chúng.
+                            --}}
+                            <a class="dropdown-item" href="{{ route('shop.community.profile', Auth::id()) }}">
+                                <x-site.icon name="person" /> Trang cá nhân
+                            </a>
+
                             {{-- Điểm hiện ngay trong menu tài khoản: thấy số tăng mới là thứ kéo người ta quay lại. --}}
                             <a class="dropdown-item" href="{{ route('shop.profile.edit', ['muc' => 'diem-thuong']) }}" data-diem-header>
                                 <x-site.icon name="star" /> Điểm thưởng: <strong>{{ number_format(app(\App\Services\Points\PointLedger::class)->soDu(Auth::user()), 0, ',', '.') }}</strong>

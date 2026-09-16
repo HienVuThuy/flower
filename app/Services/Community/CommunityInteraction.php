@@ -141,6 +141,10 @@ class CommunityInteraction
             throw new CommunityException('Xác thực email của tài khoản để bình luận.');
         }
 
+        if ($post->khoaBinhLuan()) {
+            throw new CommunityException('Chủ bài đã khoá bình luận cho bài này.');
+        }
+
         $noiDung = trim($noiDung);
 
         if ($noiDung === '') {

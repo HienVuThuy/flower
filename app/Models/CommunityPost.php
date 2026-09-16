@@ -31,6 +31,9 @@ class CommunityPost extends Model
             'approved_at' => 'datetime',
             'rejected_at' => 'datetime',
             'hidden_at' => 'datetime',
+            'author_hidden_at' => 'datetime',
+            'comments_locked_at' => 'datetime',
+            'pinned_at' => 'datetime',
             'edited_at' => 'datetime',
         ];
     }
@@ -68,10 +71,28 @@ class CommunityPost extends Model
         return $this->hasMany(CommunityComment::class);
     }
 
-    /** CỬA DUY NHẤT để lấy bài hiện ra ngoài: đã duyệt và không bị cửa hàng ẩn. */
+    /**
+     * CỬA DUY NHẤT để lấy bài hiện ra ngoài: đã duyệt, không bị cửa hàng ẩn, và
+     * chính chủ cũng không tạm ẩn.
+     */
     public function scopeApproved(Builder $query): Builder
     {
-        return $query->whereNotNull('approved_at')->whereNull('hidden_at');
+        return $query->whereNotNull('approved_at')->whereNull('hidden_at')->whereNull('author_hidden_at');
+    }
+
+    /**
+     * Bài do CHÍNH CHỦ tạm ẩn — vẫn đã duyệt, cửa hàng không ẩn.
+     *
+     * Dùng để chủ bài mở lại được bài mình vừa ẩn: `approved()` đã loại nó ra
+     * khỏi mọi đường công khai, không có ngoại lệ này thì chính chủ bấm vào bài
+     * của mình cũng nhận 404 và không còn chỗ nào bật lại.
+     */
+    public function scopeAuthorHidden(Builder $query, int $userId): Builder
+    {
+        return $query->where('user_id', $userId)
+            ->whereNotNull('approved_at')
+            ->whereNull('hidden_at')
+            ->whereNotNull('author_hidden_at');
     }
 
     public function scopePending(Builder $query): Builder
@@ -94,6 +115,22 @@ class CommunityPost extends Model
         return $this->hidden_at !== null;
     }
 
+    /** Chính chủ tạm ẩn bài của mình (khác với cửa hàng ẩn vì vi phạm). */
+    public function tuAn(): bool
+    {
+        return $this->author_hidden_at !== null;
+    }
+
+    public function khoaBinhLuan(): bool
+    {
+        return $this->comments_locked_at !== null;
+    }
+
+    public function daGhim(): bool
+    {
+        return $this->pinned_at !== null;
+    }
+
     /** Ảnh đầu tiên (cho thẻ nhỏ ở trang sản phẩm, ảnh chia sẻ). */
     public function anhDau(): ?CommunityPostMedia
     {
@@ -110,6 +147,7 @@ class CommunityPost extends Model
     {
         return match (true) {
             $this->isHidden() => 'Bị ẩn',
+            $this->tuAn() => 'Bạn đang ẩn',
             $this->isApproved() => 'Đã đăng',
             $this->isRejected() => 'Không được duyệt',
             default => 'Đang chờ duyệt',
@@ -120,6 +158,7 @@ class CommunityPost extends Model
     {
         return match (true) {
             $this->isHidden() => 'danger',
+            $this->tuAn() => 'secondary',
             $this->isApproved() => 'success',
             $this->isRejected() => 'danger',
             default => 'warning',

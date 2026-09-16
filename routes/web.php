@@ -692,6 +692,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('goc-cay/binh-luan/{comment}', [CommunityController::class, 'destroyComment'])
         ->name('shop.community.comment.destroy');
 
+    /*
+     * CHỦ BÀI TỰ QUẢN LÝ BÀI CỦA MÌNH — tạm ẩn, ghim lên trang cá nhân, khoá
+     * bình luận, và ẩn bình luận trên bài của mình. Luật ở PostOwner.
+     */
+    Route::patch('goc-cay/{post}/an-cua-toi', [\App\Http\Controllers\Shop\CommunityPostOwnerController::class, 'hide'])
+        ->whereNumber('post')
+        ->name('shop.community.owner.hide');
+
+    Route::patch('goc-cay/{post}/ghim', [\App\Http\Controllers\Shop\CommunityPostOwnerController::class, 'pin'])
+        ->whereNumber('post')
+        ->name('shop.community.owner.pin');
+
+    Route::patch('goc-cay/{post}/khoa-binh-luan', [\App\Http\Controllers\Shop\CommunityPostOwnerController::class, 'lockComments'])
+        ->whereNumber('post')
+        ->name('shop.community.owner.lock');
+
+    Route::patch('goc-cay/binh-luan/{comment}/an', [\App\Http\Controllers\Shop\CommunityPostOwnerController::class, 'hideComment'])
+        ->whereNumber('comment')
+        ->name('shop.community.owner.comment-hide');
+
     // Báo cáo bài / bình luận vi phạm cho cửa hàng.
     Route::post('goc-cay/bao-cao', [CommunityController::class, 'report'])
         ->middleware('throttle:20,1')

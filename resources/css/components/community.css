@@ -251,6 +251,22 @@
     color: var(--ink-500);
 }
 
+/*
+ * Nhãn "Đã ghim" / "Đã khoá bình luận" trên dòng thời gian.
+ * Nhạt hơn status-pill: đây là trạng thái do chủ bài tự đặt, không phải
+ * phán quyết của cửa hàng, nên không được nổi bằng "Bị ẩn".
+ */
+.gc-bai__nhan {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    font-size: 0.72rem;
+    color: var(--ink-500);
+}
+
 .gc-bai__product {
     display: inline-flex;
     align-items: center;
@@ -525,6 +541,21 @@
 .comment__tool:hover {
     color: var(--ink-900);
     text-decoration: underline;
+}
+
+/*
+ * Bình luận CHỦ BÀI đang ẩn — chỉ chính họ thấy.
+ * Làm mờ chứ không giấu: phải nhìn thấy mình đã ẩn cái gì thì mới bật lại được.
+ */
+.comment--an > .comment__body > .comment__bubble {
+    opacity: 0.55;
+    border: 1px dashed var(--border-soft);
+}
+
+.comment__an-note {
+    margin: 0.2rem 0 0;
+    font-size: 0.75rem;
+    color: var(--ink-500);
 }
 
 /* Câu trả lời thụt vào MỘT tầng — sâu hơn thì trên điện thoại hết chỗ. */

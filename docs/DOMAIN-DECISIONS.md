@@ -8269,3 +8269,29 @@ có thanh bên.
   đó; chính chủ xem thì thấy cả bài chờ duyệt / bị từ chối / bị ẩn kèm trạng
   thái. Các con số (bài, cảm xúc, bình luận nhận được) đếm từ bài đang hiện —
   không tính bài chờ duyệt hay bị ẩn.
+
+## QĐ-301. Chủ bài tự quản lý bài của mình, nhưng KHÔNG lấn quyền duyệt của cửa hàng
+
+- HAI CỘT ẨN RIÊNG BIỆT: `hidden_at` là CỬA HÀNG ẩn vì vi phạm, `author_hidden_at`
+  là CHỦ BÀI tự tạm ẩn. Gộp một cột thì mất đúng ranh giới cần giữ: bài mình tự ẩn
+  thì bật lại lúc nào cũng được, còn bài cửa hàng ẩn thì khách không được tự mở.
+  `scopeApproved()` loại cả hai, nên mọi đường công khai (bảng tin, trang bài,
+  thích, lưu, bình luận) đều không thấy bài đang tạm ẩn.
+- NGOẠI LỆ DUY NHẤT của luật trên là `scopeAuthorHidden($userId)`: CHÍNH CHỦ mở
+  được trang bài mình tự ẩn — không có ngoại lệ này thì ẩn xong là mất luôn chỗ
+  bấm "Hiện lại bài".
+- BÌNH LUẬN: chủ bài ẩn được bình luận TRÊN BÀI CỦA MÌNH, `hidden_by` ghi ai ẩn.
+  Chủ bài ẩn thì chính họ mở lại được; cửa hàng ẩn (`hidden_by` null) thì chủ bài
+  KHÔNG mở lại được — nếu không, ẩn một bình luận vi phạm xong chủ bài bật lại là
+  xong chuyện. Bình luận chủ bài tự ẩn vẫn hiện mờ cho riêng họ, vì lý do y hệt
+  điểm trên.
+- KHOÁ BÌNH LUẬN (`comments_locked_at`) chặn ở `CommunityInteraction::binhLuan()`,
+  không phải chỉ giấu ô nhập: giấu ô chỉ chặn người dùng bình thường. Bình luận cũ
+  vẫn còn và vẫn đọc được — khoá là "không bàn thêm", không phải xoá dấu vết.
+- GHIM (`pinned_at`) CHỈ ĐỔI THỨ TỰ TRANG CÁ NHÂN, không đụng bảng tin chung: ghim
+  mà đẩy được bài lên bảng tin của mọi người thì ai cũng ghim. Mỗi người một bài
+  ghim (ghim bài mới thì bài cũ tự bỏ) — "ghim" mà có mười cái thì không còn là
+  ghim. Chỉ ghim được bài đang hiển thị, và ẩn bài thì gỡ luôn ghim.
+- Mọi nút quản lý là PATCH + CSRF, và quyền lấy từ `PostOwner::baiCuaToi()` (lọc
+  theo `user_id` rồi mới `findOrFail`) nên bài người khác trả 404, không phải 403:
+  không xác nhận hộ rằng bài đó có tồn tại.
