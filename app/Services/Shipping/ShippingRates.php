@@ -31,12 +31,49 @@ class ShippingRates
             return $default;
         }
 
-        $zone = config('shipping.zone_of')[trim($province)] ?? $default;
+        /*
+         * TRA CẢ HAI CÁCH GỌI TÊN MỘT TỈNH.
+         *
+         * Bảng trong config ghi "Thành phố Hà Nội", còn danh mục GHN trả về
+         * "Hà Nội" — và tên GHN chính là tên được lưu vào đơn khi khách chọn
+         * địa chỉ bằng ba ô chọn. Khớp tuyệt đối thì mọi đơn nội thành rơi về
+         * vùng xa nhất, và phí dự phòng (lúc không hỏi được GHN) tính sai —
+         * âm thầm, vì không có lỗi nào.
+         */
+        $bang = config('shipping.zone_of');
+        $zone = $bang[trim($province)] ?? $this->theoTenRutGon($bang, $province) ?? $default;
 
         // Bảng ánh xạ trỏ tới một vùng không tồn tại (gõ sai lúc sửa
         // config) thì lùi về mặc định thay vì trả phí bằng 0 — miễn phí
         // vì gõ sai là cửa hàng mất tiền mà không ai hay.
         return isset(config('shipping.zones')[$zone]) ? $zone : $default;
+    }
+
+    /**
+     * Tra bảng sau khi bỏ tiền tố "Thành phố" / "Tỉnh" ở cả hai vế.
+     *
+     * @param  array<string, string>  $bang
+     */
+    private function theoTenRutGon(array $bang, string $province): ?string
+    {
+        $goc = self::rutGon($province);
+
+        foreach ($bang as $ten => $zone) {
+            if (self::rutGon($ten) === $goc) {
+                return $zone;
+            }
+        }
+
+        return null;
+    }
+
+    /** "Thành phố Hà Nội" và "Hà Nội" cùng rút về "hà nội". */
+    private static function rutGon(string $ten): string
+    {
+        $ten = mb_strtolower(trim($ten));
+        $ten = preg_replace('/^(thành phố|tỉnh|tp\.?)\s+/u', '', $ten) ?? $ten;
+
+        return trim(preg_replace('/\s+/u', ' ', $ten) ?? $ten);
     }
 
     /** Nhãn tiếng Việt của vùng, để hiện cho khách xem. */

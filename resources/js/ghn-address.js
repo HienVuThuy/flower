@@ -79,6 +79,46 @@ export function initGhnAddress() {
 
     const khoiChon = [...document.querySelectorAll('.ghn-select')];
 
+    /*
+     * TÊN QUẬN / PHƯỜNG CẦN CHỌN LẠI — DÙNG ĐÚNG MỘT LẦN.
+     *
+     * Có hai lúc cần: khách chọn một địa chỉ trong sổ, và biểu mẫu quay về vì
+     * sai một ô khác. Cả hai đều đã có sẵn tên chữ trong ô ẩn.
+     *
+     * "Dùng một lần" là phần quan trọng: sau khi khách TỰ đổi tỉnh hay quận,
+     * tên cũ không còn nghĩa gì — mà tên phường thì hay trùng nhau giữa các
+     * quận ("Phường 1", "Thị trấn ..."), nên giữ lại là mời một lựa chọn sai
+     * tự nhảy vào ô của khách.
+     */
+    let tinhCu = oTinh?.value?.trim() || '';
+    let quanCu = oQuan?.dataset.cu?.trim() || '';
+    let phuongCu = oPhuong?.dataset.cu?.trim() || '';
+
+    /*
+     * MỘT TỈNH CÓ HAI CÁCH GỌI TÊN.
+     *
+     * Sổ địa chỉ và bảng phí của cửa hàng ghi "Thành phố Hồ Chí Minh", danh mục
+     * GHN trả về "Hồ Chí Minh". Khớp tuyệt đối thì địa chỉ đã lưu không chọn
+     * lại được tỉnh, và vì ba ô nối nhau nên quận / phường cũng đứng im.
+     */
+    const rutGon = (s) => (s || '')
+        .toLowerCase()
+        .replace(/^(thành phố|tỉnh|tp\.?|quận|huyện|thị xã|phường|xã|thị trấn)\s+/i, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    /** Chọn lại theo TÊN trong danh sách vừa tải, rồi quên tên đó đi. */
+    const chonLaiTheoTen = (chon, ten) => {
+        const ds = [...chon.options];
+        const tim = ds.find((o) => o.textContent.trim() === ten)
+            || ds.find((o) => rutGon(o.textContent) === rutGon(ten));
+
+        if (tim) {
+            chon.value = tim.value;
+            chon.dispatchEvent(new Event('change'));
+        }
+    };
+
     /**
      * Bật một khối và tắt khối kia — VỪA ẩn VỪA vô hiệu hoá.
      *
@@ -195,15 +235,10 @@ export function initGhnAddress() {
              * chọn lại cả ba cấp địa chỉ từ đầu — và họ sẽ bỏ giữa chừng.
              * Khớp theo TÊN vì đó là thứ đã lưu trong `old()`.
              */
-            const tenCu = oTinh?.value;
-
-            if (tenCu) {
-                const tim = [...tinh.options].find((o) => o.textContent === tenCu);
-
-                if (tim) {
-                    tinh.value = tim.value;
-                    tinh.dispatchEvent(new Event('change'));
-                }
+            if (tinhCu) {
+                const ten = tinhCu;
+                tinhCu = '';
+                chonLaiTheoTen(tinh, ten);
             }
         })
         .catch(() => {
@@ -256,15 +291,10 @@ export function initGhnAddress() {
                 quan.innerHTML = dungOption(res.data, 'DistrictID', 'DistrictName', '-- Chọn Quận/Huyện --');
                 quan.disabled = false;
 
-                const tenCu = oQuan?.dataset.cu;
-
-                if (tenCu) {
-                    const tim = [...quan.options].find((o) => o.textContent === tenCu);
-
-                    if (tim) {
-                        quan.value = tim.value;
-                        quan.dispatchEvent(new Event('change'));
-                    }
+                if (quanCu) {
+                    const ten = quanCu;
+                    quanCu = '';
+                    chonLaiTheoTen(quan, ten);
                 }
             })
             .catch(() => veSinh(quan, KHONG_TAI_DUOC));
@@ -292,6 +322,18 @@ export function initGhnAddress() {
 
                 phuong.innerHTML = dungOption(res.data, 'WardCode', 'WardName', '-- Chọn Phường/Xã --');
                 phuong.disabled = false;
+
+                /*
+                 * LỖI ĐÃ SỬA: hai cấp trên tự chọn lại còn cấp này thì không.
+                 * Khách dùng địa chỉ trong sổ thấy tỉnh và quận điền sẵn, riêng
+                 * phường bỏ trống — và `to_ward_code` rỗng theo, nên máy chủ
+                 * không hỏi được cước GHN lẫn không tạo được vận đơn.
+                 */
+                if (phuongCu) {
+                    const ten = phuongCu;
+                    phuongCu = '';
+                    chonLaiTheoTen(phuong, ten);
+                }
             })
             .catch(() => veSinh(phuong, KHONG_TAI_DUOC));
     });

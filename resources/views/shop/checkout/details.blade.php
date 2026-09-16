@@ -239,7 +239,9 @@
                             <select id="ward_select" class="form-select" data-ghn-ward disabled>
                                 <option value="">-- Chọn Quận/Huyện trước --</option>
                             </select>
+            {{-- data-cu: cùng lý do với quận/huyện — xem ô bên trên. --}}
                             <input type="hidden" id="shipping_ward" name="shipping_ward"
+                                   data-cu="{{ old('shipping_ward', $values['shipping_ward'] ?? '') }}"
                                    value="{{ old('shipping_ward', $values['shipping_ward'] ?? '') }}">
                             <input type="hidden" name="to_ward_code" data-ghn-ward-code
                                    value="{{ old('to_ward_code', $values['to_ward_code'] ?? '') }}">
