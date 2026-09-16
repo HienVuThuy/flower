@@ -222,7 +222,7 @@ class ProductController extends Controller
             'category',
             'promotions',
             'variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order'),
-
+            'traits',
             'blocks',
             'videos',
         ]);
