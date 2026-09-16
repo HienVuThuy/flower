@@ -13,14 +13,14 @@
 
         <p class="mb-3"><a href="{{ route('shop.community.index') }}">&larr; Quay lại Góc cây</a></p>
 
-        <article class="post-card post-card--don" id="bai-{{ $post->id }}" data-bai="{{ $post->id }}">
+        <article class="gc-bai gc-bai--don" id="bai-{{ $post->id }}" data-bai="{{ $post->id }}">
 
-            <header class="post-card__head">
+            <header class="gc-bai__head">
                 <span class="avatar" aria-hidden="true">{{ mb_substr($post->user?->name ?? 'K', 0, 1) }}</span>
 
-                <div class="post-card__who">
-                    <span class="post-card__author">{{ $post->user?->name ?? 'Người dùng đã xoá' }}</span>
-                    <p class="post-card__meta mb-0">
+                <div class="gc-bai__who">
+                    <span class="gc-bai__author">{{ $post->user?->name ?? 'Người dùng đã xoá' }}</span>
+                    <p class="gc-bai__meta mb-0">
                         <x-site.time :at="$post->approved_at" relative />
                         @if($post->edited_at)
                             <span>· đã chỉnh sửa</span>
@@ -72,7 +72,7 @@
 
             {{-- Chữ người lạ gửi lên: luôn escape, cùng luật với bảng tin. --}}
             @if(trim((string) $post->body) !== '')
-                <p class="post-card__text">{{ $post->body }}</p>
+                <p class="gc-bai__text">{{ $post->body }}</p>
             @endif
 
             {{-- Trang một bài xem ĐỦ tệp, cỡ lớn, video có nút điều khiển. --}}
@@ -93,17 +93,17 @@
             @endif
 
             @if($post->product)
-                <a href="{{ route('shop.products.show', $post->product) }}" class="post-card__product">
+                <a href="{{ route('shop.products.show', $post->product) }}" class="gc-bai__product">
                     <x-site.icon name="flower2" /> Cây trong bài: {{ $post->product->name }}
                 </a>
             @endif
 
-            <div class="post-card__stats">
+            <div class="gc-bai__stats">
                 <span>{{ $post->likers_count }} lượt thích</span>
                 <span>{{ $post->so_binh_luan }} bình luận</span>
             </div>
 
-            <div class="post-card__actions">
+            <div class="gc-bai__actions">
                 <x-community.like-button :post="$post" :liked="$daThich" :count="$post->likers_count" />
 
                 <a href="#binh-luan" class="post-action">

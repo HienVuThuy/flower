@@ -178,7 +178,7 @@
 
 /* ---------- Thẻ bài ---------- */
 
-.post-card {
+.gc-bai {
     padding: 1rem;
     margin-bottom: 1rem;
     border: 1px solid var(--border-soft);
@@ -186,23 +186,23 @@
     background: var(--surface);
 }
 
-.post-card__head {
+.gc-bai__head {
     display: flex;
     align-items: flex-start;
     gap: 0.6rem;
     margin-bottom: 0.6rem;
 }
 
-.post-card__who {
+.gc-bai__who {
     flex: 1 1 auto;
     min-width: 0;
 }
 
-.post-card__author {
+.gc-bai__author {
     font-weight: 600;
 }
 
-.post-card__meta {
+.gc-bai__meta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -211,30 +211,30 @@
     color: var(--ink-500);
 }
 
-.post-card__time {
+.gc-bai__time {
     color: inherit;
     text-decoration: none;
 }
 
-.post-card__time:hover {
+.gc-bai__time:hover {
     text-decoration: underline;
 }
 
-.post-card__text {
+.gc-bai__text {
     /* pre-line giữ xuống dòng khách gõ nhưng không giữ khoảng trắng thừa. */
     white-space: pre-line;
     overflow-wrap: anywhere;
     margin-bottom: 0.6rem;
 }
 
-.post-card__note,
-.post-card__diem {
+.gc-bai__note,
+.gc-bai__diem {
     margin-bottom: 0.6rem;
     font-size: 0.85rem;
     color: var(--ink-500);
 }
 
-.post-card__product {
+.gc-bai__product {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -242,7 +242,7 @@
     font-size: 0.85rem;
 }
 
-.post-card__stats {
+.gc-bai__stats {
     display: flex;
     justify-content: space-between;
     gap: 0.75rem;
@@ -253,11 +253,11 @@
     color: var(--ink-500);
 }
 
-.post-card__stats a {
+.gc-bai__stats a {
     color: inherit;
 }
 
-.post-card__actions {
+.gc-bai__actions {
     display: flex;
     gap: 0.25rem;
     padding-block: 0.25rem;
@@ -290,11 +290,11 @@
     font-weight: 600;
 }
 
-.post-card__comments {
+.gc-bai__comments {
     padding-top: 0.75rem;
 }
 
-.post-card__xem-them {
+.gc-bai__xem-them {
     display: inline-block;
     margin-top: 0.25rem;
     font-size: 0.85rem;
@@ -439,7 +439,7 @@
     border-radius: var(--radius-sm);
 }
 
-.post-card--don {
+.gc-bai--don {
     margin-bottom: 0;
 }
 

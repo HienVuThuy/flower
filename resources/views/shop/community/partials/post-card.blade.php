@@ -16,15 +16,15 @@
     $binhLuanXemTruoc = $post->relationLoaded('comments') ? $post->comments->sortBy('created_at') : collect();
 @endphp
 
-<article class="post-card" id="bai-{{ $post->id }}" data-bai="{{ $post->id }}">
+<article class="gc-bai" id="bai-{{ $post->id }}" data-bai="{{ $post->id }}">
 
-    <header class="post-card__head">
+    <header class="gc-bai__head">
         <span class="avatar" aria-hidden="true">{{ mb_substr($post->user?->name ?? 'K', 0, 1) }}</span>
 
-        <div class="post-card__who">
-            <span class="post-card__author">{{ $post->user?->name ?? 'Người dùng đã xoá' }}</span>
-            <p class="post-card__meta mb-0">
-                <a href="{{ route('shop.community.show', $post->id) }}" class="post-card__time">
+        <div class="gc-bai__who">
+            <span class="gc-bai__author">{{ $post->user?->name ?? 'Người dùng đã xoá' }}</span>
+            <p class="gc-bai__meta mb-0">
+                <a href="{{ route('shop.community.show', $post->id) }}" class="gc-bai__time">
                     <x-site.time :at="$post->approved_at ?? $post->created_at" relative />
                 </a>
                 @if($post->edited_at)
@@ -84,39 +84,39 @@
 
     {{-- Chữ người lạ gửi lên: LUÔN escape. --}}
     @if(trim((string) $post->body) !== '')
-        <p class="post-card__text">{{ $post->body }}</p>
+        <p class="gc-bai__text">{{ $post->body }}</p>
     @endif
 
     @if($post->isRejected() && $post->reject_reason)
         {{-- Lý do hiện lại cho chính người đăng: từ chối im lặng thì họ đăng lại y hệt. --}}
-        <p class="post-card__note">Lý do không được duyệt: {{ $post->reject_reason }}</p>
+        <p class="gc-bai__note">Lý do không được duyệt: {{ $post->reject_reason }}</p>
     @endif
 
     @if($post->isHidden() && $post->hidden_reason)
-        <p class="post-card__note">Bài đang bị ẩn: {{ $post->hidden_reason }}</p>
+        <p class="gc-bai__note">Bài đang bị ẩn: {{ $post->hidden_reason }}</p>
     @endif
 
     @isset($diemBai[$post->id])
-        <p class="post-card__diem" data-diem-bai="{{ $post->id }}">+{{ $diemBai[$post->id] }} điểm</p>
+        <p class="gc-bai__diem" data-diem-bai="{{ $post->id }}">+{{ $diemBai[$post->id] }} điểm</p>
     @endisset
 
     @include('shop.community.partials.media-grid', ['post' => $post])
 
     @if($post->product)
-        <a href="{{ route('shop.products.show', $post->product) }}" class="post-card__product">
+        <a href="{{ route('shop.products.show', $post->product) }}" class="gc-bai__product">
             <x-site.icon name="flower2" /> Cây trong bài: {{ $post->product->name }}
         </a>
     @endif
 
     @if($dangHien)
-        <div class="post-card__stats">
+        <div class="gc-bai__stats">
             <span data-tom-tat-thich="{{ $post->id }}">{{ $post->likers_count ?? 0 }} lượt thích</span>
             <a href="{{ route('shop.community.show', $post->id) }}#binh-luan" data-so-binh-luan="{{ $post->id }}">
                 {{ $post->so_binh_luan ?? 0 }} bình luận
             </a>
         </div>
 
-        <div class="post-card__actions">
+        <div class="gc-bai__actions">
             <x-community.like-button :post="$post" :liked="$daThichBai" :count="$post->likers_count ?? 0" />
 
             <a href="{{ route('shop.community.show', $post->id) }}#binh-luan" class="post-action">
@@ -128,7 +128,7 @@
         </div>
 
         @if($binhLuanXemTruoc->isNotEmpty())
-            <div class="post-card__comments">
+            <div class="gc-bai__comments">
                 @foreach($binhLuanXemTruoc as $bl)
                     @include('shop.community.partials.comment', [
                         'bl' => $bl,
@@ -139,7 +139,7 @@
                 @endforeach
 
                 @if(($post->so_binh_luan ?? 0) > $binhLuanXemTruoc->count())
-                    <a href="{{ route('shop.community.show', $post->id) }}#binh-luan" class="post-card__xem-them">
+                    <a href="{{ route('shop.community.show', $post->id) }}#binh-luan" class="gc-bai__xem-them">
                         Xem tất cả {{ $post->so_binh_luan }} bình luận
                     </a>
                 @endif

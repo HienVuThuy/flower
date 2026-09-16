@@ -22,7 +22,7 @@
                     Bài đang hiển thị. Lưu thay đổi xong, bài sẽ được gửi duyệt lại trước khi hiện.
                 </p>
             @elseif($post->isRejected() && $post->reject_reason)
-                <p class="post-card__note">Lý do không được duyệt: {{ $post->reject_reason }}</p>
+                <p class="gc-bai__note">Lý do không được duyệt: {{ $post->reject_reason }}</p>
             @endif
 
             <form method="POST" action="{{ route('shop.community.update', $post->id) }}" enctype="multipart/form-data">
