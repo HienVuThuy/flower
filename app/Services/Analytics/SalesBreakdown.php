@@ -2,15 +2,19 @@
 
 namespace App\Services\Analytics;
 
+use App\Enums\ExchangeStatus;
 use App\Enums\OrderStatus;
 use App\Enums\RefundStatus;
+use App\Enums\UserRole;
 use App\Models\Category;
+use App\Models\Exchange;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Refund;
+use App\Models\User;
 use Illuminate\Support\Collection;
 
-/** Doanh thu cắt theo từng chiều: danh mục, tỉnh, khung giờ, khách mới/cũ. */
+/** Doanh thu cắt theo từng chiều: danh mục, tỉnh, khung giờ, thời gian, khách mới/cũ. */
 class SalesBreakdown
 {
     private KhoangThoiGian $khoang;
@@ -201,5 +205,75 @@ class SalesBreakdown
             'khach_mua_lai' => $muaLai,
             'ti_le_mua_lai' => $coDon > 0 ? round($muaLai / $coDon * 100, 1) : null,
         ];
+    }
+
+    /** Đơn đã giao gom theo ngày / tháng / năm giờ Việt Nam: trừ tiền hoàn, cộng tiền bù đổi hàng. */
+    public function theoThoiGian(): array
+    {
+        $don = $this->khoang->apDung(
+            Order::query()->where('status', OrderStatus::Completed),
+            'created_at',
+        )->get(['id', 'created_at', 'grand_total']);
+
+        $hoan = Refund::query()
+            ->where('status', RefundStatus::Completed->value)
+            ->whereIn('order_id', $don->pluck('id'))
+            ->selectRaw('order_id, SUM(amount) as tien')
+            ->groupBy('order_id')
+            ->pluck('tien', 'order_id');
+
+        $bu = Exchange::query()
+            ->where('status', ExchangeStatus::HoanTat->value)
+            ->whereIn('order_id', $don->pluck('id'))
+            ->selectRaw('order_id, SUM(da_thu) as tien')
+            ->groupBy('order_id')
+            ->pluck('tien', 'order_id');
+
+        $dong = $don->map(fn (Order $o) => [
+            'ngay' => KhoangThoiGian::diaPhuong($o->created_at)->toDateString(),
+            'doanh_thu' => (string) $o->grand_total,
+            'hoan' => (string) ($hoan[$o->id] ?? '0'),
+            'bu' => (string) ($bu[$o->id] ?? '0'),
+        ]);
+
+        return [
+            'ngay' => $this->gopKy($dong, 10),
+            'thang' => $this->gopKy($dong, 7),
+            'nam' => $this->gopKy($dong, 4),
+        ];
+    }
+
+    public function taiKhoanKhach(): array
+    {
+        $khach = User::query()->where('role', UserRole::Customer->value);
+
+        return [
+            'tong' => (clone $khach)->count(),
+            'moi' => $this->khoang->apDung(clone $khach, 'created_at')->count(),
+        ];
+    }
+
+    private function gopKy(Collection $dong, int $doDai): Collection
+    {
+        $cong = fn (Collection $ds, string $cot) => $ds->reduce(fn ($c, $d) => bcadd($c, $d[$cot], 2), '0.00');
+
+        return $dong
+            ->groupBy(fn (array $d) => substr($d['ngay'], 0, $doDai))
+            ->map(function (Collection $ds, string $ky) use ($cong) {
+                $doanhThu = $cong($ds, 'doanh_thu');
+                $hoan = $cong($ds, 'hoan');
+                $bu = $cong($ds, 'bu');
+
+                return [
+                    'ky' => $ky,
+                    'so_don' => $ds->count(),
+                    'doanh_thu' => $doanhThu,
+                    'hoan' => $hoan,
+                    'bu' => $bu,
+                    'thuan' => bcadd(bcsub($doanhThu, $hoan, 2), $bu, 2),
+                ];
+            })
+            ->sortKeys()
+            ->values();
     }
 }

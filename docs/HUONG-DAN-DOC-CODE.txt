@@ -1032,25 +1032,24 @@ LUỒNG 22. Admin xử lý đơn hàng: tab, bộ lọc, "đang giao không hu�
   Kiểm thử: tests/Feature/Admin/XuLyDonHangTest.php, LoHongNghiepVuTest.php
 
 --------------------------------------------------------------------------------
-LUỒNG 23. Báo cáo doanh thu: bảng số liệu và biểu đồ (lab08)
+LUỒNG 23. Báo cáo doanh thu (lab08) — nằm trong trang Phân tích
 --------------------------------------------------------------------------------
-  1. GET /admin/bao-cao → Admin\ReportController@index
-     GET /admin/bao-cao/bieu-do → @charts          (quyền bao-cao)
-  2. app/Services/Analytics/RevenueReport.php
-       theoNgay()     lấy đơn Completed, tiền hoàn (refunds completed) và tiền bù
-                      đổi hàng theo từng đơn; gom theo NGÀY GIỜ VIỆT NAM
-                      (KhoangThoiGian::diaPhuong); nhớ kết quả trong $this->ngay
-                      để các hàm sau không truy vấn lại
-       theoThang(), theoNam()  gop(): gộp từ dữ liệu ngày (cắt chuỗi 'Y-m' / 'Y')
-                      — chạy giống nhau trên MySQL và SQLite
-       tongQuan()     tổng đơn, tổng khách, doanh thu, đã hoàn, thuần
-       theoDanhMuc()  dùng lại SalesBreakdown::theoDanhMuc() (không viết lại)
-       theoPhuongThuc(), bieuDoNgay(30), bieuDoThang(12): điền 0 cho ngày / tháng
-                      không có đơn để trục thời gian liền mạch
-     Mọi phép cộng trừ tiền dùng bcadd / bcsub.
-  3. Views: resources/views/admin/reports/index.blade.php (bảng) và charts.blade.php
-     (biểu đồ SVG bằng <x-admin.chart.bars|line|donut>); hai trang nối nhau bằng
-     <x-admin.nhom-tab ten="bao-cao" />.
+  Không có trang báo cáo riêng: phần nào trang Phân tích đã có thì dùng luôn,
+  phần còn thiếu được thêm vào đúng tab của nó.
+  1. GET /admin/phan-tich/doanh-thu?ky=... → Admin\AnalyticsPagesController@sales
+       ChonKy::tuRequest() đọc kỳ → khoang() → SalesBreakdown::trong($khoang)
+  2. app/Services/Analytics/SalesBreakdown.php → theoThoiGian()
+       lấy đơn Completed trong kỳ, tiền hoàn (refunds completed) và tiền bù đổi
+       hàng theo từng đơn; mỗi đơn quy về NGÀY GIỜ VIỆT NAM
+       (KhoangThoiGian::diaPhuong) rồi gopKy() cắt chuỗi ngày 10 / 7 / 4 ký tự
+       để ra ngày / tháng / năm — chạy giống nhau trên MySQL và SQLite.
+       Mọi phép cộng trừ tiền dùng bcadd / bcsub.
+     View: resources/views/admin/analytics/sales.blade.php, mục "4. Theo ngày,
+     tháng, năm" (biểu đồ <x-admin.chart.bars> + 3 bảng).
+  3. Doanh thu theo hình thức thanh toán: AnalyticsService::paymentMix() (sẵn có,
+     trước chỉ vẽ số đơn) → hiện thêm ở admin/analytics/index.blade.php.
+  4. Tổng số khách hàng: SalesBreakdown::taiKhoanKhach() → tab Khách hàng
+     (admin/analytics/customers.blade.php).
   Kiểm thử: tests/Feature/Admin/BaoCaoDoanhThuTest.php
 
 --------------------------------------------------------------------------------

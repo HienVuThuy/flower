@@ -8334,9 +8334,13 @@ có thanh bên.
   đổi; lý do ghi "Hoàn hàng: …".
 - Số trên tab đơn hàng đếm theo CÙNG bộ lọc với danh sách (`locChung()`).
 - BÁO CÁO: giữ định nghĩa doanh thu của dự án (đơn đã giao, trừ hoàn, cộng bù
-  đổi hàng — QĐ-218, QĐ-227), không dùng "đơn đã thanh toán" của bài mẫu, để
-  trang Báo cáo và trang Phân tích không bao giờ lệch nhau. Biểu đồ vẽ SVG ở
-  máy chủ (QĐ-131) thay cho Chart.js tải từ CDN.
+  đổi hàng — QĐ-218, QĐ-227), không dùng "đơn đã thanh toán" của bài mẫu.
+  Biểu đồ vẽ SVG ở máy chủ (QĐ-131) thay cho Chart.js tải từ CDN.
+- Sau đó GỘP báo cáo vào trang Phân tích và bỏ mục "Báo cáo doanh thu": hai
+  trang trùng tổng đơn, doanh thu, thuần, theo danh mục, theo ngày. Phần chưa có
+  (theo ngày / tháng / năm kèm hoàn tiền, doanh thu theo hình thức thanh toán,
+  tổng số khách) được thêm vào đúng tab và đi theo kỳ đang chọn — trang cũ chỉ
+  xem được toàn thời gian.
 - NGƯỜI DÙNG: thêm / sửa / xoá như bài; xoá dùng chung luật của AccountDeleter,
   đổi vai trò dùng chung chốt chặn với nút đổi vai trò nhanh. Tài khoản do
   admin tạo coi như đã xác thực email; admin đổi email thì phải xác thực lại.

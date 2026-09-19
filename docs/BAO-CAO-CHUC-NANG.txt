@@ -53,12 +53,12 @@ A3. Kiến trúc (chia lớp rõ ràng)
   OrderService, điểm chỉ ghi ở PointLedger, thuế chỉ tính ở TaxCalculator…
 
 A4. Quy mô (đếm từ mã nguồn)
-  - 296 đường dẫn (route), trong đó 164 thuộc khu quản trị
-  - 72 controller, 139 lớp service, 58 model, 63 enum
+  - 294 đường dẫn (route), trong đó 162 thuộc khu quản trị
+  - 71 controller, 138 lớp service, 58 model, 63 enum
   - 90 migration tạo khoảng 71 bảng
-  - 243 view Blade, 42 tệp JavaScript, 47 tệp CSS
+  - 241 view Blade, 42 tệp JavaScript, 47 tệp CSS
   - 15 lệnh artisan tự viết, 5 tác vụ chạy theo lịch
-  - 132 tệp kiểm thử, 1305 bài kiểm thử, 4815 phép khẳng định
+  - 132 tệp kiểm thử, 1305 bài kiểm thử, 4811 phép khẳng định
   - Tài liệu: docs/ (quyết định thiết kế 301 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
@@ -276,7 +276,7 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
 4.1  Phân quyền 3 vai trò + 9 khu vực quyền
      Chủ cửa hàng (toàn quyền), Nhân viên (theo khu vực được giao), Khách hàng.
      9 khu vực: Đơn hàng · Sản phẩm · Kho · Khuyến mại · Đánh giá · Báo cáo ·
-     Tài chính · Hệ thống · Hỗ trợ khách hàng. Cả 164 đường dẫn quản trị đều gắn
+     Tài chính · Hệ thống · Hỗ trợ khách hàng. Cả 162 đường dẫn quản trị đều gắn
      quyền.
      → app/Enums/{UserRole, Quyen}, Middleware/{EnsureUserHasRole, CoQuyen}
 
@@ -398,9 +398,12 @@ CẤP 5 — PHÂN TÍCH & BÁO CÁO
 5.2  Phân tích (chọn kỳ dựng sẵn hoặc khoảng ngày tự chọn, so với kỳ trước,
      gom theo GIỜ VIỆT NAM trong khi dữ liệu lưu UTC):
      - Tổng quan: phễu (xem → thêm giỏ → đặt), sản phẩm/danh mục bán chạy,
-       từ khoá tìm nhiều, doanh thu theo ngày, trạng thái đơn
-     - Doanh thu: theo danh mục, tỉnh, khung giờ, khách mới / quay lại
-     - Khách hàng, giỏ hàng bỏ dở
+       từ khoá tìm nhiều, doanh thu theo ngày, trạng thái đơn, tổng đơn /
+       doanh thu / đã hoàn / thuần, số đơn và DOANH THU theo hình thức thanh toán
+     - Doanh thu: theo danh mục, tỉnh, khung giờ, và theo NGÀY / THÁNG / NĂM
+       (bảng có cột hoàn tiền, thuần + biểu đồ doanh thu thuần theo tháng)
+     - Khách hàng: TỔNG SỐ KHÁCH, tài khoản mới trong kỳ, khách mới / quay lại,
+       giỏ hàng bỏ dở
      - Đánh giá: sản phẩm bị chê nhiều, theo tháng
      - Lợi nhuận: lãi gộp CHỈ trên phần doanh thu có giá vốn thật, lãi hoa tươi
        theo lô
@@ -408,17 +411,19 @@ CẤP 5 — PHÂN TÍCH & BÁO CÁO
      Biểu đồ SVG vẽ ở máy chủ, màu chọn theo thuật toán an toàn mù màu.
      → Admin/{AnalyticsController, AnalyticsPagesController}, Services/Analytics/*
 
-5.3  BÁO CÁO DOANH THU (lab08 — Admin quản lý báo cáo), 2 trang dạng tab:
-     - Bảng số liệu (/admin/bao-cao): tổng số đơn, tổng số khách hàng, doanh
-       thu, doanh thu thuần; doanh thu theo danh mục (số lượng, số đơn, tỉ lệ),
-       theo phương thức thanh toán, theo năm, tháng, ngày (kèm cột đã hoàn,
-       thuần).
-     - Biểu đồ (/admin/bao-cao/bieu-do): theo danh mục, 30 ngày gần nhất, 12
-       tháng gần nhất, theo năm, theo phương thức thanh toán — vẽ SVG ở máy chủ
-       thay cho Chart.js tải từ CDN như bài mẫu (không phụ thuộc mạng ngoài).
-     - CÙNG định nghĩa doanh thu với trang Phân tích (đơn đã giao, trừ tiền hoàn,
-       cộng tiền bù đổi hàng, gom ngày theo giờ Việt Nam).
-     → Admin/ReportController, Services/Analytics/RevenueReport
+5.3  BÁO CÁO DOANH THU (lab08 — Admin quản lý báo cáo): GỘP VÀO trang Phân tích
+     (mục 5.2), không còn mục riêng. Đối chiếu từng yêu cầu của bài:
+       tổng đơn, doanh thu, thuần         → Phân tích › Tổng hợp (đã có sẵn)
+       doanh thu theo danh mục            → Phân tích › Doanh thu (đã có sẵn)
+       doanh thu theo phương thức         → Phân tích › Tổng hợp (bổ sung)
+       doanh thu theo ngày / tháng / năm  → Phân tích › Doanh thu (bổ sung)
+       tổng số khách hàng                 → Phân tích › Khách hàng (bổ sung)
+       biểu đồ                            → SVG vẽ ở máy chủ, thay cho Chart.js
+                                            tải từ CDN như bài mẫu
+     Mọi phần đi theo kỳ đang chọn (7 ngày, 30 ngày, toàn bộ, khoảng tự chọn) và
+     xuất được như các phần phân tích khác.
+     → Admin/AnalyticsPagesController, Services/Analytics/SalesBreakdown
+       (theoThoiGian, taiKhoanKhach)
 
 5.4  Xuất báo cáo 5 định dạng: CSV, XLSX (mỗi phần một trang tính), JSON,
      HTML, PDF (đủ dấu tiếng Việt); chọn phần muốn xuất.
@@ -668,7 +673,7 @@ D1. Xác thực & tài khoản
 
 D2. Phân quyền
     - Vai trò (role:admin,staff) + quyền theo khu vực (quyen:...) trên TỪNG route
-      quản trị; đã kiểm: 164/164 route có quyền
+      quản trị; đã kiểm: 162/162 route có quyền
     - Ba chốt chặn khi đổi vai trò; thanh toán và hoàn tiền cần quyền tài chính
     - Kiểm CHỦ SỞ HỮU mọi tài nguyên của khách: địa chỉ, giỏ, đơn, nhật ký, thông
       báo, đánh giá, bài Góc cây (tìm theo user_id rồi mới findOrFail → trả 404,
@@ -734,7 +739,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1305 bài / 4815 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1305 bài / 4811 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,

@@ -16,6 +16,19 @@
 <h2 class="admin-section-title">1. Khách mới và khách quay lại</h2>
 
 <div class="row g-3 mb-3">
+    <div class="col-12 col-md-6">
+        <x-admin.kpi label="Tổng số khách hàng" note="Tài khoản vai trò khách hàng, toàn bộ lịch sử.">
+            <span data-tong-khach>{{ number_format($taiKhoan['tong'], 0, ',', '.') }}</span>
+        </x-admin.kpi>
+    </div>
+    <div class="col-12 col-md-6">
+        <x-admin.kpi label="Tài khoản mới trong kỳ" note="Đăng ký trong kỳ đang chọn, chưa cần mua hàng.">
+            {{ number_format($taiKhoan['moi'], 0, ',', '.') }}
+        </x-admin.kpi>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
     <div class="col-12 col-md-4">
         <x-admin.kpi label="Đơn đầu tiên của khách"
                      :note="$khach['moi']['khach'] . ' khách mua lần đầu trong kỳ · ' . $khach['moi']['don'] . ' đơn'">

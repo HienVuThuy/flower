@@ -31,6 +31,7 @@ class AnalyticsPagesController extends Controller
             'danhMuc' => $bao->theoDanhMuc(),
             'tinh' => $bao->theoTinh(),
             'khungGio' => $bao->theoKhungGio(),
+            'thoiGian' => $bao->theoThoiGian(),
         ]);
     }
 
@@ -40,6 +41,7 @@ class AnalyticsPagesController extends Controller
 
         return view('admin.analytics.customers', $this->chung($ky) + [
             'khach' => $bao->trong($khoang)->khachMoiVaQuayLai(),
+            'taiKhoan' => $bao->taiKhoanKhach(),
             'gioBoDo' => $gio->baoCao(),
         ]);
     }

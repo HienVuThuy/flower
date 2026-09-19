@@ -56,6 +56,18 @@
                     'value' => $r['total'],
                     'color' => $i === 0 ? 'var(--viz-1)' : 'var(--viz-2)',
                 ])" />
+
+            @if($paymentMix->sum('total') > 0)
+                <h3 class="h6 fw-bold mb-0">Doanh thu theo hình thức thanh toán</h3>
+                <dl class="stat-list mb-0" data-doanh-thu-hinh-thuc>
+                    @foreach($paymentMix as $r)
+                        <div class="stat-list__row">
+                            <dt>{{ $r['method']->label() }}</dt>
+                            <dd><x-site.money :amount="$r['revenue']" /></dd>
+                        </div>
+                    @endforeach
+                </dl>
+            @endif
         </div>
     </div>
 

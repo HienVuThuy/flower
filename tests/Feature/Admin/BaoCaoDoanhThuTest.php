@@ -6,13 +6,14 @@ use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Models\Refund;
 use App\Models\User;
-use App\Services\Analytics\RevenueReport;
-use Carbon\Carbon;
+use App\Services\Analytics\KhoangThoiGian;
+use App\Services\Analytics\SalesBreakdown;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/** Báo cáo doanh thu: bảng số liệu và biểu đồ (lab08). */
+/** Báo cáo doanh thu của lab08, nay nằm trong trang Phân tích. */
 class BaoCaoDoanhThuTest extends TestCase
 {
     use RefreshDatabase;
@@ -38,7 +39,7 @@ class BaoCaoDoanhThuTest extends TestCase
     }
 
     #[Test]
-    public function chi_tinh_don_da_giao_va_tru_tien_da_hoan(): void
+    public function theo_thoi_gian_chi_tinh_don_da_giao_va_tru_tien_da_hoan(): void
     {
         $giao = $this->don('A', OrderStatus::Completed, '500000', '2026-09-01 03:00:00');
         $this->don('B', OrderStatus::Cancelled, '900000', '2026-09-01 03:00:00');
@@ -47,13 +48,12 @@ class BaoCaoDoanhThuTest extends TestCase
         $hoan = new Refund();
         $hoan->forceFill(['order_id' => $giao->id, 'amount' => '100000', 'status' => 'completed', 'method' => 'tien_mat', 'reason' => 'khac', 'code' => 'HT-TEST-1'])->save();
 
-        $tq = app(RevenueReport::class)->tongQuan();
+        $ngay = (new SalesBreakdown())->theoThoiGian()['ngay']->keyBy('ky');
 
-        $this->assertSame(3, $tq['tong_don']);
-        $this->assertSame(1, $tq['don_da_giao']);
-        $this->assertSame('500000.00', $tq['doanh_thu']);
-        $this->assertSame('100000.00', $tq['da_hoan']);
-        $this->assertSame('400000.00', $tq['thuan']);
+        $this->assertSame(1, $ngay['2026-09-01']['so_don']);
+        $this->assertSame('500000.00', $ngay['2026-09-01']['doanh_thu']);
+        $this->assertSame('100000.00', $ngay['2026-09-01']['hoan']);
+        $this->assertSame('400000.00', $ngay['2026-09-01']['thuan']);
     }
 
     #[Test]
@@ -63,59 +63,63 @@ class BaoCaoDoanhThuTest extends TestCase
         $this->don('D2', OrderStatus::Completed, '200000', '2026-09-01 02:00:00');
         $this->don('D3', OrderStatus::Completed, '300000', '2025-12-10 02:00:00');
 
-        $bc = app(RevenueReport::class);
+        $tg = (new SalesBreakdown())->theoThoiGian();
 
-        $ngay = $bc->theoNgay()->keyBy('ky');
+        $ngay = $tg['ngay']->keyBy('ky');
         $this->assertSame(2, $ngay['2026-09-01']['so_don'], '00:30 giờ VN ngày 01/09 thuộc ngày 01/09, không phải 31/08.');
         $this->assertArrayNotHasKey('2026-08-31', $ngay->all());
 
-        $thang = $bc->theoThang()->keyBy('ky');
-        $this->assertSame('300000.00', $thang['2026-09']['doanh_thu']);
+        $this->assertSame('300000.00', $tg['thang']->keyBy('ky')['2026-09']['doanh_thu']);
 
-        $nam = $bc->theoNam()->keyBy('ky');
+        $nam = $tg['nam']->keyBy('ky');
         $this->assertSame('300000.00', $nam['2025']['doanh_thu']);
         $this->assertSame('300000.00', $nam['2026']['doanh_thu']);
     }
 
     #[Test]
-    public function doanh_thu_theo_phuong_thuc_thanh_toan(): void
+    public function theo_thoi_gian_di_theo_ky_dang_chon(): void
     {
-        $this->don('P1', OrderStatus::Completed, '100000', '2026-09-01 02:00:00', 'cod');
-        $this->don('P2', OrderStatus::Completed, '250000', '2026-09-01 02:00:00', 'momo');
+        $this->don('K1', OrderStatus::Completed, '100000', '2026-09-01 02:00:00');
+        $this->don('K2', OrderStatus::Completed, '200000', '2026-06-01 02:00:00');
 
-        $pt = app(RevenueReport::class)->theoPhuongThuc()->keyBy(fn ($d) => $d['phuong_thuc']->value);
+        $tg = (new SalesBreakdown())
+            ->trong(new KhoangThoiGian(Carbon::parse('2026-08-01', 'UTC'), Carbon::parse('2026-10-01', 'UTC')))
+            ->theoThoiGian();
 
-        $this->assertSame('100000.00', $pt['cod']['doanh_thu']);
-        $this->assertSame('250000.00', $pt['momo']['doanh_thu']);
-        $this->assertSame(0, $pt['tra_gop']['so_don']);
+        $this->assertSame(['2026-09'], $tg['thang']->pluck('ky')->all());
     }
 
     #[Test]
-    public function hai_trang_hien_so_lieu_va_bieu_do_svg_khong_tai_thu_vien_ngoai(): void
+    public function cac_tab_phan_tich_hien_phan_bao_cao_da_gop(): void
     {
-        $this->don('W1', OrderStatus::Completed, '450000', now()->subDay()->toDateTimeString());
+        $this->don('W1', OrderStatus::Completed, '450000', now()->subDay()->toDateTimeString(), 'momo');
+        User::factory()->count(2)->create(['role' => 'customer']);
         $admin = User::factory()->create(['role' => 'admin']);
 
         $this->actingAs($admin)
-            ->get(route('admin.reports.index'))
+            ->get(route('admin.analytics.sales', ['ky' => 'all']))
             ->assertOk()
-            ->assertSee('Doanh thu theo danh mục')
-            ->assertSee('Doanh thu theo tháng')
-            ->assertSee('Doanh thu theo năm')
+            ->assertSee('Theo ngày, tháng, năm')
+            ->assertSee('Doanh thu thuần theo tháng')
             ->assertSee('450.000');
 
         $this->actingAs($admin)
-            ->get(route('admin.reports.charts'))
+            ->get(route('admin.analytics.index', ['ky' => 'all']))
             ->assertOk()
-            ->assertSee('<svg', false)
-            ->assertSee('Doanh thu theo phương thức thanh toán')
-            ->assertDontSee('chart.js', false);
+            ->assertSee('Doanh thu theo hình thức thanh toán');
+
+        $this->actingAs($admin)
+            ->get(route('admin.analytics.customers'))
+            ->assertOk()
+            ->assertSee('Tổng số khách hàng')
+            ->assertSee('<span data-tong-khach>2</span>', false);
     }
 
     #[Test]
-    public function nhan_vien_xem_duoc_khach_hang_thi_khong(): void
+    public function muc_bao_cao_doanh_thu_rieng_da_bo(): void
     {
-        $this->actingAs(User::factory()->create(['role' => 'staff']))->get(route('admin.reports.index'))->assertOk();
-        $this->actingAs(User::factory()->create(['role' => 'customer']))->get(route('admin.reports.index'))->assertForbidden();
+        $this->actingAs(User::factory()->create(['role' => 'admin']))
+            ->get('/admin/bao-cao')
+            ->assertNotFound();
     }
 }

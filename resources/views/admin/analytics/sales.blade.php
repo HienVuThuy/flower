@@ -6,7 +6,7 @@
 
 @include('admin.analytics._header', [
     'tieuDe' => 'Doanh thu theo chiều',
-    'moTa' => 'Tiền đến từ danh mục nào, tỉnh nào, và khách đặt vào giờ nào. Chỉ đơn đã giao, trừ bản đồ khung giờ.',
+    'moTa' => 'Tiền đến từ danh mục nào, tỉnh nào, ngày / tháng / năm nào, và khách đặt vào giờ nào. Chỉ đơn đã giao, trừ bản đồ khung giờ.',
 ])
 
 @php
@@ -176,6 +176,70 @@
             @endif
         </p>
     @endif
+</div>
+
+<h2 class="admin-section-title">4. Theo ngày, tháng, năm</h2>
+
+@php
+    $bangKy = [
+        ['Theo năm', 'Năm', $thoiGian['nam'], fn ($k) => $k],
+        ['Theo tháng', 'Tháng', $thoiGian['thang'], fn ($k) => \Carbon\Carbon::createFromFormat('!Y-m', $k)->format('m/Y')],
+        ['Theo ngày', 'Ngày', $thoiGian['ngay']->reverse(), fn ($k) => \Carbon\Carbon::createFromFormat('!Y-m-d', $k)->format('d/m/Y')],
+    ];
+@endphp
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-5">
+        <div class="admin-panel p-4 h-100">
+            <x-admin.chart.bars
+                title="Doanh thu thuần theo tháng"
+                note="Đã trừ hoàn tiền, cộng tiền khách bù khi đổi hàng."
+                format="tien"
+                empty="Chưa có đơn nào giao xong trong kỳ này."
+                :rows="$thoiGian['thang']->map(fn ($d) => [
+                    'label' => \Carbon\Carbon::createFromFormat('!Y-m', $d['ky'])->format('m/Y'),
+                    'value' => (float) $d['thuan'],
+                    'meta' => $d['so_don'] . ' đơn',
+                ])" />
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="admin-panel p-4 h-100">
+            @foreach($bangKy as [$tieuDe, $nhan, $dong, $hien])
+                <h3 class="h6 fw-bold mb-2 {{ $loop->first ? '' : 'mt-3' }}">{{ $tieuDe }}</h3>
+
+                @if($dong->isEmpty())
+                    <p class="analytics-empty mb-0">Chưa có dữ liệu trong kỳ này.</p>
+                @else
+                    <div class="table-responsive" @if($nhan === 'Ngày') style="max-height: 320px; overflow-y: auto" @endif>
+                        <table class="table table-sm align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>{{ $nhan }}</th>
+                                    <th class="text-end text-nowrap">Đơn</th>
+                                    <th class="text-end text-nowrap">Doanh thu</th>
+                                    <th class="text-end text-nowrap">Hoàn tiền</th>
+                                    <th class="text-end text-nowrap">Thuần</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($dong as $d)
+                                    <tr>
+                                        <td class="text-nowrap">{{ $hien($d['ky']) }}</td>
+                                        <td class="text-end">{{ $d['so_don'] }}</td>
+                                        <td class="text-end text-nowrap">{{ $tien($d['doanh_thu']) }}</td>
+                                        <td class="text-end text-nowrap">{{ bccomp($d['hoan'], '0', 2) > 0 ? '−' . $tien($d['hoan']) : '—' }}</td>
+                                        <td class="text-end text-nowrap fw-bold">{{ $tien($d['thuan']) }}</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    </div>
 </div>
 
 @endsection

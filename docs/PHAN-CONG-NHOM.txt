@@ -9,14 +9,14 @@ CÁCH CHIA
     controller, service, model, migration, giao diện, JavaScript, CSS đến bài
     kiểm thử), để mỗi người trình bày được một luồng hoàn chỉnh từ đầu đến cuối
     thay vì mỗi người giữ một "tầng" rời rạc.
-  - Mọi tệp code của dự án (1016 tệp, không tính ảnh / phông / tài liệu)
+  - Mọi tệp code của dự án (1012 tệp, không tính ảnh / phông / tài liệu)
     đều được giao cho ĐÚNG MỘT người. Danh sách được sinh bằng script từ chính kho
     mã nên đường dẫn chính xác.
   - Khối lượng cân nhau:
-      Hưng   229 tệp, khoảng 22.980 dòng code
+      Hưng   229 tệp, khoảng 22.968 dòng code
       Hùng   181 tệp, khoảng 21.295 dòng code
       Huy    195 tệp, khoảng 24.638 dòng code
-      Dũng   195 tệp, khoảng 22.784 dòng code
+      Dũng   191 tệp, khoảng 22.581 dòng code
       Hiền   216 tệp, khoảng 26.930 dòng code
   - "Phối hợp" ghi rõ chỗ hai khối gọi sang nhau, để khi sửa một bên thì báo
     người kia.
@@ -198,13 +198,13 @@ DANH SÁCH TỆP
     database/seeders/AdminUserSeeder.php
     database/seeders/DatabaseSeeder.php
   [Giao diện Blade] (56)
-    resources/views/admin/users/_form.blade.php
-    resources/views/admin/users/create.blade.php
-    resources/views/admin/users/edit.blade.php
     resources/views/admin/activity-logs/index.blade.php
     resources/views/admin/dashboard.blade.php
     resources/views/admin/pages/edit.blade.php
     resources/views/admin/settings/edit.blade.php
+    resources/views/admin/users/_form.blade.php
+    resources/views/admin/users/create.blade.php
+    resources/views/admin/users/edit.blade.php
     resources/views/admin/users/index.blade.php
     resources/views/admin/users/show.blade.php
     resources/views/auth/forgot-password.blade.php
@@ -305,7 +305,6 @@ DANH SÁCH TỆP
     resources/css/themes/tet.css
     resources/css/themes/valentine.css
   [Kiểm thử] (23)
-    tests/Feature/Admin/QuanLyNguoiDungTest.php
     tests/Feature/Admin/ActivityLogTest.php
     tests/Feature/Admin/AdminDarkModeTest.php
     tests/Feature/Admin/DashboardTest.php
@@ -314,6 +313,7 @@ DANH SÁCH TỆP
     tests/Feature/Admin/HoSoKhachHangTest.php
     tests/Feature/Admin/ListFilterTest.php
     tests/Feature/Admin/PhanQuyenTest.php
+    tests/Feature/Admin/QuanLyNguoiDungTest.php
     tests/Feature/Admin/SortAndBulkTest.php
     tests/Feature/Admin/StoreSettingsTest.php
     tests/Feature/Admin/TongQuanKhongTrungTest.php
@@ -785,12 +785,12 @@ DANH SÁCH TỆP
     resources/css/components/order-timeline.css
     resources/css/components/voucher.css
   [Kiểm thử] (39)
-    tests/Feature/Admin/XuLyDonHangTest.php
     tests/Feature/Admin/InPhieuDonTest.php
     tests/Feature/Admin/LienHeBaoGiaTest.php
     tests/Feature/Admin/OrderPaymentTest.php
     tests/Feature/Admin/SuaGiaoHangTest.php
     tests/Feature/Admin/TaxClassAdminTest.php
+    tests/Feature/Admin/XuLyDonHangTest.php
     tests/Feature/BulkInquiryYeuCauThemTest.php
     tests/Feature/Cart/AddToCartTest.php
     tests/Feature/Cart/CartLiveTest.php
@@ -852,8 +852,8 @@ CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
  10. Phân tích: phễu, doanh thu theo danh mục / tỉnh / khung giờ / khách mới-cũ,
      khách hàng, đánh giá; chọn kỳ tuỳ ý so với kỳ trước; biểu đồ SVG
  11. Xuất báo cáo 5 định dạng: CSV, XLSX, JSON, HTML, PDF
- 12. Báo cáo doanh thu (lab08): bảng số liệu theo danh mục / ngày / tháng / năm /
-     phương thức và trang biểu đồ SVG
+ 12. Báo cáo doanh thu (lab08) gộp vào Phân tích: theo ngày / tháng / năm, doanh
+     thu theo hình thức thanh toán, tổng số khách
 
 ĐIỂM KỸ THUẬT NỔI BẬT ĐỂ TRÌNH BÀY
   - Giá linh hoạt theo thời điểm và nguyên tắc "một nguồn giá" (Luồng 1)
@@ -870,8 +870,7 @@ PHỐI HỢP
     hoa tươi dùng dữ liệu lô hoa
 
 DANH SÁCH TỆP
-  [Controller] (16)
-    app/Http/Controllers/Admin/ReportController.php
+  [Controller] (15)
     app/Http/Controllers/Admin/AnalyticsController.php
     app/Http/Controllers/Admin/AnalyticsPagesController.php
     app/Http/Controllers/Admin/ExchangeController.php
@@ -894,8 +893,7 @@ DANH SÁCH TỆP
     app/Http/Requests/Admin/StorePromotionRequest.php
     app/Http/Requests/Admin/SyncPromotionProductsRequest.php
     app/Http/Requests/Admin/UpdatePromotionRequest.php
-  [Service (luật nghiệp vụ)] (42)
-    app/Services/Analytics/RevenueReport.php
+  [Service (luật nghiệp vụ)] (41)
     app/Services/Analytics/AnalyticsService.php
     app/Services/Analytics/CashFlowReport.php
     app/Services/Analytics/ChonKy.php
@@ -994,9 +992,7 @@ DANH SÁCH TỆP
     database/migrations/2026_10_16_010000_create_product_gifts_table.php
     database/migrations/2026_10_17_010000_add_rules_to_product_gifts_table.php
     database/migrations/2026_10_18_010000_create_installment_tables.php
-  [Giao diện Blade] (48)
-    resources/views/admin/reports/charts.blade.php
-    resources/views/admin/reports/index.blade.php
+  [Giao diện Blade] (46)
     resources/views/admin/analytics/_header.blade.php
     resources/views/admin/analytics/customers.blade.php
     resources/views/admin/analytics/export.blade.php
@@ -1054,8 +1050,8 @@ DANH SÁCH TỆP
     resources/css/admin/analytics.css
     resources/css/admin/charts.css
   [Kiểm thử] (24)
-    tests/Feature/Admin/BaoCaoDoanhThuTest.php
     tests/Feature/Admin/AnalyticsBreakdownTest.php
+    tests/Feature/Admin/BaoCaoDoanhThuTest.php
     tests/Feature/Admin/DanhSachHoanTienTest.php
     tests/Feature/Admin/DoiHangTest.php
     tests/Feature/Admin/KhoangNgayTest.php
@@ -1126,10 +1122,9 @@ PHỐI HỢP
 
 DANH SÁCH TỆP
   [Controller] (20)
-    app/Http/Controllers/Admin/ChatController.php
-    app/Http/Controllers/Shop/ChatController.php
     app/Http/Controllers/Admin/BlogCategoryController.php
     app/Http/Controllers/Admin/BlogPostController.php
+    app/Http/Controllers/Admin/ChatController.php
     app/Http/Controllers/Admin/CommunityModerationController.php
     app/Http/Controllers/Admin/FlowerKindController.php
     app/Http/Controllers/Admin/FlowerLotController.php
@@ -1142,6 +1137,7 @@ DANH SÁCH TỆP
     app/Http/Controllers/Shop/AiChatController.php
     app/Http/Controllers/Shop/BlogController.php
     app/Http/Controllers/Shop/CareController.php
+    app/Http/Controllers/Shop/ChatController.php
     app/Http/Controllers/Shop/CommunityController.php
     app/Http/Controllers/Shop/CommunityPostOwnerController.php
     app/Http/Controllers/Shop/JournalController.php
@@ -1149,8 +1145,6 @@ DANH SÁCH TỆP
   [Kiểm tra dữ liệu (Request)] (1)
     app/Http/Requests/Admin/StockReceiptRequest.php
   [Service (luật nghiệp vụ)] (32)
-    app/Services/Chat/ChatException.php
-    app/Services/Chat/LiveChat.php
     app/Services/AI/AdvisorContext.php
     app/Services/AI/AiException.php
     app/Services/AI/AiManager.php
@@ -1162,6 +1156,8 @@ DANH SÁCH TỆP
     app/Services/Analytics/PurchasingReport.php
     app/Services/Care/CareReminderMailer.php
     app/Services/Care/CareScheduler.php
+    app/Services/Chat/ChatException.php
+    app/Services/Chat/LiveChat.php
     app/Services/Community/CommunityException.php
     app/Services/Community/CommunityInteraction.php
     app/Services/Community/CommunityMediaStore.php
@@ -1182,7 +1178,6 @@ DANH SÁCH TỆP
     app/Services/Media/VideoMetadataStripper.php
     app/Services/Notification/NotificationCenter.php
   [Model / Observer] (20)
-    app/Models/Message.php
     app/Models/BlogCategory.php
     app/Models/BlogPost.php
     app/Models/CareReminder.php
@@ -1196,6 +1191,7 @@ DANH SÁCH TỆP
     app/Models/JournalEntry.php
     app/Models/JournalMetric.php
     app/Models/JournalMilestone.php
+    app/Models/Message.php
     app/Models/StockCount.php
     app/Models/StockCountItem.php
     app/Models/StockReceipt.php
@@ -1225,7 +1221,6 @@ DANH SÁCH TỆP
   [Cấu hình / Ngôn ngữ] (1)
     config/ai.php
   [Migration (bảng CSDL)] (18)
-    database/migrations/2026_10_24_010000_create_messages_table.php
     database/migrations/2026_09_04_010000_create_care_reminders_table.php
     database/migrations/2026_09_21_010000_create_journals_tables.php
     database/migrations/2026_09_22_010000_add_journal_design_tables.php
@@ -1243,14 +1238,12 @@ DANH SÁCH TỆP
     database/migrations/2026_10_21_010000_add_reaction_to_community_post_likes.php
     database/migrations/2026_10_22_010000_create_community_comment_reactions_table.php
     database/migrations/2026_10_23_010000_add_owner_controls_to_community.php
+    database/migrations/2026_10_24_010000_create_messages_table.php
   [Seeder / Factory (dữ liệu mẫu)] (3)
     database/seeders/BlogSeeder.php
     database/seeders/CommunityPostSampleSeeder.php
     database/seeders/DuLieuMauKhoSeeder.php
   [Giao diện Blade] (61)
-    resources/views/components/admin/chat-popup.blade.php
-    resources/views/components/chat/thread.blade.php
-    resources/views/shop/chat/index.blade.php
     resources/views/admin/analytics/purchasing.blade.php
     resources/views/admin/blog/categories.blade.php
     resources/views/admin/blog/form.blade.php
@@ -1270,6 +1263,8 @@ DANH SÁCH TỆP
     resources/views/admin/supplier-returns/index.blade.php
     resources/views/admin/suppliers/form.blade.php
     resources/views/admin/suppliers/index.blade.php
+    resources/views/components/admin/chat-popup.blade.php
+    resources/views/components/chat/thread.blade.php
     resources/views/components/community/comment-reaction.blade.php
     resources/views/components/community/emoji-picker.blade.php
     resources/views/components/community/like-button.blade.php
@@ -1294,6 +1289,7 @@ DANH SÁCH TỆP
     resources/views/shop/blog/index.blade.php
     resources/views/shop/blog/show.blade.php
     resources/views/shop/care/index.blade.php
+    resources/views/shop/chat/index.blade.php
     resources/views/shop/community/edit.blade.php
     resources/views/shop/community/index.blade.php
     resources/views/shop/community/partials/comment.blade.php
@@ -1311,19 +1307,18 @@ DANH SÁCH TỆP
     resources/views/shop/notifications/index.blade.php
   [JavaScript] (7)
     resources/js/admin/live-chat.js
-    resources/js/live-chat.js
     resources/js/admin/receipt-lines.js
     resources/js/admin/stock-lock.js
     resources/js/ai-chat.js
     resources/js/community.js
     resources/js/journal-form.js
+    resources/js/live-chat.js
   [CSS] (4)
     resources/css/components/ai-chat.css
     resources/css/components/blog.css
     resources/css/components/community.css
     resources/css/components/journal.css
   [Kiểm thử] (32)
-    tests/Feature/Chat/NhanTinTest.php
     tests/Feature/AI/TroLyAiTest.php
     tests/Feature/Admin/ChuyenMucCamNangTest.php
     tests/Feature/Admin/InventoryReportTest.php
@@ -1340,6 +1335,7 @@ DANH SÁCH TỆP
     tests/Feature/Admin/TraHangNccTest.php
     tests/Feature/Blog/BlogTest.php
     tests/Feature/Blog/HtmlSanitizerTest.php
+    tests/Feature/Chat/NhanTinTest.php
     tests/Feature/Community/CamXucTest.php
     tests/Feature/Community/CommunityPostTest.php
     tests/Feature/Community/GocCayNangCapTest.php

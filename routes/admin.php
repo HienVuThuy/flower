@@ -463,10 +463,6 @@ Route::prefix('admin')
             ->middleware('quyen:he-thong')
             ->name('users.lock');
 
-
-        Route::get('bao-cao', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->middleware('quyen:bao-cao')->name('reports.index');
-        Route::get('bao-cao/bieu-do', [\App\Http\Controllers\Admin\ReportController::class, 'charts'])->middleware('quyen:bao-cao')->name('reports.charts');
-
         Route::prefix('tin-nhan')
             ->name('chat.')
             ->middleware('quyen:ho-tro')

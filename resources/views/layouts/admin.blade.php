@@ -189,10 +189,6 @@
         <div class="admin-nav-heading">Hệ thống</div>
         <nav class="d-flex flex-column gap-1">
             @can('bao-cao')
-            <a data-admin-link href="{{ route('admin.reports.index') }}" class="admin-nav-link {{ request()->routeIs('admin.reports.*') ? 'is-active' : '' }}">
-                <x-site.icon name="journal" />
-                <span>Báo cáo doanh thu</span>
-            </a>
             <a data-admin-link href="{{ route('admin.analytics.index') }}" class="admin-nav-link {{ request()->routeIs('admin.analytics.*') ? 'is-active' : '' }}">
                 <x-site.icon name="bar-chart" />
                 <span>Phân tích</span>
