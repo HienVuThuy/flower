@@ -431,6 +431,26 @@ Route::prefix('admin')
             ->middleware('quyen:he-thong')
             ->name('users.index');
 
+        Route::get('users/them', [UserController::class, 'create'])
+            ->middleware('quyen:he-thong')
+            ->name('users.create');
+
+        Route::post('users', [UserController::class, 'store'])
+            ->middleware(['quyen:he-thong', 'throttle:20,1'])
+            ->name('users.store');
+
+        Route::get('users/{user}/sua', [UserController::class, 'edit'])
+            ->middleware('quyen:he-thong')
+            ->name('users.edit');
+
+        Route::put('users/{user}', [UserController::class, 'update'])
+            ->middleware(['quyen:he-thong', 'throttle:30,1'])
+            ->name('users.update');
+
+        Route::delete('users/{user}', [UserController::class, 'destroy'])
+            ->middleware(['quyen:he-thong', 'throttle:10,1'])
+            ->name('users.destroy');
+
         Route::get('users/{user}', [UserController::class, 'show'])
             ->middleware('quyen:he-thong')
             ->name('users.show');
@@ -443,6 +463,18 @@ Route::prefix('admin')
             ->middleware('quyen:he-thong')
             ->name('users.lock');
 
+
+        Route::get('bao-cao', [\App\Http\Controllers\Admin\ReportController::class, 'index'])->middleware('quyen:bao-cao')->name('reports.index');
+        Route::get('bao-cao/bieu-do', [\App\Http\Controllers\Admin\ReportController::class, 'charts'])->middleware('quyen:bao-cao')->name('reports.charts');
+
+        Route::prefix('tin-nhan')
+            ->name('chat.')
+            ->middleware('quyen:ho-tro')
+            ->group(function () {
+                Route::get('/', [\App\Http\Controllers\Admin\ChatController::class, 'users'])->middleware('throttle:120,1')->name('users');
+                Route::get('/{user}', [\App\Http\Controllers\Admin\ChatController::class, 'messages'])->middleware('throttle:120,1')->name('messages');
+                Route::post('/{user}', [\App\Http\Controllers\Admin\ChatController::class, 'send'])->middleware('throttle:30,1')->name('send');
+            });
 
         Route::get('nhat-ky', [ActivityLogController::class, 'index'])
             ->middleware('quyen:he-thong')

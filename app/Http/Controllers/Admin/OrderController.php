@@ -5,7 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Admin\Concerns\LogsAdminActivity;
 use App\Http\Controllers\Admin\Concerns\SortsAdminList;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Enums\ShippingStatus;
+use App\Services\Time\Gio;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Shipping\GHNOrderService;
@@ -29,57 +34,14 @@ class OrderController extends Controller
 
     public function index(Request $request): View
     {
-        $status = $request->query('status');
-
-        if ($status !== null && OrderStatus::tryFrom($status) === null) {
-            $status = null;
-        }
+        $status = OrderStatus::tryFrom((string) $request->query('status'))?->value;
+        $moiTrang = in_array((int) $request->query('moi_trang'), [20, 50, 100], true) ? (int) $request->query('moi_trang') : 20;
+        $loc = $this->locChung($request);
 
         return view('admin.orders.index', [
-            'orders' => Order::query()
+            'orders' => (clone $loc)
                 ->status($status)
-
-                ->when($request->filled('q'), function ($query) use ($request) {
-                    $tu = trim((string) $request->query('q'));
-                    $ma = preg_replace('/[^A-Za-z0-9]/', '', $tu) ?? '';
-
-                    $query->where(function ($q) use ($tu, $ma) {
-                        $q->where('recipient_phone', 'like', '%'.$tu.'%')
-                            ->orWhere('recipient_name', 'like', '%'.$tu.'%')
-                            ->orWhereRaw(
-                                "REPLACE(order_number, '-', '') LIKE ?",
-                                ['%'.$ma.'%'],
-                            );
-                    });
-                })
-
-                ->when(
-                    $request->filled('payment'),
-                    fn ($q) => $q->where('payment_status', $request->string('payment'))
-                )
-
-                ->when(
-                    $request->query('van_don') === 'cho-tao',
-                    fn ($q) => $q->awaitingWaybill()
-                )
-                ->when(
-                    $request->query('hoan_tien') === 'chua-ro',
-                    fn ($q) => $q->refundPending()
-                )
-                ->when(
-                    $request->query('van_don') === 'roi',
-                    fn ($q) => $q->whereNotNull('ghn_order_code')
-                )
-
-                ->when(
-                    $request->filled('tu_ngay'),
-                    fn ($q) => $q->whereDate('created_at', '>=', $request->date('tu_ngay'))
-                )
-                ->when(
-                    $request->filled('den_ngay'),
-                    fn ($q) => $q->whereDate('created_at', '<=', $request->date('den_ngay'))
-                )
-
+                ->with(['items:id,order_id,product_name,quantity'])
                 ->withCount('items')
                 ->tap(fn ($q) => $this->applySort($q, $request, [
                     'ma' => 'order_number',
@@ -88,13 +50,58 @@ class OrderController extends Controller
                     'thanh-toan' => 'payment_status',
                     'ngay' => 'created_at',
                 ], fn ($q) => $q->latest()))
-
-                ->paginate(20)
+                ->paginate($moiTrang)
                 ->withQueryString(),
             'currentStatus' => $status,
             'statuses' => OrderStatus::cases(),
-            'counts' => $this->countsByStatus(),
+            'counts' => (clone $loc)->selectRaw('status, COUNT(*) as total')->groupBy('status')->pluck('total', 'status')->all(),
+            'phuongThuc' => PaymentMethod::cases(),
+            'vanChuyen' => ShippingStatus::cases(),
         ]);
+    }
+
+    private function locChung(Request $request): Builder
+    {
+        return Order::query()
+            ->when($request->filled('q'), function ($query) use ($request) {
+                $tu = trim((string) $request->query('q'));
+                $ma = preg_replace('/[^A-Za-z0-9]/', '', $tu) ?? '';
+                $thich = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\%', '\_'], $tu) . '%';
+
+                $query->where(function ($q) use ($thich, $ma) {
+                    $q->where('recipient_phone', 'like', $thich)
+                        ->orWhere('recipient_name', 'like', $thich)
+                        ->orWhere('ghn_order_code', 'like', $thich)
+                        ->orWhereHas('items', fn ($i) => $i->where('product_name', 'like', $thich));
+
+                    if ($ma !== '') {
+                        $q->orWhereRaw("REPLACE(order_number, '-', '') LIKE ?", ['%' . $ma . '%']);
+                    }
+                });
+            })
+            ->when(PaymentStatus::tryFrom((string) $request->query('payment')), fn ($q, $v) => $q->where('payment_status', $v->value))
+            ->when(PaymentMethod::tryFrom((string) $request->query('phuong_thuc')), fn ($q, $v) => $q->where('payment_method', $v->value))
+            ->when(ShippingStatus::tryFrom((string) $request->query('van_chuyen')), fn ($q, $v) => $q->where('shipping_status', $v->value))
+            ->when($request->query('van_don') === 'cho-tao', fn ($q) => $q->awaitingWaybill())
+            ->when($request->query('van_don') === 'roi', fn ($q) => $q->whereNotNull('ghn_order_code'))
+            ->when($request->query('hoan_tien') === 'chua-ro', fn ($q) => $q->refundPending())
+            ->when($this->ngay($request, 'tu_ngay'), fn ($q, $d) => $q->where('created_at', '>=', $d->copy()->startOfDay()->utc()))
+            ->when($this->ngay($request, 'den_ngay'), fn ($q, $d) => $q->where('created_at', '<', $d->copy()->addDay()->startOfDay()->utc()));
+    }
+
+    private function ngay(Request $request, string $khoa): ?Carbon
+    {
+        $chuoi = (string) $request->query($khoa);
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $chuoi)) {
+            return null;
+        }
+
+        try {
+            return Carbon::createFromFormat('!Y-m-d', $chuoi, Gio::mui());
+        } catch (\Throwable) {
+            return null;
+        }
     }
 
     public function printSlip(Order $order): View
@@ -146,25 +153,29 @@ class OrderController extends Controller
 
     public function updateStatus(Request $request, Order $order): RedirectResponse
     {
+        $hoanHang = $order->status === OrderStatus::Shipping
+            && $request->input('status') === OrderStatus::Cancelled->value;
+
         $validated = $request->validate([
             'status' => ['required', Rule::enum(OrderStatus::class)],
-            'cancel_reason' => ['nullable', 'string', 'max:255'],
+            'cancel_reason' => [$hoanHang ? 'required' : 'nullable', 'string', 'max:255'],
         ], [], [
             'status' => 'trạng thái',
-            'cancel_reason' => 'lý do huỷ',
+            'cancel_reason' => $hoanHang ? 'lý do hoàn hàng' : 'lý do huỷ',
         ]);
 
         try {
             $this->orders->changeStatus(
                 $order,
                 OrderStatus::from($validated['status']),
-                $validated['cancel_reason'] ?? null,
+                $hoanHang ? 'Hoàn hàng: ' . $validated['cancel_reason'] : ($validated['cancel_reason'] ?? null),
+                hoanHang: $hoanHang,
             );
         } catch (OrderException $e) {
             return back()->with('error', $e->getMessage());
         }
 
-        return back()->with('success', 'Đã cập nhật trạng thái đơn hàng.');
+        return back()->with('success', $hoanHang ? 'Đã ghi nhận hoàn hàng, tồn kho đã được cộng lại.' : 'Đã cập nhật trạng thái đơn hàng.');
     }
 
     public function updateDelivery(Request $request, Order $order): RedirectResponse
@@ -255,15 +266,6 @@ class OrderController extends Controller
         $order->save();
 
         return back()->with('success', 'Đã lưu ghi chú.');
-    }
-
-    private function countsByStatus(): array
-    {
-        return Order::query()
-            ->selectRaw('status, COUNT(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status')
-            ->all();
     }
 
     public function createShipment(Order $order, GHNOrderService $ghnOrders): RedirectResponse

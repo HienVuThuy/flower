@@ -71,7 +71,7 @@ class KiemDiemTest extends TestCase
         $this->giao($this->donDangGiao(null));
 
         $u = User::factory()->create();
-        app(OrderService::class)->changeStatus($this->donDangGiao($u)->fresh(), OrderStatus::Cancelled, 'Khách đổi ý');
+        app(OrderService::class)->changeStatus($this->donDangGiao($u)->fresh(), OrderStatus::Cancelled, 'Khách từ chối nhận', hoanHang: true);
 
         $this->assertSame(0, $this->soDu($u));
         $this->assertDatabaseCount('point_transactions', 0);

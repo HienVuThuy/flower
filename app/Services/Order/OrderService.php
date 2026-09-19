@@ -280,10 +280,11 @@ class OrderService
         OrderStatus $target,
         ?string $reason = null,
         bool $tuDong = false,
+        bool $hoanHang = false,
     ): void {
         $truocDo = $order->status;
 
-        DB::transaction(function () use ($order, $target, $reason, $tuDong) {
+        DB::transaction(function () use ($order, $target, $reason, $tuDong, $hoanHang) {
             $locked = Order::whereKey($order->id)->lockForUpdate()->first();
 
             if (! $locked) {
@@ -303,7 +304,22 @@ class OrderService
                 throw new OrderException('Đơn trả góp chưa trả đủ các kỳ nên chưa chuẩn bị hay giao được.');
             }
 
+            if ($target === OrderStatus::Cancelled && $locked->status === OrderStatus::Shipping && ! $hoanHang) {
+                throw new OrderException(
+                    'Đơn đang giao — không huỷ được. Nếu giao không thành công và hàng đã quay về cửa hàng, '
+                    .'hãy ghi nhận "Hoàn hàng".'
+                );
+            }
+
+            if ($hoanHang && $locked->ghn_order_code && ! in_array($locked->shipping_status, ['returned', 'cancel'], true)) {
+                throw new OrderException(sprintf(
+                    'Vận đơn GHN %s chưa hoàn về cửa hàng. Chờ GHN báo "Đã hoàn về" rồi mới ghi nhận hoàn hàng.',
+                    $locked->ghn_order_code,
+                ));
+            }
+
             if ($target === OrderStatus::Cancelled
+                && ! $hoanHang
                 && $locked->ghn_order_code
                 && $locked->shipping_status !== 'cancel') {
                 throw new OrderException(sprintf(

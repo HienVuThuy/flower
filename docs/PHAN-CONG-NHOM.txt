@@ -9,18 +9,18 @@ CÁCH CHIA
     controller, service, model, migration, giao diện, JavaScript, CSS đến bài
     kiểm thử), để mỗi người trình bày được một luồng hoàn chỉnh từ đầu đến cuối
     thay vì mỗi người giữ một "tầng" rời rạc.
-  - Mọi tệp code của dự án (994 tệp, không tính ảnh / phông / tài liệu)
+  - Mọi tệp code của dự án (1016 tệp, không tính ảnh / phông / tài liệu)
     đều được giao cho ĐÚNG MỘT người. Danh sách được sinh bằng script từ chính kho
     mã nên đường dẫn chính xác.
   - Khối lượng cân nhau:
-      Hưng   225 tệp, khoảng 22.420 dòng code
+      Hưng   229 tệp, khoảng 22.980 dòng code
       Hùng   181 tệp, khoảng 21.295 dòng code
-      Huy    194 tệp, khoảng 24.420 dòng code
-      Dũng   190 tệp, khoảng 22.266 dòng code
-      Hiền   204 tệp, khoảng 25.709 dòng code
+      Huy    195 tệp, khoảng 24.638 dòng code
+      Dũng   195 tệp, khoảng 22.784 dòng code
+      Hiền   216 tệp, khoảng 26.930 dòng code
   - "Phối hợp" ghi rõ chỗ hai khối gọi sang nhau, để khi sửa một bên thì báo
     người kia.
-  - Tài liệu nên đọc chung: docs/HUONG-DAN-DOC-CODE.txt (kiến thức nền + 20 luồng),
+  - Tài liệu nên đọc chung: docs/HUONG-DAN-DOC-CODE.txt (kiến thức nền + 24 luồng),
     docs/BAO-CAO-CHUC-NANG.txt, docs/CHU-THICH-CODE.md (tìm theo tên tệp),
     docs/DOMAIN-DECISIONS.md (lý do thiết kế).
 
@@ -35,7 +35,8 @@ TỔNG QUAN 5 KHỐI
            điểm thưởng, hạng, trả góp + điểm tín dụng, hoàn tiền, đổi hàng,
            thu chi, phân tích & báo cáo
   - Hiền : KHO VẬN & CỘNG ĐỒNG — kho, nhập, kiểm kê, lô hoa, nhà cung cấp; Góc
-           cây, thông báo, Cẩm nang, nhật ký cây, lịch chăm cây, trợ lý AI
+           cây, thông báo, Cẩm nang, nhật ký cây, lịch chăm cây, trợ lý AI,
+           nhắn tin trực tiếp khách ↔ cửa hàng (lab07)
 
 
 ================================================================================
@@ -56,7 +57,8 @@ CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
   5. Hồ sơ tài khoản: thông tin, đổi mật khẩu, thiết bị đang đăng nhập, tuỳ chọn
      thư, xoá tài khoản 3 bước
   6. Phân quyền: 3 vai trò + 8 khu vực quyền, middleware role / quyen, Gate
-  7. Quản lý người dùng: khoá tài khoản, đổi vai trò với 3 chốt chặn, hồ sơ khách
+  7. Quản lý người dùng (lab08): thêm / sửa / xoá, khoá tài khoản, đổi vai trò
+     với 3 chốt chặn, hồ sơ khách; quyền mới "Hỗ trợ khách hàng"
   8. Nhật ký thao tác quản trị; trang Tổng quan với hàng đợi việc
   9. Cấu hình cửa hàng (logo, hotline, cam kết dịch vụ, ảnh hero), sửa trang nội
      dung / chính sách, định dạng tiền tệ, giờ Việt Nam
@@ -195,7 +197,10 @@ DANH SÁCH TỆP
     database/factories/UserFactory.php
     database/seeders/AdminUserSeeder.php
     database/seeders/DatabaseSeeder.php
-  [Giao diện Blade] (53)
+  [Giao diện Blade] (56)
+    resources/views/admin/users/_form.blade.php
+    resources/views/admin/users/create.blade.php
+    resources/views/admin/users/edit.blade.php
     resources/views/admin/activity-logs/index.blade.php
     resources/views/admin/dashboard.blade.php
     resources/views/admin/pages/edit.blade.php
@@ -299,7 +304,8 @@ DANH SÁCH TỆP
     resources/css/themes/noel.css
     resources/css/themes/tet.css
     resources/css/themes/valentine.css
-  [Kiểm thử] (22)
+  [Kiểm thử] (23)
+    tests/Feature/Admin/QuanLyNguoiDungTest.php
     tests/Feature/Admin/ActivityLogTest.php
     tests/Feature/Admin/AdminDarkModeTest.php
     tests/Feature/Admin/DashboardTest.php
@@ -586,7 +592,9 @@ CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
   9. Thanh toán COD và MoMo (chữ ký HMAC, IPN, đối chiếu số tiền, trả lại lần nữa)
  10. Đơn hàng phía khách: danh sách, chi tiết, dòng thời gian, tự huỷ, tra cứu đơn
      cho khách vãng lai
- 11. Đơn hàng phía quản trị: máy trạng thái, cập nhật thanh toán, sửa thông tin
+ 11. Đơn hàng phía quản trị (lab08): tab trạng thái có số đếm theo bộ lọc, tìm
+     theo mã GHN / tên sản phẩm, lọc phương thức / vận chuyển, 20-50-100 dòng,
+     ĐƠN ĐANG GIAO KHÔNG HUỶ (chỉ ghi nhận hoàn hàng); máy trạng thái, cập nhật thanh toán, sửa thông tin
      giao, in phiếu soạn / phiếu giao, tạo / huỷ vận đơn GHN, đồng bộ tự động
  12. Email đơn hàng cho khách và cho cửa hàng; dữ liệu hoá đơn
  13. FRAUD DETECTION: chấm điểm rủi ro đơn hàng có lý do
@@ -776,7 +784,8 @@ DANH SÁCH TỆP
     resources/css/components/cart.css
     resources/css/components/order-timeline.css
     resources/css/components/voucher.css
-  [Kiểm thử] (38)
+  [Kiểm thử] (39)
+    tests/Feature/Admin/XuLyDonHangTest.php
     tests/Feature/Admin/InPhieuDonTest.php
     tests/Feature/Admin/LienHeBaoGiaTest.php
     tests/Feature/Admin/OrderPaymentTest.php
@@ -843,6 +852,8 @@ CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
  10. Phân tích: phễu, doanh thu theo danh mục / tỉnh / khung giờ / khách mới-cũ,
      khách hàng, đánh giá; chọn kỳ tuỳ ý so với kỳ trước; biểu đồ SVG
  11. Xuất báo cáo 5 định dạng: CSV, XLSX, JSON, HTML, PDF
+ 12. Báo cáo doanh thu (lab08): bảng số liệu theo danh mục / ngày / tháng / năm /
+     phương thức và trang biểu đồ SVG
 
 ĐIỂM KỸ THUẬT NỔI BẬT ĐỂ TRÌNH BÀY
   - Giá linh hoạt theo thời điểm và nguyên tắc "một nguồn giá" (Luồng 1)
@@ -859,7 +870,8 @@ PHỐI HỢP
     hoa tươi dùng dữ liệu lô hoa
 
 DANH SÁCH TỆP
-  [Controller] (15)
+  [Controller] (16)
+    app/Http/Controllers/Admin/ReportController.php
     app/Http/Controllers/Admin/AnalyticsController.php
     app/Http/Controllers/Admin/AnalyticsPagesController.php
     app/Http/Controllers/Admin/ExchangeController.php
@@ -882,7 +894,8 @@ DANH SÁCH TỆP
     app/Http/Requests/Admin/StorePromotionRequest.php
     app/Http/Requests/Admin/SyncPromotionProductsRequest.php
     app/Http/Requests/Admin/UpdatePromotionRequest.php
-  [Service (luật nghiệp vụ)] (41)
+  [Service (luật nghiệp vụ)] (42)
+    app/Services/Analytics/RevenueReport.php
     app/Services/Analytics/AnalyticsService.php
     app/Services/Analytics/CashFlowReport.php
     app/Services/Analytics/ChonKy.php
@@ -981,7 +994,9 @@ DANH SÁCH TỆP
     database/migrations/2026_10_16_010000_create_product_gifts_table.php
     database/migrations/2026_10_17_010000_add_rules_to_product_gifts_table.php
     database/migrations/2026_10_18_010000_create_installment_tables.php
-  [Giao diện Blade] (46)
+  [Giao diện Blade] (48)
+    resources/views/admin/reports/charts.blade.php
+    resources/views/admin/reports/index.blade.php
     resources/views/admin/analytics/_header.blade.php
     resources/views/admin/analytics/customers.blade.php
     resources/views/admin/analytics/export.blade.php
@@ -1038,7 +1053,8 @@ DANH SÁCH TỆP
   [CSS] (2)
     resources/css/admin/analytics.css
     resources/css/admin/charts.css
-  [Kiểm thử] (23)
+  [Kiểm thử] (24)
+    tests/Feature/Admin/BaoCaoDoanhThuTest.php
     tests/Feature/Admin/AnalyticsBreakdownTest.php
     tests/Feature/Admin/DanhSachHoanTienTest.php
     tests/Feature/Admin/DoiHangTest.php
@@ -1093,6 +1109,9 @@ CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
  12. Tước metadata ảnh (EXIF / GPS) và xoá GPS trong video MP4
  13. AI SHOPPING ADVISOR (Gemini): gom dữ liệu thật, luật chống bịa và chống chèn
      lệnh, bảo vệ dữ liệu riêng tư
+ 14. LIVECHAT (lab07): khách nhắn tin với nhân viên (tab trong khung chat nổi +
+     trang /tin-nhan), khung chat hỗ trợ trong trang quản trị, số chưa đọc,
+     thông báo khi cửa hàng trả lời, tải tin mới theo mốc id
 
 ĐIỂM KỸ THUẬT NỔI BẬT ĐỂ TRÌNH BÀY
   - Kho theo chứng từ, một nơi duy nhất cộng / trừ tồn (Luồng 16)
@@ -1106,7 +1125,9 @@ PHỐI HỢP
   - Hùng: AI dùng bộ tìm kiếm ProductSearch; ảnh bài viết đi qua ImageStore
 
 DANH SÁCH TỆP
-  [Controller] (18)
+  [Controller] (20)
+    app/Http/Controllers/Admin/ChatController.php
+    app/Http/Controllers/Shop/ChatController.php
     app/Http/Controllers/Admin/BlogCategoryController.php
     app/Http/Controllers/Admin/BlogPostController.php
     app/Http/Controllers/Admin/CommunityModerationController.php
@@ -1127,7 +1148,9 @@ DANH SÁCH TỆP
     app/Http/Controllers/Shop/NotificationController.php
   [Kiểm tra dữ liệu (Request)] (1)
     app/Http/Requests/Admin/StockReceiptRequest.php
-  [Service (luật nghiệp vụ)] (30)
+  [Service (luật nghiệp vụ)] (32)
+    app/Services/Chat/ChatException.php
+    app/Services/Chat/LiveChat.php
     app/Services/AI/AdvisorContext.php
     app/Services/AI/AiException.php
     app/Services/AI/AiManager.php
@@ -1158,7 +1181,8 @@ DANH SÁCH TỆP
     app/Services/Media/ImageMetadataStripper.php
     app/Services/Media/VideoMetadataStripper.php
     app/Services/Notification/NotificationCenter.php
-  [Model / Observer] (19)
+  [Model / Observer] (20)
+    app/Models/Message.php
     app/Models/BlogCategory.php
     app/Models/BlogPost.php
     app/Models/CareReminder.php
@@ -1200,7 +1224,8 @@ DANH SÁCH TỆP
     app/Console/Commands/SendCareReminders.php
   [Cấu hình / Ngôn ngữ] (1)
     config/ai.php
-  [Migration (bảng CSDL)] (17)
+  [Migration (bảng CSDL)] (18)
+    database/migrations/2026_10_24_010000_create_messages_table.php
     database/migrations/2026_09_04_010000_create_care_reminders_table.php
     database/migrations/2026_09_21_010000_create_journals_tables.php
     database/migrations/2026_09_22_010000_add_journal_design_tables.php
@@ -1222,7 +1247,10 @@ DANH SÁCH TỆP
     database/seeders/BlogSeeder.php
     database/seeders/CommunityPostSampleSeeder.php
     database/seeders/DuLieuMauKhoSeeder.php
-  [Giao diện Blade] (58)
+  [Giao diện Blade] (61)
+    resources/views/components/admin/chat-popup.blade.php
+    resources/views/components/chat/thread.blade.php
+    resources/views/shop/chat/index.blade.php
     resources/views/admin/analytics/purchasing.blade.php
     resources/views/admin/blog/categories.blade.php
     resources/views/admin/blog/form.blade.php
@@ -1281,7 +1309,9 @@ DANH SÁCH TỆP
     resources/views/shop/journals/index.blade.php
     resources/views/shop/journals/show.blade.php
     resources/views/shop/notifications/index.blade.php
-  [JavaScript] (5)
+  [JavaScript] (7)
+    resources/js/admin/live-chat.js
+    resources/js/live-chat.js
     resources/js/admin/receipt-lines.js
     resources/js/admin/stock-lock.js
     resources/js/ai-chat.js
@@ -1292,7 +1322,8 @@ DANH SÁCH TỆP
     resources/css/components/blog.css
     resources/css/components/community.css
     resources/css/components/journal.css
-  [Kiểm thử] (31)
+  [Kiểm thử] (32)
+    tests/Feature/Chat/NhanTinTest.php
     tests/Feature/AI/TroLyAiTest.php
     tests/Feature/Admin/ChuyenMucCamNangTest.php
     tests/Feature/Admin/InventoryReportTest.php

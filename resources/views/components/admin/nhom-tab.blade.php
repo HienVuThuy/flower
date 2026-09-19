@@ -16,6 +16,10 @@
             ['route' => 'admin.blog.index', 'khop' => 'admin.blog.*', 'nhan' => 'Bài viết'],
             ['route' => 'admin.blog-categories.index', 'khop' => 'admin.blog-categories.*', 'nhan' => 'Chuyên mục'],
         ],
+        'bao-cao' => [
+            ['route' => 'admin.reports.index', 'khop' => 'admin.reports.index', 'nhan' => 'Bảng số liệu'],
+            ['route' => 'admin.reports.charts', 'khop' => 'admin.reports.charts', 'nhan' => 'Biểu đồ'],
+        ],
         'cai-dat' => [
             ['route' => 'admin.settings.edit', 'khop' => 'admin.settings.*', 'nhan' => 'Cài đặt chung'],
             ['route' => 'admin.page-contents.edit', 'khop' => 'admin.page-contents.*', 'nhan' => 'Trang nội dung'],

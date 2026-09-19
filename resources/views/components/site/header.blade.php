@@ -162,6 +162,12 @@
                                 <x-site.icon name="person" /> Trang cá nhân
                             </a>
 
+                            @if(Auth::user()->isCustomer())
+                                <a class="dropdown-item" href="{{ route('shop.chat.index') }}">
+                                    <x-site.icon name="chat" /> Tin nhắn với cửa hàng
+                                </a>
+                            @endif
+
                             <a class="dropdown-item" href="{{ route('shop.profile.edit', ['muc' => 'diem-thuong']) }}" data-diem-header>
                                 <x-site.icon name="star" /> Điểm thưởng: <strong>{{ number_format(app(\App\Services\Points\PointLedger::class)->soDu(Auth::user()), 0, ',', '.') }}</strong>
                             </a>

@@ -279,6 +279,17 @@ Route::get('trang/{slug}', [PageController::class, 'show'])
     ->name('shop.pages.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('tin-nhan', [\App\Http\Controllers\Shop\ChatController::class, 'index'])->name('shop.chat.index');
+    Route::get('tin-nhan/tin', [\App\Http\Controllers\Shop\ChatController::class, 'messages'])
+        ->middleware('throttle:60,1')
+        ->name('shop.chat.messages');
+    Route::get('tin-nhan/chua-doc', [\App\Http\Controllers\Shop\ChatController::class, 'unread'])
+        ->middleware('throttle:60,1')
+        ->name('shop.chat.unread');
+    Route::post('tin-nhan', [\App\Http\Controllers\Shop\ChatController::class, 'send'])
+        ->middleware('throttle:20,1')
+        ->name('shop.chat.send');
+
     Route::post('goc-cay', [CommunityController::class, 'store'])
         ->middleware('throttle:10,1')
         ->name('shop.community.store');

@@ -100,3 +100,134 @@
 .ai-chat__msg--loi {
     color: var(--danger, #b3261e);
 }
+
+/* ============ NHẮN TIN VỚI CỬA HÀNG ============ */
+
+.ai-chat__toggle {
+    position: relative;
+}
+
+.chat-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--danger, #b3261e);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.chat-badge--toggle {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+}
+
+.chat-tabs {
+    display: flex;
+    gap: 0.25rem;
+    margin-bottom: 0.6rem;
+    padding: 0.2rem;
+    border-radius: 10px;
+    background: var(--surface-alt);
+}
+
+.chat-tabs__tab {
+    flex: 1 1 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.5rem;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--ink-500);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.chat-tabs__tab.is-active {
+    background: var(--surface);
+    color: var(--ink-900);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.chat-thread__log {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    max-height: 45vh;
+    min-height: 8rem;
+    overflow-y: auto;
+    margin-bottom: 0.5rem;
+    padding: 0.25rem;
+}
+
+.chat-page .chat-thread__log {
+    max-height: 60vh;
+    min-height: 16rem;
+}
+
+.chat-thread__empty {
+    margin: auto 0;
+    color: var(--ink-500);
+    font-size: 0.85rem;
+    text-align: center;
+}
+
+.chat-thread__form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: flex-end;
+}
+
+.chat-thread__error {
+    align-self: stretch;
+    margin: 0;
+    color: var(--danger, #b3261e);
+    font-size: 0.8rem;
+}
+
+.chat-msg {
+    display: flex;
+    flex-direction: column;
+    max-width: 85%;
+}
+
+.chat-msg--me {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.chat-msg--them {
+    align-self: flex-start;
+}
+
+.chat-msg__text {
+    margin: 0;
+    padding: 0.45rem 0.7rem;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+    background: var(--surface-alt);
+    color: var(--ink-900);
+}
+
+.chat-msg--me .chat-msg__text {
+    background: var(--brand, #2f6b4f);
+    color: #fff;
+}
+
+.chat-msg__meta {
+    margin-top: 0.15rem;
+    color: var(--ink-500);
+    font-size: 0.7rem;
+}

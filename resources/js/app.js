@@ -32,6 +32,8 @@ import { initRefundGiftAutofill } from './admin/refund-gift-autofill';
 import { initAiChat } from './ai-chat';
 import { initCommunity } from './community';
 import { initVideoEmbed } from './components/video-embed';
+import { initLiveChat } from './live-chat';
+import { initAdminLiveChat } from './admin/live-chat';
 
 const header = document.querySelector('.site-header');
 
@@ -75,6 +77,8 @@ export function bootUi() {
     initAiChat();
     initCommunity();
     initVideoEmbed();
+    initLiveChat();
+    initAdminLiveChat();
 }
 
 bootUi();

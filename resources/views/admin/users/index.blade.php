@@ -4,12 +4,15 @@
 
 @section('content')
 
-<div class="mb-4">
-    <h1 class="admin-page-title">Người dùng</h1>
-    <p class="admin-page-subtitle">
-        Đổi vai trò và khoá tài khoản. Khoá thì chặn được người mà giữ nguyên
-        đơn hàng và đánh giá của họ — không có chức năng xoá tài khoản.
-    </p>
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+    <div>
+        <h1 class="admin-page-title">Người dùng</h1>
+        <p class="admin-page-subtitle mb-0">
+            Thêm, sửa, đổi vai trò, khoá hoặc xoá tài khoản. Nên khoá thay vì xoá: khoá chặn đăng nhập mà vẫn giữ lịch sử;
+            xoá chỉ làm được khi tài khoản không còn đơn dở dang và đơn cũ vẫn được giữ.
+        </p>
+    </div>
+    <a data-admin-link href="{{ route('admin.users.create') }}" class="btn btn-primary-brand">+ Thêm người dùng</a>
 </div>
 
 <x-admin.filter-bar
@@ -103,7 +106,7 @@
 
                         @else
 
-                            <div class="d-inline-flex gap-2 align-items-center">
+                            <div class="d-inline-flex flex-wrap gap-2 align-items-center justify-content-end" style="max-width: 250px">
 
                                 <form method="POST"
                                       action="{{ route('admin.users.role', $user) }}"
@@ -143,6 +146,15 @@
                                             class="btn btn-sm {{ $user->isLocked() ? 'btn-outline-success' : 'btn-outline-danger' }}">
                                         {{ $user->isLocked() ? 'Mở khoá' : 'Khoá' }}
                                     </button>
+                                </form>
+
+                                <a data-admin-link href="{{ route('admin.users.edit', $user) }}" class="btn btn-sm btn-outline-secondary">Sửa</a>
+
+                                <form method="POST" action="{{ route('admin.users.destroy', $user) }}"
+                                      onsubmit="return confirm('Xoá hẳn tài khoản {{ addslashes($user->name) }}? Không hoàn tác được — cân nhắc Khoá thay vì xoá.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Xoá</button>
                                 </form>
 
                             </div>

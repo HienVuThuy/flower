@@ -11,6 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Hash;
+use App\Services\Auth\AccountDeleter;
+use App\Services\Auth\AccountDeletionException;
 use Illuminate\View\View;
 
 /** Quản lý khách hàng và quản trị viên. */
@@ -101,19 +105,8 @@ class UserController extends Controller
             return back()->with('info', 'Vai trò không thay đổi.');
         }
 
-        if ($user->is(Auth::user())) {
-            return back()->with(
-                'error',
-                'Không tự đổi vai trò của chính mình được. Hãy nhờ một quản trị viên khác.',
-            );
-        }
-
-        if ($cu === UserRole::Admin && $moi !== UserRole::Admin && $this->adminConLaiNeuBo($user) === 0) {
-            return back()->with(
-                'error',
-                'Đây là quản trị viên duy nhất còn hoạt động. '
-                .'Hãy chỉ định một quản trị viên khác trước khi hạ quyền tài khoản này.',
-            );
+        if ($loi = $this->loiDoiVaiTro($user, $moi)) {
+            return back()->with('error', $loi);
         }
 
         $user->role = $moi;
@@ -176,6 +169,108 @@ class UserController extends Controller
         return back()->with('success', $khoa
             ? 'Đã khoá tài khoản '.$user->name.'. Họ sẽ bị đăng xuất ngay.'
             : 'Đã mở khoá tài khoản '.$user->name.'.');
+    }
+
+    public function create(): View
+    {
+        return view('admin.users.create', ['roles' => UserRole::cases()]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
+            'password' => ['required', 'confirmed', Password::defaults()],
+            'role' => ['required', Rule::enum(UserRole::class)],
+        ], [], ['name' => 'tên', 'password' => 'mật khẩu', 'role' => 'vai trò']);
+
+        $user = new User();
+        $user->forceFill([
+            'name' => $data['name'],
+            'email' => mb_strtolower($data['email']),
+            'password' => Hash::make($data['password']),
+            'role' => UserRole::from($data['role']),
+            'email_verified_at' => now(),
+        ])->save();
+
+        $this->audit()->log('user.created', 'Tạo tài khoản ' . $user->name, $user, [
+            'email' => $user->email,
+            'vai_tro' => $user->role->label(),
+        ]);
+
+        return redirect()->route('admin.users.show', $user)->with('success', 'Đã tạo tài khoản ' . $user->name . '.');
+    }
+
+    public function edit(User $user): View
+    {
+        return view('admin.users.edit', ['user' => $user, 'roles' => UserRole::cases()]);
+    }
+
+    public function update(Request $request, User $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'role' => ['required', Rule::enum(UserRole::class)],
+        ], [], ['name' => 'tên', 'role' => 'vai trò']);
+
+        $vaiTroMoi = UserRole::from($data['role']);
+
+        if ($vaiTroMoi !== $user->role && ($loi = $this->loiDoiVaiTro($user, $vaiTroMoi))) {
+            return back()->withInput()->with('error', $loi);
+        }
+
+        $truoc = ['ten' => $user->name, 'email' => $user->email, 'vai_tro' => $user->role->label()];
+        $emailMoi = mb_strtolower($data['email']);
+
+        $user->forceFill([
+            'name' => $data['name'],
+            'email' => $emailMoi,
+            'role' => $vaiTroMoi,
+            'email_verified_at' => $emailMoi === $user->email ? $user->email_verified_at : null,
+        ])->save();
+
+        $this->audit()->log('user.updated', 'Sửa tài khoản ' . $user->name, $user, [
+            'truoc' => $truoc,
+            'sau' => ['ten' => $user->name, 'email' => $user->email, 'vai_tro' => $user->role->label()],
+        ]);
+
+        return redirect()->route('admin.users.show', $user)->with('success', 'Đã cập nhật tài khoản ' . $user->name . '.');
+    }
+
+    public function destroy(User $user, AccountDeleter $xoa): RedirectResponse
+    {
+        if ($user->is(Auth::user())) {
+            return back()->with('error', 'Không tự xoá tài khoản của chính mình ở đây.');
+        }
+
+        $ten = $user->name;
+        $email = $user->email;
+
+        try {
+            $xoa->delete($user);
+        } catch (AccountDeletionException $e) {
+            return back()->with('error', str_replace('Bạn còn', 'Tài khoản này còn', $e->getMessage()) . ' Có thể khoá tài khoản thay vì xoá.');
+        }
+
+        $this->audit()->log('user.deleted', 'Xoá tài khoản ' . $ten, null, ['email' => $email]);
+
+        return redirect()->route('admin.users.index')->with('success', 'Đã xoá tài khoản ' . $ten . '. Đơn hàng cũ của họ vẫn được giữ.');
+    }
+
+    private function loiDoiVaiTro(User $user, UserRole $moi): ?string
+    {
+        if ($user->is(Auth::user())) {
+            return 'Không tự đổi vai trò của chính mình được. Hãy nhờ một quản trị viên khác.';
+        }
+
+        if ($user->role === UserRole::Admin && $moi !== UserRole::Admin && $this->adminConLaiNeuBo($user) === 0) {
+            return 'Đây là quản trị viên duy nhất còn hoạt động. '
+                .'Hãy chỉ định một quản trị viên khác trước khi hạ quyền tài khoản này.';
+        }
+
+        return null;
     }
 
     private function adminConLaiNeuBo(User $user): int

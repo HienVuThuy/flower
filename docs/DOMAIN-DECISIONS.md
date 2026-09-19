@@ -8313,3 +8313,32 @@ có thanh bên.
   đè phần khác; không chép lại cả bộ luật.
 - Tên dài không đổi hàng loạt: đã đo, không vượt quy ước Laravel, một số do
   framework áp đặt, tên hàm kiểm thử là câu mô tả luật (docs/RA-SOAT-CODE.txt).
+
+## QĐ-303. Lab07 (livechat) và lab08 (xử lý đơn, báo cáo, người dùng): theo bài, sửa chỗ bài mẫu sai
+
+- LIVECHAT: mỗi khách MỘT hội thoại với cả cửa hàng (`messages.customer_id`),
+  không gắn người nhận vào "admin đầu tiên" như bài mẫu — có nhiều admin / nhân
+  viên thì tin sẽ lạc. Người trả lời là ai có quyền mới `Quyen::HoTro`
+  (nhân viên được cấp sẵn). `read_at` là lúc PHÍA BÊN KIA đã đọc.
+- Tin nhắn hiện bằng `textContent` / `{{ }}`. Bài mẫu ghép `${msg.content}` vào
+  `innerHTML` — khách gõ `<img onerror>` là chạy mã trên máy nhân viên.
+- Hỏi máy chủ định kỳ (polling) như bài, nhưng chỉ khi khung đang mở và tab
+  trình duyệt đang hiện, và chỉ tải tin có id lớn hơn tin cuối (`?sau=`).
+  Không dùng WebSocket: XAMPP không có tiến trình chạy nền để giữ kết nối.
+- Chat nhân viên là một TAB trong khung chat nổi sẵn có (cùng Trợ lý AI): hai
+  nút nổi sẽ che nội dung. Có thêm trang /tin-nhan làm đích cho thông báo và
+  cho điện thoại; tắt JavaScript vẫn gửi được.
+- ĐƠN ĐANG GIAO KHÔNG HUỶ: thay bằng "Hoàn hàng" (lý do bắt buộc; đơn đi GHN
+  phải chờ GHN báo đã hoàn về cửa hàng). Chặn ở `OrderService::changeStatus()`
+  chứ không chỉ ẩn nút. Trạng thái vẫn là `Cancelled` để mọi báo cáo cũ không
+  đổi; lý do ghi "Hoàn hàng: …".
+- Số trên tab đơn hàng đếm theo CÙNG bộ lọc với danh sách (`locChung()`).
+- BÁO CÁO: giữ định nghĩa doanh thu của dự án (đơn đã giao, trừ hoàn, cộng bù
+  đổi hàng — QĐ-218, QĐ-227), không dùng "đơn đã thanh toán" của bài mẫu, để
+  trang Báo cáo và trang Phân tích không bao giờ lệch nhau. Biểu đồ vẽ SVG ở
+  máy chủ (QĐ-131) thay cho Chart.js tải từ CDN.
+- NGƯỜI DÙNG: thêm / sửa / xoá như bài; xoá dùng chung luật của AccountDeleter,
+  đổi vai trò dùng chung chốt chặn với nút đổi vai trò nhanh. Tài khoản do
+  admin tạo coi như đã xác thực email; admin đổi email thì phải xác thực lại.
+- `.admin-main` thêm `min-width: 0`: bảng rộng tự cuộn trong khung thay vì đẩy
+  cả trang quản trị tràn ngang (QĐ-169).

@@ -120,7 +120,13 @@
                 <h2 class="h6 fw-bold mb-3">Giao hàng</h2>
 
                 <dl class="admin-detail-list mb-0">
-                    <div><dt>Người nhận</dt><dd>{{ $order->recipient_name }}</dd></div>
+                    <div><dt>Người nhận</dt><dd>{{ $order->recipient_name }}
+                        @can('ho-tro')
+                            @if($order->user?->isCustomer())
+                                <button type="button" class="btn btn-link btn-sm p-0 ms-1" data-chat-mo="{{ $order->user_id }}">Nhắn tin</button>
+                            @endif
+                        @endcan
+                    </dd></div>
                     <div><dt>Điện thoại</dt><dd>{{ $order->recipient_phone }}</dd></div>
 
                     @if($order->recipient_email)
@@ -355,6 +361,7 @@
                 @endif
 
                 @php($next = $order->status->nextStates())
+                @php($dangGiao = $order->status->value === 'shipping')
 
                 @if(empty($next))
 
@@ -371,19 +378,27 @@
                         <label class="form-label" for="status">Chuyển sang</label>
                         <select name="status" id="status" class="form-select mb-2" required>
                             @foreach($next as $state)
-                                <option value="{{ $state->value }}">{{ $state->label() }}</option>
+                                <option value="{{ $state->value }}">
+                                    {{ $dangGiao && $state->value === 'cancelled' ? 'Hoàn hàng (giao không thành công)' : $state->label() }}
+                                </option>
                             @endforeach
                         </select>
 
-                        <label class="form-label" for="cancel_reason">Lý do (chỉ dùng khi huỷ)</label>
+                        <label class="form-label" for="cancel_reason">
+                            {{ $dangGiao ? 'Lý do hoàn hàng (bắt buộc khi hoàn hàng)' : 'Lý do (chỉ dùng khi huỷ)' }}
+                        </label>
                         <input type="text" name="cancel_reason" id="cancel_reason" class="form-control mb-3"
-                               maxlength="255" placeholder="Ví dụ: khách đổi ý">
+                               maxlength="255" placeholder="{{ $dangGiao ? 'Ví dụ: khách từ chối nhận, hàng đã về cửa hàng' : 'Ví dụ: khách đổi ý' }}">
 
                         <button type="submit" class="btn btn-primary-brand w-100">Cập nhật</button>
                     </form>
 
                     <p class="admin-page-subtitle mt-2 mb-0">
-                        Huỷ đơn sẽ tự động hoàn lại tồn kho cho các sản phẩm có quản lý kho.
+                        @if($dangGiao)
+                            Đơn đang giao không huỷ được. Chỉ ghi nhận hoàn hàng khi hàng đã quay về cửa hàng — tồn kho được cộng lại.
+                        @else
+                            Huỷ đơn sẽ tự động hoàn lại tồn kho cho các sản phẩm có quản lý kho.
+                        @endif
                     </p>
 
                     @if($order->ghn_order_code && $order->shipping_status !== 'cancel')

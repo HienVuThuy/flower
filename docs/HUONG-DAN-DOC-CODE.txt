@@ -7,7 +7,7 @@ Tài liệu này dạy cách đọc code của dự án theo thứ tự dễ →
   PHẦN 0. Cách dùng tài liệu và cách tìm nhanh trong VS Code
   PHẦN 1. Kiến thức nền: 22 khái niệm gặp liên tục trong dự án
   PHẦN 2. Bản đồ thư mục: tệp nào nằm ở đâu, làm gì
-  PHẦN 3. 20 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
+  PHẦN 3. 24 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
   PHẦN 4. Tự học và gỡ lỗi
   PHẦN 5. Bảng tra nhanh thuật ngữ
 
@@ -485,6 +485,7 @@ app/
     Care/          lịch chăm cây
     Cart/          giỏ hàng
     Catalog/       bằng chứng xã hội (đã bán, chỉ còn)
+    Chat/          tin nhắn trực tiếp khách ↔ cửa hàng (livechat)
     Checkout/      tính tiền thanh toán, nguồn hàng, chống đặt trùng
     Community/     Góc cây
     Content/       trang nội dung
@@ -534,7 +535,7 @@ tools/                  script Node tải và tối ưu ảnh mẫu
 
 
 ================================================================================
-PHẦN 3. 20 LUỒNG CHẠY THẬT
+PHẦN 3. 24 LUỒNG CHẠY THẬT
 ================================================================================
 
 Mỗi luồng ghi: người dùng làm gì → các bước (tệp → hàm) → điểm cần hiểu.
@@ -950,6 +951,129 @@ LUỒNG 20. Tải ảnh lên
   5. Xoá: ImageStore::xoa() xoá cả bản gốc và bản WebP.
 
 
+--------------------------------------------------------------------------------
+LUỒNG 21. Nhắn tin trực tiếp khách ↔ cửa hàng (livechat — lab07)
+--------------------------------------------------------------------------------
+  CƠ SỞ DỮ LIỆU: bảng messages (migration 2026_10_24_010000_create_messages_table)
+    customer_id  hội thoại của khách nào (mỗi khách MỘT hội thoại với cả cửa hàng)
+    sender_id    ai gửi: bằng customer_id là khách, khác là nhân viên
+    content      nội dung;  read_at  lúc phía bên kia đã đọc
+  Model: app/Models/Message.php → tuKhach()
+
+  PHÍA KHÁCH
+  1. resources/views/components/site/ai-chat.blade.php: khung chat nổi có 2 tab
+     "Trợ lý AI" và "Nhắn cửa hàng"; tab sau chứa <x-chat.thread :lazy="true" />
+     (resources/views/components/chat/thread.blade.php: danh sách tin + biểu mẫu).
+     Trang riêng: GET /tin-nhan → Shop\ChatController@index →
+     resources/views/shop/chat/index.blade.php (dùng lại component thread).
+  2. resources/js/live-chat.js → initLiveChat()
+       - bấm tab: hiện đúng khung, bắn sự kiện chat:doi-tab
+       - hoiThoai(): gắn submit, Enter để gửi (ganPhimEnter), tai() lấy tin mới
+       - setInterval mỗi 4 giây, CHỈ chạy khi khung đang mở, đúng tab, tab trình
+         duyệt không ẩn (dangHien()); gọi GET /tin-nhan/tin?sau=<id tin cuối>&da_xem=1
+       - veTin(): dựng bong bóng tin bằng createElement + textContent (không
+         innerHTML) → nội dung khách gõ không chạy được thành mã độc
+       - khi khung đóng: 30 giây/lần gọi GET /tin-nhan/chua-doc để hiện số chưa đọc
+  3. Gửi: POST /tin-nhan (throttle 20/phút) → Shop\ChatController@send
+       validate noi_dung (tối đa 1000 ký tự) → LiveChat::gui($khach, $khach, ...)
+       gọi bằng fetch thì trả JSON 201; không có JavaScript thì chuyển về /tin-nhan
+
+  PHÍA QUẢN TRỊ (quyền "ho-tro" — app/Enums/Quyen::HoTro)
+  4. resources/views/components/admin/chat-popup.blade.php, được nhúng ở cuối
+     resources/views/layouts/admin.blade.php NGOÀI thẻ <main> nên không mất khi
+     trang quản trị chuyển trang kiểu không tải lại.
+  5. resources/js/admin/live-chat.js → initAdminLiveChat()
+       taiDanhSach(): GET /admin/tin-nhan?q=... → Admin\ChatController@users
+                      → LiveChat::hopThu() (khách, tin cuối, số chưa đọc)
+       chon(id) / taiTin(): GET /admin/tin-nhan/{user}?sau=... → @messages
+                      (đồng thời LiveChat::cuaHangDaDoc() đánh dấu đã đọc)
+       gửi: POST /admin/tin-nhan/{user} → @send → LiveChat::gui($nhanVien, $khach, ...)
+       nút [data-chat-mo="id"] ở trang hồ sơ khách / trang đơn mở thẳng hội thoại
+  6. Admin\ChatController::khach(): {user} không phải khách hàng → 404.
+
+  LUẬT — app/Services/Chat/LiveChat.php
+    gui()           trim, không rỗng, ≤ 1000 ký tự, người nhận phải là khách,
+                    người gửi là chính khách hoặc có quyền HoTro; nhân viên gửi
+                    thì baoKhach() tạo / cập nhật MỘT thông báo TinNhan chưa đọc
+    tinCua()        tối đa 100 tin gần nhất, hoặc chỉ tin có id > $sauId
+    khachDaDoc()    đánh dấu tin của cửa hàng + thông báo TinNhan là đã đọc
+    hopThu()        truy vấn gộp theo customer_id: MAX(id) = tin cuối,
+                    SUM(CASE …) = số tin khách gửi chưa đọc
+    json()          dữ liệu gửi cho JavaScript; với khách, tên người gửi phía
+                    cửa hàng là tên cửa hàng (StoreProfile::name())
+  Kiểm thử: tests/Feature/Chat/NhanTinTest.php
+
+--------------------------------------------------------------------------------
+LUỒNG 22. Admin xử lý đơn hàng: tab, bộ lọc, "đang giao không huỷ" (lab08)
+--------------------------------------------------------------------------------
+  1. GET /admin/orders → Admin\OrderController@index
+       locChung($request): MỘT truy vấn bộ lọc dùng chung cho danh sách VÀ số trên
+       tab — vì vậy số trên tab luôn khớp bộ lọc đang chọn:
+         q          SĐT, tên người nhận, mã vận đơn GHN, tên sản phẩm
+                    (orWhereHas('items', ...)), mã đơn bỏ dấu gạch
+         payment    PaymentStatus::tryFrom (giá trị lạ thì bỏ qua, không lỗi)
+         phuong_thuc, van_chuyen (ShippingStatus), van_don, hoan_tien
+         tu_ngay / den_ngay  ngay(): hiểu theo giờ Việt Nam rồi đổi sang UTC
+       danh sách: ->status($status) (scope trong Order) → applySort (danh sách
+       trắng cột) → paginate(20 / 50 / 100)
+       số trên tab: (clone $loc)->selectRaw('status, COUNT(*)')->groupBy('status')
+  2. resources/views/admin/orders/index.blade.php: tab, filter-bar, bảng.
+  3. Đổi trạng thái: PATCH /admin/orders/{order}/status → @updateStatus
+       $hoanHang = đơn đang giao && chọn "cancelled" → lý do BẮT BUỘC
+       → OrderService::changeStatus(..., hoanHang: $hoanHang)
+  4. app/Services/Order/OrderService.php → changeStatus()
+       - Cancelled từ Shipping mà không phải hoàn hàng → OrderException
+         "Đơn đang giao — không huỷ được"
+       - hoàn hàng có vận đơn GHN mà shipping_status chưa là returned / cancel
+         → OrderException (hàng chưa về cửa hàng)
+       - còn lại như Luồng 5: trả kho, trả mã, trả điểm, ghi dòng thời gian
+  5. resources/views/admin/orders/show.blade.php: đơn đang giao thì lựa chọn
+     "Đã huỷ" hiện thành "Hoàn hàng (giao không thành công)".
+  Kiểm thử: tests/Feature/Admin/XuLyDonHangTest.php, LoHongNghiepVuTest.php
+
+--------------------------------------------------------------------------------
+LUỒNG 23. Báo cáo doanh thu: bảng số liệu và biểu đồ (lab08)
+--------------------------------------------------------------------------------
+  1. GET /admin/bao-cao → Admin\ReportController@index
+     GET /admin/bao-cao/bieu-do → @charts          (quyền bao-cao)
+  2. app/Services/Analytics/RevenueReport.php
+       theoNgay()     lấy đơn Completed, tiền hoàn (refunds completed) và tiền bù
+                      đổi hàng theo từng đơn; gom theo NGÀY GIỜ VIỆT NAM
+                      (KhoangThoiGian::diaPhuong); nhớ kết quả trong $this->ngay
+                      để các hàm sau không truy vấn lại
+       theoThang(), theoNam()  gop(): gộp từ dữ liệu ngày (cắt chuỗi 'Y-m' / 'Y')
+                      — chạy giống nhau trên MySQL và SQLite
+       tongQuan()     tổng đơn, tổng khách, doanh thu, đã hoàn, thuần
+       theoDanhMuc()  dùng lại SalesBreakdown::theoDanhMuc() (không viết lại)
+       theoPhuongThuc(), bieuDoNgay(30), bieuDoThang(12): điền 0 cho ngày / tháng
+                      không có đơn để trục thời gian liền mạch
+     Mọi phép cộng trừ tiền dùng bcadd / bcsub.
+  3. Views: resources/views/admin/reports/index.blade.php (bảng) và charts.blade.php
+     (biểu đồ SVG bằng <x-admin.chart.bars|line|donut>); hai trang nối nhau bằng
+     <x-admin.nhom-tab ten="bao-cao" />.
+  Kiểm thử: tests/Feature/Admin/BaoCaoDoanhThuTest.php
+
+--------------------------------------------------------------------------------
+LUỒNG 24. Quản lý người dùng: thêm, sửa, xoá (lab08)
+--------------------------------------------------------------------------------
+  Route (routes/admin.php, quyền he-thong). Chú ý thứ tự: 'users/them' khai
+  TRƯỚC 'users/{user}', nếu không Laravel hiểu "them" là id người dùng (QĐ-196).
+  1. GET /admin/users/them → Admin\UserController@create
+     POST /admin/users → @store: validate tên, email (unique), mật khẩu
+     (confirmed + Password::defaults()), vai trò (Rule::enum) → Hash::make →
+     forceFill (email_verified_at = now) → ActivityLogger
+  2. GET /admin/users/{user}/sua → @edit;  PUT /admin/users/{user} → @update
+       đổi vai trò đi qua loiDoiVaiTro() — cùng chốt chặn với nút đổi vai trò
+       nhanh (không tự đổi, không bỏ admin cuối cùng)
+       đổi email → email_verified_at = null (phải xác thực lại)
+  3. DELETE /admin/users/{user} → @destroy
+       không tự xoá mình → AccountDeleter::delete() (cùng luật với khách tự xoá:
+       còn đơn dở dang / admin cuối cùng thì ném AccountDeletionException)
+  4. Views: resources/views/admin/users/{index, create, edit, _form}.blade.php
+     (_form dùng chung cho thêm và sửa).
+  Kiểm thử: tests/Feature/Admin/QuanLyNguoiDungTest.php
+
+
 ================================================================================
 PHẦN 4. TỰ HỌC VÀ GỠ LỖI
 ================================================================================
@@ -1028,4 +1152,7 @@ PHẦN 5. BẢNG TRA NHANH THUẬT NGỮ
   Levenshtein         số lần sửa ký tự tối thiểu để biến từ này thành từ kia
   Trung vị (median)   giá trị đứng giữa dãy đã sắp xếp
   UTC                 giờ chuẩn quốc tế, giờ Việt Nam = UTC + 7
+  Polling             trình duyệt hỏi máy chủ định kỳ (vài giây/lần) để lấy dữ
+                      liệu mới — cách livechat của dự án cập nhật tin nhắn
+  Livechat            nhắn tin trực tiếp giữa khách và nhân viên
   bcmath              thư viện tính số chính xác trên chuỗi

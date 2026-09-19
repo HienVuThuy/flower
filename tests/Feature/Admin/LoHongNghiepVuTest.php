@@ -116,28 +116,55 @@ class LoHongNghiepVuTest extends TestCase
             app(OrderService::class)->changeStatus($don, OrderStatus::Cancelled, 'khách đổi ý');
             $this->fail('Phải chặn huỷ đơn khi vận đơn GHN còn hiệu lực.');
         } catch (OrderException $e) {
-            $this->assertStringContainsString('Huỷ vận đơn GHN trước', $e->getMessage());
+            $this->assertStringContainsString('không huỷ được', $e->getMessage());
         }
 
         $this->assertSame(OrderStatus::Shipping, $don->fresh()->status);
     }
 
     #[Test]
-    public function da_huy_van_don_GHN_thi_huy_duoc_don(): void
+    public function da_huy_van_don_GHN_thi_ghi_nhan_hoan_hang_duoc(): void
     {
         $don = $this->don(OrderStatus::Shipping, ['ghn_order_code' => 'GHN123', 'shipping_status' => 'cancel']);
 
-        app(OrderService::class)->changeStatus($don, OrderStatus::Cancelled, 'khách đổi ý');
+        app(OrderService::class)->changeStatus($don, OrderStatus::Cancelled, 'khách đổi ý', hoanHang: true);
 
         $this->assertSame(OrderStatus::Cancelled, $don->fresh()->status);
     }
 
     #[Test]
-    public function don_dang_giao_KHONG_qua_GHN_van_huy_duoc(): void
+    public function don_dang_giao_KHONG_huy_duoc_chi_ghi_nhan_hoan_hang(): void
     {
         $don = $this->don(OrderStatus::Shipping);
 
-        app(OrderService::class)->changeStatus($don, OrderStatus::Cancelled, 'khách từ chối nhận');
+        try {
+            app(OrderService::class)->changeStatus($don, OrderStatus::Cancelled, 'khách đổi ý');
+            $this->fail('Đơn đang giao không được huỷ.');
+        } catch (OrderException $e) {
+            $this->assertStringContainsString('Đơn đang giao — không huỷ được', $e->getMessage());
+        }
+
+        $this->assertSame(OrderStatus::Shipping, $don->fresh()->status);
+
+        app(OrderService::class)->changeStatus($don->fresh(), OrderStatus::Cancelled, 'khách từ chối nhận', hoanHang: true);
+
+        $this->assertSame(OrderStatus::Cancelled, $don->fresh()->status);
+    }
+
+    #[Test]
+    public function hoan_hang_qua_GHN_phai_cho_hang_ve_cua_hang(): void
+    {
+        $don = $this->don(OrderStatus::Shipping, ['ghn_order_code' => 'GHN9', 'shipping_status' => 'delivery_fail']);
+
+        try {
+            app(OrderService::class)->changeStatus($don, OrderStatus::Cancelled, 'giao hỏng', hoanHang: true);
+            $this->fail('Chưa hoàn về thì chưa ghi nhận hoàn hàng.');
+        } catch (OrderException $e) {
+            $this->assertStringContainsString('chưa hoàn về cửa hàng', $e->getMessage());
+        }
+
+        $don->forceFill(['shipping_status' => 'returned'])->save();
+        app(OrderService::class)->changeStatus($don->fresh(), OrderStatus::Cancelled, 'giao hỏng', hoanHang: true);
 
         $this->assertSame(OrderStatus::Cancelled, $don->fresh()->status);
     }

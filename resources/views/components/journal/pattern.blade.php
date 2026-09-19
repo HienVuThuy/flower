@@ -1,8 +1,5 @@
 @props(['pattern'])
 
-@php
-@endphp
-
 <svg class="journal-pattern" aria-hidden="true" focusable="false"
      width="100%" height="100%" preserveAspectRatio="none">
     <defs>

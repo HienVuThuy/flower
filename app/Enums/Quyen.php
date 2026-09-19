@@ -13,6 +13,7 @@ enum Quyen: string
     case BaoCao = 'bao-cao';
     case TaiChinh = 'tai-chinh';
     case HeThong = 'he-thong';
+    case HoTro = 'ho-tro';
 
     public function nhan(): string
     {
@@ -25,6 +26,7 @@ enum Quyen: string
             self::BaoCao => 'Báo cáo bán hàng',
             self::TaiChinh => 'Giá vốn, lãi gộp, hoàn tiền',
             self::HeThong => 'Người dùng, cấu hình, nhật ký',
+            self::HoTro => 'Hỗ trợ khách hàng',
         };
     }
 
@@ -39,6 +41,7 @@ enum Quyen: string
             self::BaoCao => 'Tổng quan, doanh thu, khách hàng — không gồm lãi gộp.',
             self::TaiChinh => 'Giá vốn, lãi gộp, và xác nhận tiền hoàn đã đi.',
             self::HeThong => 'Phân quyền, cấu hình cửa hàng, nhật ký thao tác.',
+            self::HoTro => 'Trả lời tin nhắn khách gửi tới cửa hàng.',
         };
     }
 }

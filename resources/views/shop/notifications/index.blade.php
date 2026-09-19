@@ -42,7 +42,7 @@
                         @endif
 
                         @if($tb->note)
-                            <span class="thong-bao__trich">Lý do: {{ $tb->note }}</span>
+                            <span class="thong-bao__trich">{{ $tb->type->name === 'TinNhan' ? '“' . $tb->note . '”' : 'Lý do: ' . $tb->note }}</span>
                         @endif
                     </span>
 

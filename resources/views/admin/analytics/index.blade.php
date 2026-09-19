@@ -37,9 +37,6 @@
 
     <div class="col-lg-5">
         <div class="admin-panel p-4 h-100 d-flex flex-column gap-3">
-            @php
-            @endphp
-
             <x-admin.chart.donut
                 title="Cơ cấu trạng thái đơn"
                 note="Toàn bộ đơn trong kỳ"

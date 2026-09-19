@@ -26,7 +26,8 @@ A1. Mô tả
   Angevil là website thương mại điện tử bán hoa tươi, cây cảnh và phụ kiện
   chăm cây. Gồm hai khu:
     - Khu CỬA HÀNG cho khách: xem, tìm, chọn cây, mua, theo dõi đơn, chăm cây,
-      viết nhật ký, đăng bài cộng đồng, tích điểm, trả góp, hỏi trợ lý AI.
+      viết nhật ký, đăng bài cộng đồng, tích điểm, trả góp, hỏi trợ lý AI,
+      nhắn tin trực tiếp với nhân viên cửa hàng.
     - Khu QUẢN TRỊ cho chủ cửa hàng và nhân viên: sản phẩm, đơn hàng, kho,
       khuyến mại, khách hàng, báo cáo, tài chính, kiểm duyệt nội dung.
 
@@ -52,12 +53,12 @@ A3. Kiến trúc (chia lớp rõ ràng)
   OrderService, điểm chỉ ghi ở PointLedger, thuế chỉ tính ở TaxCalculator…
 
 A4. Quy mô (đếm từ mã nguồn)
-  - 284 đường dẫn (route), trong đó 154 thuộc khu quản trị
-  - 69 controller, 136 lớp service, 57 model, 63 enum
-  - 89 migration tạo khoảng 70 bảng
-  - 235 view Blade, 42 tệp JavaScript, 47 tệp CSS
+  - 296 đường dẫn (route), trong đó 164 thuộc khu quản trị
+  - 72 controller, 139 lớp service, 58 model, 63 enum
+  - 90 migration tạo khoảng 71 bảng
+  - 243 view Blade, 42 tệp JavaScript, 47 tệp CSS
   - 15 lệnh artisan tự viết, 5 tác vụ chạy theo lịch
-  - 128 tệp kiểm thử, 1275 bài kiểm thử, 4688 phép khẳng định
+  - 132 tệp kiểm thử, 1305 bài kiểm thử, 4815 phép khẳng định
   - Tài liệu: docs/ (quyết định thiết kế 301 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
@@ -208,6 +209,22 @@ CẤP 2 — MUA HÀNG
      Biểu mẫu nhiều yêu cầu thêm (tông màu, ngân sách, thời gian…).
      → Shop/BulkInquiryController, Admin/BulkInquiryController
 
+2.15 NHẮN TIN TRỰC TIẾP VỚI CỬA HÀNG (Livechat — lab07)
+     - Khách (đã đăng nhập, đã xác thực email) nhắn tin với nhân viên thật: tab
+       "Nhắn cửa hàng" trong khung chat nổi (chung khung với Trợ lý AI, cả trang
+       chỉ một nút nổi) và trang riêng /tin-nhan (dùng tốt trên điện thoại; tắt
+       JavaScript vẫn gửi được bằng biểu mẫu).
+     - Tin mới tự hiện: hỏi máy chủ mỗi 4 giây khi khung đang mở, chỉ tải phần
+       tin mới hơn tin cuối (tham số ?sau=id); tab trình duyệt ẩn thì tạm dừng.
+     - Số tin chưa đọc trên nút chat (kiểm 30 giây/lần khi khung đóng); mở chat
+       là đánh dấu đã đọc. Cửa hàng trả lời thì khách nhận MỘT thông báo trong
+       trang (gộp, không dồn), bấm vào mở thẳng trang chat.
+     - Mỗi khách MỘT hội thoại với cả cửa hàng (không gắn cứng vào "admin đầu
+       tiên" như bài mẫu): nhân viên nào có quyền "Hỗ trợ khách hàng" cũng trả
+       lời được.
+     → Services/Chat/LiveChat, Shop/ChatController, Models/Message,
+       components/chat/thread.blade.php, resources/js/live-chat.js
+
 --------------------------------------------------------------------------------
 CẤP 3 — SAU MUA HÀNG: CHĂM SÓC KHÁCH & CỘNG ĐỒNG
 --------------------------------------------------------------------------------
@@ -256,10 +273,11 @@ CẤP 3 — SAU MUA HÀNG: CHĂM SÓC KHÁCH & CỘNG ĐỒNG
 CẤP 4 — QUẢN TRỊ VẬN HÀNH
 --------------------------------------------------------------------------------
 
-4.1  Phân quyền 3 vai trò + 8 khu vực quyền
+4.1  Phân quyền 3 vai trò + 9 khu vực quyền
      Chủ cửa hàng (toàn quyền), Nhân viên (theo khu vực được giao), Khách hàng.
-     8 khu vực: Đơn hàng · Sản phẩm · Kho · Khuyến mại · Đánh giá · Báo cáo ·
-     Tài chính · Hệ thống. Cả 154 đường dẫn quản trị đều gắn quyền.
+     9 khu vực: Đơn hàng · Sản phẩm · Kho · Khuyến mại · Đánh giá · Báo cáo ·
+     Tài chính · Hệ thống · Hỗ trợ khách hàng. Cả 164 đường dẫn quản trị đều gắn
+     quyền.
      → app/Enums/{UserRole, Quyen}, Middleware/{EnsureUserHasRole, CoQuyen}
 
 4.2  Sản phẩm & danh mục
@@ -270,11 +288,23 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
      → Admin/ProductController, Admin/CategoryController,
        Services/Product/*, Services/Media/ImageStore
 
-4.3  Đơn hàng
-     Lọc, xem, đổi trạng thái theo máy trạng thái (không nhảy bước), cập nhật
-     thanh toán, ghi chú nội bộ, sửa thông tin giao, IN phiếu soạn hàng (không
-     giá) và phiếu giao hàng, điểm rủi ro, tạo / huỷ vận đơn GHN bằng tay.
-     → Admin/OrderController, app/Enums/OrderStatus, Services/Shipping/GHNOrderService
+4.3  Đơn hàng (lab08 — Admin xử lý đơn hàng)
+     - Tab theo trạng thái (Chờ xác nhận, Đã xác nhận, Đang chuẩn bị, Đang giao,
+       Đã giao, Đã huỷ) kèm SỐ ĐẾM; số trên tab đi theo bộ lọc đang chọn.
+     - Tìm theo mã đơn, số điện thoại, tên người nhận, MÃ VẬN ĐƠN GHN, TÊN SẢN
+       PHẨM; lọc theo tình trạng trả tiền, phương thức thanh toán (COD / MoMo /
+       trả góp), trạng thái vận chuyển GHN, có / chưa có vận đơn, khoảng ngày
+       (giờ Việt Nam); sắp xếp theo mã, tiền, trạng thái, ngày; chọn 20 / 50 /
+       100 đơn mỗi trang; cột sản phẩm và trạng thái vận chuyển ngay trong bảng.
+     - Đổi trạng thái theo máy trạng thái (không nhảy bước). Đơn ĐANG GIAO KHÔNG
+       HUỶ ĐƯỢC; chỉ ghi nhận "Hoàn hàng (giao không thành công)" với lý do bắt
+       buộc, và nếu đi GHN thì phải chờ GHN báo hàng đã hoàn về cửa hàng. Hoàn
+       hàng trả kho, trả mã, trả điểm như huỷ.
+     - Cập nhật thanh toán, ghi chú nội bộ, sửa thông tin giao, in phiếu soạn
+       hàng (không giá) và phiếu giao hàng, điểm rủi ro, tạo / huỷ vận đơn GHN,
+       nút "Nhắn tin" mở khung chat với khách của đơn.
+     → Admin/OrderController, app/Enums/OrderStatus, Services/Order/OrderService,
+       Services/Shipping/GHNOrderService
 
 4.4  Đồng bộ vận đơn GHN tự động mỗi 30 phút, tự ghi nhận COD đã thu
      → Services/Shipping/GhnStatusSync, lệnh ghn:dong-bo
@@ -317,11 +347,26 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
 4.10 Hạng thành viên (Mầm, Lá, Hoa, Vườn, Rừng) — cấu hình trong bảng
      → Admin/MemberTierController, Services/Loyalty/*
 
-4.11 Khách hàng & quản trị viên
-     Hồ sơ khách ("đã chi" cùng định nghĩa với danh sách), KHOÁ tài khoản (có lý
-     do) thay vì xoá, đổi vai trò với 3 chốt chặn (không tự đổi vai trò / tự khoá
-     chính mình, luôn còn ít nhất một quản trị viên dùng được, ghi nhật ký).
-     → Admin/UserController, Middleware/EnsureUserIsNotLocked
+4.11 Quản lý người dùng (lab08)
+     - Danh sách có tìm theo tên / email, lọc vai trò, lọc đã / chưa xác thực,
+       sắp xếp; hồ sơ khách ("đã chi" cùng định nghĩa với danh sách).
+     - THÊM người dùng (tên, email, mật khẩu đủ mạnh + nhập lại, vai trò), SỬA
+       (tên, email, vai trò — đổi email thì phải xác thực lại), XOÁ (dùng chung
+       luật xoá tài khoản: không xoá khi còn đơn dở dang, không xoá admin cuối
+       cùng, không tự xoá mình; đơn cũ được giữ).
+     - KHOÁ tài khoản (có lý do) — khuyến khích thay cho xoá; đổi vai trò với 3
+       chốt chặn (không tự đổi vai trò / tự khoá chính mình, luôn còn ít nhất
+       một quản trị viên dùng được, ghi nhật ký). Mọi thay đổi vào nhật ký.
+     → Admin/UserController, Services/Auth/AccountDeleter,
+       Middleware/EnsureUserIsNotLocked
+
+4.17 Hỗ trợ khách hàng bằng tin nhắn (lab07 — phía quản trị)
+     Khung chat nổi trong trang quản trị (không mất khi chuyển trang): danh sách
+     khách đã nhắn kèm tin cuối và số chưa đọc, ô tìm khách, xem và trả lời từng
+     hội thoại, tự cập nhật (hội thoại 3 giây, danh sách 6 giây, số chưa đọc 20
+     giây); mở thẳng hội thoại từ trang hồ sơ khách hoặc trang đơn hàng.
+     → Admin/ChatController, components/admin/chat-popup.blade.php,
+       resources/js/admin/live-chat.js
 
 4.12 Kiểm duyệt Góc cây: duyệt / từ chối / ẩn / xoá bài, xử lý báo cáo
      → Admin/CommunityModerationController, Services/Community/CommunityReports
@@ -363,11 +408,23 @@ CẤP 5 — PHÂN TÍCH & BÁO CÁO
      Biểu đồ SVG vẽ ở máy chủ, màu chọn theo thuật toán an toàn mù màu.
      → Admin/{AnalyticsController, AnalyticsPagesController}, Services/Analytics/*
 
-5.3  Xuất báo cáo 5 định dạng: CSV, XLSX (mỗi phần một trang tính), JSON,
+5.3  BÁO CÁO DOANH THU (lab08 — Admin quản lý báo cáo), 2 trang dạng tab:
+     - Bảng số liệu (/admin/bao-cao): tổng số đơn, tổng số khách hàng, doanh
+       thu, doanh thu thuần; doanh thu theo danh mục (số lượng, số đơn, tỉ lệ),
+       theo phương thức thanh toán, theo năm, tháng, ngày (kèm cột đã hoàn,
+       thuần).
+     - Biểu đồ (/admin/bao-cao/bieu-do): theo danh mục, 30 ngày gần nhất, 12
+       tháng gần nhất, theo năm, theo phương thức thanh toán — vẽ SVG ở máy chủ
+       thay cho Chart.js tải từ CDN như bài mẫu (không phụ thuộc mạng ngoài).
+     - CÙNG định nghĩa doanh thu với trang Phân tích (đơn đã giao, trừ tiền hoàn,
+       cộng tiền bù đổi hàng, gom ngày theo giờ Việt Nam).
+     → Admin/ReportController, Services/Analytics/RevenueReport
+
+5.4  Xuất báo cáo 5 định dạng: CSV, XLSX (mỗi phần một trang tính), JSON,
      HTML, PDF (đủ dấu tiếng Việt); chọn phần muốn xuất.
      → Services/Analytics/{ReportExporter, ReportSections, Export/*}
 
-5.4  Báo cáo tồn kho, báo cáo cước giao hàng cửa hàng thật sự trả
+5.5  Báo cáo tồn kho, báo cáo cước giao hàng cửa hàng thật sự trả
      → Services/Analytics/InventoryReport
 
 --------------------------------------------------------------------------------
@@ -580,7 +637,12 @@ C17. Hiệu ứng mùa vụ / cảm xúc (Seasonal Framing)
     - Theme Tết, Noel, Valentine có hiệu ứng động; trang sự kiện theo dịp lễ
     → Services/Theme/ThemeRegistry, Shop/EventController
 
-C18. Niềm tin (Trust Signals)
+C18. Giảm lo âu trước khi mua (Reassurance) — có người thật trả lời
+    - Khách hỏi nhân viên ngay trên trang (livechat), thấy số tin chưa đọc và
+      nhận thông báo khi cửa hàng trả lời; ngoài giờ có Trợ lý AI trả lời ngay
+    → Services/Chat/LiveChat, Services/AI/ShoppingAdvisor
+
+C19. Niềm tin (Trust Signals)
     - Cam kết dịch vụ, chính sách đổi trả, trạng thái kiện hàng GHN thật, dòng
       thời gian đơn hàng, thư xác nhận đơn không nói dối
     → Services/Shop/ServiceCommitments, components/order/timeline
@@ -606,12 +668,16 @@ D1. Xác thực & tài khoản
 
 D2. Phân quyền
     - Vai trò (role:admin,staff) + quyền theo khu vực (quyen:...) trên TỪNG route
-      quản trị; đã kiểm: 154/154 route có quyền
+      quản trị; đã kiểm: 164/164 route có quyền
     - Ba chốt chặn khi đổi vai trò; thanh toán và hoàn tiền cần quyền tài chính
     - Kiểm CHỦ SỞ HỮU mọi tài nguyên của khách: địa chỉ, giỏ, đơn, nhật ký, thông
       báo, đánh giá, bài Góc cây (tìm theo user_id rồi mới findOrFail → trả 404,
       không xác nhận hộ tài nguyên có tồn tại)
     - "Vé xem đơn" của khách vãng lai gắn với phiên, mất khi có người đăng nhập
+    - Tin nhắn: khách chỉ đọc được hội thoại của chính mình (không có tham số
+      id nào để đoán); nhân viên chỉ nhắn với tài khoản khách hàng; nội dung
+      hiện bằng textContent / {{ }} (bài mẫu dùng innerHTML là lỗ hổng XSS);
+      tối đa 1000 ký tự, giới hạn tần suất gửi và tải
     - Nhật ký cá nhân là dữ liệu RIÊNG TƯ: không bộ máy gợi ý / phân tích / AI
       nào được đọc (có bài kiểm thử riêng)
 
@@ -668,9 +734,9 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1275 bài / 4688 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1305 bài / 4815 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
-    Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
+    Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,
     Shipping, Smoke.
 E2. Bài quét 5xx: mở MỌI đường dẫn GET (kể cả có tham số) để bắt lỗi 500.
@@ -714,7 +780,7 @@ PHẦN G. CƠ SỞ DỮ LIỆU (khoảng 70 bảng, nhóm theo miền)
 
   Người dùng   : users, sessions, password_reset_tokens,
                  email_verification_codes, addresses, user_events,
-                 user_notifications, activity_logs
+                 user_notifications, activity_logs, messages (tin nhắn)
   Danh mục     : categories, products, product_variants, product_images,
                  product_blocks, product_traits, plant_taxa, tax_classes
   Bán hàng     : carts, cart_items, orders, order_items, order_status_events,

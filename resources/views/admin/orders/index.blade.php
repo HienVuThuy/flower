@@ -34,7 +34,7 @@
 
     <x-admin.filter-bar
         :action="route('admin.orders.index')"
-        placeholder="Tìm mã đơn, số điện thoại hoặc tên người nhận…"
+        placeholder="Tìm mã đơn, SĐT, tên người nhận, mã vận đơn GHN hoặc tên sản phẩm…"
         :total="$orders->total()"
     >
         @if($currentStatus)
@@ -48,6 +48,20 @@
             <option value="refunded" @selected(request('payment') === 'refunded')>Đã hoàn tiền</option>
         </select>
 
+        <select name="phuong_thuc" class="form-select" aria-label="Lọc theo phương thức thanh toán">
+            <option value="">Mọi phương thức</option>
+            @foreach($phuongThuc as $pt)
+                <option value="{{ $pt->value }}" @selected(request('phuong_thuc') === $pt->value)>{{ $pt->label() }}</option>
+            @endforeach
+        </select>
+
+        <select name="van_chuyen" class="form-select" aria-label="Lọc theo trạng thái vận chuyển">
+            <option value="">Mọi trạng thái vận chuyển</option>
+            @foreach($vanChuyen as $vc)
+                <option value="{{ $vc->value }}" @selected(request('van_chuyen') === $vc->value)>{{ $vc->label() }}</option>
+            @endforeach
+        </select>
+
         <select name="van_don" class="form-select" aria-label="Lọc theo vận đơn">
             <option value="">Mọi tình trạng vận đơn</option>
             <option value="cho-tao" @selected(request('van_don') === 'cho-tao')>Chờ tạo vận đơn</option>
@@ -58,7 +72,15 @@
                class="form-control" style="width:auto" aria-label="Từ ngày">
         <input type="date" name="den_ngay" value="{{ request('den_ngay') }}"
                class="form-control" style="width:auto" aria-label="Đến ngày">
+
+        <select name="moi_trang" class="form-select" style="width:auto" aria-label="Số đơn mỗi trang">
+            @foreach([20, 50, 100] as $n)
+                <option value="{{ $n }}" @selected((int) request('moi_trang', 20) === $n)>{{ $n }} / trang</option>
+            @endforeach
+        </select>
     </x-admin.filter-bar>
+
+    <p class="admin-page-subtitle small">Số trên từng tab đếm theo bộ lọc đang chọn. Đơn đang giao không huỷ được — chỉ ghi nhận hoàn hàng khi hàng đã về cửa hàng.</p>
 
     <div class="admin-panel">
 
@@ -66,7 +88,7 @@
 
             <div class="p-4 text-center admin-page-subtitle">
                 <p class="mb-0">
-                    @if(request()->hasAny(['q', 'payment', 'van_don', 'hoan_tien', 'tu_ngay', 'den_ngay']))
+                    @if(request()->hasAny(['q', 'payment', 'phuong_thuc', 'van_chuyen', 'van_don', 'hoan_tien', 'tu_ngay', 'den_ngay']))
                         Không có đơn nào khớp với bộ lọc.
                         <a href="{{ route('admin.orders.index') }}" class="ms-1">Xoá lọc</a>
                     @elseif($currentStatus)
@@ -115,7 +137,12 @@
                                     <div class="admin-page-subtitle">{{ $order->recipient_phone }}</div>
                                 </td>
 
-                                <td>{{ $order->items_count }} dòng</td>
+                                <td>
+                                    {{ $order->items->first()?->product_name }}
+                                    @if($order->items_count > 1)
+                                        <div class="admin-page-subtitle">và {{ $order->items_count - 1 }} món khác</div>
+                                    @endif
+                                </td>
 
                                 <td class="fw-bold">
                                     <x-site.money :amount="(float) $order->grand_total" />
@@ -132,6 +159,9 @@
                                     <span class="status-pill status-pill--{{ $order->status->badge() }}">
                                         {{ $order->status->label() }}
                                     </span>
+                                    @if($order->shipping_status)
+                                        <div class="admin-page-subtitle">{{ \App\Enums\ShippingStatus::tryFrom($order->shipping_status)?->label() ?? $order->shipping_status }}</div>
+                                    @endif
                                 </td>
 
                                 <td><x-site.time :at="$order->created_at" format="d/m/Y H:i" /></td>

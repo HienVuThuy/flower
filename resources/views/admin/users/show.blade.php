@@ -24,7 +24,17 @@
         </p>
     </div>
 
-    <a data-admin-link href="{{ route('admin.users.index') }}" class="btn btn-outline-admin">Về danh sách</a>
+    <div class="d-flex gap-2 flex-wrap">
+        @can('ho-tro')
+            @if($user->isCustomer())
+                <button type="button" class="btn btn-outline-admin" data-chat-mo="{{ $user->id }}">Nhắn tin</button>
+            @endif
+        @endcan
+        @can('he-thong')
+            <a data-admin-link href="{{ route('admin.users.edit', $user) }}" class="btn btn-outline-admin">Sửa</a>
+        @endcan
+        <a data-admin-link href="{{ route('admin.users.index') }}" class="btn btn-outline-admin">Về danh sách</a>
+    </div>
 </div>
 
 <div class="row g-3 mb-4">

@@ -37,6 +37,7 @@ enum UserRole: string
                 Quyen::Kho,
                 Quyen::DanhGia,
                 Quyen::BaoCao,
+                Quyen::HoTro,
             ],
 
             self::Customer => [],

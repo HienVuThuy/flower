@@ -52,6 +52,10 @@ class UserNotification extends Model
 
     public function duongDan(): string
     {
+        if ($this->type === NotificationType::TinNhan) {
+            return route('shop.chat.index');
+        }
+
         if (! $this->community_post_id) {
             return route('shop.community.index');
         }

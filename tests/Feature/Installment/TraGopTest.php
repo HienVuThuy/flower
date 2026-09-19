@@ -266,9 +266,10 @@ class TraGopTest extends TestCase
             'subtotal' => '1', 'discount_total' => '0', 'shipping_fee' => '0', 'coupon_discount' => '0', 'grand_total' => '1',
         ]);
         $dv = app(OrderService::class);
-        foreach ([OrderStatus::Confirmed, OrderStatus::Preparing, OrderStatus::Shipping, OrderStatus::Cancelled] as $b) {
+        foreach ([OrderStatus::Confirmed, OrderStatus::Preparing, OrderStatus::Shipping] as $b) {
             $dv->changeStatus($o->fresh(), $b);
         }
+        $dv->changeStatus($o->fresh(), OrderStatus::Cancelled, 'khách từ chối nhận', hoanHang: true);
 
         $tinDung = app(CreditScore::class)->cua($u);
         $this->assertSame(60, $tinDung['diem']);
