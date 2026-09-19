@@ -212,25 +212,6 @@ class ProductGiftController extends Controller
             throw ValidationException::withMessages(['gift_variant_id' => 'Quy cách không thuộc sản phẩm đã chọn làm quà.']);
         }
 
-        $sp = Product::findOrFail($productId);
-        $qc = $variantId ? ProductVariant::find($variantId) : null;
-
-        $vat = GiftItem::query()
-            ->where('product_id', $productId)
-            ->when($variantId !== null, fn ($q) => $q->where('product_variant_id', $variantId), fn ($q) => $q->whereNull('product_variant_id'))
-            ->first();
-
-        if ($vat === null) {
-            $vat = GiftItem::create([
-                'name' => $sp->name . ($qc ? ' — ' . $qc->name : ''),
-                'kind' => ($sp->product_type?->value ?? null) === 'plant' ? GiftKind::Cay : GiftKind::DoVat,
-                'product_id' => $productId,
-                'product_variant_id' => $variantId,
-                'value' => $giaTri,
-                'is_active' => true,
-            ]);
-        }
-
-        return $vat;
+        return GiftItem::tuSanPham(Product::findOrFail($productId), $variantId, $giaTri);
     }
 }

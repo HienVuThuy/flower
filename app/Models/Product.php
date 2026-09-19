@@ -126,7 +126,7 @@ class Product extends Model
     public function promotions(): BelongsToMany
     {
         return $this->belongsToMany(Promotion::class, 'promotion_product')
-            ->withPivot(['discount_type', 'discount_value', 'promotional_price'])
+            ->withPivot(['discount_type', 'discount_value', 'promotional_price', 'gift_item_id', 'gift_quantity'])
             ->withTimestamps();
     }
 

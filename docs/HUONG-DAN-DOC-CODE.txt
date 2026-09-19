@@ -1085,6 +1085,12 @@ LUỒNG 25. Chương trình khuyến mại "Tặng quà" và nhãn trên thẻ s
     min_order_amount, min_member_tier_id, first_order_only, per_user_limit
     total_limit, used_count               tổng suất và số suất đã phát
   order_items.gift_promotion_id: dòng quà 0đ thuộc chương trình nào.
+  promotion_product (bảng nối): mỗi dòng sản phẩm có ưu đãi riêng —
+    discount_type   null = theo chương trình; percent / fixed_amount /
+                    fixed_price = mức giảm khác; tang_qua = tặng quà
+    discount_value  mức giảm riêng;  gift_item_id, gift_quantity  quà riêng
+  Promotion::kieuCho($pivot) trả ưu đãi THẬT của một dòng (riêng, không có thì
+  theo chương trình) — PricingService chỉ giảm giá dòng có kieuCho() là giảm giá.
 
   QUẢN TRỊ
   1. /admin/promotions/create → Admin\PromotionController@create
@@ -1093,19 +1099,28 @@ LUỒNG 25. Chương trình khuyến mại "Tặng quà" và nhãn trên thẻ s
   2. POST → StorePromotionRequest: luật 'exclude_unless:type,tang_qua' — ô quà
      chỉ được kiểm (và lưu) khi là Tặng quà; đã phát quà thì không đổi sang giảm
      giá. PromotionController::chuanHoa() xoá điều kiện quà khi là giảm giá.
-  3. Trang sửa: chương trình Tặng quà thì bảng sản phẩm thành "Sản phẩm điều
-     kiện" (không có cột ghi đè giá). destroy() chặn xoá khi used_count > 0.
+  3. Trang sửa: bảng "Sản phẩm áp dụng và ưu đãi từng sản phẩm"
+     (resources/views/admin/promotions/_dong-san-pham.blade.php cho mỗi dòng,
+     resources/js/admin/promotion-products.js: thêm dòng, đổi ưu đãi, tính cột
+     Kết quả). Cột quà có "vp:ID" (vật phẩm quà) và "sp:ID[:quy cách]" (sản phẩm
+     đang bán) — PromotionController::vatPhamQua() đổi "sp:" thành vật phẩm quà
+     bằng GiftItem::tuSanPham() (dùng chung với trang Quà kèm sản phẩm).
+     destroy() chặn xoá khi used_count > 0.
 
   KHI KHÁCH MUA — app/Services/Gift/GiftResolver.php
     khuyenMaiQua()   các chương trình Tặng quà đang chạy (nạp một lần)
-    lyDoKhong()      vì sao đơn CHƯA được quà: hết suất, hết quà, thiếu sản phẩm
-                     của chương trình, chưa đủ tiền, chưa đủ hạng, không phải đơn
-                     đầu, đã nhận đủ lần; null = được quà
+    quaCua()         quà một chương trình mang lại cho giỏ: mỗi món có dòng
+                     tặng quà riêng → quà riêng (dong_cha = món đó); dòng dùng quà
+                     chung hoặc chương trình không gắn sản phẩm → MỘT quà chung
+    lyDoKhong()      vì sao đơn CHƯA được quà: hết suất, quaCua() rỗng, chưa đủ
+                     tiền, chưa đủ hạng, không phải đơn đầu, đã nhận đủ lần
     goiYMuaThem()    quà chỉ còn thiếu tiền → giỏ hàng hiện "Mua thêm X để nhận…"
                      (resources/views/components/cart/summary.blade.php)
     khuyenMaiQuaCho($product)  quà theo chương trình hiện ở trang sản phẩm
-  GiftGranter::tangChoDon() giữ suất bằng một câu UPDATE có điều kiện
-  (used_count < total_limit) rồi mới ghi dòng quà; huỷ đơn thì trả suất.
+  GiftGranter::tangChoDon() giữ suất MỘT lần cho mỗi chương trình trong đơn
+  (UPDATE có điều kiện used_count < total_limit) rồi mới ghi các dòng quà; không
+  ghi được món nào thì trả suất; huỷ đơn thì trả suất (distinct theo chương trình).
+  Chương trình mẫu: php artisan db:seed --class=ChuongTrinhKhuyenMaiMauSeeder
 
   NHÃN GÓC TRÊN TRÁI — resources/views/components/product/card.blade.php
     "Giảm X%"   $product->price()->isDiscounted()

@@ -8374,3 +8374,22 @@ có thanh bên.
   tính một lần mỗi request.
 - Giỏ hàng nhắc "Mua thêm X để nhận quà" chỉ khi quà đó CHỈ còn thiếu tiền —
   không gợi ý quà mà khách không đủ hạng hay đã nhận hết lượt.
+
+## QĐ-305. Ưu đãi riêng từng sản phẩm: giảm khác hoặc tặng quà riêng, trong cùng một chương trình
+
+- Ưu đãi của chương trình chỉ là MẶC ĐỊNH. Mỗi dòng ở bảng nối
+  `promotion_product` chọn: theo chương trình, mức giảm khác, hoặc tặng quà
+  riêng (`gift_item_id`, `gift_quantity`). `Promotion::kieuCho()` là chỗ duy
+  nhất quyết định ưu đãi thật của một dòng; giá chỉ giảm ở dòng giảm giá, dòng
+  tặng quà giữ giá gốc (cả tính giá lẫn sắp xếp theo giá bằng SQL).
+- Quà riêng có thể là vật phẩm quà hoặc một sản phẩm / quy cách đang bán (tự
+  thành vật phẩm quà dùng chung tồn kho, qua `GiftItem::tuSanPham()`).
+- Điều kiện nhận quà (đơn tối thiểu, hạng, đơn đầu, lượt mỗi tài khoản, tổng
+  suất) thuộc cấp CHƯƠNG TRÌNH và luôn lưu, kể cả chương trình mặc định là giảm
+  giá. Một đơn nhận nhiều quà của cùng chương trình vẫn chỉ tốn MỘT suất.
+- Quà chung của chương trình Tặng quà không còn bắt buộc (mọi dòng có thể có quà
+  riêng), nhưng không được bỏ quà chung khi còn dòng đang dựa vào nó; dòng tặng
+  quà không có quà riêng mà chương trình không có quà chung thì không lưu được.
+- Bỏ luật "đã phát quà thì không đổi sang giảm giá" của QĐ-304: chương trình
+  giảm giá giờ cũng phát quà, đơn cũ đã chụp tên chương trình và dòng quà.
+- Chương trình mẫu "Tuần lễ cây xanh" tạo bằng seeder, chạy lại không nhân đôi.

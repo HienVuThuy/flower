@@ -39,7 +39,7 @@ class PricingService
     private function bestPromotionFor(Product $product, string $base): ?Promotion
     {
         $candidates = $product->promotions
-            ->filter(fn (Promotion $p) => $p->isRunning() && $p->type->laGiamGia());
+            ->filter(fn (Promotion $p) => $p->isRunning() && $p->kieuCho($p->pivot)->laGiamGia());
 
         if ($candidates->isEmpty()) {
             return null;

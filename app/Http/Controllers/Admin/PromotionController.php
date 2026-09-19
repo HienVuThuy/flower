@@ -12,13 +12,16 @@ use App\Http\Requests\Admin\UpdatePromotionRequest;
 use App\Models\GiftItem;
 use App\Models\MemberTier;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use App\Services\Media\ImageStore;
 use App\Models\Promotion;
 use App\Services\Pricing\PricingService;
 use App\Services\Theme\ThemeRegistry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class PromotionController extends Controller
@@ -34,7 +37,7 @@ class PromotionController extends Controller
     public function index(Request $request): View
     {
         $promotions = Promotion::query()
-            ->withCount('products')
+            ->withCount(['products', 'products as dong_qua_count' => fn ($q) => $q->where('promotion_product.discount_type', PromotionType::TangQua->value)])
             ->with('giftItem:id,name')
             ->when($request->filled('q'), fn ($q) => $q
                 ->where('name', 'like', '%'.trim((string) $request->query('q')).'%'))
@@ -78,10 +81,15 @@ class PromotionController extends Controller
 
     public function edit(Promotion $promotion): View
     {
-        $promotion->load(['products.category']);
+        $promotion->load(['products.category', 'giftItem']);
 
         return view('admin.promotions.edit', array_merge($this->formData(), [
             'promotion' => $promotion,
+            'sanPhamLamQua' => Product::query()
+                ->whereIn('status', ['active', 'out_of_stock'])
+                ->with(['variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+                ->orderBy('name')
+                ->get(['id', 'name']),
             'availableProducts' => Product::query()
                 ->with('category')
                 ->whereNotIn('id', $promotion->products->pluck('id'))
@@ -126,49 +134,74 @@ class PromotionController extends Controller
         Promotion $promotion
     ): RedirectResponse {
         $rows = $request->validated()['products'] ?? [];
+        $basePrices = Product::whereIn('id', array_column($rows, 'id'))->pluck('base_price', 'id');
 
-        if ($promotion->laTangQua()) {
-            $promotion->products()->sync(collect($rows)->mapWithKeys(fn ($row) => [$row['id'] => [
-                'discount_type' => null,
-                'discount_value' => null,
-                'promotional_price' => null,
-            ]])->all());
+        $payload = DB::transaction(function () use ($rows, $promotion, $basePrices) {
+            $payload = [];
 
-            return redirect()
-                ->route('admin.promotions.edit', $promotion)
-                ->with('success', 'Đã cập nhật danh sách sản phẩm của chương trình.');
-        }
+            foreach ($rows as $i => $row) {
+                $rieng = ! empty($row['discount_type']) ? PromotionType::from($row['discount_type']) : null;
+                $kieu = $rieng ?? $promotion->type;
 
-        $productIds = array_column($rows, 'id');
-        $basePrices = Product::whereIn('id', $productIds)->pluck('base_price', 'id');
+                if ($kieu === PromotionType::TangQua) {
+                    $payload[$row['id']] = [
+                        'discount_type' => $rieng?->value,
+                        'discount_value' => null,
+                        'promotional_price' => null,
+                        'gift_item_id' => $this->vatPhamQua($row['qua'] ?? null, "products.{$i}.qua"),
+                        'gift_quantity' => $row['gift_quantity'] ?? null,
+                    ];
 
-        $payload = [];
+                    continue;
+                }
 
-        foreach ($rows as $row) {
-            $type = ! empty($row['discount_type'])
-                ? PromotionType::from($row['discount_type'])
-                : $promotion->type;
+                $coMucRieng = ($row['discount_value'] ?? '') !== '' && $row['discount_value'] !== null;
 
-            $value = ($row['discount_value'] ?? null) !== null && $row['discount_value'] !== ''
-                ? (float) $row['discount_value']
-                : (float) $promotion->discount_value;
+                $payload[$row['id']] = [
+                    'discount_type' => $rieng?->value,
+                    'discount_value' => $coMucRieng ? $row['discount_value'] : null,
+                    'promotional_price' => $this->pricing->preview(
+                        $basePrices[$row['id']] ?? null,
+                        $kieu,
+                        $coMucRieng ? (float) $row['discount_value'] : (float) $promotion->discount_value,
+                    ),
+                    'gift_item_id' => null,
+                    'gift_quantity' => null,
+                ];
+            }
 
-            $payload[$row['id']] = [
-                'discount_type' => $row['discount_type'] ?: null,
-                'discount_value' => ($row['discount_value'] ?? '') !== '' ? $row['discount_value'] : null,
-                'promotional_price' => $this->pricing->preview(
-                    $basePrices[$row['id']] ?? null,
-                    $type,
-                    $value
-                ),
-            ];
-        }
+            return $payload;
+        });
 
         $promotion->products()->sync($payload);
 
         return redirect()
             ->route('admin.promotions.edit', $promotion)
-            ->with('success', 'Đã cập nhật danh sách sản phẩm áp dụng.');
+            ->with('success', 'Đã cập nhật danh sách sản phẩm và ưu đãi từng sản phẩm.');
+    }
+
+    /** "vp:ID" = vật phẩm quà có sẵn, "sp:ID[:quy cách]" = lấy sản phẩm đang bán làm quà. */
+    private function vatPhamQua(?string $ma, string $o): ?int
+    {
+        if ($ma === null || $ma === '') {
+            return null;
+        }
+
+        $phan = explode(':', $ma);
+
+        if ($phan[0] === 'vp') {
+            return GiftItem::whereKey((int) $phan[1])->value('id')
+                ?? throw ValidationException::withMessages([$o => 'Vật phẩm quà không còn tồn tại.']);
+        }
+
+        $sp = Product::find((int) $phan[1]) ?? throw ValidationException::withMessages([$o => 'Sản phẩm làm quà không còn tồn tại.']);
+        $qc = isset($phan[2]) ? (int) $phan[2] : null;
+
+        if ($qc !== null && ! ProductVariant::whereKey($qc)->where('product_id', $sp->id)->exists()) {
+            throw ValidationException::withMessages([$o => 'Quy cách không thuộc sản phẩm đã chọn làm quà.']);
+        }
+
+        return GiftItem::tuSanPham($sp, $qc)->id;
     }
 
     public function destroy(Promotion $promotion): RedirectResponse
@@ -192,21 +225,13 @@ class PromotionController extends Controller
 
     private function chuanHoa(array $data, StorePromotionRequest $request): array
     {
-        if ($data['type'] === PromotionType::TangQua->value) {
-            $data['first_order_only'] = $request->boolean('first_order_only');
+        $data['first_order_only'] = $request->boolean('first_order_only');
 
+        if ($data['type'] === PromotionType::TangQua->value) {
             return $data;
         }
 
-        return $data + [
-            'gift_item_id' => null,
-            'gift_quantity' => 1,
-            'min_order_amount' => null,
-            'min_member_tier_id' => null,
-            'first_order_only' => false,
-            'per_user_limit' => null,
-            'total_limit' => null,
-        ];
+        return ['gift_item_id' => null, 'gift_quantity' => 1] + $data;
     }
 
     private function formData(): array

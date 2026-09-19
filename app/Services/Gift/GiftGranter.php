@@ -22,22 +22,28 @@ class GiftGranter
     public function tangChoDon(Order $order, CheckoutBasket $basket, ?User $user): array
     {
         $daTang = [];
+        $suat = [];
+        $daGhi = [];
 
         foreach ($this->resolver->choGio($basket, $user) as $dong) {
             $vat = $dong['item'];
             $soLuong = $dong['quantity'];
             $ct = $dong['campaign'];
 
-            if ($ct !== null && ! $this->giuSuat($ct)) {
-                continue;
+            if ($ct !== null) {
+                $suat[$ct->id] ??= $this->giuSuat($ct);
+
+                if (! $suat[$ct->id]) {
+                    continue;
+                }
             }
 
             if (! $this->truKho($vat, $soLuong)) {
-                if ($ct !== null) {
-                    $this->traSuatMot($ct->id);
-                }
-
                 continue;
+            }
+
+            if ($ct !== null) {
+                $daGhi[$ct->id] = true;
             }
 
             $order->items()->create([
@@ -62,6 +68,12 @@ class GiftGranter
             $daTang[] = $vat->name;
         }
 
+        foreach (array_keys(array_filter($suat)) as $id) {
+            if (! isset($daGhi[$id])) {
+                $this->traSuatMot($id);
+            }
+        }
+
         return $daTang;
     }
 
@@ -70,6 +82,7 @@ class GiftGranter
         $order->items()
             ->where('is_gift', true)
             ->whereNotNull('gift_promotion_id')
+            ->distinct()
             ->pluck('gift_promotion_id')
             ->each(fn ($id) => $this->traSuatMot((int) $id));
     }

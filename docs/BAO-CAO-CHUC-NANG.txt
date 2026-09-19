@@ -55,10 +55,10 @@ A3. Kiến trúc (chia lớp rõ ràng)
 A4. Quy mô (đếm từ mã nguồn)
   - 288 đường dẫn (route), trong đó 156 thuộc khu quản trị
   - 70 controller, 138 lớp service, 57 model, 62 enum
-  - 92 migration tạo khoảng 70 bảng
-  - 239 view Blade, 43 tệp JavaScript, 47 tệp CSS
+  - 93 migration tạo khoảng 70 bảng
+  - 240 view Blade, 44 tệp JavaScript, 47 tệp CSS
   - 15 lệnh artisan tự viết, 5 tác vụ chạy theo lịch
-  - 133 tệp kiểm thử, 1309 bài kiểm thử, 4844 phép khẳng định
+  - 133 tệp kiểm thử, 1312 bài kiểm thử, 4872 phép khẳng định
   - Tài liệu: docs/ (quyết định thiết kế 301 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
@@ -335,13 +335,22 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
 
 4.8  Khuyến mại — MỘT trang, 4 tab: Chương trình khuyến mại · Quà kèm sản
      phẩm · Mã giảm giá · Hạng thành viên
-     Chương trình khuyến mại có 2 hình thức ưu đãi:
-     - GIẢM GIÁ: % / số tiền / giá cố định, mức riêng cho từng sản phẩm; chọn
-       chương trình cho GIÁ THẤP NHẤT khi chồng nhau (không cộng dồn).
-     - TẶNG QUÀ (thay cho mục "Quà theo chương trình" cũ): chọn vật phẩm quà và
-       số lượng mỗi đơn; điều kiện đơn từ bao nhiêu tiền, từ hạng thành viên,
-       chỉ đơn đầu tiên, mỗi tài khoản tối đa N lần, tổng số suất; nếu gắn sản
-       phẩm thì đơn phải có một trong số đó. Giữ suất nguyên tử, huỷ đơn trả suất.
+     Chương trình khuyến mại có ưu đãi MẶC ĐỊNH (giảm %, giảm tiền, giá cố định
+     hoặc tặng quà) và bảng "Sản phẩm áp dụng" — MỖI SẢN PHẨM chọn được ưu đãi
+     riêng: theo chương trình, mức giảm khác, hoặc TẶNG QUÀ RIÊNG (một vật phẩm
+     quà, hoặc lấy luôn một sản phẩm / quy cách đang bán làm quà — trừ tồn kho
+     của sản phẩm đó; số quà mỗi đơn tuỳ dòng). Ví dụ trong cùng một chương
+     trình: cây cảnh giảm 10%, lan giảm 15%, Monstera tặng phân bón, hoa hồng
+     tặng 2 thiệp.
+     - Giảm giá: chọn chương trình cho GIÁ THẤP NHẤT khi chồng nhau (không cộng
+       dồn); sản phẩm được tặng quà thì giữ giá gốc.
+     - Tặng quà: điều kiện nhận quà chung cho cả chương trình — đơn từ bao nhiêu
+       tiền, từ hạng thành viên, chỉ đơn đầu tiên, mỗi tài khoản tối đa N lần,
+       tổng số suất. Mỗi đơn chỉ tính MỘT suất dù nhận nhiều quà; giữ suất
+       nguyên tử, huỷ đơn trả suất. Quà riêng nằm ngay dưới món sinh ra nó.
+       Chương trình tặng quà không gắn sản phẩm thì tặng quà chung cho mọi đơn.
+     Chương trình mẫu: "Tuần lễ cây xanh" (database/seeders/
+     ChuongTrinhKhuyenMaiMauSeeder.php).
      Chung cho cả hai: khung giờ trong ngày (kể cả qua nửa đêm) và thứ trong
      tuần; trạng thái tự bật/tắt theo lịch; trang sự kiện (landing page) và
      banner. Chương trình đã phát quà không xoá được, không đổi sang giảm giá.
@@ -752,7 +761,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1309 bài / 4844 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1312 bài / 4872 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,

@@ -15,8 +15,8 @@
                 {{ $promotion->effectiveStatus()->label() }}
             </span>
             <span class="ms-2">{{ $promotion->type->label() }} · {{ $promotion->products->count() }} sản phẩm</span>
-            @if($laQua && $promotion->giftItem)
-                <span class="ms-2">· Tặng {{ $promotion->gift_quantity }} × {{ $promotion->giftItem->name }}, đã phát {{ $promotion->used_count }}{{ $promotion->total_limit !== null ? '/' . $promotion->total_limit : '' }} suất</span>
+            @if($promotion->used_count > 0 || $laQua)
+                <span class="ms-2">· Đã phát quà cho {{ $promotion->used_count }}{{ $promotion->total_limit !== null ? '/' . $promotion->total_limit : '' }} đơn</span>
             @endif
         </p>
     </div>
@@ -38,7 +38,21 @@
 
 </form>
 
-<form action="{{ route('admin.promotions.sync-products', $promotion) }}" method="POST" id="productsForm">
+@php
+    $tienTe = [
+        'code' => \App\Services\Shop\Money::code(),
+        'symbol' => \App\Services\Shop\Money::symbol(),
+        'position' => \App\Services\Shop\Money::position(),
+        'decimals' => \App\Services\Shop\Money::decimals(),
+    ];
+@endphp
+
+<form action="{{ route('admin.promotions.sync-products', $promotion) }}" method="POST" id="productsForm"
+      data-km-san-pham
+      data-kieu="{{ $promotion->type->value }}"
+      data-muc="{{ (float) $promotion->discount_value }}"
+      data-qua-chung="{{ $promotion->giftItem ? $promotion->gift_quantity . ' × ' . $promotion->giftItem->name : '' }}"
+      data-tien-te="{{ json_encode($tienTe) }}">
 
     @csrf
     @method('PUT')
@@ -47,26 +61,25 @@
 
         <div class="admin-panel__header">
             <div>
-                @if($laQua)
-                    <h2 class="form-panel__title mb-1">Sản phẩm điều kiện</h2>
-                    <p class="admin-page-subtitle mb-0">
-                        Có sản phẩm thì đơn phải chứa ít nhất một sản phẩm trong danh sách mới được quà.
-                        Để trống thì mọi đơn đạt điều kiện đều được quà. Sản phẩm trong danh sách hiện nhãn "Có quà".
-                    </p>
-                @else
-                    <h2 class="form-panel__title mb-1">Sản phẩm áp dụng</h2>
-                    <p class="admin-page-subtitle mb-0">
-                        Để trống cột ghi đè thì sản phẩm dùng mức chung của chương trình
-                        ({{ rtrim(rtrim(number_format($promotion->discount_value, 2, ',', '.'), '0'), ',') }}{{ $promotion->type->unit() }}).
-                    </p>
-                @endif
+                <h2 class="form-panel__title mb-1">Sản phẩm áp dụng và ưu đãi từng sản phẩm</h2>
+                <p class="admin-page-subtitle mb-0">
+                    Mỗi sản phẩm mặc định nhận ưu đãi của chương trình
+                    (<strong>{{ $laQua
+                        ? 'Tặng ' . ($promotion->giftItem ? $promotion->gift_quantity . ' × ' . $promotion->giftItem->name : 'quà — chưa chọn quà chung')
+                        : rtrim(rtrim(number_format($promotion->discount_value, 2, ',', '.'), '0'), ',') . $promotion->type->unit() }}</strong>).
+                    Đổi cột "Ưu đãi" để sản phẩm đó được mức giảm khác, hoặc được <strong>tặng quà riêng</strong> thay vì giảm giá.
+                    Quà tặng theo điều kiện nhận quà của chương trình; mỗi đơn chỉ tính một suất dù có nhiều quà.
+                    @if($laQua)
+                        Chương trình tặng quà không gắn sản phẩm nào thì tặng quà chung cho mọi đơn đạt điều kiện.
+                    @endif
+                </p>
             </div>
         </div>
 
         <div class="admin-panel__body">
 
             <div class="d-flex gap-2 mb-3 flex-wrap">
-                <select id="productPicker" class="form-select" style="max-width: 420px;">
+                <select id="productPicker" class="form-select" style="max-width: 420px;" data-chon-san-pham>
                     <option value="">— Chọn sản phẩm để thêm —</option>
                     @foreach($availableProducts as $product)
                         <option
@@ -80,7 +93,7 @@
                     @endforeach
                 </select>
 
-                <button type="button" class="btn btn-secondary-brand" id="addProductBtn">
+                <button type="button" class="btn btn-secondary-brand" data-them-san-pham>
                     + Thêm vào chương trình
                 </button>
             </div>
@@ -92,75 +105,42 @@
                     <thead>
                         <tr>
                             <th>Sản phẩm</th>
-                            <th style="width: 130px;">Giá gốc</th>
-                            @unless($laQua)
-                                <th style="width: 160px;">Ghi đè kiểu</th>
-                                <th style="width: 130px;">Ghi đè mức</th>
-                                <th style="width: 140px;">Giá sau KM</th>
-                            @endunless
+                            <th style="width: 120px;">Giá gốc</th>
+                            <th style="width: 170px;">Ưu đãi</th>
+                            <th style="min-width: 260px;">Mức giảm / Quà tặng</th>
+                            <th style="width: 170px;">Kết quả</th>
                             <th style="width: 60px;"></th>
                         </tr>
                     </thead>
 
-                    <tbody id="promoProductsBody">
+                    <tbody data-dong-san-pham>
 
                     @foreach($promotion->products as $i => $product)
                         @php
                             $pivot = $product->pivot;
-                            $effType = $pivot->discount_type
-                                ? \App\Enums\PromotionType::from($pivot->discount_type)
-                                : $promotion->type;
-                            $effValue = $pivot->discount_value ?? $promotion->discount_value;
-                            $finalPrice = $pricing->preview($product->base_price, $effType, (float) $effValue);
+                            $kieuDong = $promotion->kieuCho($pivot);
+
+                            if ($kieuDong === \App\Enums\PromotionType::TangQua) {
+                                $vatDong = $pivot->gift_item_id ? $vatPham->firstWhere('id', $pivot->gift_item_id) : $promotion->giftItem;
+                                $ketQua = $vatDong ? 'Tặng ' . ($pivot->gift_quantity ?? $promotion->gift_quantity) . ' × ' . $vatDong->name : 'Chưa chọn quà';
+                            } else {
+                                $giaSau = $pricing->preview($product->base_price, $kieuDong, (float) ($pivot->discount_value ?? $promotion->discount_value));
+                                $ketQua = $giaSau !== null ? \App\Services\Shop\Money::format($giaSau) : '—';
+                            }
                         @endphp
 
-                        <tr data-row>
-                            <td>
-                                <input type="hidden" name="products[{{ $i }}][id]" value="{{ $product->id }}">
-                                <div class="fw-semibold">{{ $product->name }}</div>
-                                <small class="text-muted">{{ $product->category->name }}</small>
-                            </td>
-
-                            <td data-base-price="{{ $product->base_price }}">
-                                {{ $product->base_price !== null
-                                    ? \App\Services\Shop\Money::format($product->base_price)
-                                    : '—' }}
-                            </td>
-
-                            @unless($laQua)
-                            <td>
-                                <select name="products[{{ $i }}][discount_type]" class="form-select form-select-sm" data-type>
-                                    <option value="">Theo chương trình</option>
-                                    @foreach($kieuGiam as $type)
-                                        <option value="{{ $type->value }}" @selected($pivot->discount_type === $type->value)>
-                                            {{ $type->label() }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </td>
-
-                            <td>
-                                <input
-                                    type="number"
-                                    name="products[{{ $i }}][discount_value]"
-                                    value="{{ $pivot->discount_value !== null ? rtrim(rtrim($pivot->discount_value, '0'), '.') : '' }}"
-                                    min="0"
-                                    step="any"
-                                    class="form-control form-control-sm"
-                                    placeholder="—"
-                                    data-value
-                                >
-                            </td>
-
-                            <td class="fw-semibold text-accent" data-final>
-                                {{ $finalPrice !== null ? \App\Services\Shop\Money::format($finalPrice) : '—' }}
-                            </td>
-                            @endunless
-
-                            <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-danger" data-remove>Xóa</button>
-                            </td>
-                        </tr>
+                        @include('admin.promotions._dong-san-pham', [
+                            'i' => $i,
+                            'id' => $product->id,
+                            'ten' => $product->name,
+                            'danhMuc' => $product->category->name,
+                            'gia' => $product->base_price,
+                            'kieu' => $pivot->discount_type,
+                            'muc' => $pivot->discount_value,
+                            'qua' => $pivot->gift_item_id ? 'vp:' . $pivot->gift_item_id : null,
+                            'soQua' => $pivot->gift_quantity,
+                            'ketQua' => $ketQua,
+                        ])
                     @endforeach
 
                     </tbody>
@@ -169,7 +149,7 @@
 
             </div>
 
-            <div id="emptyProducts" class="{{ $promotion->products->isEmpty() ? '' : 'd-none' }}">
+            <div data-trong class="{{ $promotion->products->isEmpty() ? '' : 'd-none' }}">
                 <x-site.empty-state
                     title="Chưa có sản phẩm nào"
                     text="Chọn sản phẩm ở ô phía trên để thêm vào chương trình."
@@ -177,7 +157,7 @@
             </div>
 
             <div class="d-flex justify-content-end mt-3">
-                <button type="submit" class="btn btn-primary-brand px-4">Lưu danh sách sản phẩm</button>
+                <button type="submit" class="btn btn-primary-brand px-4">Lưu sản phẩm và ưu đãi</button>
             </div>
 
         </div>
@@ -186,133 +166,14 @@
 
 </form>
 
-<template id="promoRowTemplate">
-    <tr data-row>
-        <td>
-            <input type="hidden" name="products[__I__][id]" value="__ID__">
-            <div class="fw-semibold">__NAME__</div>
-            <small class="text-muted">__CATEGORY__</small>
-        </td>
-        <td data-base-price="__PRICE__">__PRICE_LABEL__</td>
-        @unless($laQua)
-        <td>
-            <select name="products[__I__][discount_type]" class="form-select form-select-sm" data-type>
-                <option value="">Theo chương trình</option>
-                @foreach($kieuGiam as $type)
-                    <option value="{{ $type->value }}">{{ $type->label() }}</option>
-                @endforeach
-            </select>
-        </td>
-        <td>
-            <input type="number" name="products[__I__][discount_value]" min="0" step="any"
-                   class="form-control form-control-sm" placeholder="—" data-value>
-        </td>
-        <td class="fw-semibold text-accent" data-final>—</td>
-        @endunless
-        <td class="text-end">
-            <button type="button" class="btn btn-sm btn-outline-danger" data-remove>Xóa</button>
-        </td>
-    </tr>
+<template data-mau-dong>
+    @include('admin.promotions._dong-san-pham', [
+        'i' => '__I__',
+        'id' => '__ID__',
+        'ten' => '__NAME__',
+        'danhMuc' => '__CATEGORY__',
+        'gia' => '__PRICE__',
+    ])
 </template>
-
-<script>
-(function () {
-    const body = document.getElementById('promoProductsBody');
-    const picker = document.getElementById('productPicker');
-    const tpl = document.getElementById('promoRowTemplate');
-    const emptyBox = document.getElementById('emptyProducts');
-
-    const promoType = @json($promotion->type->value);
-    const promoValue = @json((float) $promotion->discount_value);
-
-    let nextIndex = {{ $promotion->products->count() }};
-
-    const tienTe = {{ \Illuminate\Support\Js::from([
-        'code' => \App\Services\Shop\Money::code(),
-        'symbol' => \App\Services\Shop\Money::symbol(),
-        'position' => \App\Services\Shop\Money::position(),
-        'decimals' => \App\Services\Shop\Money::decimals(),
-    ]) }};
-
-    const fmt = (n) => {
-        const so = new Intl.NumberFormat(tienTe.code === 'USD' ? 'en-US' : 'vi-VN', {
-            minimumFractionDigits: tienTe.decimals,
-            maximumFractionDigits: tienTe.decimals,
-        }).format(n);
-
-        return tienTe.position === 'before' ? tienTe.symbol + so : so + tienTe.symbol;
-    };
-
-    function computeFinal(base, type, value) {
-        if (base === null || isNaN(base) || value === null || isNaN(value)) return null;
-
-        let final;
-        if (type === 'percent')           final = base - (base * value / 100);
-        else if (type === 'fixed_amount') final = base - value;
-        else if (type === 'fixed_price')  final = value;
-        else return null;
-
-        if (final < 0) final = 0;
-        return final > base ? base : final;
-    }
-
-    function refreshRow(row) {
-        if (!row.querySelector('[data-type]')) return;
-        const baseAttr = row.querySelector('[data-base-price]')?.dataset.basePrice;
-        const base = baseAttr === '' || baseAttr == null ? null : parseFloat(baseAttr);
-
-        const typeSel = row.querySelector('[data-type]').value;
-        const valInput = row.querySelector('[data-value]').value;
-
-        const type = typeSel || promoType;
-        const value = valInput !== '' ? parseFloat(valInput) : promoValue;
-
-        const final = computeFinal(base, type, value);
-        row.querySelector('[data-final]').textContent = final === null ? '—' : fmt(final);
-    }
-
-    function refreshAll() {
-        body.querySelectorAll('[data-row]').forEach(refreshRow);
-        emptyBox.classList.toggle('d-none', body.querySelectorAll('[data-row]').length > 0);
-    }
-
-    document.getElementById('addProductBtn').addEventListener('click', function () {
-        const opt = picker.selectedOptions[0];
-        if (!opt || !opt.value) return;
-
-        const price = opt.dataset.price;
-        const html = tpl.innerHTML
-            .replaceAll('__I__', nextIndex++)
-            .replaceAll('__ID__', opt.value)
-            .replaceAll('__NAME__', opt.dataset.name)
-            .replaceAll('__CATEGORY__', opt.dataset.category)
-            .replaceAll('__PRICE__', price ?? '')
-            .replaceAll('__PRICE_LABEL__', price ? fmt(parseFloat(price)) : '—');
-
-        body.insertAdjacentHTML('beforeend', html);
-        opt.remove();
-        picker.value = '';
-        refreshAll();
-    });
-
-    body.addEventListener('input', e => {
-        const row = e.target.closest('[data-row]');
-        if (row) refreshRow(row);
-    });
-
-    body.addEventListener('change', e => {
-        const row = e.target.closest('[data-row]');
-        if (row) refreshRow(row);
-    });
-
-    body.addEventListener('click', e => {
-        if (!e.target.matches('[data-remove]')) return;
-        e.target.closest('[data-row]').remove();
-        refreshAll();
-    });
-
-    refreshAll();
-})();
-</script>
 
 @endsection

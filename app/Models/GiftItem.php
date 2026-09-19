@@ -45,6 +45,25 @@ class GiftItem extends Model
         return $this->hasMany(Promotion::class);
     }
 
+    /** Vật phẩm quà ứng với một sản phẩm / quy cách đang bán — dùng lại nếu đã có. */
+    public static function tuSanPham(Product $sp, ?int $variantId = null, mixed $giaTri = null): self
+    {
+        $qc = $variantId ? ProductVariant::find($variantId) : null;
+
+        return self::query()
+            ->where('product_id', $sp->id)
+            ->when($variantId !== null, fn ($q) => $q->where('product_variant_id', $variantId), fn ($q) => $q->whereNull('product_variant_id'))
+            ->first()
+            ?? self::create([
+                'name' => $sp->name . ($qc ? ' — ' . $qc->name : ''),
+                'kind' => ($sp->product_type?->value ?? null) === 'plant' ? GiftKind::Cay : GiftKind::DoVat,
+                'product_id' => $sp->id,
+                'product_variant_id' => $variantId,
+                'value' => $giaTri,
+                'is_active' => true,
+            ]);
+    }
+
     public function laSanPham(): bool
     {
         return $this->product_id !== null;

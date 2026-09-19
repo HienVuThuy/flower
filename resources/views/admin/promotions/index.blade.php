@@ -101,11 +101,16 @@
 
                     <td>
                         @if($promotion->laTangQua())
-                            <span class="fw-semibold">Tặng {{ $promotion->gift_quantity }} × {{ $promotion->giftItem?->name ?? '—' }}</span>
-                            <small class="d-block text-muted">Đã phát {{ $promotion->used_count }}{{ $promotion->total_limit !== null ? '/' . $promotion->total_limit : '' }} suất</small>
+                            <span class="fw-semibold">Tặng {{ $promotion->giftItem ? $promotion->gift_quantity . ' × ' . $promotion->giftItem->name : 'quà riêng từng sản phẩm' }}</span>
                         @else
                             <span class="fw-semibold">{{ rtrim(rtrim(number_format($promotion->discount_value, 2, ',', '.'), '0'), ',') }}{{ $promotion->type->unit() }}</span>
                             <small class="d-block text-muted">{{ $promotion->type->label() }}</small>
+                        @endif
+                        @if($promotion->dong_qua_count > 0)
+                            <small class="d-block text-muted">{{ $promotion->dong_qua_count }} sản phẩm tặng quà riêng</small>
+                        @endif
+                        @if($promotion->laTangQua() || $promotion->dong_qua_count > 0)
+                            <small class="d-block text-muted">Đã phát quà {{ $promotion->used_count }}{{ $promotion->total_limit !== null ? '/' . $promotion->total_limit : '' }} đơn</small>
                         @endif
                     </td>
 

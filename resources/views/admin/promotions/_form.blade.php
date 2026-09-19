@@ -63,8 +63,9 @@
 
             <h2 class="form-panel__title">Hình thức ưu đãi</h2>
             <p class="form-panel__hint">
-                Giảm giá: áp cho các sản phẩm chọn ở phần bên dưới, từng sản phẩm vẫn ghi đè được mức riêng.
-                Tặng quà: đơn đạt điều kiện được thêm quà 0đ; nếu chọn sản phẩm thì đơn phải có một trong số đó.
+                Đây là ưu đãi MẶC ĐỊNH cho mọi sản phẩm của chương trình. Sau khi lưu, ở bảng sản phẩm bên dưới
+                từng sản phẩm vẫn đổi được: mức giảm khác, hoặc tặng một món quà riêng thay vì giảm giá.
+                Tặng quà mà không gắn sản phẩm nào thì mọi đơn đạt điều kiện đều được quà chung.
             </p>
 
             @php $typeOld = old('type', $promotion->type->value ?? 'percent'); @endphp
@@ -113,9 +114,9 @@
                 @endif
 
                 <div class="col-md-8">
-                    <label class="form-label" for="km-gift">Quà tặng <span class="text-accent">*</span></label>
+                    <label class="form-label" for="km-gift">Quà chung</label>
                     <select id="km-gift" name="gift_item_id" class="form-select @error('gift_item_id') is-invalid @enderror">
-                        <option value="">— Chọn quà —</option>
+                        <option value="">— Không có quà chung, chọn quà riêng từng sản phẩm —</option>
                         @foreach($vatPham as $vat)
                             <option value="{{ $vat->id }}" @selected((string) old('gift_item_id', $promotion->gift_item_id) === (string) $vat->id)>
                                 {{ $vat->name }}{{ $vat->is_active ? '' : ' (đang ngừng)' }}
@@ -133,6 +134,20 @@
                            value="{{ old('gift_quantity', $promotion->gift_quantity ?? 1) }}">
                     <x-form-error name="gift_quantity"/>
                 </div>
+
+            </div>
+
+        </div>
+
+        <div class="form-panel">
+
+            <h2 class="form-panel__title">Điều kiện nhận quà</h2>
+            <p class="form-panel__hint">
+                Áp cho mọi quà của chương trình — quà chung và quà riêng của từng sản phẩm.
+                Mỗi đơn chỉ tính một suất dù nhận nhiều quà. Chương trình chỉ giảm giá thì bỏ qua khung này.
+            </p>
+
+            <div class="row g-3">
 
                 <div class="col-md-6">
                     <label class="form-label" for="km-min-order">Đơn từ (đồng)</label>

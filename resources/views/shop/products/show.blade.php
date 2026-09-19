@@ -109,14 +109,19 @@
                         <summary class="product-gifts__title">
                             <x-site.icon name="gift" />
                             Quà theo chương trình
-                            <span class="product-gifts__names">{{ $quaChuongTrinh->map(fn ($km) => $km->giftItem->name)->implode(', ') }}</span>
+                            <span class="product-gifts__names">{{ $quaChuongTrinh->map(fn ($q) => $q['item']->name)->unique()->implode(', ') }}</span>
                         </summary>
                         <ul class="product-gifts__list list-unstyled mb-0 mt-2">
-                            @foreach($quaChuongTrinh as $km)
+                            @foreach($quaChuongTrinh as $q)
+                                @php $km = $q['khuyen_mai']; @endphp
                                 <li class="product-gifts__item">
-                                    <span class="product-gifts__icon"><x-site.icon name="gift" /></span>
+                                    @if($q['item']->product?->main_image)
+                                        <x-site.image :path="$q['item']->product->main_image" :alt="$q['item']->name" class="product-gifts__img" />
+                                    @else
+                                        <span class="product-gifts__icon"><x-site.icon name="gift" /></span>
+                                    @endif
                                     <span>
-                                        {{ $km->gift_quantity }} × {{ $km->giftItem->name }}
+                                        {{ $q['quantity'] }} × {{ $q['item']->name }}
                                         <span class="text-caption d-block">{{ $km->name }} · {{ $km->dieuKienQua() }}</span>
                                         @if($km->endsInText())
                                             <span class="text-caption d-block">{{ Str::ucfirst($km->endsInText()) }}</span>

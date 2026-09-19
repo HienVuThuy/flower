@@ -55,7 +55,7 @@ class Promotion extends Model
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'promotion_product')
-            ->withPivot(['discount_type', 'discount_value', 'promotional_price'])
+            ->withPivot(['discount_type', 'discount_value', 'promotional_price', 'gift_item_id', 'gift_quantity'])
             ->withTimestamps();
     }
 
@@ -72,6 +72,12 @@ class Promotion extends Model
     public function laTangQua(): bool
     {
         return $this->type === PromotionType::TangQua;
+    }
+
+    /** Ưu đãi thật của một dòng sản phẩm: ghi đè của dòng, không có thì theo chương trình. */
+    public function kieuCho(?object $pivot): PromotionType
+    {
+        return ($pivot?->discount_type ? PromotionType::tryFrom($pivot->discount_type) : null) ?? $this->type;
     }
 
     public function dieuKienQua(): string
@@ -211,33 +217,33 @@ class Promotion extends Model
 
         $percents = [];
         $amounts = [];
+        $coQua = false;
 
         foreach ($this->products as $product) {
             $pivot = $product->pivot;
-
-            $type = $pivot?->discount_type
-                ? PromotionType::tryFrom($pivot->discount_type)
-                : $this->type;
-
+            $type = $this->kieuCho($pivot);
             $value = $pivot?->discount_value ?? $this->discount_value;
-
-            if ($type === null || $value === null) {
-                continue;
-            }
 
             match ($type) {
                 PromotionType::Percent => $percents[] = (float) $value,
                 PromotionType::FixedAmount => $amounts[] = (float) $value,
+                PromotionType::TangQua => $coQua = true,
                 default => null,
             };
         }
 
+        $kem = $coQua ? ' · có quà kèm' : '';
+
         if ($percents !== []) {
-            return 'Giảm đến '.rtrim(rtrim(number_format(max($percents), 1, ',', '.'), '0'), ',').'%';
+            return 'Giảm đến '.rtrim(rtrim(number_format(max($percents), 1, ',', '.'), '0'), ',').'%'.$kem;
         }
 
         if ($amounts !== []) {
-            return 'Giảm đến '.number_format(max($amounts), 0, ',', '.').'đ';
+            return 'Giảm đến '.number_format(max($amounts), 0, ',', '.').'đ'.$kem;
+        }
+
+        if ($coQua) {
+            return 'Tặng quà kèm';
         }
 
         return null;

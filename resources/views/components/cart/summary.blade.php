@@ -173,7 +173,7 @@
         <p class="order-summary__hint" data-goi-y-qua="{{ $goiY['khuyen_mai']->id }}">
             <x-site.icon name="gift" />
             Mua thêm <strong>{{ $money($goiY['con_thieu']) }}</strong> để nhận
-            {{ $goiY['khuyen_mai']->gift_quantity }} × {{ $goiY['khuyen_mai']->giftItem->name }} ({{ $goiY['khuyen_mai']->name }}).
+            {{ $goiY['qua']->map(fn ($q) => $q['quantity'] . ' × ' . $q['item']->name)->implode(', ') }} ({{ $goiY['khuyen_mai']->name }}).
         </p>
     @endforeach
 
