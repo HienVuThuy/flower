@@ -9,16 +9,29 @@
 
     $outOfStock = $product->status === 'out_of_stock'
         || ($product->track_inventory && ! $product->inStock());
+
+    $coQua = isset(\App\Services\Gift\GiftResolver::sanPhamCoQua()[$product->id]);
 @endphp
 
 <div class="product-card">
 
     <div class="product-card__media">
 
-        @if($price->isDiscounted())
-            <span class="media-tag media-tag--sale">−{{ $price->discountPercent() }}%</span>
-        @elseif($outOfStock)
-            <span class="media-tag media-tag--sold-out">Hết hàng</span>
+        @if($price->isDiscounted() || $product->is_featured || $coQua || $outOfStock)
+            <div class="media-tags">
+                @if($outOfStock)
+                    <span class="media-tag media-tag--sold-out">Hết hàng</span>
+                @endif
+                @if($price->isDiscounted())
+                    <span class="media-tag media-tag--sale">Giảm {{ $price->discountPercent() }}%</span>
+                @endif
+                @if($product->is_featured)
+                    <span class="media-tag media-tag--noi-bat"><x-site.icon name="star-fill" />Nổi bật</span>
+                @endif
+                @if($coQua)
+                    <span class="media-tag media-tag--qua"><x-site.icon name="gift" />Có quà</span>
+                @endif
+            </div>
         @endif
 
         <a href="{{ $url }}" aria-label="{{ $product->name }}">

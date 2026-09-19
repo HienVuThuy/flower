@@ -147,7 +147,9 @@
     </dl>
 
     @php
-        $quaKem = app(\App\Services\Gift\GiftResolver::class)->choGio($basket, auth()->user());
+        $boQua = app(\App\Services\Gift\GiftResolver::class);
+        $quaKem = $boQua->choGio($basket, auth()->user());
+        $goiYQua = $boQua->goiYMuaThem($basket, auth()->user());
     @endphp
     @if($quaKem->isNotEmpty())
         <div class="order-summary__gifts" data-qua-kem>
@@ -166,6 +168,14 @@
             </ul>
         </div>
     @endif
+
+    @foreach($goiYQua as $goiY)
+        <p class="order-summary__hint" data-goi-y-qua="{{ $goiY['khuyen_mai']->id }}">
+            <x-site.icon name="gift" />
+            Mua thêm <strong>{{ $money($goiY['con_thieu']) }}</strong> để nhận
+            {{ $goiY['khuyen_mai']->gift_quantity }} × {{ $goiY['khuyen_mai']->giftItem->name }} ({{ $goiY['khuyen_mai']->name }}).
+        </p>
+    @endforeach
 
     @if($hasDiscount || $hasShippingDiscount || bccomp($basket->orderDiscountTotal(), '0', 2) > 0)
         @php

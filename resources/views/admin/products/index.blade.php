@@ -71,6 +71,8 @@
         'ban' => 'Chuyển sang Đang bán',
         'an' => 'Chuyển sang Tạm ẩn',
         'nhap' => 'Chuyển sang Bản nháp',
+        'noi-bat' => 'Đánh dấu nổi bật',
+        'bo-noi-bat' => 'Bỏ nổi bật',
         'xoa' => 'Xoá',
     ]"
     :canh-bao="[

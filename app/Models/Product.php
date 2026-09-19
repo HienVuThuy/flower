@@ -43,6 +43,7 @@ class Product extends Model
         'tax_class_id',
         'main_image',
         'status',
+        'is_featured',
         'track_inventory',
         'stock_quantity',
         'weight',
@@ -54,6 +55,7 @@ class Product extends Model
         'base_price' => 'decimal:2',
         'care_info' => 'array',
         'track_inventory' => 'boolean',
+        'is_featured' => 'boolean',
         'stock_quantity' => 'integer',
         'view_count' => 'integer',
 

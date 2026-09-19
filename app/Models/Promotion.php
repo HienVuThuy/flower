@@ -6,6 +6,7 @@ use App\Enums\PromotionStatus;
 use App\Enums\PromotionType;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Promotion extends Model
@@ -19,6 +20,13 @@ class Promotion extends Model
         'theme_key',
         'type',
         'discount_value',
+        'gift_item_id',
+        'gift_quantity',
+        'min_order_amount',
+        'min_member_tier_id',
+        'first_order_only',
+        'per_user_limit',
+        'total_limit',
         'starts_at',
         'ends_at',
         'daily_start_time',
@@ -36,6 +44,12 @@ class Promotion extends Model
         'ends_at' => 'datetime',
         'weekdays' => 'array',
         'priority' => 'integer',
+        'gift_quantity' => 'integer',
+        'min_order_amount' => 'decimal:2',
+        'first_order_only' => 'boolean',
+        'per_user_limit' => 'integer',
+        'total_limit' => 'integer',
+        'used_count' => 'integer',
     ];
 
     public function products(): BelongsToMany
@@ -43,6 +57,53 @@ class Promotion extends Model
         return $this->belongsToMany(Product::class, 'promotion_product')
             ->withPivot(['discount_type', 'discount_value', 'promotional_price'])
             ->withTimestamps();
+    }
+
+    public function giftItem(): BelongsTo
+    {
+        return $this->belongsTo(GiftItem::class);
+    }
+
+    public function minMemberTier(): BelongsTo
+    {
+        return $this->belongsTo(MemberTier::class, 'min_member_tier_id');
+    }
+
+    public function laTangQua(): bool
+    {
+        return $this->type === PromotionType::TangQua;
+    }
+
+    public function dieuKienQua(): string
+    {
+        $dk = [];
+
+        if ($this->min_order_amount !== null && bccomp((string) $this->min_order_amount, '0', 2) > 0) {
+            $dk[] = 'đơn từ ' . \App\Services\Shop\Money::format((string) $this->min_order_amount);
+        }
+
+        if ($this->minMemberTier) {
+            $dk[] = 'từ hạng ' . $this->minMemberTier->name;
+        }
+
+        if ($this->first_order_only) {
+            $dk[] = 'đơn đầu tiên';
+        }
+
+        if ($this->per_user_limit !== null) {
+            $dk[] = 'mỗi tài khoản ' . $this->per_user_limit . ' lần';
+        }
+
+        if (($con = $this->conSuat()) !== null) {
+            $dk[] = 'còn ' . $con . ' suất';
+        }
+
+        return $dk === [] ? 'Mọi đơn có sản phẩm này' : \Illuminate\Support\Str::ucfirst(implode(' · ', $dk));
+    }
+
+    public function conSuat(): ?int
+    {
+        return $this->total_limit === null ? null : max(0, $this->total_limit - (int) $this->used_count);
     }
 
     public function scopeActiveNow(Builder $query): Builder
@@ -140,6 +201,12 @@ class Promotion extends Model
 
     public function headlineDiscount(): ?string
     {
+        if ($this->laTangQua()) {
+            $this->loadMissing('giftItem');
+
+            return $this->giftItem ? 'Tặng ' . $this->giftItem->name : null;
+        }
+
         $this->loadMissing('products');
 
         $percents = [];

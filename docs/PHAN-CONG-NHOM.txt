@@ -9,14 +9,14 @@ CÁCH CHIA
     controller, service, model, migration, giao diện, JavaScript, CSS đến bài
     kiểm thử), để mỗi người trình bày được một luồng hoàn chỉnh từ đầu đến cuối
     thay vì mỗi người giữ một "tầng" rời rạc.
-  - Mọi tệp code của dự án (1012 tệp, không tính ảnh / phông / tài liệu)
+  - Mọi tệp code của dự án (1011 tệp, không tính ảnh / phông / tài liệu)
     đều được giao cho ĐÚNG MỘT người. Danh sách được sinh bằng script từ chính kho
     mã nên đường dẫn chính xác.
   - Khối lượng cân nhau:
-      Hưng   229 tệp, khoảng 22.968 dòng code
-      Hùng   181 tệp, khoảng 21.295 dòng code
-      Huy    195 tệp, khoảng 24.638 dòng code
-      Dũng   191 tệp, khoảng 22.581 dòng code
+      Hưng   229 tệp, khoảng 22.991 dòng code
+      Hùng   183 tệp, khoảng 21.521 dòng code
+      Huy    195 tệp, khoảng 24.648 dòng code
+      Dũng   188 tệp, khoảng 22.656 dòng code
       Hiền   216 tệp, khoảng 26.930 dòng code
   - "Phối hợp" ghi rõ chỗ hai khối gọi sang nhau, để khi sửa một bên thì báo
     người kia.
@@ -451,7 +451,8 @@ DANH SÁCH TỆP
     app/Console/Commands/ToiUuAnh.php
   [Cấu hình / Ngôn ngữ] (1)
     config/catalog.php
-  [Migration (bảng CSDL)] (21)
+  [Migration (bảng CSDL)] (22)
+    database/migrations/2026_10_25_020000_drop_unused_sale_price_from_products.php
     database/migrations/2026_08_18_182726_create_categories_table.php
     database/migrations/2026_08_18_182759_create_products_table.php
     database/migrations/2026_08_18_182818_create_product_variants_table.php
@@ -543,7 +544,8 @@ DANH SÁCH TỆP
     resources/css/components/product-detail.css
     resources/css/components/reviews.css
     resources/css/components/search.css
-  [Kiểm thử] (17)
+  [Kiểm thử] (18)
+    tests/Feature/Catalog/NhanSanPhamTest.php
     tests/Feature/Admin/CatalogNhatQuanTest.php
     tests/Feature/Admin/ProductClassificationTest.php
     tests/Feature/Admin/ProductDeleteTest.php
@@ -841,8 +843,9 @@ CHỨC NĂNG PHỤ TRÁCH (cơ bản → nâng cao)
      giá thấp nhất khi chồng chương trình (PricingService — nguồn giá duy nhất)
   3. PRICING ADVISOR: 5 tình huống giá, trung vị giá cùng danh mục, im lặng khi
      thiếu dữ liệu; lịch dịp lễ
-  4. Quà tặng: quà kèm sản phẩm / quy cách, quà theo chương trình, vật phẩm quà,
-     luật thiếu kho và trả hàng
+  4. Quà tặng: quà kèm sản phẩm / quy cách, chương trình khuyến mại hình thức
+     Tặng quà (gộp từ "Quà theo chương trình"), vật phẩm quà, luật thiếu kho và
+     trả hàng; nhãn Giảm / Nổi bật / Có quà trên thẻ sản phẩm
   5. Điểm thưởng: sổ điểm, kiếm điểm (mua hàng, đánh giá, bài Góc cây, lượt thích),
      chuỗi ngày ghé thăm, đổi voucher, dùng điểm trừ tiền
   6. Hạng thành viên theo chi tiêu hợp lệ, ưu đãi hạng, luật cộng dồn với mã
@@ -870,12 +873,11 @@ PHỐI HỢP
     hoa tươi dùng dữ liệu lô hoa
 
 DANH SÁCH TỆP
-  [Controller] (15)
+  [Controller] (14)
     app/Http/Controllers/Admin/AnalyticsController.php
     app/Http/Controllers/Admin/AnalyticsPagesController.php
     app/Http/Controllers/Admin/ExchangeController.php
     app/Http/Controllers/Admin/ExpenseController.php
-    app/Http/Controllers/Admin/GiftCampaignController.php
     app/Http/Controllers/Admin/GiftItemController.php
     app/Http/Controllers/Admin/InstallmentController.php
     app/Http/Controllers/Admin/MemberTierController.php
@@ -935,11 +937,10 @@ DANH SÁCH TỆP
     app/Services/Promotion/OccasionCalendar.php
     app/Services/Refund/RefundException.php
     app/Services/Refund/RefundService.php
-  [Model / Observer] (13)
+  [Model / Observer] (12)
     app/Models/Exchange.php
     app/Models/ExchangeItem.php
     app/Models/Expense.php
-    app/Models/GiftCampaign.php
     app/Models/GiftItem.php
     app/Models/InstallmentPayment.php
     app/Models/InstallmentPlan.php
@@ -949,11 +950,10 @@ DANH SÁCH TỆP
     app/Models/Promotion.php
     app/Models/Refund.php
     app/Models/RefundItem.php
-  [Enum] (17)
+  [Enum] (16)
     app/Enums/ExchangeReason.php
     app/Enums/ExchangeStatus.php
     app/Enums/ExpenseCategory.php
-    app/Enums/GiftCampaignKind.php
     app/Enums/GiftKind.php
     app/Enums/GiftReturnRule.php
     app/Enums/GiftStockRule.php
@@ -975,7 +975,8 @@ DANH SÁCH TỆP
   [Cấu hình / Ngôn ngữ] (2)
     config/occasions.php
     config/pricing-advisor.php
-  [Migration (bảng CSDL)] (16)
+  [Migration (bảng CSDL)] (17)
+    database/migrations/2026_10_25_010000_merge_gift_campaigns_into_promotions.php
     database/migrations/2026_08_24_010000_create_promotions_table.php
     database/migrations/2026_08_24_010001_create_promotion_product_table.php
     database/migrations/2026_09_05_010000_add_time_window_to_promotions_table.php
@@ -992,7 +993,7 @@ DANH SÁCH TỆP
     database/migrations/2026_10_16_010000_create_product_gifts_table.php
     database/migrations/2026_10_17_010000_add_rules_to_product_gifts_table.php
     database/migrations/2026_10_18_010000_create_installment_tables.php
-  [Giao diện Blade] (46)
+  [Giao diện Blade] (44)
     resources/views/admin/analytics/_header.blade.php
     resources/views/admin/analytics/customers.blade.php
     resources/views/admin/analytics/export.blade.php
@@ -1003,8 +1004,6 @@ DANH SÁCH TỆP
     resources/views/admin/exchanges/show.blade.php
     resources/views/admin/expenses/form.blade.php
     resources/views/admin/expenses/index.blade.php
-    resources/views/admin/gift-campaigns/form.blade.php
-    resources/views/admin/gift-campaigns/index.blade.php
     resources/views/admin/gift-items/form.blade.php
     resources/views/admin/gift-items/index.blade.php
     resources/views/admin/installments/index.blade.php
@@ -1039,7 +1038,8 @@ DANH SÁCH TỆP
     resources/views/shop/profile/partials/diem-thuong.blade.php
     resources/views/shop/profile/partials/hang-thanh-vien.blade.php
     resources/views/shop/profile/partials/tra-gop.blade.php
-  [JavaScript] (6)
+  [JavaScript] (7)
+    resources/js/admin/promotion-form.js
     resources/js/admin/chon-ky.js
     resources/js/admin/export-picker.js
     resources/js/admin/gift-variant-picker.js

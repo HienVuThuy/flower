@@ -22,7 +22,7 @@ class SyncPromotionProductsRequest extends FormRequest
 
             'products.*.discount_type' => [
                 'nullable',
-                Rule::in(array_map(fn ($t) => $t->value, PromotionType::selectable())),
+                Rule::in(array_map(fn ($t) => $t->value, PromotionType::kieuGiamGia())),
             ],
 
             'products.*.discount_value' => [

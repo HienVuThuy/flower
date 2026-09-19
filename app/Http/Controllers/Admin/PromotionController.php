@@ -9,6 +9,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StorePromotionRequest;
 use App\Http\Requests\Admin\SyncPromotionProductsRequest;
 use App\Http\Requests\Admin\UpdatePromotionRequest;
+use App\Models\GiftItem;
+use App\Models\MemberTier;
 use App\Models\Product;
 use App\Services\Media\ImageStore;
 use App\Models\Promotion;
@@ -33,6 +35,7 @@ class PromotionController extends Controller
     {
         $promotions = Promotion::query()
             ->withCount('products')
+            ->with('giftItem:id,name')
             ->when($request->filled('q'), fn ($q) => $q
                 ->where('name', 'like', '%'.trim((string) $request->query('q')).'%'))
 
@@ -58,7 +61,7 @@ class PromotionController extends Controller
 
     public function store(StorePromotionRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $this->chuanHoa($request->validated(), $request);
 
         if ($request->hasFile('banner')) {
             $data['banner'] = $this->anh->luu($request->file('banner'), 'promotions');
@@ -90,7 +93,7 @@ class PromotionController extends Controller
 
     public function update(UpdatePromotionRequest $request, Promotion $promotion): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $this->chuanHoa($request->validated(), $request);
         $oldBanner = $promotion->banner;
         $newBanner = null;
 
@@ -123,6 +126,18 @@ class PromotionController extends Controller
         Promotion $promotion
     ): RedirectResponse {
         $rows = $request->validated()['products'] ?? [];
+
+        if ($promotion->laTangQua()) {
+            $promotion->products()->sync(collect($rows)->mapWithKeys(fn ($row) => [$row['id'] => [
+                'discount_type' => null,
+                'discount_value' => null,
+                'promotional_price' => null,
+            ]])->all());
+
+            return redirect()
+                ->route('admin.promotions.edit', $promotion)
+                ->with('success', 'Đã cập nhật danh sách sản phẩm của chương trình.');
+        }
 
         $productIds = array_column($rows, 'id');
         $basePrices = Product::whereIn('id', $productIds)->pluck('base_price', 'id');
@@ -158,6 +173,10 @@ class PromotionController extends Controller
 
     public function destroy(Promotion $promotion): RedirectResponse
     {
+        if ($promotion->used_count > 0) {
+            return back()->with('error', 'Chương trình đã phát quà nên không xoá được. Hãy chuyển trạng thái sang "Đã kết thúc".');
+        }
+
         if ($promotion->banner) {
             $this->anh->xoa($promotion->banner);
         }
@@ -171,10 +190,32 @@ class PromotionController extends Controller
             ->with('success', 'Đã xóa chương trình khuyến mại.');
     }
 
+    private function chuanHoa(array $data, StorePromotionRequest $request): array
+    {
+        if ($data['type'] === PromotionType::TangQua->value) {
+            $data['first_order_only'] = $request->boolean('first_order_only');
+
+            return $data;
+        }
+
+        return $data + [
+            'gift_item_id' => null,
+            'gift_quantity' => 1,
+            'min_order_amount' => null,
+            'min_member_tier_id' => null,
+            'first_order_only' => false,
+            'per_user_limit' => null,
+            'total_limit' => null,
+        ];
+    }
+
     private function formData(): array
     {
         return [
             'types' => PromotionType::selectable(),
+            'kieuGiam' => PromotionType::kieuGiamGia(),
+            'vatPham' => GiftItem::query()->orderByDesc('is_active')->orderBy('name')->get(['id', 'name', 'is_active']),
+            'cacHang' => MemberTier::query()->orderBy('min_spend')->get(['id', 'name']),
             'statuses' => PromotionStatus::cases(),
             'themeOptions' => $this->themes->options(),
         ];

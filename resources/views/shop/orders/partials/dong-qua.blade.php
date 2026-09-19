@@ -8,7 +8,7 @@
         @endif
         <span class="text-muted">&times; {{ $qua->quantity }}</span>
 
-        @if($qua->gift_campaign_id && $qua->promotion_name)
+        @if($qua->gift_promotion_id && $qua->promotion_name)
             <span class="text-muted d-block small">{{ $qua->promotion_name }}</span>
         @endif
     </span>

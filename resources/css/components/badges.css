@@ -76,7 +76,38 @@
 }
 
 .media-tag--sale {
-    background: var(--accent-500);
+    background: var(--semantic-danger);
+    color: #fff;
+    font-size: 0.8125rem;
+    box-shadow: 0 4px 12px rgba(var(--semantic-danger-rgb), 0.35);
+}
+
+.media-tags {
+    position: absolute;
+    top: var(--space-2xs);
+    left: var(--space-2xs);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.3rem;
+    pointer-events: none;
+}
+
+.media-tags .media-tag {
+    position: static;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+}
+
+.media-tag--noi-bat {
+    background: var(--semantic-warning);
+    color: #231a0c;
+}
+
+.media-tag--qua {
+    background: var(--brand-500);
     color: #fff;
 }
 

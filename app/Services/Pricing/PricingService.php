@@ -39,7 +39,7 @@ class PricingService
     private function bestPromotionFor(Product $product, string $base): ?Promotion
     {
         $candidates = $product->promotions
-            ->filter(fn (Promotion $p) => $p->isRunning() && $p->type->isImplemented());
+            ->filter(fn (Promotion $p) => $p->isRunning() && $p->type->laGiamGia());
 
         if ($candidates->isEmpty()) {
             return null;
@@ -83,7 +83,7 @@ class PricingService
 
     public function preview(?string $basePrice, PromotionType $type, ?float $value): ?string
     {
-        if ($basePrice === null || $value === null || ! $type->isImplemented()) {
+        if ($basePrice === null || $value === null || ! $type->laGiamGia()) {
             return null;
         }
 

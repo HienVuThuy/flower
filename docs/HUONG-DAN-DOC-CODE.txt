@@ -7,7 +7,7 @@ Tài liệu này dạy cách đọc code của dự án theo thứ tự dễ →
   PHẦN 0. Cách dùng tài liệu và cách tìm nhanh trong VS Code
   PHẦN 1. Kiến thức nền: 22 khái niệm gặp liên tục trong dự án
   PHẦN 2. Bản đồ thư mục: tệp nào nằm ở đâu, làm gì
-  PHẦN 3. 24 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
+  PHẦN 3. 25 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
   PHẦN 4. Tự học và gỡ lỗi
   PHẦN 5. Bảng tra nhanh thuật ngữ
 
@@ -535,7 +535,7 @@ tools/                  script Node tải và tối ưu ảnh mẫu
 
 
 ================================================================================
-PHẦN 3. 24 LUỒNG CHẠY THẬT
+PHẦN 3. 25 LUỒNG CHẠY THẬT
 ================================================================================
 
 Mỗi luồng ghi: người dùng làm gì → các bước (tệp → hàm) → điểm cần hiểu.
@@ -554,7 +554,8 @@ LUỒNG 1. Xem trang sản phẩm và giá được tính thế nào
        (tính một lần rồi nhớ lại cho lần gọi sau)
   4. app/Services/Pricing/PricingService.php → resolve()
        a. base_price null → sản phẩm "liên hệ báo giá"
-       b. bestPromotionFor(): lấy các khuyến mại ĐANG CHẠY
+       b. bestPromotionFor(): lấy các khuyến mại ĐANG CHẠY có hình thức giảm
+          giá (type->laGiamGia(); chương trình "Tặng quà" không đổi giá)
           (Promotion::isRunning() xét ngày, khung giờ, thứ), chọn cái cho GIÁ
           THẤP NHẤT; hoà thì ưu tiên priority cao hơn
        c. applyDiscount(): giảm % / giảm số tiền / giá cố định; mức riêng của
@@ -1071,6 +1072,52 @@ LUỒNG 24. Quản lý người dùng: thêm, sửa, xoá (lab08)
   4. Views: resources/views/admin/users/{index, create, edit, _form}.blade.php
      (_form dùng chung cho thêm và sửa).
   Kiểm thử: tests/Feature/Admin/QuanLyNguoiDungTest.php
+
+
+--------------------------------------------------------------------------------
+LUỒNG 25. Chương trình khuyến mại "Tặng quà" và nhãn trên thẻ sản phẩm
+--------------------------------------------------------------------------------
+  CƠ SỞ DỮ LIỆU: bảng promotions có thêm cột quà (migration
+  2026_10_25_010000_merge_gift_campaigns_into_promotions — chuyển luôn dữ liệu
+  của bảng gift_campaigns cũ rồi xoá bảng đó):
+    type = 'tang_qua'   hình thức Tặng quà (App\Enums\PromotionType::TangQua)
+    gift_item_id, gift_quantity           quà gì, mấy cái mỗi đơn
+    min_order_amount, min_member_tier_id, first_order_only, per_user_limit
+    total_limit, used_count               tổng suất và số suất đã phát
+  order_items.gift_promotion_id: dòng quà 0đ thuộc chương trình nào.
+
+  QUẢN TRỊ
+  1. /admin/promotions/create → Admin\PromotionController@create
+     resources/views/admin/promotions/_form.blade.php: ô "Hình thức"; chọn
+     "Tặng quà" thì resources/js/admin/promotion-form.js ẩn ô mức giảm, hiện ô quà.
+  2. POST → StorePromotionRequest: luật 'exclude_unless:type,tang_qua' — ô quà
+     chỉ được kiểm (và lưu) khi là Tặng quà; đã phát quà thì không đổi sang giảm
+     giá. PromotionController::chuanHoa() xoá điều kiện quà khi là giảm giá.
+  3. Trang sửa: chương trình Tặng quà thì bảng sản phẩm thành "Sản phẩm điều
+     kiện" (không có cột ghi đè giá). destroy() chặn xoá khi used_count > 0.
+
+  KHI KHÁCH MUA — app/Services/Gift/GiftResolver.php
+    khuyenMaiQua()   các chương trình Tặng quà đang chạy (nạp một lần)
+    lyDoKhong()      vì sao đơn CHƯA được quà: hết suất, hết quà, thiếu sản phẩm
+                     của chương trình, chưa đủ tiền, chưa đủ hạng, không phải đơn
+                     đầu, đã nhận đủ lần; null = được quà
+    goiYMuaThem()    quà chỉ còn thiếu tiền → giỏ hàng hiện "Mua thêm X để nhận…"
+                     (resources/views/components/cart/summary.blade.php)
+    khuyenMaiQuaCho($product)  quà theo chương trình hiện ở trang sản phẩm
+  GiftGranter::tangChoDon() giữ suất bằng một câu UPDATE có điều kiện
+  (used_count < total_limit) rồi mới ghi dòng quà; huỷ đơn thì trả suất.
+
+  NHÃN GÓC TRÊN TRÁI — resources/views/components/product/card.blade.php
+    "Giảm X%"   $product->price()->isDiscounted()
+    "Nổi bật"   cột products.is_featured (tích trong biểu mẫu sản phẩm hoặc thao
+                tác hàng loạt "Đánh dấu nổi bật" ở danh sách sản phẩm)
+    "Có quà"    GiftResolver::sanPhamCoQua(): id sản phẩm có quà kèm hoặc thuộc
+                chương trình tặng quà — tính MỘT lần cho cả trang (lưu trong
+                request()->attributes) để không truy vấn lại từng thẻ
+    CSS: resources/css/components/badges.css (.media-tags, .media-tag--…)
+  "Nổi bật" còn dùng ở: mục "Sản phẩm nổi bật" trang chủ (HomeController) và
+  sắp xếp "Nổi bật trước" (Shop\ProductController::applySort, 'noi_bat').
+  Kiểm thử: tests/Feature/Gift/QuaTangTest.php, tests/Feature/Catalog/NhanSanPhamTest.php
 
 
 ================================================================================

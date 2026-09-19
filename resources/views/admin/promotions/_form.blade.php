@@ -59,20 +59,21 @@
 
         </div>
 
-        <div class="form-panel">
+        <div class="form-panel" data-km-hinh-thuc>
 
-            <h2 class="form-panel__title">Hình thức khuyến mại</h2>
+            <h2 class="form-panel__title">Hình thức ưu đãi</h2>
             <p class="form-panel__hint">
-                Đây là mức áp dụng chung. Ở phần "Sản phẩm áp dụng" bên dưới
-                vẫn có thể ghi đè riêng cho từng sản phẩm.
+                Giảm giá: áp cho các sản phẩm chọn ở phần bên dưới, từng sản phẩm vẫn ghi đè được mức riêng.
+                Tặng quà: đơn đạt điều kiện được thêm quà 0đ; nếu chọn sản phẩm thì đơn phải có một trong số đó.
             </p>
+
+            @php $typeOld = old('type', $promotion->type->value ?? 'percent'); @endphp
 
             <div class="row g-3">
 
                 <div class="col-md-6">
-                    <label class="form-label">Kiểu giảm giá <span class="text-accent">*</span></label>
-                    @php $typeOld = old('type', $promotion->type->value ?? 'percent'); @endphp
-                    <select name="type" class="form-select @error('type') is-invalid @enderror">
+                    <label class="form-label" for="km-type">Hình thức <span class="text-accent">*</span></label>
+                    <select id="km-type" name="type" class="form-select @error('type') is-invalid @enderror" data-km-type>
                         @foreach($types as $type)
                             <option value="{{ $type->value }}" @selected($typeOld === $type->value)>
                                 {{ $type->label() }}
@@ -82,10 +83,11 @@
                     <x-form-error name="type"/>
                 </div>
 
-                <div class="col-md-6">
-                    <label class="form-label">Mức giảm <span class="text-accent">*</span></label>
+                <div class="col-md-6" data-km-khi="giam">
+                    <label class="form-label" for="km-value">Mức giảm <span class="text-accent">*</span></label>
                     <input
                         type="number"
+                        id="km-value"
                         name="discount_value"
                         min="0"
                         step="any"
@@ -96,6 +98,87 @@
                         Giảm %: nhập 20 nghĩa là −20%. Giảm tiền / giá cố định: nhập số tiền (VNĐ).
                     </div>
                     <x-form-error name="discount_value"/>
+                </div>
+
+            </div>
+
+            <div class="row g-3 mt-1" data-km-khi="qua">
+
+                @if($vatPham->isEmpty())
+                    <div class="col-12">
+                        <div class="alert alert-warning mb-0">
+                            Chưa có vật phẩm quà nào. <a data-admin-link href="{{ route('admin.gift-items.create') }}">Thêm vật phẩm</a> trước.
+                        </div>
+                    </div>
+                @endif
+
+                <div class="col-md-8">
+                    <label class="form-label" for="km-gift">Quà tặng <span class="text-accent">*</span></label>
+                    <select id="km-gift" name="gift_item_id" class="form-select @error('gift_item_id') is-invalid @enderror">
+                        <option value="">— Chọn quà —</option>
+                        @foreach($vatPham as $vat)
+                            <option value="{{ $vat->id }}" @selected((string) old('gift_item_id', $promotion->gift_item_id) === (string) $vat->id)>
+                                {{ $vat->name }}{{ $vat->is_active ? '' : ' (đang ngừng)' }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <div class="form-text"><a data-admin-link href="{{ route('admin.gift-items.index') }}">Kho vật phẩm quà</a></div>
+                    <x-form-error name="gift_item_id"/>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label" for="km-gift-qty">Số lượng mỗi đơn</label>
+                    <input type="number" id="km-gift-qty" name="gift_quantity" min="1" max="100"
+                           class="form-control @error('gift_quantity') is-invalid @enderror"
+                           value="{{ old('gift_quantity', $promotion->gift_quantity ?? 1) }}">
+                    <x-form-error name="gift_quantity"/>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="km-min-order">Đơn từ (đồng)</label>
+                    <input type="number" id="km-min-order" name="min_order_amount" min="0" step="1"
+                           class="form-control @error('min_order_amount') is-invalid @enderror"
+                           value="{{ old('min_order_amount', $promotion->min_order_amount !== null ? (int) $promotion->min_order_amount : '') }}">
+                    <x-form-error name="min_order_amount"/>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="km-tier">Dành cho hạng</label>
+                    <select id="km-tier" name="min_member_tier_id" class="form-select @error('min_member_tier_id') is-invalid @enderror">
+                        <option value="">— Mọi khách —</option>
+                        @foreach($cacHang as $h)
+                            <option value="{{ $h->id }}" @selected((string) old('min_member_tier_id', $promotion->min_member_tier_id) === (string) $h->id)>Từ hạng {{ $h->name }}</option>
+                        @endforeach
+                    </select>
+                    <x-form-error name="min_member_tier_id"/>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="km-per-user">Mỗi tài khoản nhận tối đa (lần)</label>
+                    <input type="number" id="km-per-user" name="per_user_limit" min="1" max="1000"
+                           class="form-control @error('per_user_limit') is-invalid @enderror"
+                           value="{{ old('per_user_limit', $promotion->per_user_limit) }}" placeholder="Không giới hạn">
+                    <x-form-error name="per_user_limit"/>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label" for="km-total">Tổng số suất</label>
+                    <input type="number" id="km-total" name="total_limit" min="1"
+                           class="form-control @error('total_limit') is-invalid @enderror"
+                           value="{{ old('total_limit', $promotion->total_limit) }}" placeholder="Không giới hạn">
+                    @if($promotion->exists && $promotion->used_count > 0)
+                        <div class="form-text">Đã phát {{ $promotion->used_count }} suất.</div>
+                    @endif
+                    <x-form-error name="total_limit"/>
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input type="hidden" name="first_order_only" value="0">
+                        <input class="form-check-input" type="checkbox" id="km-first" name="first_order_only" value="1"
+                               @checked(old('first_order_only', $promotion->first_order_only))>
+                        <label class="form-check-label" for="km-first">Chỉ cho đơn đầu tiên của tài khoản (khách phải đăng nhập)</label>
+                    </div>
                 </div>
 
             </div>
@@ -135,7 +218,7 @@
 
             <hr class="my-4">
 
-            <p class="form-label mb-1">Giá linh hoạt theo thời điểm</p>
+            <p class="form-label mb-1">Chỉ chạy vào khung giờ / thứ</p>
             <p class="text-muted small mb-3">
                 Bỏ trống hết = chương trình chạy suốt trong khoảng ngày ở trên.
             </p>

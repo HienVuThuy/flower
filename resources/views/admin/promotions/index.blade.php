@@ -11,7 +11,8 @@
     <div>
         <h1 class="admin-page-title">Chương trình khuyến mại</h1>
         <p class="admin-page-subtitle">
-            Tạo một chương trình rồi gắn nhiều sản phẩm — không cần sửa giá từng sản phẩm.
+            Mỗi chương trình là giảm giá nhiều sản phẩm cùng lúc, hoặc tặng quà cho đơn đạt điều kiện
+            (đơn từ bao nhiêu, hạng thành viên, đơn đầu tiên, có sản phẩm nào, giới hạn suất).
         </p>
     </div>
 
@@ -62,7 +63,7 @@
                     <th>Chương trình</th>
                     <th>Theme</th>
                     <th>Thời gian</th>
-                    <th>Mức giảm</th>
+                    <th>Ưu đãi</th>
                     <th>Sản phẩm</th>
                     <th>Ưu tiên</th>
                     <th>Trạng thái</th>
@@ -98,8 +99,14 @@
                         </small>
                     </td>
 
-                    <td class="fw-semibold">
-                        {{ rtrim(rtrim(number_format($promotion->discount_value, 2, ',', '.'), '0'), ',') }}{{ $promotion->type->unit() }}
+                    <td>
+                        @if($promotion->laTangQua())
+                            <span class="fw-semibold">Tặng {{ $promotion->gift_quantity }} × {{ $promotion->giftItem?->name ?? '—' }}</span>
+                            <small class="d-block text-muted">Đã phát {{ $promotion->used_count }}{{ $promotion->total_limit !== null ? '/' . $promotion->total_limit : '' }} suất</small>
+                        @else
+                            <span class="fw-semibold">{{ rtrim(rtrim(number_format($promotion->discount_value, 2, ',', '.'), '0'), ',') }}{{ $promotion->type->unit() }}</span>
+                            <small class="d-block text-muted">{{ $promotion->type->label() }}</small>
+                        @endif
                     </td>
 
                     <td>

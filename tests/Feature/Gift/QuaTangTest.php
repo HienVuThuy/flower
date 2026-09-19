@@ -6,13 +6,13 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\UserRole;
 use App\Models\Category;
-use App\Models\GiftCampaign;
 use App\Models\GiftItem;
 use App\Models\MemberTier;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductGift;
 use App\Models\ProductVariant;
+use App\Models\Promotion;
 use App\Models\User;
 use App\Services\Checkout\CheckoutBasket;
 use App\Services\Checkout\CheckoutLine;
@@ -22,7 +22,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
-/** Quà tặng: quà kèm sản phẩm (luật riêng từng món), quà theo chương trình, quà trong giỏ và đơn. */
+/** Quà tặng: quà kèm sản phẩm (luật riêng từng món), khuyến mại hình thức Tặng quà, quà trong giỏ và đơn. */
 class QuaTangTest extends TestCase
 {
     use RefreshDatabase;
@@ -53,12 +53,16 @@ class QuaTangTest extends TestCase
         return $pg;
     }
 
-    private function chuongTrinh(array $ghiDeCt = [], array $ghiDeVat = []): GiftCampaign
+    private function chuongTrinh(array $ghiDeCt = [], array $ghiDeVat = []): Promotion
     {
-        return GiftCampaign::create(array_merge([
-            'name' => 'Quà Trung thu', 'kind' => 'chuong_trinh', 'gift_item_id' => $this->vat($ghiDeVat)->id,
-            'gift_quantity' => 1, 'status' => 'active',
+        static $so = 0;
+
+        $km = Promotion::create(array_merge([
+            'name' => 'Quà Trung thu', 'slug' => 'qua-' . ++$so, 'type' => 'tang_qua', 'discount_value' => 0,
+            'gift_item_id' => $this->vat($ghiDeVat)->id, 'gift_quantity' => 1, 'status' => 'active', 'priority' => 0,
         ], $ghiDeCt));
+
+        return $km;
     }
 
     private function gio(array $dong): CheckoutBasket
@@ -252,7 +256,10 @@ class QuaTangTest extends TestCase
         $theoHang = $this->chuongTrinh(['name' => 'Quà hạng Hoa', 'min_member_tier_id' => $hoa]);
 
         $this->assertSame([], $this->nhan($this->gio([[$sp, null, 1]])));
+        $goiY = app(GiftResolver::class)->goiYMuaThem($this->gio([[$sp, null, 1]]), null);
+        $this->assertSame([[$theoDon->id, '200000.00']], $goiY->map(fn ($g) => [$g['khuyen_mai']->id, $g['con_thieu']])->all(), 'Chỉ gợi ý quà còn thiếu tiền, không gợi ý quà theo hạng');
         $this->assertSame(['chuong_trinh-' . $theoDon->id . ':1'], $this->nhan($this->gio([[$sp, null, 2]])));
+        $this->assertTrue(app(GiftResolver::class)->goiYMuaThem($this->gio([[$sp, null, 2]]), null)->isEmpty());
 
         $khachHoa = User::factory()->create();
         $this->donCua($khachHoa, OrderStatus::Completed, '5000000.00');
@@ -323,7 +330,7 @@ class QuaTangTest extends TestCase
 
         $this->app->instance(GiftResolver::class, new class($cu) extends GiftResolver
         {
-            public function __construct(private GiftCampaign $cu)
+            public function __construct(private Promotion $cu)
             {
             }
 
@@ -338,7 +345,7 @@ class QuaTangTest extends TestCase
         });
 
         $this->vaoThanhToan($sp);
-        GiftCampaign::whereKey($ct->id)->update(['used_count' => 1]);
+        Promotion::whereKey($ct->id)->update(['used_count' => 1]);
 
         $this->post('/thanh-toan/dat-hang')->assertRedirect();
         $don = Order::latest('id')->firstOrFail();
@@ -423,25 +430,73 @@ class QuaTangTest extends TestCase
     }
 
     #[Test]
-    public function khuyen_mai_la_trang_tong_hop_va_tab_qua_chi_tao_chuong_trinh(): void
+    public function chuong_trinh_co_san_pham_chi_tang_khi_gio_co_san_pham_do(): void
+    {
+        $senDa = $this->sp();
+        $khac = $this->sp();
+        $km = $this->chuongTrinh();
+        $km->products()->attach($senDa->id);
+
+        $this->assertSame([], $this->nhan($this->gio([[$khac, null, 1]])));
+        $this->assertSame(['chuong_trinh-' . $km->id . ':1'], $this->nhan($this->gio([[$senDa, null, 1], [$khac, null, 1]])));
+    }
+
+    #[Test]
+    public function khuyen_mai_tang_qua_khong_doi_gia_san_pham(): void
+    {
+        $sp = $this->sp('300000.00');
+        $km = $this->chuongTrinh();
+        $km->products()->attach($sp->id, ['discount_type' => 'percent', 'discount_value' => 50]);
+
+        $this->assertFalse($sp->fresh()->price()->isDiscounted());
+        $this->assertSame('Tặng Túi phân bón nhỏ', $km->headlineDiscount());
+    }
+
+    #[Test]
+    public function khuyen_mai_la_trang_tong_hop_va_tao_chuong_trinh_tang_qua(): void
     {
         $this->actingAs($this->admin());
 
-        foreach (['admin.promotions.index', 'admin.gift-campaigns.index', 'admin.member-tiers.index'] as $ten) {
-            $this->get(route($ten))->assertOk()->assertSee('data-tab-khuyen-mai', false);
+        foreach (['admin.promotions.index', 'admin.member-tiers.index'] as $ten) {
+            $this->get(route($ten))->assertOk()->assertSee('data-tab-khuyen-mai', false)->assertDontSee('Quà theo chương trình');
         }
 
-        $this->post(route('admin.gift-campaigns.store'), [
-            'name' => 'Quà Trung thu', 'gift_item_id' => $this->vat()->id, 'gift_quantity' => 1, 'status' => 'active',
-            'kind' => 'kem_san_pham', 'trigger_product_id' => $this->sp()->id,
+        $this->assertFalse(\Illuminate\Support\Facades\Route::has('admin.gift-campaigns.index'));
+
+        $vat = $this->vat();
+
+        $this->post(route('admin.promotions.store'), [
+            'name' => 'Quà Trung thu', 'type' => 'tang_qua', 'status' => 'active', 'priority' => 0,
+            'gift_quantity' => 1, 'min_order_amount' => 500000, 'first_order_only' => '1',
+        ])->assertSessionHasErrors('gift_item_id');
+
+        $this->post(route('admin.promotions.store'), [
+            'name' => 'Quà Trung thu', 'type' => 'tang_qua', 'status' => 'active', 'priority' => 0,
+            'gift_item_id' => $vat->id, 'gift_quantity' => 2, 'min_order_amount' => 500000, 'first_order_only' => '1', 'total_limit' => 10,
         ])->assertSessionHasNoErrors();
 
-        $ct = GiftCampaign::sole();
-        $this->assertSame('chuong_trinh', $ct->kind->value);
-        $this->assertNull($ct->trigger_product_id);
+        $km = Promotion::sole();
+        $this->assertSame('tang_qua', $km->type->value);
+        $this->assertSame([2, '500000.00', true, 10], [$km->gift_quantity, $km->min_order_amount, $km->first_order_only, $km->total_limit]);
+        $this->assertSame('0.00', $km->discount_value);
 
-        $ct->forceFill(['used_count' => 2])->save();
-        $this->delete(route('admin.gift-campaigns.destroy', $ct))->assertSessionHas('error');
+        $this->get(route('admin.promotions.edit', $km))->assertOk()->assertSee('Sản phẩm điều kiện');
+
+        $km->forceFill(['used_count' => 2])->save();
+
+        $this->put(route('admin.promotions.update', $km), [
+            'name' => 'Quà Trung thu', 'type' => 'percent', 'discount_value' => 10, 'status' => 'active', 'priority' => 0,
+        ])->assertSessionHasErrors('type');
+
+        $this->delete(route('admin.promotions.destroy', $km))->assertSessionHas('error');
+        $this->assertModelExists($km);
+
+        $giam = Promotion::create(['name' => 'Giảm', 'slug' => 'giam', 'type' => 'percent', 'discount_value' => 10, 'status' => 'draft', 'priority' => 0]);
+        $this->put(route('admin.promotions.update', $giam), [
+            'name' => 'Giảm', 'type' => 'percent', 'discount_value' => 15, 'status' => 'draft', 'priority' => 0,
+            'gift_item_id' => $vat->id, 'min_order_amount' => 1,
+        ])->assertSessionHasNoErrors();
+        $this->assertNull($giam->fresh()->gift_item_id, 'Giảm giá thì không lưu điều kiện quà');
 
         $nv = User::factory()->create();
         $nv->role = UserRole::Staff;

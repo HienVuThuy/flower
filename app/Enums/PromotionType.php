@@ -2,14 +2,13 @@
 
 namespace App\Enums;
 
-/** Kiểu tính giảm giá của một chương trình khuyến mại. */
+/** Hình thức ưu đãi của một chương trình khuyến mại: giảm giá sản phẩm hoặc tặng quà. */
 enum PromotionType: string
 {
     case Percent = 'percent';
     case FixedAmount = 'fixed_amount';
     case FixedPrice = 'fixed_price';
-    case Combo = 'combo';
-    case BuyXGetY = 'buy_x_get_y';
+    case TangQua = 'tang_qua';
 
     public function label(): string
     {
@@ -17,8 +16,7 @@ enum PromotionType: string
             self::Percent => 'Giảm theo phần trăm',
             self::FixedAmount => 'Giảm số tiền',
             self::FixedPrice => 'Giá cố định',
-            self::Combo => 'Combo (chưa hỗ trợ)',
-            self::BuyXGetY => 'Mua X tặng Y (chưa hỗ trợ)',
+            self::TangQua => 'Tặng quà',
         };
     }
 
@@ -27,17 +25,22 @@ enum PromotionType: string
         return match ($this) {
             self::Percent => '%',
             self::FixedAmount, self::FixedPrice => '₫',
-            default => '',
+            self::TangQua => '',
         };
     }
 
-    public function isImplemented(): bool
+    public function laGiamGia(): bool
     {
-        return in_array($this, [self::Percent, self::FixedAmount, self::FixedPrice], true);
+        return $this !== self::TangQua;
+    }
+
+    public static function kieuGiamGia(): array
+    {
+        return array_filter(self::cases(), fn (self $t) => $t->laGiamGia());
     }
 
     public static function selectable(): array
     {
-        return array_filter(self::cases(), fn (self $t) => $t->isImplemented());
+        return self::cases();
     }
 }

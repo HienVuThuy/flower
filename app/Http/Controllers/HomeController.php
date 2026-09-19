@@ -39,6 +39,18 @@ class HomeController extends Controller
             ->take((int) config('catalog.new_arrival_limit', 8))
             ->get();
 
+        $noiBat = Product::query()
+            ->with(['category', 'promotions',
+                'variants' => fn ($q) => $q->where('is_active', true)->orderBy('sort_order')])
+            ->withAvg(['reviews as rating_avg' => fn ($q) => $q->visible()], 'rating')
+            ->withCount(['reviews as rating_count' => fn ($q) => $q->visible()])
+            ->mainCatalog()
+            ->where('is_featured', true)
+            ->whereIn('status', ['active', 'out_of_stock'])
+            ->latest()
+            ->take(8)
+            ->get();
+
         $reco = $this->recommendations->forViewer(
             $request->user()?->id,
             $request->session()->getId(),
@@ -47,6 +59,7 @@ class HomeController extends Controller
         return view('welcome', [
             'categories' => $categories,
             'featuredProducts' => $featuredProducts,
+            'noiBat' => $noiBat,
             'mostWished' => $this->mostWished($reco['items']->pluck('product.id')->all()),
             'recommendations' => $reco['items'],
             'recommendationsArePersonal' => $reco['personalized'],

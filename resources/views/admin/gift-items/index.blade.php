@@ -4,12 +4,15 @@
 
 @section('content')
 
+<x-admin.promo-tabs />
+
 <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
     <div>
         <h1 class="admin-page-title">Vật phẩm quà tặng</h1>
         <p class="admin-page-subtitle mb-0">
             Thứ được tặng: một sản phẩm đang có (dùng chung tồn kho) hoặc một vật phẩm tặng riêng không bán (tồn kho riêng).
-            <a data-admin-link href="{{ route('admin.gift-campaigns.index') }}">Chương trình quà</a>
+            Dùng cho <a data-admin-link href="{{ route('admin.product-gifts.index') }}">quà kèm sản phẩm</a> và
+            <a data-admin-link href="{{ route('admin.promotions.index') }}">chương trình khuyến mại tặng quà</a>.
         </p>
     </div>
     <a data-admin-link href="{{ route('admin.gift-items.create') }}" class="btn btn-primary-brand">Thêm vật phẩm</a>
@@ -47,7 +50,7 @@
                             @else
                                 Vật phẩm tặng riêng
                             @endif
-                            <span class="d-block admin-page-subtitle small">{{ $vat->campaigns_count }} chương trình</span>
+                            <span class="d-block admin-page-subtitle small">{{ $vat->promotions_count }} chương trình</span>
                         </td>
                         <td>{{ $con === null ? 'Không giới hạn' : number_format($con, 0, ',', '.') }}</td>
                         <td>

@@ -2,11 +2,11 @@
 
 namespace App\Services\Gift;
 
-use App\Models\GiftCampaign;
 use App\Models\GiftItem;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Promotion;
 use App\Models\User;
 use App\Services\Checkout\CheckoutBasket;
 use Illuminate\Support\Facades\DB;
@@ -53,7 +53,7 @@ class GiftGranter
                 'line_total' => '0.00',
                 'discount_amount' => '0.00',
                 'is_gift' => true,
-                'gift_campaign_id' => $ct?->id,
+                'gift_promotion_id' => $ct?->id,
                 'product_gift_id' => $dong['product_gift']?->id,
                 'gift_item_id' => $vat->id,
                 'parent_item_id' => $this->dongCha($order, $dong),
@@ -69,8 +69,8 @@ class GiftGranter
     {
         $order->items()
             ->where('is_gift', true)
-            ->whereNotNull('gift_campaign_id')
-            ->pluck('gift_campaign_id')
+            ->whereNotNull('gift_promotion_id')
+            ->pluck('gift_promotion_id')
             ->each(fn ($id) => $this->traSuatMot((int) $id));
     }
 
@@ -92,16 +92,16 @@ class GiftGranter
             ->value('id');
     }
 
-    private function giuSuat(GiftCampaign $ct): bool
+    private function giuSuat(Promotion $ct): bool
     {
-        return GiftCampaign::whereKey($ct->id)
+        return Promotion::whereKey($ct->id)
             ->where(fn ($q) => $q->whereNull('total_limit')->orWhereColumn('used_count', '<', 'total_limit'))
             ->update(['used_count' => DB::raw('used_count + 1')]) === 1;
     }
 
-    private function traSuatMot(int $campaignId): void
+    private function traSuatMot(int $khuyenMaiId): void
     {
-        GiftCampaign::whereKey($campaignId)->where('used_count', '>', 0)->decrement('used_count');
+        Promotion::whereKey($khuyenMaiId)->where('used_count', '>', 0)->decrement('used_count');
     }
 
     private function truKho(GiftItem $vat, int $soLuong): bool

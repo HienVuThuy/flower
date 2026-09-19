@@ -4,12 +4,14 @@
 
 @section('content')
 
+<x-admin.promo-tabs />
+
 <div class="mb-4">
     <h1 class="admin-page-title">Quà tặng kèm sản phẩm</h1>
     <p class="admin-page-subtitle mb-0">
         Quà mặc định của từng sản phẩm — khách mua là có, như "Mua 1 mặt hàng – nhận quà miễn phí".
-        Quà theo chương trình (giới hạn suất, thời gian, hạng) nằm ở
-        <a data-admin-link href="{{ route('admin.gift-campaigns.index') }}">Khuyến mại › Quà theo chương trình</a>.
+        Quà có giới hạn suất, thời gian, hạng thì tạo
+        <a data-admin-link href="{{ route('admin.promotions.create') }}">chương trình khuyến mại</a> với hình thức "Tặng quà".
     </p>
 </div>
 

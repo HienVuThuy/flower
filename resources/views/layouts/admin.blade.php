@@ -149,7 +149,7 @@
 
             @can('khuyen-mai')
 
-            <a data-admin-link href="{{ route('admin.promotions.index') }}" class="admin-nav-link {{ request()->routeIs('admin.promotions.*', 'admin.coupons.*', 'admin.gift-campaigns.*', 'admin.member-tiers.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.promotions.index') }}" class="admin-nav-link {{ request()->routeIs('admin.promotions.*', 'admin.coupons.*', 'admin.member-tiers.*', 'admin.product-gifts.*', 'admin.gift-items.*') ? 'is-active' : '' }}">
                 <x-site.icon name="megaphone" />
                 <span>Khuyến mại</span>
             </a>
@@ -157,11 +157,6 @@
             <a data-admin-link href="{{ route('admin.pricing-advisor.index') }}" class="admin-nav-link {{ request()->routeIs('admin.pricing-advisor.*') ? 'is-active' : '' }}">
                 <x-site.icon name="speedometer2" />
                 <span>Đề xuất giá</span>
-            </a>
-
-            <a data-admin-link href="{{ route('admin.product-gifts.index') }}" class="admin-nav-link {{ request()->routeIs('admin.product-gifts.*', 'admin.gift-items.*') ? 'is-active' : '' }}">
-                <x-site.icon name="flower1" />
-                <span>Quà tặng</span>
             </a>
             @endcan
         </nav>

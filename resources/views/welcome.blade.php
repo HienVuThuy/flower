@@ -106,6 +106,29 @@
     </div>
 </section>
 
+@if($noiBat->isNotEmpty())
+<section class="section-sm" data-noi-bat>
+    <div class="container-shop">
+
+        <div class="section-header">
+            <div>
+                <h2 class="text-h2 section-header__title">Sản phẩm nổi bật</h2>
+            </div>
+            <a href="{{ route('shop.products.index', ['sort' => 'noi_bat']) }}" class="btn btn-ghost">Xem tất cả</a>
+        </div>
+
+        <div class="row g-4">
+            @foreach($noiBat as $product)
+                <div class="col-6 col-md-4 col-lg-3">
+                    <x-product.card :product="$product" />
+                </div>
+            @endforeach
+        </div>
+
+    </div>
+</section>
+@endif
+
 @if($featuredProducts->isNotEmpty())
 <section class="section-sm">
     <div class="container-shop">

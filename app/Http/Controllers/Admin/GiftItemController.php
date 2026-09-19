@@ -23,7 +23,7 @@ class GiftItemController extends Controller
     public function index(): View
     {
         return view('admin.gift-items.index', [
-            'vatPham' => GiftItem::query()->with(['product:id,name', 'variant:id,name'])->withCount('campaigns')->latest()->paginate(20),
+            'vatPham' => GiftItem::query()->with(['product:id,name', 'variant:id,name'])->withCount('promotions')->latest()->paginate(20),
         ]);
     }
 
@@ -55,7 +55,7 @@ class GiftItemController extends Controller
 
     public function destroy(GiftItem $giftItem): RedirectResponse
     {
-        if ($giftItem->campaigns()->exists() || OrderItem::where('gift_item_id', $giftItem->id)->exists()) {
+        if ($giftItem->promotions()->exists() || OrderItem::where('gift_item_id', $giftItem->id)->exists()) {
             return back()->with('error', 'Vật phẩm đã được chương trình hoặc đơn hàng dùng — bỏ tích "đang dùng" thay vì xoá.');
         }
 

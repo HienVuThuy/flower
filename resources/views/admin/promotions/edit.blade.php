@@ -4,6 +4,8 @@
 
 @section('content')
 
+@php $laQua = $promotion->laTangQua(); @endphp
+
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
 
     <div>
@@ -12,7 +14,10 @@
             <span class="status-chip {{ $promotion->effectiveStatus()->chipClass() }}">
                 {{ $promotion->effectiveStatus()->label() }}
             </span>
-            <span class="ms-2">{{ $promotion->products->count() }} sản phẩm áp dụng</span>
+            <span class="ms-2">{{ $promotion->type->label() }} · {{ $promotion->products->count() }} sản phẩm</span>
+            @if($laQua && $promotion->giftItem)
+                <span class="ms-2">· Tặng {{ $promotion->gift_quantity }} × {{ $promotion->giftItem->name }}, đã phát {{ $promotion->used_count }}{{ $promotion->total_limit !== null ? '/' . $promotion->total_limit : '' }} suất</span>
+            @endif
         </p>
     </div>
 
@@ -42,11 +47,19 @@
 
         <div class="admin-panel__header">
             <div>
-                <h2 class="form-panel__title mb-1">Sản phẩm áp dụng</h2>
-                <p class="admin-page-subtitle mb-0">
-                    Để trống cột ghi đè thì sản phẩm dùng mức chung của chương trình
-                    ({{ rtrim(rtrim(number_format($promotion->discount_value, 2, ',', '.'), '0'), ',') }}{{ $promotion->type->unit() }}).
-                </p>
+                @if($laQua)
+                    <h2 class="form-panel__title mb-1">Sản phẩm điều kiện</h2>
+                    <p class="admin-page-subtitle mb-0">
+                        Có sản phẩm thì đơn phải chứa ít nhất một sản phẩm trong danh sách mới được quà.
+                        Để trống thì mọi đơn đạt điều kiện đều được quà. Sản phẩm trong danh sách hiện nhãn "Có quà".
+                    </p>
+                @else
+                    <h2 class="form-panel__title mb-1">Sản phẩm áp dụng</h2>
+                    <p class="admin-page-subtitle mb-0">
+                        Để trống cột ghi đè thì sản phẩm dùng mức chung của chương trình
+                        ({{ rtrim(rtrim(number_format($promotion->discount_value, 2, ',', '.'), '0'), ',') }}{{ $promotion->type->unit() }}).
+                    </p>
+                @endif
             </div>
         </div>
 
@@ -80,9 +93,11 @@
                         <tr>
                             <th>Sản phẩm</th>
                             <th style="width: 130px;">Giá gốc</th>
-                            <th style="width: 160px;">Ghi đè kiểu</th>
-                            <th style="width: 130px;">Ghi đè mức</th>
-                            <th style="width: 140px;">Giá sau KM</th>
+                            @unless($laQua)
+                                <th style="width: 160px;">Ghi đè kiểu</th>
+                                <th style="width: 130px;">Ghi đè mức</th>
+                                <th style="width: 140px;">Giá sau KM</th>
+                            @endunless
                             <th style="width: 60px;"></th>
                         </tr>
                     </thead>
@@ -112,10 +127,11 @@
                                     : '—' }}
                             </td>
 
+                            @unless($laQua)
                             <td>
                                 <select name="products[{{ $i }}][discount_type]" class="form-select form-select-sm" data-type>
                                     <option value="">Theo chương trình</option>
-                                    @foreach($types as $type)
+                                    @foreach($kieuGiam as $type)
                                         <option value="{{ $type->value }}" @selected($pivot->discount_type === $type->value)>
                                             {{ $type->label() }}
                                         </option>
@@ -139,6 +155,7 @@
                             <td class="fw-semibold text-accent" data-final>
                                 {{ $finalPrice !== null ? \App\Services\Shop\Money::format($finalPrice) : '—' }}
                             </td>
+                            @endunless
 
                             <td class="text-end">
                                 <button type="button" class="btn btn-sm btn-outline-danger" data-remove>Xóa</button>
@@ -177,10 +194,11 @@
             <small class="text-muted">__CATEGORY__</small>
         </td>
         <td data-base-price="__PRICE__">__PRICE_LABEL__</td>
+        @unless($laQua)
         <td>
             <select name="products[__I__][discount_type]" class="form-select form-select-sm" data-type>
                 <option value="">Theo chương trình</option>
-                @foreach($types as $type)
+                @foreach($kieuGiam as $type)
                     <option value="{{ $type->value }}">{{ $type->label() }}</option>
                 @endforeach
             </select>
@@ -190,6 +208,7 @@
                    class="form-control form-control-sm" placeholder="—" data-value>
         </td>
         <td class="fw-semibold text-accent" data-final>—</td>
+        @endunless
         <td class="text-end">
             <button type="button" class="btn btn-sm btn-outline-danger" data-remove>Xóa</button>
         </td>
@@ -238,6 +257,7 @@
     }
 
     function refreshRow(row) {
+        if (!row.querySelector('[data-type]')) return;
         const baseAttr = row.querySelector('[data-base-price]')?.dataset.basePrice;
         const base = baseAttr === '' || baseAttr == null ? null : parseFloat(baseAttr);
 

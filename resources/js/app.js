@@ -34,6 +34,7 @@ import { initCommunity } from './community';
 import { initVideoEmbed } from './components/video-embed';
 import { initLiveChat } from './live-chat';
 import { initAdminLiveChat } from './admin/live-chat';
+import { initPromotionForm } from './admin/promotion-form';
 
 const header = document.querySelector('.site-header');
 
@@ -79,6 +80,7 @@ export function bootUi() {
     initVideoEmbed();
     initLiveChat();
     initAdminLiveChat();
+    initPromotionForm();
 }
 
 bootUi();

@@ -205,6 +205,11 @@ class ProductController extends Controller
                 $query->orderByDesc('view_count');
 
                 return;
+
+            case 'noi_bat':
+                $query->orderByDesc('is_featured')->latest();
+
+                return;
         }
 
         if ($search->isNotEmpty()) {
@@ -283,10 +288,13 @@ class ProductController extends Controller
             ->limit(4)
             ->get(['id', 'user_id', 'body', 'approved_at']);
 
-        $quaKem = app(\App\Services\Gift\GiftResolver::class)->choSanPham($product);
+        $qua = app(\App\Services\Gift\GiftResolver::class);
+        $quaKem = $qua->choSanPham($product);
+        $quaChuongTrinh = $qua->khuyenMaiQuaCho($product);
 
         return view('shop.products.show', compact(
             'quaKem',
+            'quaChuongTrinh',
             'baiKhoe',
             'product',
             'related',

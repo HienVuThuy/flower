@@ -25,7 +25,7 @@ class OrderItem extends Model
         'tax_rate',
         'tax_amount',
         'is_gift',
-        'gift_campaign_id',
+        'gift_promotion_id',
         'gift_item_id',
         'parent_item_id',
         'product_gift_id',

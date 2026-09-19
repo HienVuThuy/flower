@@ -111,6 +111,7 @@
             <option value="price_asc" @selected(request('sort') === 'price_asc')>Giá tăng dần</option>
             <option value="price_desc" @selected(request('sort') === 'price_desc')>Giá giảm dần</option>
             <option value="popular" @selected(request('sort') === 'popular')>Xem nhiều nhất</option>
+            <option value="noi_bat" @selected(request('sort') === 'noi_bat')>Nổi bật trước</option>
         </select>
     </div>
 

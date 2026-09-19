@@ -762,7 +762,7 @@ class ProductController extends Controller
     {
         ['viec' => $viec, 'ids' => $ids] = $this->validateBulk(
             $request,
-            ['ban', 'an', 'nhap', 'xoa'],
+            ['ban', 'an', 'nhap', 'noi-bat', 'bo-noi-bat', 'xoa'],
             'products',
         );
 
@@ -787,6 +787,20 @@ class ProductController extends Controller
             );
 
             return back()->with('success', "Đã xoá {$so} sản phẩm.");
+        }
+
+        if (in_array($viec, ['noi-bat', 'bo-noi-bat'], true)) {
+            $bat = $viec === 'noi-bat';
+            Product::whereKey($ids)->update(['is_featured' => $bat]);
+
+            $this->audit()->log(
+                'product.bulk_featured',
+                sprintf('%s %d sản phẩm nổi bật', $bat ? 'Đánh dấu' : 'Bỏ đánh dấu', $so),
+                null,
+                ['ids' => $ids, 'noi_bat' => $bat],
+            );
+
+            return back()->with('success', ($bat ? 'Đã đánh dấu nổi bật ' : 'Đã bỏ nổi bật ') . "{$so} sản phẩm.");
         }
 
         $trangThai = match ($viec) {

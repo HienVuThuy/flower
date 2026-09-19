@@ -104,6 +104,30 @@
                     </details>
                 @endif
 
+                @if(($quaChuongTrinh ?? collect())->isNotEmpty())
+                    <details class="product-gifts mb-3" data-qua-chuong-trinh>
+                        <summary class="product-gifts__title">
+                            <x-site.icon name="gift" />
+                            Quà theo chương trình
+                            <span class="product-gifts__names">{{ $quaChuongTrinh->map(fn ($km) => $km->giftItem->name)->implode(', ') }}</span>
+                        </summary>
+                        <ul class="product-gifts__list list-unstyled mb-0 mt-2">
+                            @foreach($quaChuongTrinh as $km)
+                                <li class="product-gifts__item">
+                                    <span class="product-gifts__icon"><x-site.icon name="gift" /></span>
+                                    <span>
+                                        {{ $km->gift_quantity }} × {{ $km->giftItem->name }}
+                                        <span class="text-caption d-block">{{ $km->name }} · {{ $km->dieuKienQua() }}</span>
+                                        @if($km->endsInText())
+                                            <span class="text-caption d-block">{{ Str::ucfirst($km->endsInText()) }}</span>
+                                        @endif
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </details>
+                @endif
+
                 @if($product->track_inventory)
                     <div class="mb-3">
                         @if($product->inStock() && ($chiCon ?? null) !== null)

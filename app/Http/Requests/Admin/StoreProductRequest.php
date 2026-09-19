@@ -26,6 +26,7 @@ class StoreProductRequest extends FormRequest
         );
 
         $this->merge([
+            'is_featured' => $this->boolean('is_featured'),
             'name' => $name,
 
             'slug' => $name !== ''
@@ -214,6 +215,8 @@ class StoreProductRequest extends FormRequest
             'remove_images.*' => [
                 'integer',
             ],
+
+            'is_featured' => ['boolean'],
 
             'status' => [
                 'required',

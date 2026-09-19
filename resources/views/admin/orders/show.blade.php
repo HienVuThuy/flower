@@ -78,7 +78,7 @@
                                         @if($item->is_gift)
                                             <div class="admin-page-subtitle" data-dong-qua-admin="{{ $item->id }}">
                                                 <span class="badge text-bg-success">Quà miễn phí</span>
-                                                @if($item->gift_campaign_id)
+                                                @if($item->gift_promotion_id)
                                                     {{ $item->promotion_name }}
                                                 @elseif($item->parent_item_id && ($cha = $order->items->firstWhere('id', $item->parent_item_id)))
                                                     kèm {{ $cha->product_name }}

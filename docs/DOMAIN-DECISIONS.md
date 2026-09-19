@@ -8346,3 +8346,31 @@ có thanh bên.
   admin tạo coi như đã xác thực email; admin đổi email thì phải xác thực lại.
 - `.admin-main` thêm `min-width: 0`: bảng rộng tự cuộn trong khung thay vì đẩy
   cả trang quản trị tràn ngang (QĐ-169).
+
+## QĐ-304. Gộp "Quà theo chương trình" vào Chương trình khuyến mại; nhãn góc thẻ sản phẩm
+
+- Hai mục "Giảm giá sản phẩm" và "Quà theo chương trình" cùng là một chương
+  trình có thời gian, trạng thái, lịch — khác nhau ở phần thưởng. Tab đầu đổi
+  tên "Chương trình khuyến mại", có ô "Hình thức": giảm % / giảm tiền / giá cố
+  định / **Tặng quà**. Bảng `gift_campaigns` bị xoá sau khi chuyển dữ liệu sang
+  `promotions` (`type = tang_qua`); `order_items.gift_campaign_id` thành
+  `gift_promotion_id`.
+- Tặng quà giữ mọi điều kiện cũ (đơn tối thiểu, hạng, đơn đầu, giới hạn mỗi
+  tài khoản, tổng suất giữ nguyên tử) và có thêm những gì chương trình giảm giá
+  vốn có: khung giờ, thứ trong tuần, banner, trang sự kiện, và danh sách sản
+  phẩm — có sản phẩm thì đơn phải chứa một trong số đó.
+- `PricingService` chỉ xét hình thức giảm giá (`laGiamGia()`): chương trình
+  Tặng quà không bao giờ làm đổi giá, kể cả khi còn sót mức ghi đè ở bảng nối.
+- Đã phát quà thì không xoá, không đổi sang giảm giá, tổng suất không nhỏ hơn
+  số đã phát.
+- "Quà kèm sản phẩm" (quà mặc định từng món, mua mỗi N tặng M) vẫn là mô hình
+  riêng vì tính theo dòng hàng, nhưng chuyển thành tab trong Khuyến mại; bỏ mục
+  menu "Quà tặng" riêng.
+- Bỏ luôn hai kiểu `combo`, `buy_x_get_y` chưa từng tính được (thay QĐ-03) và
+  ba cột `products.sale_price / sale_starts_at / sale_ends_at` không code nào
+  đọc: mọi giảm giá đi qua chương trình. Migration dừng lại nếu còn dữ liệu.
+- Nhãn góc trên trái ảnh sản phẩm: "Giảm X%", "Nổi bật" (cờ `is_featured` do
+  quản trị đặt — không tự suy ra), "Có quà", "Hết hàng". Tập sản phẩm có quà
+  tính một lần mỗi request.
+- Giỏ hàng nhắc "Mua thêm X để nhận quà" chỉ khi quà đó CHỈ còn thiếu tiền —
+  không gợi ý quà mà khách không đủ hạng hay đã nhận hết lượt.

@@ -27,6 +27,10 @@ class StorePromotionRequest extends FormRequest
         ]);
 
         $this->merge(\App\Services\Time\Gio::doiONhap($this->all(), 'starts_at', 'ends_at'));
+
+        if ($this->input('type') === PromotionType::TangQua->value) {
+            $this->merge(['discount_value' => 0]);
+        }
     }
 
     public function rules(): array
@@ -53,6 +57,14 @@ class StorePromotionRequest extends FormRequest
 
             'discount_value' => ['required', 'numeric', 'min:0', 'max:999999999999.99'],
 
+            'gift_item_id' => ['exclude_unless:type,tang_qua', 'required', 'integer', 'exists:gift_items,id'],
+            'gift_quantity' => ['exclude_unless:type,tang_qua', 'required', 'integer', 'min:1', 'max:100'],
+            'min_order_amount' => ['exclude_unless:type,tang_qua', 'nullable', 'numeric', 'min:0', 'max:999999999'],
+            'min_member_tier_id' => ['exclude_unless:type,tang_qua', 'nullable', 'integer', 'exists:member_tiers,id'],
+            'first_order_only' => ['exclude_unless:type,tang_qua', 'boolean'],
+            'per_user_limit' => ['exclude_unless:type,tang_qua', 'nullable', 'integer', 'min:1', 'max:1000'],
+            'total_limit' => ['exclude_unless:type,tang_qua', 'nullable', 'integer', 'min:1', 'max:1000000'],
+
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date', 'after_or_equal:starts_at'],
 
@@ -74,6 +86,16 @@ class StorePromotionRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            $dangSua = $this->route('promotion');
+
+            if ($dangSua instanceof \App\Models\Promotion && $dangSua->used_count > 0) {
+                if ($this->input('type') !== PromotionType::TangQua->value) {
+                    $validator->errors()->add('type', 'Chương trình đã phát quà nên không đổi sang giảm giá được.');
+                } elseif ($this->filled('total_limit') && (int) $this->input('total_limit') < $dangSua->used_count) {
+                    $validator->errors()->add('total_limit', 'Tổng suất không được nhỏ hơn số quà đã phát (' . $dangSua->used_count . ').');
+                }
+            }
+
             if (
                 $this->input('type') === PromotionType::Percent->value
                 && (float) $this->input('discount_value') > 100
@@ -118,6 +140,8 @@ class StorePromotionRequest extends FormRequest
             'discount_value.required' => 'Vui lòng nhập mức giảm.',
             'discount_value.numeric' => 'Mức giảm phải là số.',
             'discount_value.min' => 'Mức giảm không được âm.',
+            'gift_item_id.required' => 'Vui lòng chọn quà tặng.',
+            'gift_quantity.required' => 'Vui lòng nhập số lượng quà mỗi đơn.',
             'ends_at.after_or_equal' => 'Ngày kết thúc phải sau ngày bắt đầu.',
             'daily_start_time.date_format' => 'Giờ bắt đầu phải theo dạng HH:MM, ví dụ 19:00.',
             'daily_end_time.date_format' => 'Giờ kết thúc phải theo dạng HH:MM, ví dụ 22:00.',

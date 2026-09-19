@@ -398,11 +398,6 @@ Route::prefix('admin')
         Route::delete('qua-tang/san-pham/{product}/{productGift}', [\App\Http\Controllers\Admin\ProductGiftController::class, 'destroy'])
             ->middleware(['quyen:khuyen-mai', 'throttle:30,1'])->name('product-gifts.destroy');
 
-        Route::resource('khuyen-mai-qua', \App\Http\Controllers\Admin\GiftCampaignController::class)
-            ->except('show')
-            ->parameters(['khuyen-mai-qua' => 'giftCampaign'])
-            ->names('gift-campaigns')
-            ->middleware('quyen:khuyen-mai');
         Route::resource('vat-pham-qua', \App\Http\Controllers\Admin\GiftItemController::class)
             ->except('show')
             ->parameters(['vat-pham-qua' => 'giftItem'])

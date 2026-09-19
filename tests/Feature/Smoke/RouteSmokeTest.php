@@ -29,7 +29,6 @@ class RouteSmokeTest extends TestCase
         'flowerLot' => \App\Models\FlowerLot::class,
         'expense' => \App\Models\Expense::class,
         'giftItem' => \App\Models\GiftItem::class,
-        'giftCampaign' => \App\Models\GiftCampaign::class,
         'productGift' => \App\Models\ProductGift::class,
     ];
 
@@ -158,7 +157,7 @@ class RouteSmokeTest extends TestCase
         ]);
 
         $qua = \App\Models\GiftItem::create(['name' => 'Túi vải quét thử', 'kind' => 'qua_tang', 'stock_quantity' => 10, 'is_active' => true]);
-        \App\Models\GiftCampaign::create(['name' => 'Quà quét thử', 'kind' => 'chuong_trinh', 'gift_item_id' => $qua->id, 'status' => 'active']);
+        \App\Models\Promotion::create(['name' => 'Quà quét thử', 'slug' => 'qua-quet-thu', 'type' => 'tang_qua', 'discount_value' => 0, 'gift_item_id' => $qua->id, 'status' => 'active', 'priority' => 0]);
 
         $quaKem = new \App\Models\ProductGift(['per_quantity' => 1, 'gift_quantity' => 1, 'is_active' => true]);
         $quaKem->product_id = \App\Models\Product::query()->value('id');

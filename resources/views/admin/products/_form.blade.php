@@ -1218,6 +1218,14 @@
 
                 <x-form-error name="status"/>
 
+                <div class="form-check mt-3">
+                    <input type="hidden" name="is_featured" value="0">
+                    <input class="form-check-input" type="checkbox" id="sp-noi-bat" name="is_featured" value="1"
+                           @checked(old('is_featured', $product->is_featured ?? false))>
+                    <label class="form-check-label" for="sp-noi-bat">Sản phẩm nổi bật</label>
+                    <div class="form-text">Hiện nhãn "Nổi bật" ở góc ảnh; khách sắp xếp "Nổi bật trước" thì sản phẩm này lên đầu.</div>
+                </div>
+
             </div>
 
         </div>

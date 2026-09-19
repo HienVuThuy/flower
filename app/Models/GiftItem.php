@@ -40,9 +40,9 @@ class GiftItem extends Model
         return $this->belongsTo(ProductVariant::class, 'product_variant_id');
     }
 
-    public function campaigns(): HasMany
+    public function promotions(): HasMany
     {
-        return $this->hasMany(GiftCampaign::class);
+        return $this->hasMany(Promotion::class);
     }
 
     public function laSanPham(): bool
