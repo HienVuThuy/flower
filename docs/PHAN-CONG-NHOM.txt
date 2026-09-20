@@ -9,15 +9,15 @@ CÁCH CHIA
     controller, service, model, migration, giao diện, JavaScript, CSS đến bài
     kiểm thử), để mỗi người trình bày được một luồng hoàn chỉnh từ đầu đến cuối
     thay vì mỗi người giữ một "tầng" rời rạc.
-  - Mọi tệp code của dự án (1022 tệp, không tính ảnh / phông / tài liệu)
+  - Mọi tệp code của dự án (1036 tệp, không tính ảnh / phông / tài liệu)
     đều được giao cho ĐÚNG MỘT người. Danh sách được sinh bằng script từ chính kho
     mã nên đường dẫn chính xác.
   - Khối lượng cân nhau:
-      Hưng   237 tệp, khoảng 23.515 dòng code
-      Hùng   183 tệp, khoảng 21.620 dòng code
+      Hưng   245 tệp, khoảng 23.887 dòng code
+      Hùng   189 tệp, khoảng 22.140 dòng code
       Huy    195 tệp, khoảng 24.650 dòng code
       Dũng   191 tệp, khoảng 23.001 dòng code
-      Hiền   216 tệp, khoảng 26.936 dòng code
+      Hiền   216 tệp, khoảng 26.950 dòng code
   - "Phối hợp" ghi rõ chỗ hai khối gọi sang nhau, để khi sửa một bên thì báo
     người kia.
   - Tài liệu nên đọc chung: docs/HUONG-DAN-DOC-CODE.txt (kiến thức nền + 24 luồng),
@@ -89,8 +89,8 @@ DANH SÁCH TỆP
     routes/admin.php
     routes/console.php
     routes/web.php
-  [Controller] (17)
-    app/Http/Controllers/Shop/SitemapController.php
+  [Controller] (18)
+    app/Http/Controllers/Shop/StockAlertController.php
     app/Http/Controllers/Admin/ActivityLogController.php
     app/Http/Controllers/Admin/Concerns/HandlesBulkAction.php
     app/Http/Controllers/Admin/Concerns/LogsAdminActivity.php
@@ -107,6 +107,7 @@ DANH SÁCH TỆP
     app/Http/Controllers/Shop/DisplaySchemeController.php
     app/Http/Controllers/Shop/PageController.php
     app/Http/Controllers/Shop/ProfileController.php
+    app/Http/Controllers/Shop/SitemapController.php
   [Middleware] (5)
     app/Http/Middleware/CoQuyen.php
     app/Http/Middleware/EnsureUserHasRole.php
@@ -140,7 +141,8 @@ DANH SÁCH TỆP
     app/Services/Theme/HeroImages.php
     app/Services/Theme/ThemeRegistry.php
     app/Services/Time/Gio.php
-  [Model / Observer] (4)
+  [Model / Observer] (5)
+    app/Models/StockAlert.php
     app/Models/ActivityLog.php
     app/Models/EmailVerificationCode.php
     app/Models/Setting.php
@@ -149,12 +151,14 @@ DANH SÁCH TỆP
     app/Enums/ContactChannel.php
     app/Enums/Quyen.php
     app/Enums/UserRole.php
-  [Email] (4)
+  [Email] (5)
+    app/Mail/StockAlertMail.php
     app/Mail/AccountDeletionMail.php
     app/Mail/EmailVerificationMail.php
     app/Mail/PasswordChangedMail.php
     app/Mail/PasswordResetMail.php
-  [Lệnh artisan] (3)
+  [Lệnh artisan] (4)
+    app/Console/Commands/SaoLuuCoSoDuLieu.php
     app/Console/Commands/DoHieuNang.php
     app/Console/Commands/LamNongQuanTri.php
     app/Console/Commands/SyncAssetCredits.php
@@ -183,7 +187,8 @@ DANH SÁCH TỆP
     lang/vi/pagination.php
     lang/vi/passwords.php
     lang/vi/validation.php
-  [Migration (bảng CSDL)] (10)
+  [Migration (bảng CSDL)] (11)
+    database/migrations/2026_10_27_010000_create_stock_alerts_table.php
     database/migrations/0001_01_01_000000_create_users_table.php
     database/migrations/0001_01_01_000001_create_cache_table.php
     database/migrations/0001_01_01_000002_create_jobs_table.php
@@ -200,10 +205,6 @@ DANH SÁCH TỆP
     database/seeders/ChuongTrinhKhuyenMaiMauSeeder.php
     database/seeders/DatabaseSeeder.php
   [Giao diện Blade] (60)
-    resources/views/components/site/json-ld.blade.php
-    resources/views/components/site/social-meta.blade.php
-    resources/views/errors/404.blade.php
-    resources/views/errors/500.blade.php
     resources/views/admin/activity-logs/index.blade.php
     resources/views/admin/dashboard.blade.php
     resources/views/admin/pages/edit.blade.php
@@ -235,9 +236,11 @@ DANH SÁCH TỆP
     resources/views/components/site/header.blade.php
     resources/views/components/site/icon-sprite.blade.php
     resources/views/components/site/icon.blade.php
+    resources/views/components/site/json-ld.blade.php
     resources/views/components/site/money.blade.php
     resources/views/components/site/scheme-boot.blade.php
     resources/views/components/site/scheme-toggle.blade.php
+    resources/views/components/site/social-meta.blade.php
     resources/views/components/site/speculation-rules.blade.php
     resources/views/components/site/time.blade.php
     resources/views/emails/auth/delete-account.blade.php
@@ -245,7 +248,9 @@ DANH SÁCH TỆP
     resources/views/emails/auth/password-reset.blade.php
     resources/views/emails/auth/verify-email.blade.php
     resources/views/errors/403.blade.php
+    resources/views/errors/404.blade.php
     resources/views/errors/429.blade.php
+    resources/views/errors/500.blade.php
     resources/views/layouts/admin.blade.php
     resources/views/layouts/app.blade.php
     resources/views/shop/credits.blade.php
@@ -260,7 +265,9 @@ DANH SÁCH TỆP
     resources/views/shop/profile/partials/thu-thong-bao.blade.php
     resources/views/shop/profile/partials/tom-tat.blade.php
     resources/views/shop/profile/partials/xoa-tai-khoan.blade.php
-  [JavaScript] (17)
+  [JavaScript] (19)
+    resources/js/components/filter-loading.js
+    resources/js/components/quick-buy.js
     resources/js/account-menu.js
     resources/js/admin/bulk-actions.js
     resources/js/admin/nav.js
@@ -311,8 +318,8 @@ DANH SÁCH TỆP
     resources/css/themes/noel.css
     resources/css/themes/tet.css
     resources/css/themes/valentine.css
-  [Kiểm thử] (24)
-    tests/Feature/Seo/SeoVaTaiTrangTest.php
+  [Kiểm thử] (25)
+    tests/Feature/Admin/SaoLuuTest.php
     tests/Feature/Admin/ActivityLogTest.php
     tests/Feature/Admin/AdminDarkModeTest.php
     tests/Feature/Admin/DashboardTest.php
@@ -333,6 +340,7 @@ DANH SÁCH TỆP
     tests/Feature/Profile/ProfileTabsTest.php
     tests/Feature/Security/OwnershipTest.php
     tests/Feature/Security/SecurityHeadersTest.php
+    tests/Feature/Seo/SeoVaTaiTrangTest.php
     tests/Feature/Smoke/HeaderNavTest.php
     tests/Feature/Smoke/RouteSmokeTest.php
     tests/TestCase.php
@@ -403,7 +411,8 @@ DANH SÁCH TỆP
     app/Http/Requests/Admin/UpdateCategoryRequest.php
     app/Http/Requests/Admin/UpdateProductRequest.php
     app/Http/Requests/Shop/ReviewRequest.php
-  [Service (luật nghiệp vụ)] (17)
+  [Service (luật nghiệp vụ)] (18)
+    app/Services/Catalog/StockAlertService.php
     app/Services/Analytics/ReviewReport.php
     app/Services/Catalog/SocialProof.php
     app/Services/Media/ImageOptimizer.php
@@ -421,7 +430,8 @@ DANH SÁCH TỆP
     app/Services/Search/SearchDictionary.php
     app/Services/Search/SearchTerms.php
     app/Services/Search/TextNormalizer.php
-  [Model / Observer] (12)
+  [Model / Observer] (13)
+    app/Observers/ProductVariantObserver.php
     app/Models/Category.php
     app/Models/PlantTaxon.php
     app/Models/Product.php
@@ -492,7 +502,9 @@ DANH SÁCH TỆP
     database/seeders/PlantTraitSeeder.php
     database/seeders/ReviewSampleSeeder.php
     database/seeders/SupplyCatalogSeeder.php
-  [Giao diện Blade] (43)
+  [Giao diện Blade] (45)
+    resources/views/components/product/stock-alert.blade.php
+    resources/views/emails/catalog/stock-alert.blade.php
     resources/views/admin/analytics/reviews.blade.php
     resources/views/admin/categories/_form.blade.php
     resources/views/admin/categories/create.blade.php
@@ -552,7 +564,9 @@ DANH SÁCH TỆP
     resources/css/components/product-detail.css
     resources/css/components/reviews.css
     resources/css/components/search.css
-  [Kiểm thử] (18)
+  [Kiểm thử] (20)
+    tests/Feature/Catalog/BaoHangVeTest.php
+    tests/Feature/Catalog/GiaoDienMuaHangTest.php
     tests/Feature/Admin/CatalogNhatQuanTest.php
     tests/Feature/Admin/ProductClassificationTest.php
     tests/Feature/Admin/ProductDeleteTest.php

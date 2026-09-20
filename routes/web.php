@@ -297,6 +297,15 @@ Route::get('robots.txt', function () {
 })->name('robots');
 
 Route::middleware(['auth', 'verified'])->group(function () {
+
+    /* Báo tôi khi có hàng lại. */
+    Route::post('san-pham/{product}/bao-hang-ve', [\App\Http\Controllers\Shop\StockAlertController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('shop.stock-alerts.store');
+
+    Route::delete('san-pham/{product}/bao-hang-ve', [\App\Http\Controllers\Shop\StockAlertController::class, 'destroy'])
+        ->middleware('throttle:20,1')
+        ->name('shop.stock-alerts.destroy');
     Route::get('tin-nhan', [\App\Http\Controllers\Shop\ChatController::class, 'index'])->name('shop.chat.index');
     Route::get('tin-nhan/tin', [\App\Http\Controllers\Shop\ChatController::class, 'messages'])
         ->middleware('throttle:60,1')

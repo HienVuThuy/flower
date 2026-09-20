@@ -1,5 +1,5 @@
 {{-- $moiThamSoLoc do ProductController dựng — một nơi sở hữu duy nhất, dùng chung với khối mời "Chọn cây" ở… --}}
-<form method="GET" action="{{ route('shop.products.index') }}" class="filter-panel">
+<form method="GET" action="{{ route('shop.products.index') }}" class="filter-panel" data-form-loc>
 
     @foreach($moiThamSoLoc as $thamSo)
         @continue(in_array($thamSo, ['q', 'sort'], true))

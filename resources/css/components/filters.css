@@ -378,3 +378,28 @@
         text-align: right;
     }
 }
+
+/* Đang chờ kết quả lọc: làm mờ lưới cũ và khoá thao tác, để khách biết trang đang đổi. */
+[data-luoi-san-pham].dang-tai {
+    position: relative;
+    opacity: 0.45;
+    pointer-events: none;
+    transition: opacity var(--duration-base) var(--ease-standard);
+}
+
+[data-luoi-san-pham].dang-tai::after {
+    content: "Đang lọc…";
+    position: absolute;
+    inset-inline: 0;
+    top: 2rem;
+    text-align: center;
+    font-weight: 600;
+    color: var(--ink-900);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-luoi-san-pham].dang-tai {
+        transition: none;
+    }
+}
+

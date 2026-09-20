@@ -42,6 +42,8 @@ import { initLiveChat } from './live-chat';
 import { initAdminLiveChat } from './admin/live-chat';
 import { initPromotionForm } from './admin/promotion-form';
 import { initPromotionProducts } from './admin/promotion-products';
+import { initQuickBuy } from './components/quick-buy';
+import { initFilterLoading } from './components/filter-loading';
 
 const header = document.querySelector('.site-header');
 
@@ -89,6 +91,8 @@ export function bootUi() {
     initAdminLiveChat();
     initPromotionForm();
     initPromotionProducts();
+    initQuickBuy();
+    initFilterLoading();
 }
 
 bootUi();

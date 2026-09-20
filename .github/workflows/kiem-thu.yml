@@ -1,0 +1,47 @@
+# Chạy toàn bộ kiểm thử mỗi lần đẩy mã lên GitHub.
+# Kiểm thử dùng SQLite trong bộ nhớ (xem phpunit.xml) nên không cần dựng MySQL.
+name: Kiểm thử
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  phpunit:
+    name: PHPUnit + build giao diện
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cài PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: bcmath, gd, intl, pdo_sqlite, zip
+          coverage: none
+
+      - name: Cài thư viện PHP
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Chuẩn bị .env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Cài thư viện giao diện
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Kiểm thử
+        run: php artisan test
+
+      - name: Soát định dạng mã (không chặn)
+        run: vendor/bin/pint --test
+        continue-on-error: true

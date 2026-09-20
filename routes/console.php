@@ -18,6 +18,12 @@ Schedule::command('care:remind')
     ->description('Nhắc khách tưới nước / bón phân cho cây đã mua');
 
 
+Schedule::command('sao-luu:csdl')
+    ->dailyAt('02:30')
+    ->withoutOverlapping()
+    ->description('Sao lưu cơ sở dữ liệu, giữ 14 bản gần nhất');
+
+
 Schedule::command('ghn:dong-bo')
     ->everyThirtyMinutes()
     ->withoutOverlapping()

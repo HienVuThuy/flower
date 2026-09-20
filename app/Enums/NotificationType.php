@@ -11,6 +11,7 @@ enum NotificationType: string
     case BaiTuChoi = 'bai_tu_choi';
     case BaiBiAn = 'bai_bi_an';
     case TinNhan = 'tin_nhan';
+    case HangVe = 'hang_ve';
 
     public function label(): string
     {
@@ -21,6 +22,7 @@ enum NotificationType: string
             self::BaiTuChoi => 'Bài của bạn không được duyệt',
             self::BaiBiAn => 'Bài của bạn đã bị ẩn',
             self::TinNhan => 'Cửa hàng đã trả lời tin nhắn của bạn',
+            self::HangVe => 'Sản phẩm bạn chờ đã có hàng lại',
         };
     }
 
@@ -32,11 +34,12 @@ enum NotificationType: string
             self::BaiTuChoi => 'x-circle',
             self::BaiBiAn => 'eye-slash',
             self::TinNhan => 'chat',
+            self::HangVe => 'bag',
         };
     }
 
     public function cuaCuaHang(): bool
     {
-        return in_array($this, [self::BaiDuocDuyet, self::BaiTuChoi, self::BaiBiAn, self::TinNhan], true);
+        return in_array($this, [self::BaiDuocDuyet, self::BaiTuChoi, self::BaiBiAn, self::TinNhan, self::HangVe], true);
     }
 }

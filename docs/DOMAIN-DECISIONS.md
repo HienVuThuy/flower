@@ -8447,3 +8447,30 @@ thô (59KB nén) gộp CHUNG cả cửa hàng lẫn quản trị; JS 130KB thô 
 Chưa làm, ghi lại để cân nhắc sau: cắt bớt Bootstrap CSS (232KB thô trong gói,
 cần chuyển sang bản nguồn SCSS), bỏ kiểu chữ 500 để giảm 2 tệp phông (~29KB),
 và nén gzip/brotli phải bật ở máy chủ thật (php artisan serve không nén).
+
+## QĐ-308. Báo hàng về, sao lưu, CI, và hai chi tiết giao diện mua hàng
+
+- BÁO HÀNG VỀ: chỉ cho khách ĐÃ ĐĂNG NHẬP đăng ký (không thu email rời của
+  người lạ). Mỗi lượt đăng ký báo đúng MỘT lần: `stock_alerts.notified_at` ghi
+  thời điểm đã báo, hàng hết rồi về lại lần nữa cũng không báo lại lượt cũ.
+  Điểm kích hoạt là observer của Product và ProductVariant, khi tồn kho vừa từ 0
+  lên, hoặc sản phẩm / quy cách được mở bán lại, hoặc tắt theo dõi tồn. Chọn
+  observer vì mọi đường cộng kho đều đi qua model (`increment` trên model có
+  bắn sự kiện `updated`), không phải viết lại từng dịch vụ kho.
+  Báo bằng thông báo trong trang (`user_notifications.product_id`) và thư; thư
+  lỗi thì chỉ ghi log, không làm hỏng phiên nhập kho.
+- SAO LƯU: `php artisan sao-luu:csdl` gọi mysqldump, ghi vào storage/app/sao-luu
+  (thư mục này đã nằm trong .gitignore), giữ 14 bản gần nhất, chạy 02:30 hằng
+  ngày. Không phải MySQL thì lệnh bỏ qua chứ không báo lỗi — để kiểm thử SQLite
+  vẫn chạy được. Đường dẫn mysqldump lấy từ MYSQLDUMP_PATH (.env), vì trên XAMPP
+  Windows nó không nằm trong PATH; trong .env phải viết dấu gạch xuôi.
+- CI: .github/workflows/kiem-thu.yml chạy PHPUnit + npm build mỗi lần đẩy mã.
+  Kiểm thử dùng SQLite trong bộ nhớ nên không cần dựng MySQL trên máy chạy CI.
+- KHỐI MUA HÀNG DÍNH: từ 992px, cột phải của trang sản phẩm dùng position:
+  sticky (không JavaScript). Dưới 992px, thanh mua nhanh dính đáy hiện khi khối
+  mua chính đã cuộn khuất — dùng sự kiện cuộn + requestAnimationFrame thay cho
+  IntersectionObserver để dễ kiểm chứng và chạy đúng cả khi trang tải lại giữa
+  chừng. Khi thanh hiện thì trang chừa chỗ ở đáy và nút chat nổi dời lên trên.
+- ĐANG LỌC: bấm lọc là lưới sản phẩm mờ đi kèm chữ "Đang lọc…" — trang tải lại
+  thật nên đây chỉ là dấu hiệu cho khách biết web không đơ; quay lại bằng nút
+  Back thì gỡ trạng thái mờ (sự kiện pageshow).

@@ -88,7 +88,7 @@
                         </x-slot:actions>
                     </x-site.empty-state>
                 @else
-                    <div class="row g-4">
+                    <div class="row g-4" data-luoi-san-pham>
                         @foreach($products as $product)
                             <div class="col-6 col-md-4">
                                 <x-product.card :product="$product" />

@@ -53,12 +53,12 @@ A3. Kiến trúc (chia lớp rõ ràng)
   OrderService, điểm chỉ ghi ở PointLedger, thuế chỉ tính ở TaxCalculator…
 
 A4. Quy mô (đếm từ mã nguồn)
-  - 290 đường dẫn (route), trong đó 156 thuộc khu quản trị
-  - 71 controller, 138 lớp service, 57 model, 62 enum
+  - 292 đường dẫn (route), trong đó 156 thuộc khu quản trị
+  - 72 controller, 139 lớp service, 58 model, 62 enum
   - 93 migration tạo khoảng 70 bảng
-  - 244 view Blade, 44 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
-  - 15 lệnh artisan tự viết, 5 tác vụ chạy theo lịch
-  - 134 tệp kiểm thử, 1317 bài kiểm thử, 4900 phép khẳng định
+  - 247 view Blade, 46 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
+  - 16 lệnh artisan tự viết, 6 tác vụ chạy theo lịch
+  - 137 tệp kiểm thử, 1326 bài kiểm thử, 4934 phép khẳng định
   - Tài liệu: docs/ (quyết định thiết kế 301 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
@@ -761,7 +761,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1317 bài / 4900 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1326 bài / 4934 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,
@@ -856,6 +856,12 @@ G. TỐC ĐỘ TẢI VÀ TÌM KIẾM (đo bằng trình duyệt, trang chủ)
     và tiêu đề); trang sản phẩm có schema Product + Offer + AggregateRating,
     trang chủ có Store + WebSite, mọi đường dẫn phân cấp có BreadcrumbList.
   - Trang lỗi 404 (kèm ô tìm) và 500 mang giao diện cửa hàng.
+  - Hết hàng thì khách đã đăng nhập bấm "Báo tôi khi có hàng"; hàng về là nhận
+    thông báo trong trang và một lá thư, mỗi lượt đăng ký đúng một lần.
+  - Trang sản phẩm: khối mua hàng đi theo khi cuộn (máy tính), thanh mua nhanh
+    dính đáy (điện thoại). Danh sách báo "Đang lọc…" khi đang chờ kết quả.
+  - Sao lưu cơ sở dữ liệu 02:30 hằng ngày, giữ 14 bản (lệnh sao-luu:csdl).
+  - CI trên GitHub chạy toàn bộ kiểm thử mỗi lần đẩy mã.
   - Liên kết "Bỏ qua tới nội dung" cho người dùng bàn phím; chấm chuyển banner
     có vùng bấm 24px.
 

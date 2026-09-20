@@ -25,6 +25,11 @@ class UserNotification extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function product(): BelongsTo
+    {
+        return $this->belongsTo(Product::class);
+    }
+
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_id');
@@ -54,6 +59,12 @@ class UserNotification extends Model
     {
         if ($this->type === NotificationType::TinNhan) {
             return route('shop.chat.index');
+        }
+
+        if ($this->type === NotificationType::HangVe) {
+            $sp = $this->product;
+
+            return $sp ? route('shop.products.show', $sp) : route('shop.products.index');
         }
 
         if (! $this->community_post_id) {

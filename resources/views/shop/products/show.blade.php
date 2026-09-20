@@ -188,11 +188,15 @@
                     </div>
                 @endif
 
+                <x-product.stock-alert :product="$product" />
+
                 @if($product->short_description)
                     <p>{{ $product->short_description }}</p>
                 @endif
 
-                <x-product.actions :product="$product" :with-quantity="true" :variants="$activeVariants" :pho-bien="$quyCachPhoBien ?? null" />
+                <div data-mua-chinh>
+                    <x-product.actions :product="$product" :with-quantity="true" :variants="$activeVariants" :pho-bien="$quyCachPhoBien ?? null" />
+                </div>
 
                 <div class="product-info__wish">
                     <x-product.wishlist-button :product="$product" :active="$product->isWishlisted()" />
@@ -339,5 +343,17 @@
         <x-product.actions :product="$product" :compact="true" />
     </div>
 </div>
+
+{{-- Điện thoại: giá và nút mua đi theo đáy màn hình khi nút chính đã cuộn khuất. --}}
+@if(! $price->isContactForPrice() && $product->isPurchasable())
+    <div class="mua-nhanh" data-mua-nhanh hidden>
+        <span class="mua-nhanh__gia">
+            <x-product.price :product="$product" />
+            <span class="mua-nhanh__ten">{{ $product->name }}</span>
+        </span>
+
+        <x-product.actions :product="$product" :compact="true" :variants="$activeVariants" />
+    </div>
+@endif
 
 @endsection
