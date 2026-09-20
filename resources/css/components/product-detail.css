@@ -483,16 +483,16 @@
 }
 
 /* Khối mua hàng đi theo khi cuộn (màn hình rộng) — khách đọc mô tả dài vẫn thấy giá và nút mua.
-   Dùng position: sticky, không JavaScript. */
-@media (min-width: 992px) {
+   Dùng position: sticky, không JavaScript.
+
+   CHỈ dính khi cửa sổ đủ cao (>= 900px): cột mua hàng cao nhất trong catalog là 732px.
+   Cửa sổ thấp hơn mà vẫn dính thì phần dưới cột bị cắt, và nếu chữa bằng overflow thì
+   mọc ra một thanh cuộn thứ hai ngay giữa trang — đo được trên cửa sổ cao 787px. */
+@media (min-width: 992px) and (min-height: 900px) {
     [data-product-panel] {
         position: sticky;
         top: var(--space-md);
         align-self: start;
-        max-height: calc(100vh - var(--space-xl));
-        overflow-y: auto;
-        scrollbar-width: thin;
-        overscroll-behavior: contain;
     }
 }
 

@@ -8466,8 +8466,12 @@ và nén gzip/brotli phải bật ở máy chủ thật (php artisan serve khôn
   Windows nó không nằm trong PATH; trong .env phải viết dấu gạch xuôi.
 - CI: .github/workflows/kiem-thu.yml chạy PHPUnit + npm build mỗi lần đẩy mã.
   Kiểm thử dùng SQLite trong bộ nhớ nên không cần dựng MySQL trên máy chạy CI.
-- KHỐI MUA HÀNG DÍNH: từ 992px, cột phải của trang sản phẩm dùng position:
-  sticky (không JavaScript). Dưới 992px, thanh mua nhanh dính đáy hiện khi khối
+- KHỐI MUA HÀNG DÍNH: cột phải của trang sản phẩm dùng position: sticky (không
+  JavaScript), nhưng CHỈ khi cửa sổ rộng >= 992px VÀ cao >= 900px. Bản đầu chỉ
+  xét chiều rộng, kèm max-height + overflow để khỏi bị cắt — trên cửa sổ cao
+  787px nó đẻ ra một thanh cuộn thứ hai ngay giữa trang. Cột cao nhất trong
+  catalog là 732px, nên lấy 900px làm ngưỡng: đủ cao thì dính trọn, thấp hơn thì
+  cuộn bình thường như mọi cột khác. Dưới 992px, thanh mua nhanh dính đáy hiện khi khối
   mua chính đã cuộn khuất — dùng sự kiện cuộn + requestAnimationFrame thay cho
   IntersectionObserver để dễ kiểm chứng và chạy đúng cả khi trang tải lại giữa
   chừng. Khi thanh hiện thì trang chừa chỗ ở đáy và nút chat nổi dời lên trên.
