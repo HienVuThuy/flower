@@ -1,4 +1,10 @@
-import 'bootstrap';
+/* Chỉ ba thành phần Bootstrap được dùng thật (data-bs-toggle: modal, collapse, offcanvas).
+   Nạp cả bộ tốn thêm ~60KB cho mọi trang. */
+import Modal from 'bootstrap/js/dist/modal';
+import Collapse from 'bootstrap/js/dist/collapse';
+import Offcanvas from 'bootstrap/js/dist/offcanvas';
+
+window.bootstrap = { Modal, Collapse, Offcanvas };
 import './product-variants';
 import './theme/theme-manager';
 import { initProductDetail } from './components/product-detail';

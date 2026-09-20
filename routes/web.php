@@ -278,6 +278,24 @@ Route::get('loai-cay/{taxon}', [PlantTaxonController::class, 'show'])->name('sho
 Route::get('trang/{slug}', [PageController::class, 'show'])
     ->name('shop.pages.show');
 
+Route::get('sitemap.xml', \App\Http\Controllers\Shop\SitemapController::class)->name('sitemap');
+
+/* robots.txt sinh động để địa chỉ sitemap luôn đúng tên miền đang chạy. */
+Route::get('robots.txt', function () {
+    $rieng = ['/admin', '/gio-hang', '/thanh-toan', '/tai-khoan', '/don-hang', '/thong-bao', '/tin-nhan', '/nhat-ky'];
+
+    $dong = ['User-agent: *', 'Allow: /'];
+
+    foreach ($rieng as $duong) {
+        $dong[] = 'Disallow: ' . $duong;
+    }
+
+    $dong[] = '';
+    $dong[] = 'Sitemap: ' . route('sitemap');
+
+    return response(implode(PHP_EOL, $dong) . PHP_EOL, 200, ['Content-Type' => 'text/plain; charset=UTF-8']);
+})->name('robots');
+
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('tin-nhan', [\App\Http\Controllers\Shop\ChatController::class, 'index'])->name('shop.chat.index');
     Route::get('tin-nhan/tin', [\App\Http\Controllers\Shop\ChatController::class, 'messages'])

@@ -54,15 +54,28 @@ class PlantTaxon extends Model
         return $this->hasMany(Product::class, 'taxon_id');
     }
 
+    /** Cả cây phân loại chỉ có vài chục dòng — nạp một lần mỗi request thay vì hỏi từng bậc cha. */
+    private static function bang(): Collection
+    {
+        $req = request();
+
+        if (! $req->attributes->has('plant_taxa_bang')) {
+            $req->attributes->set('plant_taxa_bang', self::query()->get()->keyBy('id'));
+        }
+
+        return $req->attributes->get('plant_taxa_bang');
+    }
+
     public function chain(): Collection
     {
+        $bang = self::bang();
         $chuoi = collect([$this]);
         $nut = $this;
 
         $conLai = count(TaxonRank::cases());
 
         while ($nut->parent_id && $conLai-- > 0) {
-            $nut = $nut->parent;
+            $nut = $bang->get($nut->parent_id) ?? $nut->parent;
 
             if (! $nut) {
                 break;

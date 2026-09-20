@@ -8420,3 +8420,30 @@ tràn ngang không. Kết quả thành mấy luật chung:
 - Chữ trong ô chọn và chữ gợi ý trong ô nhập phải ngắn hơn ô: phần giải thích
   dài chuyển xuống dòng `form-text` dưới ô (ví dụ mô tả từng vai trò người dùng,
   từng nhóm danh mục) thay vì nhét vào chính lựa chọn.
+
+## QĐ-307. Tách gói CSS/JS theo khu, và bộ thẻ cho công cụ tìm kiếm
+
+Đo trước khi sửa (trang chủ, trình duyệt thật): 769KB / 15 yêu cầu; CSS 396KB
+thô (59KB nén) gộp CHUNG cả cửa hàng lẫn quản trị; JS 130KB thô (38KB nén) vì
+`import 'bootstrap'` nạp cả bộ; 12 tệp phông 174KB, không tệp nào được preload.
+
+- Hai điểm vào CSS: `resources/css/app.css` (cửa hàng) và
+  `resources/css/admin.css` (= app.css + phần quản trị). Trang khách không còn
+  tải giao diện quản trị. Sau khi tách: 56KB nén cho khách, 62KB cho quản trị.
+- JS chỉ nạp Modal, Collapse, Offcanvas — đúng ba thành phần có `data-bs-toggle`
+  trong mã; `window.bootstrap` vẫn được gán để chỗ khác gọi được. 38 → 24KB nén.
+- Preload hai tệp phông dùng cho chữ nội dung (Inter 400 latin + vietnamese).
+  Không preload nhiều hơn: preload quá tay sẽ tranh băng thông với ảnh chính.
+- Cây phân loại thực vật nạp MỘT lần mỗi request (66 dòng) thay vì hỏi từng bậc
+  cha — trang sản phẩm 59 → 54 truy vấn.
+- Thẻ tìm kiếm: canonical + og: + twitter: đặt ở bố cục chung, trang con ghi đè
+  bằng `@section('og_image')`. Dữ liệu có cấu trúc chỉ nêu thứ đọc được từ CSDL
+  (giá, còn hàng, số sao thật) — không bịa đánh giá hay khuyến mại.
+- `sitemap.xml` sinh từ CSDL và nhớ trong 60 phút; `robots.txt` là route (không
+  phải tệp tĩnh) để địa chỉ sitemap luôn đúng tên miền đang chạy.
+- Trang 404 có ô tìm kiếm thay vì chỉ báo lỗi; trang 500 nói rõ lỗi ở phía cửa
+  hàng, đơn hàng và giỏ vẫn còn, kèm hotline.
+
+Chưa làm, ghi lại để cân nhắc sau: cắt bớt Bootstrap CSS (232KB thô trong gói,
+cần chuyển sang bản nguồn SCSS), bỏ kiểu chữ 500 để giảm 2 tệp phông (~29KB),
+và nén gzip/brotli phải bật ở máy chủ thật (php artisan serve không nén).

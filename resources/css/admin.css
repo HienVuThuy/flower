@@ -1,0 +1,8 @@
+/* ENTRY POINT KHU QUẢN TRỊ — nền chung của cửa hàng + giao diện quản trị.
+   Trang khách nạp app.css (không kèm phần này), nên nhẹ hơn. */
+
+@import './app.css';
+
+@import './admin/analytics.css';
+@import './admin/charts.css';
+@import './admin/admin.css';

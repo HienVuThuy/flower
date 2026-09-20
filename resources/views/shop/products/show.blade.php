@@ -2,6 +2,43 @@
 
 @section('title', $product->meta_title ?: $product->name)
 
+@if($product->meta_description ?: $product->short_description)
+    @section('meta_description', \Illuminate\Support\Str::limit(strip_tags($product->meta_description ?: $product->short_description), 155))
+@endif
+
+@if($product->main_image)
+    @section('og_image', asset('storage/' . $product->main_image))
+@endif
+
+@section('og_type', 'product')
+
+@push('head')
+    @php $giaLd = $product->price(); @endphp
+    <x-site.json-ld :data="array_filter([
+        '@context' => 'https://schema.org',
+        '@type' => 'Product',
+        'name' => $product->name,
+        'description' => \Illuminate\Support\Str::limit(strip_tags($product->short_description ?: $product->description ?: ''), 300) ?: null,
+        'sku' => $product->product_code,
+        'category' => $product->category?->name,
+        'image' => $product->main_image ? asset('storage/' . $product->main_image) : null,
+        'aggregateRating' => $product->ratingCount() > 0 ? [
+            '@type' => 'AggregateRating',
+            'ratingValue' => round($product->ratingAverage(), 1),
+            'reviewCount' => $product->ratingCount(),
+        ] : null,
+        'offers' => $giaLd->finalPrice === null ? null : [
+            '@type' => 'Offer',
+            'url' => url()->current(),
+            'price' => $giaLd->finalPrice,
+            'priceCurrency' => \App\Services\Shop\Money::code(),
+            'availability' => $product->inStock()
+                ? 'https://schema.org/InStock'
+                : 'https://schema.org/OutOfStock',
+        ],
+    ])" />
+@endpush
+
 @section('content')
 
 @php

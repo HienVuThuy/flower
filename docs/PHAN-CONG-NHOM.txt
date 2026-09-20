@@ -9,15 +9,15 @@ CÁCH CHIA
     controller, service, model, migration, giao diện, JavaScript, CSS đến bài
     kiểm thử), để mỗi người trình bày được một luồng hoàn chỉnh từ đầu đến cuối
     thay vì mỗi người giữ một "tầng" rời rạc.
-  - Mọi tệp code của dự án (1015 tệp, không tính ảnh / phông / tài liệu)
+  - Mọi tệp code của dự án (1022 tệp, không tính ảnh / phông / tài liệu)
     đều được giao cho ĐÚNG MỘT người. Danh sách được sinh bằng script từ chính kho
     mã nên đường dẫn chính xác.
   - Khối lượng cân nhau:
-      Hưng   230 tệp, khoảng 23.079 dòng code
-      Hùng   183 tệp, khoảng 21.526 dòng code
-      Huy    195 tệp, khoảng 24.648 dòng code
-      Dũng   191 tệp, khoảng 22.991 dòng code
-      Hiền   216 tệp, khoảng 26.930 dòng code
+      Hưng   237 tệp, khoảng 23.515 dòng code
+      Hùng   183 tệp, khoảng 21.620 dòng code
+      Huy    195 tệp, khoảng 24.650 dòng code
+      Dũng   191 tệp, khoảng 23.001 dòng code
+      Hiền   216 tệp, khoảng 26.936 dòng code
   - "Phối hợp" ghi rõ chỗ hai khối gọi sang nhau, để khi sửa một bên thì báo
     người kia.
   - Tài liệu nên đọc chung: docs/HUONG-DAN-DOC-CODE.txt (kiến thức nền + 24 luồng),
@@ -89,7 +89,8 @@ DANH SÁCH TỆP
     routes/admin.php
     routes/console.php
     routes/web.php
-  [Controller] (16)
+  [Controller] (17)
+    app/Http/Controllers/Shop/SitemapController.php
     app/Http/Controllers/Admin/ActivityLogController.php
     app/Http/Controllers/Admin/Concerns/HandlesBulkAction.php
     app/Http/Controllers/Admin/Concerns/LogsAdminActivity.php
@@ -194,11 +195,15 @@ DANH SÁCH TỆP
     database/migrations/2026_09_15_010000_create_activity_logs_table.php
     database/migrations/2026_09_15_030000_add_lock_to_users_table.php
   [Seeder / Factory (dữ liệu mẫu)] (4)
-    database/seeders/ChuongTrinhKhuyenMaiMauSeeder.php
     database/factories/UserFactory.php
     database/seeders/AdminUserSeeder.php
+    database/seeders/ChuongTrinhKhuyenMaiMauSeeder.php
     database/seeders/DatabaseSeeder.php
-  [Giao diện Blade] (56)
+  [Giao diện Blade] (60)
+    resources/views/components/site/json-ld.blade.php
+    resources/views/components/site/social-meta.blade.php
+    resources/views/errors/404.blade.php
+    resources/views/errors/500.blade.php
     resources/views/admin/activity-logs/index.blade.php
     resources/views/admin/dashboard.blade.php
     resources/views/admin/pages/edit.blade.php
@@ -273,7 +278,8 @@ DANH SÁCH TỆP
     resources/js/theme/effects/tet-effect.js
     resources/js/theme/effects/valentine-effect.js
     resources/js/theme/theme-manager.js
-  [CSS] (31)
+  [CSS] (32)
+    resources/css/admin.css
     resources/css/admin/admin.css
     resources/css/app.css
     resources/css/components/auth.css
@@ -305,7 +311,8 @@ DANH SÁCH TỆP
     resources/css/themes/noel.css
     resources/css/themes/tet.css
     resources/css/themes/valentine.css
-  [Kiểm thử] (23)
+  [Kiểm thử] (24)
+    tests/Feature/Seo/SeoVaTaiTrangTest.php
     tests/Feature/Admin/ActivityLogTest.php
     tests/Feature/Admin/AdminDarkModeTest.php
     tests/Feature/Admin/DashboardTest.php
@@ -977,7 +984,6 @@ DANH SÁCH TỆP
     config/occasions.php
     config/pricing-advisor.php
   [Migration (bảng CSDL)] (18)
-    database/migrations/2026_10_26_010000_add_gift_to_promotion_product.php
     database/migrations/2026_08_24_010000_create_promotions_table.php
     database/migrations/2026_08_24_010001_create_promotion_product_table.php
     database/migrations/2026_09_05_010000_add_time_window_to_promotions_table.php
@@ -995,8 +1001,8 @@ DANH SÁCH TỆP
     database/migrations/2026_10_17_010000_add_rules_to_product_gifts_table.php
     database/migrations/2026_10_18_010000_create_installment_tables.php
     database/migrations/2026_10_25_010000_merge_gift_campaigns_into_promotions.php
+    database/migrations/2026_10_26_010000_add_gift_to_promotion_product.php
   [Giao diện Blade] (45)
-    resources/views/admin/promotions/_dong-san-pham.blade.php
     resources/views/admin/analytics/_header.blade.php
     resources/views/admin/analytics/customers.blade.php
     resources/views/admin/analytics/export.blade.php
@@ -1018,6 +1024,7 @@ DANH SÁCH TỆP
     resources/views/admin/product-gifts/_luat.blade.php
     resources/views/admin/product-gifts/edit.blade.php
     resources/views/admin/product-gifts/index.blade.php
+    resources/views/admin/promotions/_dong-san-pham.blade.php
     resources/views/admin/promotions/_form.blade.php
     resources/views/admin/promotions/create.blade.php
     resources/views/admin/promotions/edit.blade.php
@@ -1042,11 +1049,11 @@ DANH SÁCH TỆP
     resources/views/shop/profile/partials/hang-thanh-vien.blade.php
     resources/views/shop/profile/partials/tra-gop.blade.php
   [JavaScript] (8)
-    resources/js/admin/promotion-products.js
     resources/js/admin/chon-ky.js
     resources/js/admin/export-picker.js
     resources/js/admin/gift-variant-picker.js
     resources/js/admin/promotion-form.js
+    resources/js/admin/promotion-products.js
     resources/js/admin/refund-gift-autofill.js
     resources/js/admin/tuoi-so-lieu.js
     resources/js/components/banner-rotator.js

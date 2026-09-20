@@ -394,6 +394,12 @@ PHẦN 1. KIẾN THỨC NỀN (đọc một lần, quay lại tra khi cần)
   Tên class theo kiểu BEM: .gc-bai (khối), .gc-bai__head (phần tử),
   .gc-bai--don (biến thể).
 
+  HAI ĐIỂM VÀO CSS (QĐ-307):
+    app.css    trang khách nạp (layouts/app.blade.php)
+    admin.css  = app.css + thư mục admin/, chỉ khu quản trị nạp
+    Thêm CSS cho trang khách thì @import vào app.css; CSS riêng quản trị thì
+    để trong resources/css/admin/ và @import vào admin.css.
+
   LUẬT BỐ CỤC PHẢI GIỮ (chi tiết ở QĐ-306):
     - Nhãn trạng thái / thẻ / huy hiệu / nút / <time>: không xuống dòng.
     - Ô chọn (.form-select) luôn chừa padding-right cho mũi tên; chữ trong lựa
@@ -403,6 +409,16 @@ PHẦN 1. KIẾN THỨC NỀN (đọc một lần, quay lại tra khi cần)
       relative để chữ .visually-hidden không kéo tràn trang).
     - Menu quản trị cố định chỉ từ 1200px; dưới mức đó dùng nút ba gạch.
     - Sửa xong bố cục thì kiểm ở ba bề ngang 390 / 1024 / 1366px.
+
+  THẺ CHO CÔNG CỤ TÌM KIẾM (QĐ-307):
+    components/site/social-meta.blade.php  canonical + og: + twitter: (bố cục
+                                           chung tự gọi, trang con ghi đè bằng
+                                           @section('og_image'), 'og_type')
+    components/site/json-ld.blade.php      in một khối dữ liệu có cấu trúc;
+                                           breadcrumb tự kèm BreadcrumbList,
+                                           trang sản phẩm đẩy Product + Offer
+                                           qua @push('head')
+    Shop/SitemapController + route robots.txt trong routes/web.php
 
 --------------------------------------------------------------------------------
 1.18 Lệnh artisan tự viết và lịch chạy

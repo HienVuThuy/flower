@@ -53,12 +53,12 @@ A3. Kiến trúc (chia lớp rõ ràng)
   OrderService, điểm chỉ ghi ở PointLedger, thuế chỉ tính ở TaxCalculator…
 
 A4. Quy mô (đếm từ mã nguồn)
-  - 288 đường dẫn (route), trong đó 156 thuộc khu quản trị
-  - 70 controller, 138 lớp service, 57 model, 62 enum
+  - 290 đường dẫn (route), trong đó 156 thuộc khu quản trị
+  - 71 controller, 138 lớp service, 57 model, 62 enum
   - 93 migration tạo khoảng 70 bảng
-  - 240 view Blade, 44 tệp JavaScript, 47 tệp CSS
+  - 244 view Blade, 44 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
   - 15 lệnh artisan tự viết, 5 tác vụ chạy theo lịch
-  - 133 tệp kiểm thử, 1312 bài kiểm thử, 4872 phép khẳng định
+  - 134 tệp kiểm thử, 1317 bài kiểm thử, 4900 phép khẳng định
   - Tài liệu: docs/ (quyết định thiết kế 301 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
@@ -761,7 +761,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1312 bài / 4872 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1317 bài / 4900 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,
@@ -840,6 +840,25 @@ H2. Không lọc cộng tác "người mua X cũng mua Y" khi dữ liệu còn �
     đại nhiễu) — dùng hành vi của chính người xem.
 H3. Không tự động chặn đơn nghi gian lận — máy chấm điểm, người quyết định.
 H4. Không đề xuất một con số giá cụ thể — chỉ đưa mốc tham chiếu có thật.
+G. TỐC ĐỘ TẢI VÀ TÌM KIẾM (đo bằng trình duyệt, trang chủ)
+  - Tách gói CSS: trang khách nạp app.css (56KB nén), khu quản trị nạp admin.css
+    (62KB nén). Trước đây mọi khách đều tải cả phần quản trị.
+  - JavaScript chỉ nạp ba thành phần Bootstrap thật sự dùng (Modal, Collapse,
+    Offcanvas): 38KB → 24KB nén.
+  - Phông chữ tự host, chỉ woff2, chia theo bảng mã, font-display: swap; hai tệp
+    dùng cho chữ nội dung được preload.
+  - Ảnh: WebP + srcset + kích thước sẵn + lazy (đã có từ trước).
+  - Trang chi tiết sản phẩm: 59 → 54 truy vấn (cây phân loại nạp một lần mỗi
+    request thay vì hỏi từng bậc cha).
+  - sitemap.xml sinh động (sản phẩm đang bán, danh mục, bài Cẩm nang, trang tĩnh),
+    robots.txt trỏ tới sitemap và chặn khu riêng tư.
+  - Mỗi trang có canonical, thẻ og: / twitter: (dán link ra Zalo, Facebook có ảnh
+    và tiêu đề); trang sản phẩm có schema Product + Offer + AggregateRating,
+    trang chủ có Store + WebSite, mọi đường dẫn phân cấp có BreadcrumbList.
+  - Trang lỗi 404 (kèm ô tìm) và 500 mang giao diện cửa hàng.
+  - Liên kết "Bỏ qua tới nội dung" cho người dùng bàn phím; chấm chuyển banner
+    có vùng bấm 24px.
+
 H5. Không có loại khuyến mại "chưa hỗ trợ" nằm chờ: Combo và Mua X tặng Y đã bỏ
     khỏi danh sách (Mua X tặng Y làm bằng quà kèm sản phẩm); giá sale riêng
     trên sản phẩm (sale_price) đã bỏ — mọi giảm giá đi qua chương trình.

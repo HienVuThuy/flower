@@ -8,7 +8,7 @@ use Illuminate\View\View;
 /** Các trang nội dung tĩnh: giới thiệu, liên hệ, chính sách. */
 class PageController extends Controller
 {
-    private const PAGES = [
+    public const PAGES = [
         'gioi-thieu' => 'Giới thiệu',
         'lien-he' => 'Liên hệ',
         'chinh-sach-doi-tra' => 'Chính sách đổi trả',

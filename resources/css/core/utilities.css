@@ -63,3 +63,25 @@
         display: none;
     }
 }
+
+/* Liên kết cho người dùng bàn phím: ẩn cho tới khi được chọn. */
+.skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 2000;
+    padding: 0.6rem 1rem;
+    border-radius: 0 0 var(--radius-md) 0;
+    background: var(--brand-500);
+    color: #fff;
+    font-weight: 600;
+}
+
+.skip-link:focus {
+    left: 0;
+}
+
+#noi-dung:focus {
+    outline: none;
+}
+

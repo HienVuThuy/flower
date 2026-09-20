@@ -382,23 +382,37 @@
     margin-top: var(--space-sm);
 }
 
+.banner-rotator__dots {
+    gap: 0;
+}
+
+/* Hình thoi vẫn nhỏ, nhưng vùng bấm đủ 24px cho ngón tay. */
 .banner-rotator__dot {
+    width: 24px;
+    height: 24px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.banner-rotator__dot::before {
+    content: "";
     width: 0.6rem;
     height: 0.6rem;
-    padding: 0;
     border: 1px solid var(--brand-400);
-    background: transparent;
     transform: rotate(45deg);
-    cursor: pointer;
     transition: background-color var(--duration-base) var(--ease-standard),
         transform var(--duration-base) var(--ease-standard);
 }
 
-.banner-rotator__dot:hover {
+.banner-rotator__dot:hover::before {
     background: color-mix(in srgb, var(--brand-500) 45%, transparent);
 }
 
-.banner-rotator__dot.is-active {
+.banner-rotator__dot.is-active::before {
     background: var(--brand-500);
     border-color: var(--brand-500);
     transform: rotate(45deg) scale(1.25);

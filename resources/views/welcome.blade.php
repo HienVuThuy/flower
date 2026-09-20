@@ -1,5 +1,37 @@
 @extends('layouts.app')
 
+@push('head')
+    <x-site.json-ld :data="[
+        '@context' => 'https://schema.org',
+        '@graph' => [
+            array_filter([
+                '@type' => 'Store',
+                'name' => \App\Services\Shop\StoreProfile::name(),
+                'url' => route('welcome'),
+                'image' => Vite::asset('resources/images/hero/default-1.jpg'),
+                'telephone' => \App\Services\Shop\StoreProfile::hotline(),
+                'email' => \App\Services\Shop\StoreProfile::email(),
+                'address' => \App\Services\Shop\StoreProfile::address() ? [
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => \App\Services\Shop\StoreProfile::address(),
+                    'addressRegion' => \App\Services\Shop\StoreProfile::province(),
+                    'addressCountry' => 'VN',
+                ] : null,
+            ]),
+            [
+                '@type' => 'WebSite',
+                'name' => \App\Services\Shop\StoreProfile::name(),
+                'url' => route('welcome'),
+                'potentialAction' => [
+                    '@type' => 'SearchAction',
+                    'target' => route('shop.products.index') . '?q={search_term_string}',
+                    'query-input' => 'required name=search_term_string',
+                ],
+            ],
+        ],
+    ]" />
+@endpush
+
 @section('title', 'Trang chủ')
 
 @section('content')

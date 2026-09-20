@@ -14,7 +14,7 @@
 
     <x-site.scheme-boot :bootstrap="true" />
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @vite(['resources/css/admin.css', 'resources/js/app.js'])
 </head>
 
 <body>
@@ -212,7 +212,9 @@
 
     </aside>
 
-    <main class="admin-main flex-fill">
+    <a href="#noi-dung" class="skip-link">Bỏ qua tới nội dung</a>
+
+    <main class="admin-main flex-fill" id="noi-dung" tabindex="-1">
 
         <header class="admin-topbar">
             <div class="d-flex justify-content-between align-items-center gap-2 w-100">
