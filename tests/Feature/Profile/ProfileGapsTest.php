@@ -180,6 +180,6 @@ class ProfileGapsTest extends TestCase
     #[Test]
     public function khach_chua_dang_nhap_khong_xem_duoc_danh_gia_cua_ai(): void
     {
-        $this->get('/danh-gia-cua-toi')->assertRedirect('/login');
+        $this->get('/danh-gia-cua-toi')->assertRedirect('/dang-nhap');
     }
 }

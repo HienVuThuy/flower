@@ -53,13 +53,13 @@ A3. Kiến trúc (chia lớp rõ ràng)
   OrderService, điểm chỉ ghi ở PointLedger, thuế chỉ tính ở TaxCalculator…
 
 A4. Quy mô (đếm từ mã nguồn)
-  - 292 đường dẫn (route), trong đó 156 thuộc khu quản trị
-  - 72 controller, 139 lớp service, 58 model, 62 enum
-  - 93 migration tạo khoảng 70 bảng
-  - 247 view Blade, 46 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
+  - 299 đường dẫn (route), trong đó 156 thuộc khu quản trị
+  - 74 controller, 139 lớp service, 58 model, 62 enum
+  - 94 migration, 133 bảng
+  - 246 view Blade, 46 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
   - 16 lệnh artisan tự viết, 6 tác vụ chạy theo lịch
-  - 137 tệp kiểm thử, 1326 bài kiểm thử, 4934 phép khẳng định
-  - Tài liệu: docs/ (quyết định thiết kế 301 mục, luồng hoạt động, kiểm thử,
+  - 137 tệp kiểm thử, 1327 bài kiểm thử, 4940 phép khẳng định
+  - Tài liệu: docs/ (quyết định thiết kế 308 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
 
@@ -761,7 +761,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1326 bài / 4934 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1327 bài / 4940 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,

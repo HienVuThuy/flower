@@ -113,7 +113,7 @@ class DiemTruTienTest extends TestCase
     {
         auth()->logout();
 
-        $this->post(route('shop.checkout.apply-points'), ['points' => 500])->assertRedirect('/login');
+        $this->post(route('shop.checkout.apply-points'), ['points' => 500])->assertRedirect('/dang-nhap');
     }
 
     #[Test]

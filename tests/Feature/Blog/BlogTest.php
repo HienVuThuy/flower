@@ -188,7 +188,7 @@ class BlogTest extends TestCase
     #[Test]
     public function khach_va_nguoi_dung_thuong_khong_vao_duoc_trang_quan_tri(): void
     {
-        $this->get('/admin/cam-nang')->assertRedirect('/login');
+        $this->get('/admin/cam-nang')->assertRedirect('/dang-nhap');
 
         $this->actingAs(User::factory()->create())
             ->get('/admin/cam-nang')

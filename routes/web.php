@@ -441,6 +441,10 @@ Route::get('yeu-thich', [WishlistController::class, 'index'])
 });
 
 
+/* Địa chỉ cũ bằng tiếng Anh: giữ lại để link đã lưu không chết. */
+Route::redirect('login', '/dang-nhap');
+Route::redirect('register', '/dang-ky');
+
 Route::middleware('guest')->group(function () {
 
     Route::get('quen-mat-khau', [PasswordResetController::class, 'showLinkForm'])
@@ -457,18 +461,18 @@ Route::middleware('guest')->group(function () {
         ->middleware('throttle:10,1')
         ->name('password.update');
 
-    Route::get('register', [AuthController::class, 'showRegistrationForm'])
+    Route::get('dang-ky', [AuthController::class, 'showRegistrationForm'])
         ->name('register');
 
-    Route::post('register', [AuthController::class, 'register']);
+    Route::post('dang-ky', [AuthController::class, 'register']);
 
-    Route::get('login', [AuthController::class, 'showLoginForm'])
+    Route::get('dang-nhap', [AuthController::class, 'showLoginForm'])
         ->name('login');
 
-    Route::post('login', [AuthController::class, 'login']);
+    Route::post('dang-nhap', [AuthController::class, 'login']);
 });
 
-Route::post('logout', [AuthController::class, 'logout'])
+Route::post('dang-xuat', [AuthController::class, 'logout'])
     ->middleware('auth')
     ->name('logout');
 

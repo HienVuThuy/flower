@@ -86,6 +86,16 @@ class SeoVaTaiTrangTest extends TestCase
     }
 
     #[Test]
+    public function dia_chi_dang_nhap_bang_tieng_viet_va_dia_chi_cu_van_vao_duoc(): void
+    {
+        $this->get('/dang-nhap')->assertOk();
+        $this->get('/dang-ky')->assertOk();
+
+        $this->get('/login')->assertRedirect('/dang-nhap');
+        $this->get('/register')->assertRedirect('/dang-ky');
+    }
+
+    #[Test]
     public function trang_khach_khong_nap_css_quan_tri(): void
     {
         $khach = $this->get('/')->getContent();

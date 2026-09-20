@@ -217,8 +217,8 @@ class JournalPrivacyTest extends TestCase
     #[Test]
     public function khach_vang_lai_khong_vao_duoc_phan_nhat_ky(): void
     {
-        $this->get('/nhat-ky')->assertRedirect('/login');
-        $this->get('/nhat-ky/tao-moi')->assertRedirect('/login');
+        $this->get('/nhat-ky')->assertRedirect('/dang-nhap');
+        $this->get('/nhat-ky/tao-moi')->assertRedirect('/dang-nhap');
     }
 
     #[Test]

@@ -50,7 +50,7 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function dang_ky_xong_thi_chua_xac_thuc_va_duoc_dua_toi_trang_nhap_ma(): void
     {
-        $this->post('/register', [
+        $this->post('/dang-ky', [
             'name' => 'Nguyễn Văn Kiểm Thử',
             'email' => 'kiemthu@example.com',
             'password' => 'MatKhau@12345',
@@ -67,7 +67,7 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function ma_gui_di_gom_dung_6_chu_so(): void
     {
-        $this->post('/register', [
+        $this->post('/dang-ky', [
             'name' => 'Nguyễn Văn Kiểm Thử',
             'email' => 'kiemthu@example.com',
             'password' => 'MatKhau@12345',
@@ -82,7 +82,7 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function co_so_du_lieu_chi_luu_bam_chu_khong_luu_ma_goc(): void
     {
-        $this->post('/register', [
+        $this->post('/dang-ky', [
             'name' => 'Nguyễn Văn Kiểm Thử',
             'email' => 'kiemthu@example.com',
             'password' => 'MatKhau@12345',
@@ -322,8 +322,8 @@ class EmailVerificationTest extends TestCase
     #[Test]
     public function khach_chua_dang_nhap_bi_dua_ve_trang_dang_nhap(): void
     {
-        $this->get(route('verification.notice'))->assertRedirect('/login');
-        $this->post(route('verification.confirm'), ['code' => '135790'])->assertRedirect('/login');
+        $this->get(route('verification.notice'))->assertRedirect('/dang-nhap');
+        $this->post(route('verification.confirm'), ['code' => '135790'])->assertRedirect('/dang-nhap');
     }
 
     #[Test]

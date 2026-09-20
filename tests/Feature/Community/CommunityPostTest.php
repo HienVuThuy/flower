@@ -215,7 +215,7 @@ class CommunityPostTest extends TestCase
     {
         $this->get('/goc-cay')->assertOk();
 
-        $this->post('/goc-cay', ['body' => 'Chen vào không đăng nhập'])->assertRedirect('/login');
+        $this->post('/goc-cay', ['body' => 'Chen vào không đăng nhập'])->assertRedirect('/dang-nhap');
         $this->assertDatabaseCount('community_posts', 0);
     }
 

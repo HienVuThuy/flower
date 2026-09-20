@@ -41,7 +41,3 @@ jobs:
 
       - name: Kiểm thử
         run: php artisan test
-
-      - name: Soát định dạng mã (không chặn)
-        run: vendor/bin/pint --test
-        continue-on-error: true

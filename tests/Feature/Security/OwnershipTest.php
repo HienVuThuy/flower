@@ -166,7 +166,7 @@ class OwnershipTest extends TestCase
         $b = User::factory()->create(['password' => 'MatKhau@12345']);
 
         $this->withSession([\App\Http\Controllers\Shop\CheckoutController::PLACED_KEY => ['FP-260101-AAAA']])
-            ->post('/login', ['email' => $b->email, 'password' => 'MatKhau@12345'])
+            ->post('/dang-nhap', ['email' => $b->email, 'password' => 'MatKhau@12345'])
             ->assertRedirect();
 
         $this->assertNull(
@@ -213,6 +213,6 @@ class OwnershipTest extends TestCase
     #[Test]
     public function khach_vang_lai_khong_vao_duoc_khu_vuc_quan_tri(): void
     {
-        $this->get('/admin/dashboard')->assertRedirect('/login');
+        $this->get('/admin/dashboard')->assertRedirect('/dang-nhap');
     }
 }

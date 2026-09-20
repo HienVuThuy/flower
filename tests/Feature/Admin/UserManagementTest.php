@@ -119,9 +119,9 @@ class UserManagementTest extends TestCase
 
         $this->assertNotNull($khach->fresh()->locked_at);
 
-        $this->post('/logout');
+        $this->post('/dang-xuat');
 
-        $this->post('/login', [
+        $this->post('/dang-nhap', [
             'email' => $khach->email,
             'password' => 'MatKhau123!',
         ])->assertSessionHasErrors('email');
@@ -137,7 +137,7 @@ class UserManagementTest extends TestCase
         $khach->lock_reason = 'Đặt hàng ảo nhiều lần';
         $khach->save();
 
-        $this->post('/login', [
+        $this->post('/dang-nhap', [
             'email' => $khach->email,
             'password' => 'MatKhau123!',
         ])->assertInvalid(['email' => 'Đặt hàng ảo nhiều lần']);
@@ -153,7 +153,7 @@ class UserManagementTest extends TestCase
         $khach->locked_at = now();
         $khach->save();
 
-        $this->get('/tai-khoan')->assertRedirect('/login');
+        $this->get('/tai-khoan')->assertRedirect('/dang-nhap');
         $this->assertGuest();
     }
 

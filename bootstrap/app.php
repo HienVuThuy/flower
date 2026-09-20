@@ -28,7 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->appendToGroup('web', \App\Http\Middleware\GhiNhanNgayGhe::class);
 
-        $middleware->redirectGuestsTo('/login');
+        $middleware->redirectGuestsTo('/dang-nhap');
 
         $middleware->validateCsrfTokens(except: [
             'thanh-toan/momo/ipn',

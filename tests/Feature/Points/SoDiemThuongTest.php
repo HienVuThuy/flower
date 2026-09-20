@@ -174,6 +174,6 @@ class SoDiemThuongTest extends TestCase
     #[Test]
     public function khach_chua_dang_nhap_khong_doi_duoc(): void
     {
-        $this->post(route('shop.points.redeem'), ['goi' => 'giam-20k'])->assertRedirect('/login');
+        $this->post(route('shop.points.redeem'), ['goi' => 'giam-20k'])->assertRedirect('/dang-nhap');
     }
 }

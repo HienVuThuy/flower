@@ -1,0 +1,109 @@
+================================================================================
+RÀ SOÁT TOÀN DỰ ÁN TRƯỚC KHI VIẾT BÁO CÁO
+Ngày rà: 21/09/2026 — mọi con số dưới đây do đo trực tiếp, không ước lượng
+================================================================================
+
+Cách đo lại (chạy trong thư mục dự án):
+    php artisan test                     kiểm thử
+    php artisan route:list               đếm đường dẫn
+    php artisan migrate:status           trạng thái migration
+    npm run build                        đóng gói giao diện, in kích thước
+
+
+--------------------------------------------------------------------------------
+A. QUY MÔ
+--------------------------------------------------------------------------------
+  299 đường dẫn (route), trong đó 156 thuộc khu quản trị
+  74 controller, 139 lớp service, 58 model, 62 enum
+  94 migration, 133 bảng trong cơ sở dữ liệu
+  246 view Blade, 46 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
+  16 lệnh artisan tự viết, 6 tác vụ chạy theo lịch
+  137 tệp kiểm thử, 1327 bài, 4940 phép khẳng định — ĐẠT 100%
+
+
+--------------------------------------------------------------------------------
+B. KẾT QUẢ KIỂM TRA
+--------------------------------------------------------------------------------
+  Kiểm thử tự động ......... 1327/1327 đạt
+  Migration ................ không còn migration nào chờ chạy
+  Quyền khu quản trị ....... 156/156 đường dẫn đều gắn middleware quyen:*
+  Biểu mẫu POST ............ không có biểu mẫu nào thiếu @csrf
+  Liên kết nội bộ .......... bò qua 90 trang công khai, 0 liên kết hỏng
+  Ảnh ...................... 0 bản ghi trỏ tới tệp ảnh không tồn tại
+  Dữ liệu ..................  0 đơn rỗng, 0 dòng đơn trỏ sản phẩm đã xoá,
+                              0 sản phẩm mất danh mục
+  Lỗi JavaScript ........... 0 trên 8 trang chính (trang chủ, danh sách, chi tiết,
+                              danh mục, cẩm nang, góc cây, giỏ hàng, đăng nhập)
+  Tệp JS thừa .............. không có (mọi module đều được nạp)
+  Trang lỗi ................ 403, 404, 429, 500 đều có giao diện cửa hàng
+
+  Tốc độ trang chủ (đo bằng trình duyệt, máy chủ dev chưa bật nén):
+      CSS trang khách   56,8 KB nén (khu quản trị tách riêng, 62 KB)
+      JavaScript        24,4 KB nén
+      Phông chữ         174 KB (12 tệp woff2, tự host, đã preload 2 tệp chính)
+      Máy chủ           9–26 truy vấn mỗi trang, trang chi tiết 54 truy vấn
+
+
+--------------------------------------------------------------------------------
+C. CẤU HÌNH HIỆN TẠI (và phải đổi gì khi chạy thật)
+--------------------------------------------------------------------------------
+  APP_ENV=local, APP_DEBUG=true
+      → Chạy thật phải đổi thành production và false, nếu không lỗi sẽ in cả
+        mã nguồn ra cho khách xem.
+  GHN: cổng THỬ (dev-online-gateway)
+      → Vận đơn thử không bao giờ rời trạng thái "Chờ bàn giao" vì không có
+        shipper thật. Chạy thật thì đổi GHN_BASE_URL, GHN_TOKEN, GHN_SHOP_ID và
+        điền GHN_TRACKING_URL.
+  MoMo: CHƯA có khoá (chỉ có endpoint)
+      → Nút thanh toán MoMo chỉ chạy được khi điền khoá thật.
+  Trợ lý AI: đã có khoá, đang hoạt động.
+  Thư: SMTP Gmail — thư gửi đi thật.
+  Hàng đợi, bộ đệm, phiên: đều dùng cơ sở dữ liệu.
+      → Chạy thật cần một tiến trình `php artisan queue:work` và một cron gọi
+        `php artisan schedule:run` mỗi phút (máy này đang chạy schedule:work).
+  Sao lưu: 02:30 hằng ngày, giữ 14 bản, cần MYSQLDUMP_PATH trong .env.
+
+
+--------------------------------------------------------------------------------
+D. VIỆC CÒN LẠI / HẠN CHẾ ĐÃ BIẾT (nên viết thẳng vào báo cáo)
+--------------------------------------------------------------------------------
+  1. Định dạng mã chưa có công cụ ép: Laravel Pint theo chuẩn mặc định lệch 374
+     tệp, nhưng phần lớn là do dự án CỐ Ý dùng quy ước khác (nối chuỗi có dấu
+     cách, `new Foo()` có ngoặc, tên hàm kiểm thử bằng tiếng Việt có dấu gạch
+     dưới). Muốn chuẩn hoá thì phải định dạng lại toàn bộ trong một lần riêng.
+  2. Bootstrap CSS còn nguyên bộ (232 KB thô trong gói). Cắt được khoảng 15 KB
+     nén nhưng phải chuyển sang bản nguồn SCSS và rà lại 246 view.
+  3. Phông chữ: bỏ kiểu chữ 500 thì bớt 2 tệp (~29 KB) nhưng menu và vài nhãn
+     sẽ đậm hơn một nấc — cần người quyết định về mặt thẩm mỹ.
+  4. "Báo tôi khi có hàng" chỉ dành cho khách đã đăng nhập (cố ý: không thu
+     email rời của người lạ). Khách vãng lai chưa dùng được.
+  5. Hoá đơn: hệ thống dựng đủ dữ liệu hoá đơn nhưng KHÔNG phát hành hoá đơn
+     điện tử.
+  6. CI (GitHub Actions) vừa thêm; kho mã để riêng tư nên kết quả phải xem ở
+     tab Actions của repo.
+  7. Chưa đánh dấu sản phẩm nổi bật nào → mục "Sản phẩm nổi bật" ở trang chủ
+     đang ẩn. Vào Quản trị › Sản phẩm, tích "Sản phẩm nổi bật" là hiện.
+  8. Chưa có PWA / cài đặt như ứng dụng; chưa có bản đa ngôn ngữ.
+
+
+--------------------------------------------------------------------------------
+E. GỢI Ý DÀN Ý BÁO CÁO (bám theo tài liệu sẵn có trong docs/)
+--------------------------------------------------------------------------------
+  1. Giới thiệu đề tài, phạm vi, công nghệ
+         → docs/BAO-CAO-CHUC-NANG.txt mục A (kiến trúc và quy mô)
+  2. Phân tích yêu cầu, tác nhân, phân quyền
+         → BAO-CAO-CHUC-NANG mục 4.1 (3 vai trò, 9 khu vực quyền)
+  3. Thiết kế cơ sở dữ liệu (133 bảng, nhóm theo nghiệp vụ)
+         → BAO-CAO-CHUC-NANG phần bảng dữ liệu
+  4. Chức năng theo cấp độ (cửa hàng → quản trị → phân tích)
+         → BAO-CAO-CHUC-NANG cấp 1 đến cấp 6
+  5. Những quyết định thiết kế đáng nói và lý do
+         → docs/DOMAIN-DECISIONS.md (308 mục, mỗi mục một quyết định có số đo)
+  6. Luồng chạy tiêu biểu để minh hoạ
+         → docs/HUONG-DAN-DOC-CODE.txt (25 luồng, chỉ rõ tệp và hàm)
+  7. Kiểm thử và chất lượng
+         → mục B ở trên (1327 bài, cách đo, kết quả)
+  8. Hạn chế và hướng phát triển
+         → mục C và D ở trên
+  9. Phân công nhóm
+         → docs/PHAN-CONG-NHOM.txt (1036 tệp chia cho 5 người, không trùng)

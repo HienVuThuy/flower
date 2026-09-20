@@ -256,7 +256,7 @@ class PricingAdvisorTest extends TestCase
     #[Test]
     public function trang_de_xuat_gia_chi_admin_moi_vao_duoc(): void
     {
-        $this->get('/admin/de-xuat-gia')->assertRedirect('/login');
+        $this->get('/admin/de-xuat-gia')->assertRedirect('/dang-nhap');
 
         $this->actingAs(User::factory()->create())
             ->get('/admin/de-xuat-gia')

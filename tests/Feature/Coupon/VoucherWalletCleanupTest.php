@@ -162,8 +162,8 @@ class VoucherWalletCleanupTest extends TestCase
     {
         $coupon = $this->ma();
 
-        $this->delete('/voucher/' . $coupon->code . '/luu')->assertRedirect('/login');
-        $this->patch('/voucher/' . $coupon->code . '/luu')->assertRedirect('/login');
+        $this->delete('/voucher/' . $coupon->code . '/luu')->assertRedirect('/dang-nhap');
+        $this->patch('/voucher/' . $coupon->code . '/luu')->assertRedirect('/dang-nhap');
     }
 
     #[Test]
