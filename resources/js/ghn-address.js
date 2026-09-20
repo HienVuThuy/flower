@@ -146,14 +146,14 @@ export function initGhnAddress() {
         if (oTinh) oTinh.value = this.options[this.selectedIndex]?.textContent?.trim() ?? '';
 
         veSinh(quan, '-- Đang tải... --');
-        veSinh(phuong, '-- Chọn Quận/Huyện trước --');
+        veSinh(phuong, '— Chọn quận trước —');
         if (oQuan) oQuan.value = '';
         if (oPhuong) oPhuong.value = '';
         if (oMaQuan) oMaQuan.value = '';
         anCuoc();
 
         if (!this.value) {
-            veSinh(quan, '-- Chọn Tỉnh/Thành trước --');
+            veSinh(quan, '— Chọn tỉnh trước —');
 
             return;
         }
@@ -189,7 +189,7 @@ export function initGhnAddress() {
         anCuoc();
 
         if (!this.value) {
-            veSinh(phuong, '-- Chọn Quận/Huyện trước --');
+            veSinh(phuong, '— Chọn quận trước —');
 
             return;
         }

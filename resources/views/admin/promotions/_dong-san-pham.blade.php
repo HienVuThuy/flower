@@ -18,7 +18,7 @@
     <td data-base-price="{{ $gia }}">{{ is_numeric($gia) ? $tien($gia) : $gia }}</td>
 
     <td>
-        <select name="products[{{ $i }}][discount_type]" class="form-select form-select-sm" data-type aria-label="Ưu đãi của {{ $ten }}">
+        <select name="products[{{ $i }}][discount_type]" class="form-select form-select-sm" style="min-width: 11rem" data-type aria-label="Ưu đãi của {{ $ten }}">
             <option value="">Theo chương trình</option>
             @foreach($types as $type)
                 <option value="{{ $type->value }}" @selected($kieu === $type->value)>{{ $type->label() }}</option>
@@ -35,7 +35,7 @@
         </div>
 
         <div class="d-flex gap-1" data-o="qua" @unless($laQua) hidden @endunless>
-            <select name="products[{{ $i }}][qua]" class="form-select form-select-sm" data-qua aria-label="Quà của {{ $ten }}">
+            <select name="products[{{ $i }}][qua]" class="form-select form-select-sm" style="min-width: 14rem" data-qua aria-label="Quà của {{ $ten }}">
                 <option value="">{{ $promotion->giftItem ? 'Quà chung: ' . $promotion->giftItem->name : '— Chọn quà —' }}</option>
                 <optgroup label="Vật phẩm quà">
                     @foreach($vatPham as $vat)

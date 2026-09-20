@@ -133,7 +133,7 @@
                                 $pickedPromotion = old('promotion_id', $coupon->promotion_id);
                             @endphp
                             <select id="promotion_id" name="promotion_id" class="form-select">
-                                <option value="">— Mã chung, không thuộc sự kiện nào —</option>
+                                <option value="">— Mã chung —</option>
                                 @foreach($promotions as $promotion)
                                     <option value="{{ $promotion->id }}" @selected((string) $pickedPromotion === (string) $promotion->id)>
                                         {{ $promotion->name }}

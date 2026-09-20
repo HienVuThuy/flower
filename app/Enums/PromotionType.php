@@ -20,6 +20,16 @@ enum PromotionType: string
         };
     }
 
+    public function nhanNgan(): string
+    {
+        return match ($this) {
+            self::Percent => 'Giảm %',
+            self::FixedAmount => 'Giảm tiền',
+            self::FixedPrice => 'Giá cố định',
+            self::TangQua => 'Tặng quà',
+        };
+    }
+
     public function unit(): string
     {
         return match ($this) {

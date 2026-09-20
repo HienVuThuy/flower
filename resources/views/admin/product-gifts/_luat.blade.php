@@ -23,7 +23,7 @@
                    value="{{ old('gift_quantity', $pg->gift_quantity ?? 1) }}" aria-label="Số quà">
             <span>quà, tối đa</span>
             <input type="number" name="max_quantity" min="1" max="1000" class="form-control" style="width:6rem"
-                   placeholder="không giới hạn" value="{{ old('max_quantity', $pg->max_quantity) }}" aria-label="Tối đa quà mỗi đơn">
+                   placeholder="Không" value="{{ old('max_quantity', $pg->max_quantity) }}" aria-label="Tối đa quà mỗi đơn">
             <span>quà mỗi đơn</span>
         </div>
         <x-form-error name="max_quantity" />

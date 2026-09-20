@@ -10,6 +10,7 @@
 
 .tag {
     display: inline-flex;
+    white-space: nowrap;
     align-items: center;
     gap: 0.35em;
     font-size: 0.8125rem;
@@ -45,6 +46,7 @@
 
 .status-chip {
     display: inline-flex;
+    white-space: nowrap;
     align-items: center;
     gap: 0.4em;
     font-size: 0.75rem;

@@ -17,7 +17,7 @@
     </div>
 
     <form method="GET" class="d-flex gap-2">
-        <select name="status" class="form-select" onchange="this.form.submit()">
+        <select name="status" class="form-select" style="min-width: 12rem" onchange="this.form.submit()">
             <option value="">Tất cả trạng thái</option>
             @foreach($statuses as $status)
                 <option value="{{ $status->value }}" @selected(request('status') === $status->value)>

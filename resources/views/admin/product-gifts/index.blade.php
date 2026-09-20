@@ -17,10 +17,10 @@
 
 <div class="row g-3 mb-3">
     <div class="col-lg-6">
-        <form method="GET" action="{{ route('admin.product-gifts.open') }}" class="admin-panel p-3 d-flex gap-2" data-chon-san-pham-qua>
+        <form method="GET" action="{{ route('admin.product-gifts.open') }}" class="admin-panel p-3 d-flex flex-wrap gap-2" data-chon-san-pham-qua>
             <label class="visually-hidden" for="pg-chon">Chọn sản phẩm để thêm quà</label>
-            <select id="pg-chon" name="product_id" class="form-select" required>
-                <option value="">Chọn sản phẩm để thêm quà…</option>
+            <select id="pg-chon" name="product_id" class="form-select" style="flex: 1 1 12rem; width: auto" required>
+                <option value="">Chọn sản phẩm…</option>
                 @foreach($chuaCoQua as $sp)
                     <option value="{{ $sp->id }}">{{ $sp->name }}</option>
                 @endforeach

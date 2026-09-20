@@ -30,7 +30,7 @@
 
     <x-admin.filter-bar
     :action="route('admin.reviews.index')"
-    placeholder="Tìm trong nhận xét hoặc tên sản phẩm…"
+    placeholder="Nhận xét hoặc sản phẩm…"
     :total="$reviews->total()"
 >
     @if(request('trang_thai'))
@@ -125,7 +125,7 @@
 
                                 <td class="text-nowrap">{{ $review->rating }}/5</td>
 
-                                <td style="max-width: 26rem;">
+                                <td class="o-dai" style="max-width: 26rem;">
                                     {{ $review->comment ?: '—' }}
 
                                     <details class="mt-2" @if($review->hasReply()) open @endif>

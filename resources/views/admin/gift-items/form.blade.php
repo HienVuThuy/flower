@@ -37,7 +37,7 @@
                 <div class="mb-3">
                     <label class="form-label" for="qv-product">Là sản phẩm đang có</label>
                     <select id="qv-product" name="product_id" class="form-select @error('product_id') is-invalid @enderror">
-                        <option value="">— Không, là vật phẩm tặng riêng —</option>
+                        <option value="">— Vật phẩm tặng riêng —</option>
                         @foreach($sanPham as $sp)
                             <option value="{{ $sp->id }}" @selected((string) old('product_id', $vat->product_id) === (string) $sp->id)>{{ $sp->name }}</option>
                         @endforeach

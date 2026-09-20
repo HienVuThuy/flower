@@ -77,7 +77,7 @@
                             {{ auth()->user()->name }} ơi, hôm nay cây thế nào?
                         </button>
                         <button type="button" class="composer-bar__nut" data-bs-toggle="modal" data-bs-target="#hop-dang-bai">
-                            <x-site.icon name="image" /> <span>Ảnh / video</span>
+                            <x-site.icon name="image" /> <span class="text-nowrap">Ảnh / video</span>
                         </button>
                     </div>
                 @else

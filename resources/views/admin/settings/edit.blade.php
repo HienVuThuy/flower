@@ -97,7 +97,7 @@
                     <details class="hero-manager" @if($activeTheme === $themeKey) open @endif>
 
                         <summary class="hero-manager__summary">
-                            <span class="fw-semibold">{{ $theme['label'] }}</span>
+                            <span class="fw-semibold text-nowrap">{{ $theme['label'] }}</span>
                             <span class="text-caption">
                                 @if($themeHero)
                                     {{ count($themeHero) }} ảnh riêng
@@ -377,7 +377,7 @@
                                                @checked(old('tax_classes.' . $nhom->id . '.is_active', $nhom->is_active))>
                                     </td>
 
-                                    <td class="text-muted small">{{ $nhom->note }}</td>
+                                    <td class="o-dai text-muted small">{{ $nhom->note }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -409,7 +409,7 @@
                         <tbody>
                             @foreach($paymentMethods as $pm)
                                 <tr>
-                                    <td>
+                                    <td class="o-dai">
                                         <strong>{{ $pm['label'] }}</strong>
                                         <div class="text-muted small">{{ $pm['hint'] }}</div>
                                     </td>
@@ -472,7 +472,7 @@
                             <input type="text" name="commitments[{{ $i }}][title]" id="cm-title-{{ $i }}"
                                    value="{{ old("commitments.$i.title", $row['title']) }}"
                                    class="form-control @error("commitments.$i.title") is-invalid @enderror"
-                                   maxlength="80" placeholder="Ví dụ: Giao nội thành trong ngày">
+                                   maxlength="80" placeholder="Giao trong ngày">
                             <x-form-error name="commitments.{{ $i }}.title" />
                         </div>
 
@@ -481,7 +481,7 @@
                             <input type="text" name="commitments[{{ $i }}][note]" id="cm-note-{{ $i }}"
                                    value="{{ old("commitments.$i.note", $row['note']) }}"
                                    class="form-control" maxlength="120"
-                                   placeholder="Giải thích ngắn (không bắt buộc)">
+                                   placeholder="Giải thích ngắn">
                         </div>
 
                     </div>

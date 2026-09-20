@@ -158,9 +158,9 @@
                             <thead>
                                 <tr>
                                     <th>Mặt hàng</th>
-                                    <th class="text-end">Còn trả được</th>
+                                    <th class="text-end">Còn trả</th>
                                     <th style="width: 6rem">Trả về</th>
-                                    <th>Còn bán được</th>
+                                    <th>Bán lại</th>
                                 </tr>
                             </thead>
                             <tbody>

@@ -39,6 +39,37 @@
     padding: var(--space-md);
 }
 
+/* Bảng Bootstrap trong khu quản trị theo cùng luật với .admin-table. */
+.admin-main .table th,
+.admin-main .table td {
+    white-space: nowrap;
+}
+
+/* Ô chứa đoạn chữ dài (nội dung đánh giá, ghi chú…) được xuống dòng; mọi ô khác giữ một dòng. */
+.admin-main .table td.o-dai,
+.admin-table td.o-dai,
+.admin-table td .o-dai {
+    white-space: normal;
+    min-width: 11rem;
+}
+
+/* Cột phụ (danh mục, điều kiện, trạng thái kèm ghi chú) được xuống dòng nhưng không hẹp quá mức đọc được. */
+.admin-main .table td.o-vua,
+.admin-table td.o-vua {
+    white-space: normal;
+    min-width: 8.5rem;
+}
+
+.admin-topbar__trai {
+    min-width: 0;
+}
+
+.admin-topbar__tieu-de {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .admin-brand {
     display: flex;
     align-items: center;
@@ -140,18 +171,20 @@
 }
 
 .admin-table thead th {
+    white-space: nowrap;
     font-size: 0.6875rem;
     font-weight: 700;
     letter-spacing: 0.05em;
     text-transform: uppercase;
     color: var(--admin-ink-muted);
     border-bottom: 1px solid var(--admin-border);
-    padding: 0.65rem 0.75rem;
+    padding: 0.65rem 0.6rem;
     background: var(--admin-surface-alt);
 }
 
 .admin-table td {
-    padding: 0.65rem 0.75rem;
+    white-space: nowrap;
+    padding: 0.65rem 0.6rem;
     vertical-align: middle;
     border-bottom: 1px solid var(--admin-border);
 }
@@ -241,7 +274,7 @@
     color: #fff;
 }
 
-@media (max-width: 991.98px) {
+@media (max-width: 1199.98px) {
     .admin-sidebar {
         position: static;
         width: 100%;
@@ -256,6 +289,17 @@
 
     .table-responsive > .admin-table {
         min-width: 44rem;
+    }
+
+    /* Điện thoại: bảng đã cuộn ngang, nên cột phụ giữ một dòng thay vì bị bóp. */
+    .admin-main .table td.o-vua,
+    .admin-table td.o-vua {
+        white-space: nowrap;
+    }
+
+    .admin-main .table td.o-dai,
+    .admin-table td.o-dai {
+        min-width: 14rem;
     }
 }
 

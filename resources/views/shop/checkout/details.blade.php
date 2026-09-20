@@ -121,7 +121,7 @@
                             <x-form-error name="shipping_address" />
                         </div>
 
-                        <div class="col-md-4 ghn-select" hidden>
+                        <div class="col-md-6 col-xl-4 ghn-select" hidden>
                             <label class="form-label" for="province_select">Tỉnh/Thành phố *</label>
                             <select id="province_select" class="form-select"
                                     data-ghn-province
@@ -137,10 +137,10 @@
                             <x-form-error name="shipping_province" />
                         </div>
 
-                        <div class="col-md-4 ghn-select" hidden>
+                        <div class="col-md-6 col-xl-4 ghn-select" hidden>
                             <label class="form-label" for="district_select">Quận/Huyện *</label>
                             <select id="district_select" class="form-select" data-ghn-district disabled>
-                                <option value="">-- Chọn Tỉnh/Thành trước --</option>
+                                <option value="">— Chọn tỉnh trước —</option>
                             </select>
                             <input type="hidden" id="shipping_district" name="shipping_district"
                                    data-cu="{{ old('shipping_district', $values['shipping_district'] ?? '') }}"
@@ -149,10 +149,10 @@
                                    value="{{ old('to_district_id', $values['to_district_id'] ?? '') }}">
                         </div>
 
-                        <div class="col-md-4 ghn-select" hidden>
+                        <div class="col-md-6 col-xl-4 ghn-select" hidden>
                             <label class="form-label" for="ward_select">Phường/Xã *</label>
                             <select id="ward_select" class="form-select" data-ghn-ward disabled>
-                                <option value="">-- Chọn Quận/Huyện trước --</option>
+                                <option value="">— Chọn quận trước —</option>
                             </select>
                             <input type="hidden" id="shipping_ward" name="shipping_ward"
                                    data-cu="{{ old('shipping_ward', $values['shipping_ward'] ?? '') }}"
@@ -170,20 +170,20 @@
                         </p>
 
                         <div class="row g-3">
-                            <div class="col-md-4">
+                            <div class="col-md-6 col-xl-4">
                                 <label class="form-label" for="province_manual">Tỉnh/Thành phố *</label>
                                 <x-form.province-select
                                     name="shipping_province"
                                     id="province_manual"
                                     :selected="$values['shipping_province'] ?? ''" />
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6 col-xl-4">
                                 <label class="form-label" for="district_manual">Quận/Huyện</label>
                                 <input type="text" id="district_manual" name="shipping_district"
                                        value="{{ old('shipping_district', $values['shipping_district'] ?? '') }}"
                                        class="form-control">
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6 col-xl-4">
                                 <label class="form-label" for="ward_manual">Phường/Xã</label>
                                 <input type="text" id="ward_manual" name="shipping_ward"
                                        value="{{ old('shipping_ward', $values['shipping_ward'] ?? '') }}"

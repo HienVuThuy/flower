@@ -39,7 +39,7 @@
 
 <x-admin.filter-bar
     :action="route('admin.products.index')"
-    placeholder="Tìm theo tên hoặc mã sản phẩm…"
+    placeholder="Tên hoặc mã sản phẩm…"
     :total="$products->total()"
 >
     <select name="category" class="form-select" aria-label="Lọc theo danh mục">
@@ -140,7 +140,7 @@
 
                     </td>
 
-                    <td>
+                    <td class="o-dai">
 
                         <div class="fw-semibold">
                             {{ $product->name }}
@@ -152,11 +152,11 @@
 
                     </td>
 
-                    <td>
+                    <td class="o-vua">
                         {{ $product->category->name }}
                     </td>
 
-                    <td>
+                    <td class="o-vua">
                         {{ $product->selling_form?->label() ?? '—' }}
                     </td>
 
@@ -251,7 +251,7 @@
                             </form>
                         </div>
                         @else
-                        <div class="d-inline-flex gap-2">
+                        <div class="d-inline-flex flex-wrap justify-content-end gap-2" style="max-width: 9rem">
 
                             <a
                                 href="{{ route('admin.products.show', $product) }}"

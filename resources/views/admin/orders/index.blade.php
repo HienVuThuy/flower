@@ -34,7 +34,7 @@
 
     <x-admin.filter-bar
         :action="route('admin.orders.index')"
-        placeholder="Tìm mã đơn, SĐT, tên người nhận, mã vận đơn GHN hoặc tên sản phẩm…"
+        placeholder="Mã đơn, SĐT, tên, vận đơn, sản phẩm…"
         :total="$orders->total()"
     >
         @if($currentStatus)
@@ -114,7 +114,6 @@
                             <x-admin.sort-header khoa="thanh-toan" nhan="Thanh toán" />
                             <x-admin.sort-header khoa="trang-thai" nhan="Trạng thái" />
                             <x-admin.sort-header khoa="ngay" nhan="Ngày đặt" dau="giam" />
-                            <th class="text-end">Thao tác</th>
                         </tr>
                     </thead>
 
@@ -122,7 +121,7 @@
                         @foreach($orders as $order)
                             <tr>
                                 <td class="fw-bold">
-                                    {{ $order->order_number }}
+                                    <a href="{{ route('admin.orders.show', $order) }}" data-admin-link title="Xem đơn {{ $order->order_number }}">{{ $order->order_number }}</a>
 
                                     @if($order->needsRiskReview())
                                         <span class="risk-flag"
@@ -137,7 +136,7 @@
                                     <div class="admin-page-subtitle">{{ $order->recipient_phone }}</div>
                                 </td>
 
-                                <td>
+                                <td class="o-dai">
                                     {{ $order->items->first()?->product_name }}
                                     @if($order->items_count > 1)
                                         <div class="admin-page-subtitle">và {{ $order->items_count - 1 }} món khác</div>
@@ -148,14 +147,14 @@
                                     <x-site.money :amount="(float) $order->grand_total" />
                                 </td>
 
-                                <td>
+                                <td class="o-vua">
                                     <span class="status-pill status-pill--{{ $order->payment_status->badge() }}">
                                         {{ $order->payment_status->label() }}
                                     </span>
                                     <div class="admin-page-subtitle">{{ $order->payment_method->label() }}</div>
                                 </td>
 
-                                <td>
+                                <td class="o-vua">
                                     <span class="status-pill status-pill--{{ $order->status->badge() }}">
                                         {{ $order->status->label() }}
                                     </span>
@@ -164,13 +163,11 @@
                                     @endif
                                 </td>
 
-                                <td><x-site.time :at="$order->created_at" format="d/m/Y H:i" /></td>
-
-                                <td class="text-end">
-                                    <a href="{{ route('admin.orders.show', $order) }}" class="btn btn-outline-admin btn-sm">
-                                        Xem
-                                    </a>
+                                <td>
+                                    <x-site.time :at="$order->created_at" format="d/m/Y" />
+                                    <div class="admin-page-subtitle"><x-site.time :at="$order->created_at" format="H:i" /></div>
                                 </td>
+
                             </tr>
                         @endforeach
                     </tbody>

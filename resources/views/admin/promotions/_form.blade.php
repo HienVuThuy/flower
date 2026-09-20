@@ -18,7 +18,7 @@
                     name="name"
                     class="form-control @error('name') is-invalid @enderror"
                     value="{{ old('name', $promotion->name ?? '') }}"
-                    placeholder="Ví dụ: Giáng sinh an lành – Ưu đãi ngập tràn"
+                    placeholder="Ví dụ: Giáng sinh an lành"
                 >
                 <x-form-error name="name"/>
             </div>
@@ -42,7 +42,7 @@
                     name="short_description"
                     class="form-control @error('short_description') is-invalid @enderror"
                     value="{{ old('short_description', $promotion->short_description ?? '') }}"
-                    placeholder="Một câu tóm tắt hiển thị trên banner"
+                    placeholder="Một câu hiện trên banner"
                 >
                 <x-form-error name="short_description"/>
             </div>

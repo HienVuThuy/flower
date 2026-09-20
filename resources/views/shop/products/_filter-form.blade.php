@@ -18,7 +18,7 @@
             value="{{ request('q') }}"
             class="form-control"
             maxlength="100"
-            placeholder="Gõ có dấu hay không dấu đều được"
+            placeholder="Tên cây, hoa…"
         >
     </div>
 

@@ -105,7 +105,7 @@
                             <input type="text" name="products[{{ $i }}][note]"
                                    class="form-control form-control-sm" maxlength="200"
                                    value="{{ $sp?->pivot?->note }}"
-                                   placeholder="Vì sao nhắc cây này — ví dụ: chịu bóng tốt nhất danh sách"
+                                   placeholder="Vì sao nhắc cây này"
                                    aria-label="Ghi chú {{ $i + 1 }}">
                         </div>
                     </div>

@@ -58,7 +58,7 @@
                                 name="occasion"
                                 value="{{ old('occasion') }}"
                                 class="form-control @error('occasion') is-invalid @enderror"
-                                placeholder="Ví dụ: Tiệc cưới, khai trương, hội nghị..."
+                                placeholder="Tiệc cưới, khai trương…"
                             >
                             <x-form-error name="occasion"/>
                         </div>

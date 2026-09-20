@@ -27,7 +27,7 @@
                     <input type="text" id="cp-description" name="description" maxlength="200" required
                            class="form-control @error('description') is-invalid @enderror"
                            value="{{ old('description', $khoan->description) }}"
-                           placeholder="Lương chị Hoa tháng 9, tiền điện tháng 9…">
+                           placeholder="Ví dụ: tiền điện tháng 9">
                     <x-form-error name="description" />
                 </div>
 

@@ -5,7 +5,13 @@
     right: 16px;
     bottom: 16px;
     z-index: 1040;
-    max-width: calc(100vw - 32px);
+}
+
+/* Màn hình hẹp: chừa đúng 16px hai bên (100vw tính cả thanh cuộn nên hay lệch). */
+@media (max-width: 575.98px) {
+    .ai-chat {
+        left: 16px;
+    }
 }
 
 .ai-chat__toggle {

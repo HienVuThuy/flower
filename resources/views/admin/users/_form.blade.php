@@ -40,10 +40,15 @@
                 @disabled($dangSua && $user->is(auth()->user()))>
             @foreach($roles as $role)
                 <option value="{{ $role->value }}" @selected(old('role', ($user->role ?? null)?->value ?? 'customer') === $role->value)>
-                    {{ $role->label() }} — {{ $role->moTa() }}
+                    {{ $role->label() }}
                 </option>
             @endforeach
         </select>
+        <div class="form-text">
+            @foreach($roles as $role)
+                <span class="d-block"><strong>{{ $role->label() }}</strong>: {{ $role->moTa() }}</span>
+            @endforeach
+        </div>
         @if($dangSua && $user->is(auth()->user()))
             <input type="hidden" name="role" value="{{ $user->role->value }}">
             <small class="text-muted">Không tự đổi vai trò của chính mình.</small>

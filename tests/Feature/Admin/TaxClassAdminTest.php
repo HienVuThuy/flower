@@ -169,7 +169,7 @@ class TaxClassAdminTest extends TestCase
             ->get('/admin/products/create')
             ->assertOk()
             ->assertSee($nhom->name)
-            ->assertSee('Dùng mức mặc định của cửa hàng');
+            ->assertSee('Mặc định cửa hàng');
     }
 
     #[Test]

@@ -93,10 +93,15 @@
                 <select id="kind" name="kind" class="form-select @error('kind') is-invalid @enderror">
                     @foreach(\App\Enums\CategoryKind::cases() as $nhom)
                         <option value="{{ $nhom->value }}" @selected($kindOld === $nhom->value)>
-                            {{ $nhom->label() }} — {{ $nhom->hint() }}
+                            {{ $nhom->label() }}
                         </option>
                     @endforeach
                 </select>
+                <div class="form-text">
+                    @foreach(\App\Enums\CategoryKind::cases() as $nhom)
+                        <span class="d-block"><strong>{{ $nhom->label() }}</strong>: {{ $nhom->hint() }}</span>
+                    @endforeach
+                </div>
                 <x-form-error name="kind"/>
             </div>
 

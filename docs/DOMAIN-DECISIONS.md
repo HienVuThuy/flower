@@ -8393,3 +8393,30 @@ có thanh bên.
 - Bỏ luật "đã phát quà thì không đổi sang giảm giá" của QĐ-304: chương trình
   giảm giá giờ cũng phát quà, đơn cũ đã chụp tên chương trình và dòng quà.
 - Chương trình mẫu "Tuần lễ cây xanh" tạo bằng seeder, chạy lại không nhân đôi.
+
+## QĐ-306. Luật chống gãy chữ và chống chèn chữ trong giao diện
+
+Rà soát toàn bộ 91 trang ở ba bề ngang (390px, 1024px, 1366px) bằng cách dựng
+tĩnh từng trang rồi đo bằng trình duyệt: chữ ngắn có bị bẻ đôi không, chữ có
+tràn khỏi khung không, ô chọn có đủ chỗ cho chữ và mũi tên không, trang có
+tràn ngang không. Kết quả thành mấy luật chung:
+
+- `.form-select` phải chừa `padding-right: 2.25rem` cho mũi tên. Trước đây
+  `forms.css` đặt `padding: .6rem .85rem` đè mất khoảng Bootstrap dành sẵn nên
+  MỌI ô chọn đều bị mũi tên đè lên chữ khi ô hẹp.
+- Nhãn trạng thái, thẻ, huy hiệu, nút và mốc thời gian (`.status-chip`, `.tag`,
+  `.badge`, `.btn`, `<time>`) không bao giờ xuống dòng.
+- Bảng quản trị: mặc định mỗi ô một dòng. Ô chứa đoạn chữ dài (tên + mô tả, nội
+  dung đánh giá, ghi chú nhật ký) đánh dấu `o-dai`; cột phụ cần co giãn đánh dấu
+  `o-vua`. Bảng vẫn cuộn ngang được, nhưng ở màn hình 1366px thì không bảng nào
+  phải cuộn nữa.
+- Trên điện thoại `o-vua` trở lại một dòng (bảng đã cuộn ngang rồi, không cần bóp).
+- `.table-responsive` phải `position: relative`: chữ ẩn cho trình đọc màn hình
+  (`.visually-hidden`, định vị tuyệt đối) nếu không sẽ thoát ra ngoài khung cuộn
+  và kéo tràn cả trang.
+- Thanh menu quản trị cố định chỉ hiện từ 1200px (trước là 992px). Trong khoảng
+  992–1199px, menu cố định ăn 264px làm biểu mẫu chia cột bị bóp còn ~115px mỗi
+  ô chọn; nay menu thu vào nút ba gạch như trên máy tính bảng.
+- Chữ trong ô chọn và chữ gợi ý trong ô nhập phải ngắn hơn ô: phần giải thích
+  dài chuyển xuống dòng `form-text` dưới ô (ví dụ mô tả từng vai trò người dùng,
+  từng nhóm danh mục) thay vì nhét vào chính lựa chọn.

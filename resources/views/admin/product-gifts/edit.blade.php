@@ -83,11 +83,11 @@
                 </div>
                 <div class="col-6">
                     <input type="number" name="stock_quantity" min="0" class="form-control @error('stock_quantity') is-invalid @enderror"
-                           placeholder="Số lượng đang có" value="{{ old('stock_quantity') }}" aria-label="Số lượng đang có">
+                           placeholder="Đang có" value="{{ old('stock_quantity') }}" aria-label="Số lượng đang có">
                     <x-form-error name="stock_quantity" />
                 </div>
                 <div class="col-12">
-                    <input type="number" name="value" min="0" class="form-control" placeholder="Trị giá tham khảo (đồng, không bắt buộc)"
+                    <input type="number" name="value" min="0" class="form-control" placeholder="Trị giá (không bắt buộc)"
                            value="{{ old('value') }}" aria-label="Trị giá tham khảo">
                 </div>
             </div>

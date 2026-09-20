@@ -104,7 +104,7 @@
                         <td>
                             @if($l->donGia())
                                 <x-site.money :amount="$l->donGia()" />
-                                <span class="admin-page-subtitle small">/{{ $l->unit->label() }}</span>
+                                <span class="d-block admin-page-subtitle small">mỗi {{ $l->unit->label() }}</span>
                             @else
                                 <span class="admin-page-subtitle">—</span>
                             @endif
@@ -119,7 +119,7 @@
                                 <span class="admin-page-subtitle">chưa đóng</span>
                             @endif
                         </td>
-                        <td>
+                        <td class="o-vua">
                             <span class="badge text-bg-{{ $l->status->tone() }}">{{ $l->status->label() }}</span>
 
                             @unless($l->daDong())

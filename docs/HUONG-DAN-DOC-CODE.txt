@@ -394,6 +394,16 @@ PHẦN 1. KIẾN THỨC NỀN (đọc một lần, quay lại tra khi cần)
   Tên class theo kiểu BEM: .gc-bai (khối), .gc-bai__head (phần tử),
   .gc-bai--don (biến thể).
 
+  LUẬT BỐ CỤC PHẢI GIỮ (chi tiết ở QĐ-306):
+    - Nhãn trạng thái / thẻ / huy hiệu / nút / <time>: không xuống dòng.
+    - Ô chọn (.form-select) luôn chừa padding-right cho mũi tên; chữ trong lựa
+      chọn phải ngắn, phần giải thích để ở <div class="form-text"> dưới ô.
+    - Bảng quản trị: mỗi ô MỘT dòng. Ô chữ dài thêm class "o-dai", cột phụ cần
+      co giãn thêm "o-vua"; bọc bảng trong .table-responsive (đã position:
+      relative để chữ .visually-hidden không kéo tràn trang).
+    - Menu quản trị cố định chỉ từ 1200px; dưới mức đó dùng nút ba gạch.
+    - Sửa xong bố cục thì kiểm ở ba bề ngang 390 / 1024 / 1366px.
+
 --------------------------------------------------------------------------------
 1.18 Lệnh artisan tự viết và lịch chạy
 --------------------------------------------------------------------------------

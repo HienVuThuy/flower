@@ -73,7 +73,7 @@
 
                             <td>{{ $log->actorLabel() }}</td>
 
-                            <td>
+                            <td class="o-dai">
                                 {{ $log->description }}
 
                                 @if($log->properties)

@@ -1008,7 +1008,7 @@
                 <input type="text" id="taxon_note" name="taxon_note" maxlength="300"
                        class="form-control @error('taxon_note') is-invalid @enderror"
                        value="{{ old('taxon_note', $product->taxon_note ?? '') }}"
-                       placeholder="Chậu ghép nhiều loài sen đá khác nhau">
+                       placeholder="Ví dụ: chậu ghép nhiều loài">
 
                 <x-form-error name="taxon_note"/>
 
@@ -1066,7 +1066,7 @@
 
                 <select name="tax_class_id" id="tax_class_id" class="form-select">
                     <option value="">
-                        Dùng mức mặc định của cửa hàng ({{ app(\App\Services\Tax\TaxCalculator::class)->ratePercent() }}%)
+                        Mặc định cửa hàng ({{ app(\App\Services\Tax\TaxCalculator::class)->ratePercent() }}%)
                     </option>
 
                     @foreach($taxClasses as $nhom)
@@ -1147,9 +1147,10 @@
 
                     <select id="track_inventory" name="track_inventory" data-stock-toggle
                             class="form-select @error('track_inventory') is-invalid @enderror">
-                        <option value="0" @selected($trackInventoryOld == 0)>Không (bán theo mùa/đặt trước)</option>
+                        <option value="0" @selected($trackInventoryOld == 0)>Không</option>
                         <option value="1" @selected($trackInventoryOld == 1)>Có</option>
                     </select>
+                    <div class="form-text">Chọn "Không" cho hàng bán theo mùa hoặc đặt trước.</div>
 
                     <x-form-error name="track_inventory"/>
 
@@ -1327,7 +1328,7 @@
                     name="video_urls[]"
                     value="{{ old('video_urls.' . $i) }}"
                     class="form-control mb-2 @error('video_urls.' . $i) is-invalid @enderror"
-                    placeholder="https://www.youtube.com/watch?v=..."
+                    placeholder="https://youtu.be/…"
                 >
                 <x-form-error :name="'video_urls.' . $i"/>
             @endfor

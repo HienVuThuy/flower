@@ -118,7 +118,7 @@
                                             <div class="admin-page-subtitle small">{{ $g['email'] }}</div>
                                         @endif
                                     </td>
-                                    <td class="small">{{ implode(', ', $g['mat_hang']) }}</td>
+                                    <td class="o-dai small">{{ implode(', ', $g['mat_hang']) }}</td>
                                     <td class="text-end text-nowrap">
                                         {{ $tien($g['gia_tri']) }}
                                         @if($g['khong_dinh_gia'] > 0)

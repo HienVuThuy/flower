@@ -49,7 +49,7 @@
                     <th>Vai trò</th>
                     <x-admin.sort-header khoa="so-don" nhan="Đơn đã mua" dau="giam" class="text-end" />
                     <x-admin.sort-header khoa="da-chi" nhan="Đã chi" dau="giam" class="text-end" />
-                    <x-admin.sort-header khoa="ngay" nhan="Ngày tham gia" dau="giam" />
+                    <x-admin.sort-header khoa="ngay" nhan="Tham gia" dau="giam" />
                     <th class="text-end">Thao tác</th>
                 </tr>
             </thead>
@@ -59,7 +59,7 @@
             @forelse($users as $user)
 
                 <tr class="{{ $user->isLocked() ? 'admin-row--locked' : '' }}">
-                    <td class="fw-semibold">
+                    <td class="o-vua fw-semibold">
                         <a data-admin-link href="{{ route('admin.users.show', $user) }}">{{ $user->name }}</a>
 
                         @if($user->is(auth()->user()))
@@ -70,7 +70,7 @@
                         {{ $user->email }}
 
                         @unless($user->hasVerifiedEmail())
-                            <span class="badge text-bg-warning ms-1">Chưa xác thực</span>
+                            <div><span class="badge text-bg-warning">Chưa xác thực</span></div>
                         @endunless
                     </td>
                     <td>

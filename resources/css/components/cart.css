@@ -40,6 +40,7 @@
 
 .cart-line__variant,
 .cart-line__unit {
+    white-space: nowrap;
     font-size: var(--text-body-sm);
     color: var(--ink-500);
 }
@@ -892,6 +893,7 @@
 
 .credits-table th,
 .credits-table td {
+    white-space: nowrap;
     padding: 0.55rem 0.75rem 0.55rem 0;
     text-align: start;
     vertical-align: top;

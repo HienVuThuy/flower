@@ -71,7 +71,7 @@
                             <tr>
                                 <td class="fw-bold">{{ $coupon->code }}</td>
 
-                                <td>
+                                <td class="o-dai">
                                     {{ $coupon->name }}
                                     @if($coupon->description)
                                         <div class="admin-page-subtitle">{{ $coupon->description }}</div>
@@ -82,7 +82,11 @@
                                     {{ rtrim(rtrim(number_format((float) $coupon->value, 2, ',', '.'), '0'), ',') }}{{ $coupon->type->unit() }}
                                 </td>
 
-                                <td class="admin-page-subtitle">{{ $coupon->conditionText() }}</td>
+                                <td class="admin-page-subtitle">
+                                    @foreach(explode(' · ', $coupon->conditionText()) as $dieuKien)
+                                        <span class="d-block">{{ $dieuKien }}</span>
+                                    @endforeach
+                                </td>
 
                                 <td>
                                     {{ $coupon->used_count }}{{ $coupon->usage_limit ? ' / ' . $coupon->usage_limit : '' }}
@@ -92,9 +96,8 @@
                                 </td>
 
                                 <td class="admin-page-subtitle">
-                                    <x-site.time :at="$coupon->starts_at" format="d/m/Y">Không giới hạn</x-site.time>
-                                    &rarr;
-                                    <x-site.time :at="$coupon->ends_at" format="d/m/Y">Không giới hạn</x-site.time>
+                                    <span class="d-block">Từ <x-site.time :at="$coupon->starts_at" format="d/m/Y">nay</x-site.time></span>
+                                    <span class="d-block">đến <x-site.time :at="$coupon->ends_at" format="d/m/Y">khi hết lượt</x-site.time></span>
                                 </td>
 
                                 <td>

@@ -16,6 +16,18 @@
     color: var(--ink-900);
 }
 
+/* Chừa chỗ cho mũi tên: padding chung ở trên đè mất khoảng Bootstrap dành cho nó. */
+.form-select {
+    padding-right: 2.25rem;
+    background-position: right 0.75rem center;
+    text-overflow: ellipsis;
+}
+
+.form-select-sm {
+    padding-right: 2rem;
+    background-position: right 0.6rem center;
+}
+
 .form-control::placeholder,
 .form-select::placeholder,
 textarea::placeholder {
@@ -165,4 +177,16 @@ textarea::placeholder {
 
 .ghn-fee strong {
     font-variant-numeric: tabular-nums;
+}
+
+/* Nút, ngày giờ và các nhãn ngắn không bị bẻ đôi. */
+.btn,
+time,
+.badge {
+    white-space: nowrap;
+}
+
+/* Chữ ẩn cho trình đọc màn hình (position: absolute) trong bảng không được thoát ra ngoài khung cuộn. */
+.table-responsive {
+    position: relative;
 }

@@ -34,7 +34,7 @@
                             <div class="order-history__number">{{ $order->order_number }}</div>
                             <div class="order-history__meta">
                                 <x-site.time :at="$order->created_at" format="d/m/Y H:i" />
-                                &middot; {{ $order->items_count }} sản phẩm
+                                <span class="text-nowrap">&middot; {{ $order->items_count }} sản phẩm</span>
 
                                 @if($order->payment_method === \App\Enums\PaymentMethod::Momo
                                     && $order->payment_status === \App\Enums\PaymentStatus::Unpaid

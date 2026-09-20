@@ -30,7 +30,7 @@
             <div class="col-md-9">
                 <label class="form-label" for="note">Ghi chú</label>
                 <input type="text" id="note" name="note" maxlength="500" value="{{ old('note') }}"
-                       class="form-control" placeholder="Ví dụ: kiểm kê cuối tháng 9, kệ cây cảnh và kho chậu">
+                       class="form-control" placeholder="Kiểm kê cuối tháng…">
             </div>
         </div>
     </div>
@@ -65,7 +65,7 @@
                             <td>
                                 <input type="text" maxlength="255" name="dem[{{ $d['value'] }}][reason]"
                                        value="{{ old('dem.' . $d['value'] . '.reason') }}"
-                                       class="form-control form-control-sm" placeholder="Chậu vỡ, cây chết…"
+                                       class="form-control form-control-sm" placeholder="Vỡ, chết…"
                                        aria-label="Lý do lệch: {{ $d['label'] }}">
                             </td>
                         </tr>

@@ -47,7 +47,7 @@
             <tbody>
                 @forelse($nhaCungCap as $ncc)
                     <tr>
-                        <td>
+                        <td class="o-dai">
                             {{ $ncc->name }}
                             @if($ncc->address)
                                 <span class="d-block admin-page-subtitle small">{{ $ncc->address }}</span>
@@ -57,7 +57,7 @@
                             @endif
                         </td>
                         <td>{{ $ncc->kind->label() }}</td>
-                        <td>
+                        <td class="o-vua">
                             @if($ncc->phone)
                                 {{ $ncc->phone }}
                             @endif

@@ -258,11 +258,11 @@
                             @endif
 
                             @if(! $post->isRejected())
-                                <form method="POST" action="{{ route('admin.community.reject', $post) }}" class="d-flex gap-2">
+                                <form method="POST" action="{{ route('admin.community.reject', $post) }}" class="d-flex flex-wrap gap-2">
                                     @csrf
                                     @method('PATCH')
                                     <input type="text" name="reject_reason" class="form-control form-control-sm"
-                                           maxlength="200" required style="min-width: 16rem;"
+                                           maxlength="200" required style="min-width: min(16rem, 100%);"
                                            placeholder="Lý do từ chối (khách sẽ đọc được)" aria-label="Lý do từ chối">
                                     <button type="submit" class="btn btn-ghost btn-sm">Từ chối</button>
                                 </form>

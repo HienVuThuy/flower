@@ -59,6 +59,12 @@
     font-weight: 600;
 }
 
+@media (max-width: 575.98px) {
+    .category-card__title {
+        font-size: 1.05rem;
+    }
+}
+
 .category-card__meta {
     font-size: 0.75rem;
     letter-spacing: 0.04em;

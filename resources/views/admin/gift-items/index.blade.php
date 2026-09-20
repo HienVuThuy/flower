@@ -44,7 +44,7 @@
                             @endif
                         </td>
                         <td>{{ $vat->kind->label() }}</td>
-                        <td>
+                        <td class="o-dai">
                             @if($vat->laSanPham())
                                 Sản phẩm: {{ $vat->product?->name ?? 'đã xoá' }}@if($vat->variant) — {{ $vat->variant->name }}@endif
                             @else

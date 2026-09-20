@@ -21,9 +21,9 @@
 
 <x-site.icon-sprite />
 
-<div class="admin-shell d-lg-flex">
+<div class="admin-shell d-xl-flex">
 
-    <aside class="admin-sidebar collapse d-lg-block" id="adminNav">
+    <aside class="admin-sidebar collapse d-xl-block" id="adminNav">
 
         <div class="admin-brand">
             <x-site.brand :size="24" :show-text="false" />
@@ -215,11 +215,11 @@
     <main class="admin-main flex-fill">
 
         <header class="admin-topbar">
-            <div class="d-flex justify-content-between align-items-center w-100">
+            <div class="d-flex justify-content-between align-items-center gap-2 w-100">
 
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex align-items-center gap-2 admin-topbar__trai">
                     <button
-                        class="admin-nav-toggle d-lg-none"
+                        class="admin-nav-toggle d-xl-none"
                         type="button"
                         data-bs-toggle="collapse"
                         data-bs-target="#adminNav"
@@ -230,7 +230,7 @@
                         <x-site.icon name="list" />
                     </button>
 
-                    <span class="fw-semibold d-lg-none">@yield('title', 'Khu vực quản trị')</span>
+                    <span class="fw-semibold d-xl-none admin-topbar__tieu-de">@yield('title', 'Khu vực quản trị')</span>
                 </div>
 
                 <div class="d-flex align-items-center gap-3">

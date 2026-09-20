@@ -16,10 +16,10 @@
         </p>
     </div>
 
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
 
         <form method="GET">
-            <select name="status" class="form-select" onchange="this.form.submit()">
+            <select name="status" class="form-select" style="min-width: 12rem" onchange="this.form.submit()">
                 <option value="">Tất cả trạng thái</option>
                 @foreach($statuses as $status)
                     <option value="{{ $status->value }}" @selected(request('status') === $status->value)>
@@ -76,7 +76,7 @@
             @forelse($promotions as $promotion)
 
                 <tr>
-                    <td>
+                    <td class="o-dai">
                         <div class="fw-semibold">{{ $promotion->name }}</div>
                         @if($promotion->short_description)
                             <small class="text-muted">{{ Str::limit($promotion->short_description, 60) }}</small>
@@ -91,7 +91,7 @@
                         @endif
                     </td>
 
-                    <td>
+                    <td class="o-vua">
                         <small class="text-muted">
                             <x-site.time :at="$promotion->starts_at" format="d/m/Y">—</x-site.time>
                             &rarr;
@@ -99,12 +99,12 @@
                         </small>
                     </td>
 
-                    <td>
+                    <td class="o-vua">
                         @if($promotion->laTangQua())
                             <span class="fw-semibold">Tặng {{ $promotion->giftItem ? $promotion->gift_quantity . ' × ' . $promotion->giftItem->name : 'quà riêng từng sản phẩm' }}</span>
                         @else
                             <span class="fw-semibold">{{ rtrim(rtrim(number_format($promotion->discount_value, 2, ',', '.'), '0'), ',') }}{{ $promotion->type->unit() }}</span>
-                            <small class="d-block text-muted">{{ $promotion->type->label() }}</small>
+                            <small class="d-block text-muted">{{ $promotion->type->nhanNgan() }}</small>
                         @endif
                         @if($promotion->dong_qua_count > 0)
                             <small class="d-block text-muted">{{ $promotion->dong_qua_count }} sản phẩm tặng quà riêng</small>

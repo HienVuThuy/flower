@@ -31,7 +31,7 @@
                     <tbody>
                         @forelse($chuyenMuc as $cm)
                             <tr>
-                                <td>
+                                <td class="o-dai">
                                     <span class="fw-semibold">{{ $cm->name }}</span>
                                     <span class="d-block admin-page-subtitle small">/{{ $cm->slug }}</span>
                                     @if($cm->description)

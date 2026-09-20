@@ -79,7 +79,7 @@
                         @endif
                     </td>
 
-                    <td>
+                    <td class="o-dai">
                         <div class="fw-semibold">
                             {{ $category->name }}
                         </div>

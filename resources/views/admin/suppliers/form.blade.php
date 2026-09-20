@@ -28,7 +28,7 @@
                     <input type="text" id="ncc-name" name="name" maxlength="160" required
                            class="form-control @error('name') is-invalid @enderror"
                            value="{{ old('name', $nhaCungCap->name) }}"
-                           placeholder="Vựa hoa Quảng Bá, cô Lan (Đà Lạt)…">
+                           placeholder="Vựa hoa Quảng Bá…">
                     <x-form-error name="name" />
                     <div class="form-text">
                         Mỗi nơi một dòng, đừng tạo hai dòng cho cùng một người —

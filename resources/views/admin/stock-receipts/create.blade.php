@@ -62,7 +62,7 @@
                                     <td>
                                         <input type="number" name="items[{{ $i }}][unit_cost]"
                                                class="form-control form-control-sm" step="1000" min="0"
-                                               placeholder="để trống nếu chưa biết">
+                                               placeholder="Chưa rõ">
                                     </td>
                                 </tr>
                             @endfor

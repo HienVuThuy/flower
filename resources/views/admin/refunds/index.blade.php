@@ -76,7 +76,7 @@
                             @endif
                         </td>
                         <td class="text-end text-nowrap fw-bold">{{ $tien($r->amount) }}</td>
-                        <td>{{ $r->reason?->label() ?? '—' }}</td>
+                        <td class="o-vua">{{ $r->reason?->label() ?? '—' }}</td>
                         <td>{{ $r->method?->label() ?? '—' }}</td>
                         <td>
                             <span class="badge text-bg-{{ $r->status->badge() }}">{{ $r->status->label() }}</span>
