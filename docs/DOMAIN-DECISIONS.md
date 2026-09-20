@@ -8478,3 +8478,30 @@ và nén gzip/brotli phải bật ở máy chủ thật (php artisan serve khôn
 - ĐANG LỌC: bấm lọc là lưới sản phẩm mờ đi kèm chữ "Đang lọc…" — trang tải lại
   thật nên đây chỉ là dấu hiệu cho khách biết web không đơ; quay lại bằng nút
   Back thì gỡ trạng thái mờ (sự kiện pageshow).
+
+## QĐ-309. Chống quá tải và chống tiêm lệnh vào trợ lý AI
+
+Rà soát bảo mật trước báo cáo cho thấy các lớp cũ (CSRF, XSS, SQLi, quyền, chữ
+ký MoMo, kiểm chủ sở hữu) đã có và có kiểm thử; thiếu hai mảng: chống lạm dụng
+tài nguyên và chống tiêm lệnh vào AI.
+
+- TRẦN CHUNG 300 request/phút cho mỗi khách, áp cho cả nhóm web. Con số đọc từ
+  `config('app.tran_moi_phut')` vì bộ kiểm thử có bài mở hàng trăm trang liên
+  tiếp — kiểm thử nới lên 100000, chạy thật giữ 300.
+- TRẦN 10/phút cho: tạo tài khoản, thử mã giảm giá, đặt đơn. Thử mã giảm giá là
+  hành vi dò thật sự (bắn hàng nghìn mã để tìm mã còn hiệu lực), không chỉ là
+  chuyện tải máy chủ.
+- TRỢ LÝ AI chặn hai tầng: 10 lượt/phút VÀ 80 lượt/ngày. Chỉ chặn theo phút thì
+  một người vẫn hỏi được 14.400 lượt/ngày — tiền trả cho nhà cung cấp là thật.
+- KHÔNG tự nhận chống được DDoS thể tích. Ứng dụng chỉ chặn được ở tầng của nó;
+  nhiều máy bắn cùng lúc thì phải chặn ở CDN / tường lửa. Báo cáo ghi rõ ranh
+  giới này thay vì nói chung chung là "đã chống DDoS".
+- TIÊM LỆNH AI: câu hỏi đi như một lượt hỏi riêng (không ghép vào chỉ dẫn hệ
+  thống), chỉ dẫn hệ thống có luật bỏ qua yêu cầu đổi vai, và thêm bộ lọc phía
+  máy chủ gỡ dấu phân cách "===" cùng các dòng tự xưng LUẬT / SYSTEM / ASSISTANT.
+  Quan trọng nhất: KHÔNG đưa nội dung do khách khác viết vào ngữ cảnh — đánh giá
+  và bài Góc cây nằm ngoài, nên không có đường tiêm lệnh gián tiếp.
+- CSP thêm vào nhưng vẫn phải để `'unsafe-inline'` cho script: giao diện còn vài
+  đoạn script nội tuyến và thuộc tính onchange. Nó vẫn chặn được việc nạp mã từ
+  tên miền lạ — lớp chắn thứ hai nếu có chỗ nào lọt XSS. Muốn bỏ 'unsafe-inline'
+  thì phải gỡ hết script nội tuyến và dùng nonce, ghi lại để làm sau.

@@ -20,6 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'quyen' => \App\Http\Middleware\CoQuyen::class,
         ]);
 
+        $middleware->appendToGroup('web', 'throttle:chung');
+
         $middleware->appendToGroup('web', PreventBackHistory::class);
 
         $middleware->append(\App\Http\Middleware\SecurityHeaders::class);

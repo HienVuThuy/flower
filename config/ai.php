@@ -6,6 +6,10 @@ return [
 
     'provider' => env('AI_PROVIDER', 'gemini'),
 
+    /* Trần chống lạm dụng: mỗi lượt hỏi là một lần trả tiền cho nhà cung cấp. */
+    'moi_phut' => (int) env('AI_MOI_PHUT', 10),
+    'moi_ngay' => (int) env('AI_MOI_NGAY', 80),
+
     'gemini' => [
         'key' => env('GEMINI_API_KEY'),
 

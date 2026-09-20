@@ -18,13 +18,13 @@ A. QUY MÔ
   94 migration, 133 bảng trong cơ sở dữ liệu
   246 view Blade, 46 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
   16 lệnh artisan tự viết, 6 tác vụ chạy theo lịch
-  137 tệp kiểm thử, 1327 bài, 4940 phép khẳng định — ĐẠT 100%
+  138 tệp kiểm thử, 1332 bài, 4963 phép khẳng định — ĐẠT 100%
 
 
 --------------------------------------------------------------------------------
 B. KẾT QUẢ KIỂM TRA
 --------------------------------------------------------------------------------
-  Kiểm thử tự động ......... 1327/1327 đạt
+  Kiểm thử tự động ......... 1332/1332 đạt
   Migration ................ không còn migration nào chờ chạy
   Quyền khu quản trị ....... 156/156 đường dẫn đều gắn middleware quyen:*
   Biểu mẫu POST ............ không có biểu mẫu nào thiếu @csrf
@@ -36,6 +36,17 @@ B. KẾT QUẢ KIỂM TRA
                               danh mục, cẩm nang, góc cây, giỏ hàng, đăng nhập)
   Tệp JS thừa .............. không có (mọi module đều được nạp)
   Trang lỗi ................ 403, 404, 429, 500 đều có giao diện cửa hàng
+
+  Bảo mật (rà ngày 21/09):
+      Thư viện ............. composer audit và npm audit: 0 lỗ hổng
+      Dò mật khẩu .......... khoá theo email + IP sau 5 lần sai
+      Gán hàng loạt ........ cột role KHÔNG nằm trong danh sách gán được
+      Chữ ký MoMo .......... HMAC-SHA256, so bằng hash_equals
+      Tải tệp .............. giới hạn loại và dung lượng, tên tệp ngẫu nhiên
+      In HTML thô .......... 2 chỗ, cả hai lọc bằng danh sách trắng lúc LƯU
+      SSRF / chuyển hướng .. không có chỗ nào gọi URL hay chuyển hướng theo
+                             dữ liệu người dùng
+      PUT /storage/{path} .. Laravel đòi chữ ký; thử không ký → 403
 
   Tốc độ trang chủ (đo bằng trình duyệt, máy chủ dev chưa bật nén):
       CSS trang khách   56,8 KB nén (khu quản trị tách riêng, 62 KB)
@@ -84,6 +95,11 @@ D. VIỆC CÒN LẠI / HẠN CHẾ ĐÃ BIẾT (nên viết thẳng vào báo c�
   7. Chưa đánh dấu sản phẩm nổi bật nào → mục "Sản phẩm nổi bật" ở trang chủ
      đang ẩn. Vào Quản trị › Sản phẩm, tích "Sản phẩm nổi bật" là hiện.
   8. Chưa có PWA / cài đặt như ứng dụng; chưa có bản đa ngôn ngữ.
+  9. CSP vẫn phải để 'unsafe-inline' cho script vì còn vài đoạn script và thuộc
+     tính onchange nội tuyến. Muốn siết chặt thì gỡ hết chúng rồi dùng nonce.
+ 10. Chống DDoS thể tích nằm NGOÀI tầm ứng dụng: cần CDN hoặc tường lửa của nhà
+     cung cấp. Trong ứng dụng chỉ có trần tần suất (xem mục D3b của báo cáo).
+ 11. Chưa có xác thực hai bước cho tài khoản quản trị.
 
 
 --------------------------------------------------------------------------------

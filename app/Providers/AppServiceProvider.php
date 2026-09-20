@@ -10,6 +10,9 @@ use App\Services\Theme\ThemeRegistry;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\View;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -31,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        $this->gioiHanTanSuat();
+
         foreach (\App\Enums\Quyen::cases() as $quyen) {
             \Illuminate\Support\Facades\Gate::define(
                 $quyen->value,
@@ -58,5 +63,28 @@ class AppServiceProvider extends ServiceProvider
                 'heroImages' => $registry->heroImages(),
             ]);
         });
+    }
+
+    /**
+     * Chặn lạm dụng và làm nghẽn máy chủ (DoS ở tầng ứng dụng).
+     * Chống DDoS thể tích thì phải chặn ở tầng mạng / CDN, ứng dụng không làm được.
+     */
+    private function gioiHanTanSuat(): void
+    {
+        /* Trần chung cho mọi request web: đủ rộng cho người dùng thật, chặn kịch bản bắn liên tục. */
+        RateLimiter::for('chung', fn (Request $request) => Limit::perMinute((int) config('app.tran_moi_phut', 300))->by(
+            $request->user()?->id ?: $request->ip(),
+        ));
+
+        /* Việc tốn tài nguyên hoặc dễ bị dò: tạo tài khoản, thử mã giảm giá, đặt đơn. */
+        RateLimiter::for('nhay-cam', fn (Request $request) => Limit::perMinute(10)->by(
+            $request->user()?->id ?: $request->ip(),
+        ));
+
+        /* Trợ lý AI tốn tiền theo lượt hỏi: chặn cả theo phút lẫn theo ngày. */
+        RateLimiter::for('tro-ly-ai', fn (Request $request) => [
+            Limit::perMinute((int) config('ai.moi_phut', 10))->by($request->user()?->id ?: $request->ip()),
+            Limit::perDay((int) config('ai.moi_ngay', 80))->by($request->user()?->id ?: $request->ip()),
+        ]);
     }
 }

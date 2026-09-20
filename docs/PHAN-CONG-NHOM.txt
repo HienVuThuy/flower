@@ -9,15 +9,15 @@ CÁCH CHIA
     controller, service, model, migration, giao diện, JavaScript, CSS đến bài
     kiểm thử), để mỗi người trình bày được một luồng hoàn chỉnh từ đầu đến cuối
     thay vì mỗi người giữ một "tầng" rời rạc.
-  - Mọi tệp code của dự án (1036 tệp, không tính ảnh / phông / tài liệu)
+  - Mọi tệp code của dự án (1037 tệp, không tính ảnh / phông / tài liệu)
     đều được giao cho ĐÚNG MỘT người. Danh sách được sinh bằng script từ chính kho
     mã nên đường dẫn chính xác.
   - Khối lượng cân nhau:
-      Hưng   245 tệp, khoảng 23.901 dòng code
+      Hưng   246 tệp, khoảng 24.068 dòng code
       Hùng   189 tệp, khoảng 22.140 dòng code
       Huy    195 tệp, khoảng 24.650 dòng code
       Dũng   191 tệp, khoảng 23.001 dòng code
-      Hiền   216 tệp, khoảng 26.950 dòng code
+      Hiền   216 tệp, khoảng 26.968 dòng code
   - "Phối hợp" ghi rõ chỗ hai khối gọi sang nhau, để khi sửa một bên thì báo
     người kia.
   - Tài liệu nên đọc chung: docs/HUONG-DAN-DOC-CODE.txt (kiến thức nền + 24 luồng),
@@ -318,7 +318,8 @@ DANH SÁCH TỆP
     resources/css/themes/noel.css
     resources/css/themes/tet.css
     resources/css/themes/valentine.css
-  [Kiểm thử] (25)
+  [Kiểm thử] (26)
+    tests/Feature/Security/ChongLamDungTest.php
     tests/Feature/Admin/ActivityLogTest.php
     tests/Feature/Admin/AdminDarkModeTest.php
     tests/Feature/Admin/DashboardTest.php

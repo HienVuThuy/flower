@@ -91,7 +91,7 @@ if (config('features.cart')) {
             Route::get('/khoi', [CartController::class, 'fragment'])->name('fragment');
         });
 
-    Route::post('mua-ngay', [CartController::class, 'buyNow'])->name('shop.cart.buy-now');
+    Route::post('mua-ngay', [CartController::class, 'buyNow'])->middleware('throttle:30,1')->name('shop.cart.buy-now');
 
     Route::prefix('thanh-toan')
         ->name('shop.checkout.')
@@ -101,7 +101,7 @@ if (config('features.cart')) {
 
             Route::get('van-chuyen', [CheckoutController::class, 'shipping'])->name('shipping');
 
-            Route::post('ma-giam-gia', [CheckoutController::class, 'applyCoupon'])->name('apply-coupon');
+            Route::post('ma-giam-gia', [CheckoutController::class, 'applyCoupon'])->middleware('throttle:nhay-cam')->name('apply-coupon');
             Route::delete('ma-giam-gia', [CheckoutController::class, 'removeCoupon'])->name('remove-coupon');
             Route::post('ma-giam-gia/tu-chon', [CheckoutController::class, 'autoCoupon'])->name('auto-coupon');
 
@@ -109,7 +109,7 @@ if (config('features.cart')) {
             Route::delete('diem-thuong', [CheckoutController::class, 'removePoints'])->middleware('auth')->name('remove-points');
 
             Route::get('xac-nhan', [CheckoutController::class, 'confirm'])->name('confirm');
-            Route::post('dat-hang', [CheckoutController::class, 'place'])->name('place');
+            Route::post('dat-hang', [CheckoutController::class, 'place'])->middleware('throttle:nhay-cam')->name('place');
         });
 
     Route::prefix('dia-gioi')
@@ -253,7 +253,7 @@ Route::get('cam-nang/{post}', [BlogController::class, 'show'])->name('shop.blog.
 Route::get('goc-cay', [CommunityController::class, 'index'])->name('shop.community.index');
 
 Route::post('tro-ly-ai', [\App\Http\Controllers\Shop\AiChatController::class, 'store'])
-    ->middleware('throttle:10,1')
+    ->middleware('throttle:tro-ly-ai')
     ->name('shop.ai.ask');
 Route::delete('tro-ly-ai', [\App\Http\Controllers\Shop\AiChatController::class, 'destroy'])
     ->name('shop.ai.reset');
@@ -464,7 +464,7 @@ Route::middleware('guest')->group(function () {
     Route::get('dang-ky', [AuthController::class, 'showRegistrationForm'])
         ->name('register');
 
-    Route::post('dang-ky', [AuthController::class, 'register']);
+    Route::post('dang-ky', [AuthController::class, 'register'])->middleware('throttle:nhay-cam');
 
     Route::get('dang-nhap', [AuthController::class, 'showLoginForm'])
         ->name('login');

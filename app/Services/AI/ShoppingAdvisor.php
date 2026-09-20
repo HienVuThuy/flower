@@ -34,7 +34,7 @@ class ShoppingAdvisor
 
     public function hoi(string $cauHoi, ?User $user): string
     {
-        $cauHoi = trim(mb_substr($cauHoi, 0, (int) config('ai.max_message_length', 500)));
+        $cauHoi = self::locTiemLenh(trim(mb_substr($cauHoi, 0, (int) config('ai.max_message_length', 500))));
         $giuLai = 2 * max(1, (int) config('ai.max_history', 8));
         $lichSu = array_slice($this->lichSu(), -$giuLai);
 
@@ -51,6 +51,20 @@ class ShoppingAdvisor
         ], -$giuLai)]);
 
         return $traLoi;
+    }
+
+    /**
+     * Khách gõ gì cũng chỉ là CÂU HỎI. Gỡ những thứ giả làm khung chỉ dẫn của hệ thống:
+     * dấu phân cách khối dữ liệu, dòng tự xưng "LUẬT", và ký tự điều khiển.
+     * Chỉ dẫn hệ thống vẫn dặn model bỏ qua yêu cầu đổi vai — đây là lớp chặn thứ hai.
+     */
+    public static function locTiemLenh(string $chu): string
+    {
+        $chu = (string) preg_replace('/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]/u', '', $chu);
+        $chu = (string) preg_replace('/^[ \\t]*={2,}.*$/mu', '', $chu);
+        $chu = (string) preg_replace('/^[ \\t]*(LUẬT BẮT BUỘC|DỮ LIỆU CỬA HÀNG|HẾT DỮ LIỆU|SYSTEM|ASSISTANT)\\b.*$/miu', '', $chu);
+
+        return trim($chu);
     }
 
     public static function vanBanThuong(string $chu): string

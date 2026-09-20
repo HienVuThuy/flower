@@ -65,6 +65,10 @@ return [
     |
     */
 
+    /* Trần request mỗi phút cho một khách (chống làm nghẽn máy chủ). Bộ kiểm thử đặt số rất lớn
+       vì một bài kiểm thử có thể mở hàng trăm trang liên tiếp. */
+    'tran_moi_phut' => (int) env('TRAN_MOI_PHUT', 300),
+
     'timezone' => 'UTC',
 
     'display_timezone' => env('APP_DISPLAY_TIMEZONE', 'Asia/Ho_Chi_Minh'),
