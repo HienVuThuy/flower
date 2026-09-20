@@ -6,6 +6,24 @@ const TIMEOUT = {
     error: 9000,
 };
 
+/**
+ * Tự đóng, không nhờ component Alert của Bootstrap.
+ * Dự án chỉ nạp Modal / Collapse / Offcanvas cho nhẹ, nên nút x của thông báo
+ * phải tự xử lý — trước đây gọi .click() vào nút và chờ Bootstrap, thành ra
+ * thông báo nằm lì trên màn hình.
+ */
+export function dongAlert(alert) {
+    if (!alert || alert.dataset.dangDong) return;
+
+    alert.dataset.dangDong = '1';
+    alert.classList.remove('show');
+
+    const go = () => alert.remove();
+
+    alert.addEventListener('transitionend', go, { once: true });
+    setTimeout(go, 400);
+}
+
 export function dismissAfter(alert) {
     const kind = TIMEOUT[alert.dataset.autoDismiss] ? alert.dataset.autoDismiss : 'success';
     const delay = TIMEOUT[kind];
@@ -17,13 +35,9 @@ export function dismissAfter(alert) {
     bar.style.animationDuration = `${delay}ms`;
     alert.append(bar);
 
-    const close = () => {
-        alert.querySelector('[data-bs-dismiss="alert"]')?.click();
-    };
-
     const start = () => {
         clearTimeout(timer);
-        timer = setTimeout(close, delay);
+        timer = setTimeout(() => dongAlert(alert), delay);
         bar.style.animationPlayState = 'running';
     };
 
@@ -42,9 +56,23 @@ export function dismissAfter(alert) {
 }
 
 export function initFlash() {
-    document.querySelectorAll('[data-auto-dismiss]').forEach(dismissAfter);
-}
+    document.querySelectorAll('[data-auto-dismiss]:not([data-flash-bound])').forEach((alert) => {
+        alert.dataset.flashBound = '1';
+        dismissAfter(alert);
+    });
 
+    if (document.body.dataset.flashClickBound) return;
+
+    document.body.dataset.flashClickBound = '1';
+
+    document.addEventListener('click', (e) => {
+        const nut = e.target.closest('[data-bs-dismiss="alert"]');
+
+        if (nut) {
+            dongAlert(nut.closest('.alert'));
+        }
+    });
+}
 
 function toastHost() {
     let host = document.querySelector('[data-toast-host]');
@@ -70,6 +98,7 @@ export function showToast(message, kind = 'success') {
 
     alert.className = `alert alert-${kind === 'error' ? 'danger' : 'success'} alert-dismissible fade show toast-host__item`;
     alert.setAttribute('data-auto-dismiss', kind === 'error' ? 'error' : 'success');
+    alert.dataset.flashBound = '1';
 
     const text = document.createElement('span');
     text.textContent = message;
@@ -82,8 +111,6 @@ export function showToast(message, kind = 'success') {
 
     alert.append(text, close);
     toastHost().append(alert);
-
-    alert.addEventListener('closed.bs.alert', () => alert.remove());
 
     dismissAfter(alert);
 

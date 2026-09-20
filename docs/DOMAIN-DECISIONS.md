@@ -8432,6 +8432,11 @@ thô (59KB nén) gộp CHUNG cả cửa hàng lẫn quản trị; JS 130KB thô 
   tải giao diện quản trị. Sau khi tách: 56KB nén cho khách, 62KB cho quản trị.
 - JS chỉ nạp Modal, Collapse, Offcanvas — đúng ba thành phần có `data-bs-toggle`
   trong mã; `window.bootstrap` vẫn được gán để chỗ khác gọi được. 38 → 24KB nén.
+  SỰ CỐ kèm theo (sửa 21/09): nút đóng của thông báo dùng
+  `data-bs-dismiss="alert"`, mà Alert nằm trong phần bị cắt — từ lúc đó thông báo
+  không tự tắt và bấm x cũng không ăn. Không nạp lại Alert: flash.js tự đóng
+  (gỡ lớp `show`, chờ hiệu ứng mờ rồi xoá nút khỏi trang) và bắt click bằng một
+  bộ lắng nghe ở `document`. Đo lại: thông báo tự tắt ở giây 5,5.
 - Preload hai tệp phông dùng cho chữ nội dung (Inter 400 latin + vietnamese).
   Không preload nhiều hơn: preload quá tay sẽ tranh băng thông với ảnh chính.
 - Cây phân loại thực vật nạp MỘT lần mỗi request (66 dòng) thay vì hỏi từng bậc
