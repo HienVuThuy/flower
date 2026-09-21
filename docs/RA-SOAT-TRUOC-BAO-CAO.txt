@@ -13,20 +13,20 @@ Cách đo lại (chạy trong thư mục dự án):
 --------------------------------------------------------------------------------
 A. QUY MÔ
 --------------------------------------------------------------------------------
-  301 đường dẫn (route), trong đó 158 thuộc khu quản trị
-  75 controller, 141 lớp service, 58 model, 65 enum
-  95 migration, 133 bảng trong cơ sở dữ liệu
-  247 view Blade, 46 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
-  16 lệnh artisan tự viết, 6 tác vụ chạy theo lịch
-  140 tệp kiểm thử, 1355 bài, 5060 phép khẳng định — ĐẠT 100%
+  325 đường dẫn (route), trong đó 174 thuộc khu quản trị
+  78 controller, 143 lớp service, 62 model, 68 enum
+  96 migration, 137 bảng trong cơ sở dữ liệu
+  256 view Blade, 47 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
+  17 lệnh artisan tự viết, 7 tác vụ chạy theo lịch
+  141 tệp kiểm thử, 1366 bài, 5126 phép khẳng định — ĐẠT 100%
 
 
 --------------------------------------------------------------------------------
 B. KẾT QUẢ KIỂM TRA
 --------------------------------------------------------------------------------
-  Kiểm thử tự động ......... 1355/1355 đạt
+  Kiểm thử tự động ......... 1366/1366 đạt
   Migration ................ không còn migration nào chờ chạy
-  Quyền khu quản trị ....... 158/158 đường dẫn đều gắn middleware quyen:*
+  Quyền khu quản trị ....... 174/174 đường dẫn đều gắn middleware quyen:*
   Biểu mẫu POST ............ không có biểu mẫu nào thiếu @csrf
   Liên kết nội bộ .......... bò qua 90 trang công khai, 0 liên kết hỏng
   Ảnh ...................... 0 bản ghi trỏ tới tệp ảnh không tồn tại
@@ -73,10 +73,14 @@ C. CẤU HÌNH HIỆN TẠI (và phải đổi gì khi chạy thật)
       → Chạy thật cần một tiến trình `php artisan queue:work` và một cron gọi
         `php artisan schedule:run` mỗi phút (máy này đang chạy schedule:work).
   Sao lưu: 02:30 hằng ngày, giữ 14 bản, cần MYSQLDUMP_PATH trong .env.
-  Phí giao 4 vùng và mức miễn phí giao đang là MỨC MẪU
-      → Chủ cửa hàng tự sửa ở Cài đặt › Tham số kinh doanh, không cần sửa code.
-        Cùng trang đó có ngưỡng Hoa cao cấp, mốc khoảng giá, tỉ lệ điểm, hạn đổi
-        hàng, trần lượt hỏi AI.
+  Phí giao thật do GHN tính; bảng 4 vùng trong config/shipping.php chỉ là
+  phí DỰ PHÒNG khi GHN không trả lời (mức mẫu).
+      → Mức miễn phí giao, ngưỡng Hoa cao cấp, mốc khoảng giá, tỉ lệ điểm, hạn đổi
+        hàng, phí nhận cây gấp, trần lượt hỏi AI: chủ cửa hàng tự sửa ở
+        Cài đặt › Tham số kinh doanh, không cần sửa code.
+  Chăm cây hộ: CHƯA có dòng giá nào → dịch vụ đang ẩn với khách.
+      → Vào Quản trị › Chăm cây hộ › Bảng giá thêm giá là mở. Muốn khách chọn
+        "nhận lại đúng dịp" thì thêm lịch (vd. Tết 2027) ở tab Lịch trả theo dịp.
 
 
 --------------------------------------------------------------------------------
@@ -104,6 +108,8 @@ D. VIỆC CÒN LẠI / HẠN CHẾ ĐÃ BIẾT (nên viết thẳng vào báo c�
  10. Chống DDoS thể tích nằm NGOÀI tầm ứng dụng: cần CDN hoặc tường lửa của nhà
      cung cấp. Trong ứng dụng chỉ có trần tần suất (xem mục D3b của báo cáo).
  11. Chưa có xác thực hai bước cho tài khoản quản trị.
+ 12. Chăm cây hộ thu tiền trực tiếp khi giao nhận (admin ghi vào phiếu); chưa trả
+     online, và tiền dịch vụ chưa gộp vào báo cáo doanh thu bán hàng.
 
 
 --------------------------------------------------------------------------------
@@ -118,12 +124,12 @@ E. GỢI Ý DÀN Ý BÁO CÁO (bám theo tài liệu sẵn có trong docs/)
   4. Chức năng theo cấp độ (cửa hàng → quản trị → phân tích)
          → BAO-CAO-CHUC-NANG cấp 1 đến cấp 6
   5. Những quyết định thiết kế đáng nói và lý do
-         → docs/DOMAIN-DECISIONS.md (312 mục, mỗi mục một quyết định có số đo)
+         → docs/DOMAIN-DECISIONS.md (314 mục, mỗi mục một quyết định có số đo)
   6. Luồng chạy tiêu biểu để minh hoạ
-         → docs/HUONG-DAN-DOC-CODE.txt (27 luồng, chỉ rõ tệp và hàm)
+         → docs/HUONG-DAN-DOC-CODE.txt (28 luồng, chỉ rõ tệp và hàm)
   7. Kiểm thử và chất lượng
-         → mục B ở trên (1355 bài, cách đo, kết quả)
+         → mục B ở trên (1366 bài, cách đo, kết quả)
   8. Hạn chế và hướng phát triển
          → mục C và D ở trên
   9. Phân công nhóm
-         → docs/PHAN-CONG-NHOM.txt (1049 tệp chia cho 5 người, không trùng)
+         → docs/PHAN-CONG-NHOM.txt (1076 tệp chia cho 5 người, không trùng)

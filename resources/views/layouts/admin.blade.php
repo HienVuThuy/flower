@@ -117,6 +117,12 @@
                 <span>Đổi hàng</span>
             </a>
 
+            <a data-admin-link href="{{ route('admin.boarding.index') }}"
+               class="admin-nav-link {{ request()->routeIs('admin.boarding.*', 'admin.boarding-rates.*', 'admin.boarding-windows.*') ? 'is-active' : '' }}">
+                <x-site.icon name="flower1" />
+                <span>Chăm cây hộ</span>
+            </a>
+
             @can('tai-chinh')
             <a data-admin-link href="{{ route('admin.refunds.index') }}"
                class="admin-nav-link {{ request()->routeIs('admin.refunds.index') ? 'is-active' : '' }}">

@@ -42,7 +42,7 @@
                         @endif
 
                         @if($tb->note)
-                            <span class="thong-bao__trich">{{ $tb->type->name === 'TinNhan' ? '“' . $tb->note . '”' : 'Lý do: ' . $tb->note }}</span>
+                            <span class="thong-bao__trich">{{ match ($tb->type->name) { 'TinNhan' => '“' . $tb->note . '”', 'ChamHo' => $tb->note, default => 'Lý do: ' . $tb->note } }}</span>
                         @endif
                     </span>
 

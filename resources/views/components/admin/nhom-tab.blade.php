@@ -16,6 +16,11 @@
             ['route' => 'admin.blog.index', 'khop' => 'admin.blog.*', 'nhan' => 'Bài viết'],
             ['route' => 'admin.blog-categories.index', 'khop' => 'admin.blog-categories.*', 'nhan' => 'Chuyên mục'],
         ],
+        'cham-ho' => [
+            ['route' => 'admin.boarding.index', 'khop' => 'admin.boarding.*', 'nhan' => 'Phiếu gửi cây'],
+            ['route' => 'admin.boarding-rates.index', 'khop' => 'admin.boarding-rates.*', 'nhan' => 'Bảng giá'],
+            ['route' => 'admin.boarding-windows.index', 'khop' => 'admin.boarding-windows.*', 'nhan' => 'Lịch trả theo dịp'],
+        ],
         'cai-dat' => [
             ['route' => 'admin.settings.edit', 'khop' => 'admin.settings.*', 'nhan' => 'Cài đặt chung'],
             ['route' => 'admin.business-params.edit', 'khop' => 'admin.business-params.*', 'nhan' => 'Tham số kinh doanh'],

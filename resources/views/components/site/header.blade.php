@@ -22,6 +22,7 @@
                 @php
                     $inMore = request()->routeIs('shop.supplies.*')
                         || request()->routeIs('shop.bulk-inquiry.*')
+                        || request()->routeIs('shop.boarding.*')
                         || request()->routeIs('shop.taxa.*')
                         || request()->routeIs('shop.vouchers.*')
                         || request()->routeIs('shop.community.*')
@@ -56,6 +57,11 @@
                         <a class="dropdown-item" href="{{ route('shop.vouchers.index') }}">
                             <x-site.icon name="tags" /> Voucher
                         </a>
+                        @if(\App\Models\BoardingRate::dangNhan())
+                            <a class="dropdown-item" href="{{ route('shop.boarding.index') }}">
+                                <x-site.icon name="flower1" /> Chăm cây hộ
+                            </a>
+                        @endif
                         <a class="dropdown-item" href="{{ route('shop.bulk-inquiry.create') }}">
                             <x-site.icon name="people" /> Sự kiện &amp; số lượng lớn
                         </a>
@@ -192,6 +198,12 @@
 
                                 <a class="dropdown-item" href="{{ route('shop.care.index') }}">
                                     <x-site.icon name="droplet" /> Lịch chăm cây
+                                </a>
+                            @endif
+
+                            @if(\App\Models\BoardingRate::dangNhan() || \App\Models\BoardingBooking::where('user_id', Auth::id())->exists())
+                                <a class="dropdown-item" href="{{ route('shop.boarding.mine') }}">
+                                    <x-site.icon name="flower1" /> Cây gửi chăm hộ
                                 </a>
                             @endif
 

@@ -43,6 +43,7 @@
 @import './components/ai-chat.css';
 @import './components/community.css';
 @import './components/bulk-inquiry.css';
+@import './components/boarding.css';
 @import './core/dark.css';
 
 @import './seasonal/tet.css';

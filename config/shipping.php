@@ -3,7 +3,8 @@
 /*
  * PHÍ GIAO HÀNG THEO VÙNG
  * ⚠️ SỐ TIỀN DƯỚI ĐÂY LÀ MỨC MẪU, KHÔNG PHẢI BẢNG GIÁ THẬT.
- * Admin đổi phí từng vùng và mức miễn phí giao ở Cài đặt › Tham số kinh doanh.
+ * Phí thật do GHN tính theo địa chỉ; bảng vùng dưới đây chỉ là DỰ PHÒNG khi GHN
+ * không trả lời được. Mức miễn phí giao admin đổi ở Cài đặt › Tham số kinh doanh.
  */
 
 return [

@@ -65,7 +65,7 @@ class NotificationCenter
     {
         return UserNotification::query()
             ->where('user_id', $user->id)
-            ->with(['actor:id,name', 'post:id,body,approved_at,hidden_at', 'comment:id,body'])
+            ->with(['actor:id,name', 'post:id,body,approved_at,hidden_at', 'comment:id,body', 'boardingBooking:id,code'])
             ->latest('id')
             ->paginate($moiTrang);
     }

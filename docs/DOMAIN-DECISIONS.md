@@ -8576,7 +8576,7 @@ hỏi: dữ liệu có đúng bản chất không, khách cảm thấy thế nà
 
 ## QĐ-312. Tham số kinh doanh do admin tự chỉnh, không nằm chết trong code
 
-Trước đây các con số như ngưỡng "Hoa cao cấp", mốc khoảng giá, phí giao từng vùng,
+Trước đây các con số như ngưỡng "Hoa cao cấp", mốc khoảng giá,
 mức miễn phí giao, tỉ lệ tích / đổi điểm, hạn đổi hàng, trần lượt hỏi AI nằm trong
 config hoặc hằng số PHP — muốn đổi phải sửa code và triển khai lại.
 
@@ -8602,3 +8602,61 @@ config hoặc hằng số PHP — muốn đổi phải sửa code và triển kh
   Cài đặt chung; trả góp có trang cấu hình riêng.
 - Chưa có bảng settings (cài mới, chưa chạy migrate) thì tự dùng mặc định thay
   vì làm sập trang.
+- PHÍ GIAO TỪNG VÙNG KHÔNG ĐƯA LÊN: phí giao thật do GHN tính theo địa chỉ. Bảng 4
+  vùng trong config/shipping.php chỉ là phí DỰ PHÒNG khi GHN không trả lời được;
+  để admin sửa ở đây dễ gây hiểu nhầm là đang đặt giá giao hàng. Chỉ giữ "Miễn phí
+  giao cho đơn từ" vì đó là quyết định của cửa hàng (cửa hàng chịu phí GHN).
+
+## QĐ-313. Chăm cây hộ: dịch vụ gửi cây theo tháng / năm / ngày / dịp, lặp lại mỗi năm
+
+Bài toán: khách mua đào thế, mai, bonsai… chơi Tết xong không biết giữ; người đi xa
+dài ngày sợ cây chết. Cửa hàng có sẵn chỗ và tay nghề — bán thêm được dịch vụ, giữ
+khách quay lại mỗi năm, và bớt nỗi sợ "mua về làm chết" khi khách định mua cây đắt.
+
+- LÀ PHIẾU DỊCH VỤ RIÊNG (`boarding_bookings`), không phải đơn hàng: không trừ kho,
+  không qua GHN (cây thế to không gửi bưu điện được), không qua thanh toán online.
+  Khách trả tiền trực tiếp khi giao nhận cây; admin ghi tiền vào phiếu, số âm là
+  trả lại khách. Nhờ vậy không đụng vào luồng đơn hàng đang chạy.
+- GIÁ DO ADMIN ĐẶT trong bảng giá (theo loại cây / độ khó / cỡ cây): giá tháng, giá
+  năm (trống = 12 tháng). Chưa có dòng giá nào bật thì MỌI lối vào phía khách đều
+  ẩn — không có nút cho một dịch vụ chưa mở. Phiếu CHỤP giá lúc gửi; sửa bảng giá
+  không làm đổi phiếu cũ.
+- MỘT CÔNG THỨC (`BoardingPricing`) cho cả báo giá lẫn lúc trả cây: số tháng thực
+  gửi (lố dưới 3 ngày không tính thêm tháng), mỗi 12 tháng áp giá năm, phần lẻ
+  tính giá tháng. Báo giá dùng ngày DỰ KIẾN; lúc trả cây tính lại theo ngày THỰC.
+  Nên "nhận sớm" tự công bằng (gửi ít trả ít, nhưng mất giá năm nếu chưa đủ năm)
+  và chế độ "chưa hẹn ngày" dùng chung công thức. Trình duyệt không tự tính giá:
+  ô báo giá tức thời gọi máy chủ (`/cham-cay-ho/bao-gia`).
+- NĂM CHẾ ĐỘ GỬI: theo tháng, theo năm, đến một ngày, đúng dịp lễ, chưa hẹn (báo lúc
+  nào trả lúc đó). "Cần gấp" không phải chế độ riêng mà là thao tác trong lúc gửi:
+  khách hẹn ngày nhận sớm; báo trước ít hơn N ngày thì có phí nhận gấp (N và phí do
+  admin đặt ở Tham số kinh doanh, mặc định 0 = không thu).
+- DỊP LỄ DO ADMIN NHẬP NGÀY THẬT (`boarding_windows`): "Tết 2027 — mang cây về
+  01/02, nhận lại 20/02". Không tự đoán ngày âm lịch (giữ đúng nguyên tắc H7).
+  Các đợt cùng "nhóm dịp" (vd. tet) nối với nhau để lặp lại.
+- LẶP LẠI MỖI NĂM: trả cây xong, nếu khách bật lặp lại thì hệ thống mở phiếu kỳ sau
+  (nhận cây lại vào ngày "nhận lại sau dịp", trả trước dịp năm sau) ở trạng thái
+  CHỜ XÁC NHẬN — giá theo bảng giá mới, admin xác nhận lại. Chưa có lịch năm sau
+  thì phiếu đánh dấu "chờ lịch", hiện ở hàng việc cần làm; admin thêm lịch là tự mở.
+- NHẬT KÝ CHĂM SÓC có ảnh: admin gửi ảnh / ghi chú trong thời gian gửi, khách xem
+  trên phiếu và nhận thông báo. Đây là phần giữ niềm tin — khách không nhìn thấy
+  cây mình trong mấy tháng.
+- TRẠNG THÁI đổi có khoá dòng (hai người bấm cùng lúc không làm phiếu nhảy sai);
+  khách chỉ tự huỷ được khi cây CHƯA về cửa hàng. Lệnh `cham-ho:nhac` chạy 7:30 mỗi
+  sáng chuyển phiếu sắp đến hạn sang "Sắp trả cây" và báo khách.
+- CHƯA LÀM (ghi rõ để báo cáo): chưa trả tiền online cho phiếu chăm hộ; tiền dịch
+  vụ chưa cộng vào báo cáo doanh thu bán hàng (xem riêng ở danh sách phiếu).
+
+## QĐ-314. Chấm điểm rủi ro đơn hàng — giải bài toán gì, và giới hạn
+
+- BÀI TOÁN: "bom hàng" với đơn trả khi nhận (COD). Khách đặt rồi không nhận, cửa
+  hàng mất phí GHN hai chiều, hàng bị giữ mấy ngày không bán được — với HOA TƯƠI
+  thì mất trắng vì hoa héo không bán lại được. Gọi xác nhận mọi đơn thì tốn người;
+  điểm rủi ro chỉ ra đơn NÀO đáng gọi trước khi làm hàng.
+- CHỈ GẮN CỜ, KHÔNG TỰ CHẶN: sai một đơn thật thì mất khách; người quyết định.
+- ĐIỂM HIỆN TẠI là điểm khởi đầu theo kinh nghiệm, chưa học từ dữ liệu. Ngưỡng COD
+  giá trị cao và ngưỡng "cần xem lại" admin chỉnh ở Tham số kinh doanh.
+- HẠN CHẾ ĐÃ BIẾT: "từng huỷ đơn" đếm cả đơn do CỬA HÀNG huỷ (hết hàng) — nên chỉ
+  đếm đơn khách huỷ hoặc giao thất bại; chưa trừ điểm cho khách đã nhận hàng tốt
+  nhiều lần (CreditScore đã có dữ liệu này); "khách vãng lai" và "không email" là
+  tín hiệu yếu; chưa tính loại hàng (hoa tươi rủi ro mất trắng cao hơn cây chậu).

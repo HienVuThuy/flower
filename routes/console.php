@@ -40,3 +40,9 @@ Schedule::command('tra-gop:qua-han')
     ->timezone('Asia/Ho_Chi_Minh')
     ->withoutOverlapping()
     ->description('Huỷ kế hoạch trả góp có kỳ quá hạn vượt ân hạn');
+
+Schedule::command('cham-ho:nhac')
+    ->dailyAt('07:30')
+    ->timezone('Asia/Ho_Chi_Minh')
+    ->withoutOverlapping()
+    ->description('Chăm cây hộ: phiếu sắp đến ngày trả thì nhắc khách');

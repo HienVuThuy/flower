@@ -50,7 +50,7 @@ class ShippingRates
     public function feeFor(?string $province): string
     {
         $zone = $this->zoneOf($province);
-        $fee = \App\Services\Shop\ThamSoKinhDoanh::giaTri("shipping.zones.{$zone}.fee") ?? 0;
+        $fee = config("shipping.zones.{$zone}.fee", 0);
 
         return number_format((float) $fee, 2, '.', '');
     }
@@ -67,7 +67,7 @@ class ShippingRates
         foreach (config('shipping.zones', []) as $key => $zone) {
             $out[$key] = [
                 'label' => $zone['label'],
-                'fee' => (float) \App\Services\Shop\ThamSoKinhDoanh::giaTri("shipping.zones.{$key}.fee"),
+                'fee' => (float) $zone['fee'],
                 'provinces' => [],
             ];
         }

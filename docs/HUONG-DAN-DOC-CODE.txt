@@ -7,7 +7,7 @@ Tài liệu này dạy cách đọc code của dự án theo thứ tự dễ →
   PHẦN 0. Cách dùng tài liệu và cách tìm nhanh trong VS Code
   PHẦN 1. Kiến thức nền: 22 khái niệm gặp liên tục trong dự án
   PHẦN 2. Bản đồ thư mục: tệp nào nằm ở đâu, làm gì
-  PHẦN 3. 27 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
+  PHẦN 3. 28 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
   PHẦN 4. Tự học và gỡ lỗi
   PHẦN 5. Bảng tra nhanh thuật ngữ
 
@@ -1231,11 +1231,60 @@ LUỒNG 27. Admin đổi tham số kinh doanh (ngưỡng, phí, điểm, hạn)
   Nơi dùng: Shop\ProductController (khoảng giá), FlowerCollections (cao cấp, nhắc
   dịp), Product::scopeNewArrivals, HomeController, SocialProof::chiCon,
   Admin\ProductController (sắp hết hàng), CartService::toiDaMoiMon,
-  ExchangeService::hanDoiNgay, ShippingRates, TrangNoiDung (bảng phí ở trang chính
-  sách), PointEarning / PointRedemption, OrderRiskScorer, Order::needsRiskReview,
+  ExchangeService::hanDoiNgay, ShippingRates::freeFrom, TrangNoiDung (mức miễn
+  phí giao ở trang chính sách), PointEarning / PointRedemption, OrderRiskScorer, Order::needsRiskReview,
   AppServiceProvider (trần AI).
   THÊM MỘT THAM SỐ: đặt mặc định trong config → thêm một dòng vào
   ThamSoKinhDoanh::DS → đổi chỗ dùng sang ThamSoKinhDoanh::so('<khoá>').
+
+LUỒNG 28. Chăm cây hộ: gửi yêu cầu → xác nhận → chăm → trả → kỳ sau
+--------------------------------------------------------------------------------
+  BẢNG DỮ LIỆU (migration 2026_10_29_010000_create_boarding_tables)
+    boarding_rates     bảng giá admin đặt: giá tháng, giá năm (trống = 12 tháng)
+    boarding_windows   lịch trả cây theo dịp: group_key (vd. tet), return_on
+                       (mang cây về), take_back_on (nhận lại sau dịp)
+    boarding_bookings  phiếu: chế độ gửi, ngày gửi / hẹn trả / thực nhận / thực
+                       trả, giá chụp lúc gửi, các khoản phí, đã thu, trạng thái
+    boarding_events    nhật ký: đổi trạng thái, ảnh và ghi chú chăm sóc
+  Enum: App\Enums\BoardingMode (5 chế độ), BoardingHandover, BoardingStatus.
+
+  KHÁCH — Shop\BoardingController
+  1. GET /cham-cay-ho → index(): bảng giá đang bật, lịch dịp sắp tới, form.
+     ?san-pham=<slug> (từ trang sản phẩm cây chậu) điền sẵn tên cây và chọn dòng
+     giá đúng độ khó. Chưa có dòng giá nào bật thì hiện "chưa mở nhận".
+  2. resources/js/boarding-quote.js: đổi ô nào cũng POST /cham-cay-ho/bao-gia →
+     quote() → BoardingService::baoGia() → BoardingPricing::duKien(); JS chỉ hiện
+     số máy chủ trả về.
+  3. POST /cham-cay-ho → store(): kiểm tra, BoardingService::taoPhieu() chụp giá
+     của dòng giá, tính tiền dự kiến, lưu ảnh qua ImageStore, trạng thái Chờ duyệt.
+  4. /cham-cay-ho/phieu/{mã} → show(): chỉ chủ phiếu xem (khác người → 404).
+     Nút: Huỷ (khi cây chưa về), Hẹn nhận cây sớm (nhanSom — tính phí gấp nếu
+     báo trước quá ít), Bật / tắt lặp lại (chế độ theo dịp).
+
+  CỬA HÀNG — Admin\BoardingController (quyền đơn hàng), menu "Chăm cây hộ"
+    xác nhận  xacNhan(): hẹn ngày nhận, phí đến lấy / trả, điều chỉnh giá (bắt
+              buộc lý do), tính lại tiền theo ngày gửi mới
+    nhận cây  nhanCay() → Đang chăm
+    cập nhật  capNhat(): ghi chú + ảnh → nhật ký + thông báo cho khách
+    trả cây   traCay(): tính lại tiền theo số tháng THỰC gửi; nếu lặp lại theo
+              dịp → taoKySau(): phiếu mới Chờ duyệt cho dịp năm sau, hoặc đánh dấu
+              "chờ lịch" nếu admin chưa nhập dịp năm sau
+    ghi tiền  ghiThu(): cộng dồn đã thu, số âm là trả lại khách
+  Bảng giá: Admin\BoardingRateController (dòng đã có phiếu thì chỉ tắt, không xoá).
+  Lịch dịp: Admin\BoardingWindowController — thêm đợt mới gọi moKyChoLich() mở
+  kỳ sau cho các cây đang chờ lịch cùng nhóm dịp.
+
+  TỰ ĐỘNG
+    Lệnh cham-ho:nhac (7:30 hằng ngày) → BoardingService::nhacDenHan(): phiếu
+    đang chăm có ngày trả trong N ngày tới (Tham số kinh doanh) → Sắp trả cây.
+    Hàng việc dashboard (Services/Admin/WorkQueue): chờ xác nhận, sắp trả, chờ lịch.
+    Mọi đổi trạng thái do cửa hàng làm → UserNotification loại ChamHo cho khách.
+
+  CÔNG THỨC GIÁ (Services/Boarding/BoardingPricing)
+    soThang(từ, đến)   số tháng tròn; lố quá 3 ngày mới tính thêm một tháng
+    tienCham(tháng)    (tháng / 12) × giá năm + (tháng % 12) × giá tháng
+    tổng phiếu         tiền chăm + phí giao nhận + phí gấp + điều chỉnh
+                       (BoardingBooking::tongTien, conLai)
 ================================================================================
 PHẦN 4. TỰ HỌC VÀ GỠ LỖI
 ================================================================================

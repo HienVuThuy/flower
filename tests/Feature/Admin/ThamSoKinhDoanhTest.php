@@ -114,7 +114,6 @@ class ThamSoKinhDoanhTest extends TestCase
     public function phi_giao_diem_thuong_va_tran_ai_doc_tu_tham_so(): void
     {
         $this->luu([
-            'shipping__zones__inner__fee' => '30.000',
             'shipping__free_from' => '0',
             'kinh_doanh__diem__dong_moi_diem_dung' => '200',
             'kinh_doanh__diem__dong_moi_diem_tich' => '20.000',
@@ -122,13 +121,23 @@ class ThamSoKinhDoanhTest extends TestCase
         ])->assertSessionHasNoErrors();
 
         $gia = app(ShippingRates::class);
-        $this->assertSame('30000.00', $gia->feeFor('Thành phố Hà Nội'));
         $this->assertSame('0.00', $gia->freeFrom());
         $this->assertSame('20000.00', PointRedemption::quyRaTien(100));
         $this->assertSame(5, PointEarning::diemChoTien('100000'));
 
         $tran = \Illuminate\Support\Facades\RateLimiter::limiter('tro-ly-ai')(\Illuminate\Http\Request::create('/', 'GET'));
         $this->assertSame(40, $tran[1]->maxAttempts);
+    }
+
+    #[Test]
+    public function phi_giao_tung_vung_khong_nam_o_trang_tham_so_vi_ghn_tinh(): void
+    {
+        $this->assertArrayNotHasKey('shipping.zones.inner.fee', ThamSoKinhDoanh::DS);
+        $this->assertArrayHasKey('shipping.free_from', ThamSoKinhDoanh::DS);
+
+        $this->actingAs($this->admin())->get(route('admin.business-params.edit'))
+            ->assertDontSee('Phí giao nội thành')
+            ->assertSee('Miễn phí giao cho đơn từ');
     }
 
     #[Test]

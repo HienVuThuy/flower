@@ -143,7 +143,7 @@ class TrangNoiDung
         $dong = ['| Khu vực | Phí giao |'];
 
         foreach ((array) config('shipping.zones', []) as $khoa => $zone) {
-            $phi = \App\Services\Shop\ThamSoKinhDoanh::giaTri("shipping.zones.{$khoa}.fee") ?? 0;
+            $phi = $zone['fee'] ?? 0;
             $dong[] = '| ' . str_replace('|', '/', (string) ($zone['label'] ?? '')) . ' | ' . Money::format((string) $phi) . ' |';
         }
 

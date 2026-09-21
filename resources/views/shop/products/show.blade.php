@@ -272,6 +272,15 @@
                 <div class="col-lg-6">
                     <h2 class="text-h3 mb-3">{{ $product->careProfile()->label() }}</h2>
                     <x-product.care-guide :product="$product" />
+
+                    @if($product->product_type === \App\Enums\ProductType::Plant && \App\Models\BoardingRate::dangNhan())
+                        <p class="boarding-invite" data-moi-cham-ho>
+                            <x-site.icon name="flower1" />
+                            <span>Đi xa dài ngày hay không tự tin chăm?
+                                <a href="{{ route('shop.boarding.index', ['san-pham' => $product->slug]) }}">Gửi cửa hàng chăm hộ</a>
+                                — nhận lại đúng hẹn, kể cả trước Tết.</span>
+                        </p>
+                    @endif
                 </div>
             @endif
 

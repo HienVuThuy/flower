@@ -20,6 +20,9 @@ use App\Http\Controllers\Admin\CommunityModerationController;
 use App\Http\Controllers\Admin\PricingAdvisorController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\BoardingController as AdminBoardingController;
+use App\Http\Controllers\Admin\BoardingRateController;
+use App\Http\Controllers\Admin\BoardingWindowController;
 use App\Http\Controllers\Admin\BusinessParamsController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\ExpenseController;
@@ -319,6 +322,30 @@ Route::prefix('admin')
         Route::post('orders/{order}/doi-hang', [ExchangeController::class, 'store'])
             ->middleware(['quyen:don-hang', 'throttle:20,1'])
             ->name('exchanges.store');
+
+        Route::middleware('quyen:don-hang')->group(function () {
+            Route::get('cham-cay-ho', [AdminBoardingController::class, 'index'])->name('boarding.index');
+            Route::get('cham-cay-ho/bang-gia', [BoardingRateController::class, 'index'])->name('boarding-rates.index');
+            Route::get('cham-cay-ho/lich-dip', [BoardingWindowController::class, 'index'])->name('boarding-windows.index');
+            Route::get('cham-cay-ho/{booking}', [AdminBoardingController::class, 'show'])->name('boarding.show');
+
+            Route::middleware('throttle:30,1')->group(function () {
+                Route::patch('cham-cay-ho/{booking}/xac-nhan', [AdminBoardingController::class, 'confirm'])->name('boarding.confirm');
+                Route::patch('cham-cay-ho/{booking}/tu-choi', [AdminBoardingController::class, 'reject'])->name('boarding.reject');
+                Route::patch('cham-cay-ho/{booking}/huy', [AdminBoardingController::class, 'cancel'])->name('boarding.cancel');
+                Route::patch('cham-cay-ho/{booking}/nhan-cay', [AdminBoardingController::class, 'receive'])->name('boarding.receive');
+                Route::post('cham-cay-ho/{booking}/cap-nhat', [AdminBoardingController::class, 'update'])->name('boarding.update');
+                Route::patch('cham-cay-ho/{booking}/tra-cay', [AdminBoardingController::class, 'returnPlant'])->name('boarding.return');
+                Route::post('cham-cay-ho/{booking}/ghi-tien', [AdminBoardingController::class, 'payment'])->name('boarding.payment');
+
+                Route::post('cham-cay-ho/bang-gia', [BoardingRateController::class, 'store'])->name('boarding-rates.store');
+                Route::put('cham-cay-ho/bang-gia/{rate}', [BoardingRateController::class, 'update'])->name('boarding-rates.update');
+                Route::delete('cham-cay-ho/bang-gia/{rate}', [BoardingRateController::class, 'destroy'])->name('boarding-rates.destroy');
+
+                Route::post('cham-cay-ho/lich-dip', [BoardingWindowController::class, 'store'])->name('boarding-windows.store');
+                Route::put('cham-cay-ho/lich-dip/{window}', [BoardingWindowController::class, 'update'])->name('boarding-windows.update');
+            });
+        });
 
         Route::get('doi-hang', [ExchangeController::class, 'index'])
             ->middleware('quyen:don-hang')

@@ -8,6 +8,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Shop\AddressController;
 use App\Http\Controllers\Shop\AdvisorController;
 use App\Http\Controllers\Shop\PlantTaxonController;
+use App\Http\Controllers\Shop\BoardingController;
 use App\Http\Controllers\Shop\BulkInquiryController;
 use App\Http\Controllers\Shop\CareController;
 use App\Http\Controllers\Shop\CartController;
@@ -60,6 +61,28 @@ Route::get('nhu-cau/{intent}', [IntentController::class, 'show'])
 
 Route::get('su-kien/{promotion:slug}', [EventController::class, 'show'])
     ->name('shop.events.show');
+
+Route::prefix('cham-cay-ho')
+    ->name('shop.boarding.')
+    ->group(function () {
+        Route::get('/', [BoardingController::class, 'index'])->name('index');
+
+        Route::post('/bao-gia', [BoardingController::class, 'quote'])
+            ->middleware('throttle:60,1')
+            ->name('quote');
+
+        Route::middleware(['auth', 'verified'])->group(function () {
+            Route::post('/', [BoardingController::class, 'store'])
+                ->middleware('throttle:10,10')
+                ->name('store');
+
+            Route::get('/cua-toi', [BoardingController::class, 'mine'])->name('mine');
+            Route::get('/phieu/{booking}', [BoardingController::class, 'show'])->name('show');
+            Route::post('/phieu/{booking}/huy', [BoardingController::class, 'cancel'])->name('cancel');
+            Route::post('/phieu/{booking}/nhan-som', [BoardingController::class, 'early'])->name('early');
+            Route::post('/phieu/{booking}/lap-lai', [BoardingController::class, 'repeat'])->name('repeat');
+        });
+    });
 
 Route::prefix('dat-so-luong-lon')
     ->name('shop.bulk-inquiry.')

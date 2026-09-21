@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin;
 
+use App\Enums\BoardingStatus;
 use App\Enums\ExchangeStatus;
 use App\Enums\FlowerLotStatus;
 use App\Enums\InquiryStatus;
@@ -9,6 +10,7 @@ use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\StockCountStatus;
 use App\Enums\StockReceiptStatus;
+use App\Models\BoardingBooking;
 use App\Models\BulkOrderInquiry;
 use App\Models\CommunityPost;
 use App\Models\Exchange;
@@ -148,6 +150,30 @@ class WorkQueue
                 'url' => route('admin.bulk-inquiries.index', ['status' => InquiryStatus::New->value]),
                 'tone' => 'info',
                 'hint' => 'Khách hỏi mua số lượng lớn và đang đợi trả lời.',
+            ],
+
+            [
+                'label' => 'yêu cầu chăm cây hộ chờ xác nhận',
+                'count' => BoardingBooking::where('status', BoardingStatus::ChoDuyet)->count(),
+                'url' => route('admin.boarding.index', ['trang_thai' => BoardingStatus::ChoDuyet->value]),
+                'tone' => 'warning',
+                'hint' => 'Khách đã gửi yêu cầu và đang đợi cửa hàng hẹn ngày nhận cây.',
+            ],
+
+            [
+                'label' => 'cây gửi chăm hộ sắp đến ngày trả',
+                'count' => BoardingBooking::where('status', BoardingStatus::ChoTra)->count(),
+                'url' => route('admin.boarding.index', ['trang_thai' => BoardingStatus::ChoTra->value]),
+                'tone' => 'warning',
+                'hint' => 'Chuẩn bị cây (tỉa, lau lá) và hẹn giờ giao lại cho khách.',
+            ],
+
+            [
+                'label' => 'cây khách muốn gửi lặp lại nhưng chưa có lịch dịp năm sau',
+                'count' => BoardingBooking::where('waiting_next_window', true)->count(),
+                'url' => route('admin.boarding-windows.index'),
+                'tone' => 'info',
+                'hint' => 'Thêm ngày dịp năm sau (ví dụ Tết) là hệ thống tự mở phiếu kỳ mới.',
             ],
         ];
 

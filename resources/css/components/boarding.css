@@ -1,0 +1,162 @@
+/* CHĂM CÂY HỘ */
+
+.boarding-invite {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin: 1rem 0 0;
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md, 10px);
+    background: var(--surface-alt);
+}
+
+.boarding-steps {
+    padding-left: 1.2rem;
+    margin: 0;
+    display: grid;
+    gap: 0.35rem;
+}
+
+.boarding-rates {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+}
+
+.boarding-rates__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.75rem 1rem;
+}
+
+.boarding-rates__row + .boarding-rates__row {
+    border-top: 1px solid var(--border-soft);
+}
+
+.boarding-rules {
+    margin: 0.75rem 0 0;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.25rem;
+}
+
+.boarding-modes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 0.5rem;
+}
+
+.boarding-modes__item {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md, 10px);
+    cursor: pointer;
+}
+
+.boarding-modes__item:has(input:checked) {
+    border-color: var(--brand, currentColor);
+    background: var(--surface-alt);
+}
+
+.boarding-modes__item .form-check-input {
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+}
+
+.boarding-quote {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-md, 10px);
+    background: var(--surface-alt);
+}
+
+.boarding-quote__so {
+    font-size: 1.35rem;
+}
+
+.boarding-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.boarding-list__item {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.boarding-money {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.4rem 1rem;
+    margin: 0;
+}
+
+.boarding-money dt {
+    font-weight: 400;
+    color: var(--ink-500);
+}
+
+.boarding-money dd {
+    margin: 0;
+    text-align: right;
+}
+
+.boarding-money .boarding-money__tong {
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--border-soft);
+    font-weight: 700;
+    color: inherit;
+}
+
+.boarding-timeline {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    gap: 0.9rem;
+}
+
+.boarding-timeline__item {
+    display: grid;
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+    gap: 0.75rem;
+}
+
+.boarding-timeline__time {
+    color: var(--ink-500);
+    font-size: 0.85rem;
+}
+
+.boarding-timeline__photo {
+    display: block;
+    max-width: 100%;
+    width: 16rem;
+    margin-top: 0.4rem;
+    border-radius: var(--radius-md, 10px);
+}
+
+@media (max-width: 575.98px) {
+    .boarding-timeline__item {
+        grid-template-columns: 1fr;
+        gap: 0.2rem;
+    }
+
+    .boarding-list__item,
+    .boarding-rates__row {
+        flex-direction: column;
+    }
+
+    .boarding-list__item .text-end,
+    .boarding-rates__row .text-end {
+        text-align: left !important;
+    }
+}

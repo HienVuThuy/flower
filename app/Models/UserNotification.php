@@ -30,6 +30,11 @@ class UserNotification extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function boardingBooking(): BelongsTo
+    {
+        return $this->belongsTo(BoardingBooking::class);
+    }
+
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_id');
@@ -59,6 +64,12 @@ class UserNotification extends Model
     {
         if ($this->type === NotificationType::TinNhan) {
             return route('shop.chat.index');
+        }
+
+        if ($this->type === NotificationType::ChamHo) {
+            return $this->boardingBooking
+                ? route('shop.boarding.show', $this->boardingBooking)
+                : route('shop.boarding.mine');
         }
 
         if ($this->type === NotificationType::HangVe) {

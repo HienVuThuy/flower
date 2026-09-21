@@ -30,6 +30,7 @@ class RouteSmokeTest extends TestCase
         'expense' => \App\Models\Expense::class,
         'giftItem' => \App\Models\GiftItem::class,
         'productGift' => \App\Models\ProductGift::class,
+        'booking' => \App\Models\BoardingBooking::class,
     ];
 
     private const CHUA_PHU = [
@@ -168,6 +169,25 @@ class RouteSmokeTest extends TestCase
             'name' => 'Chương trình quét thử',
             'slug' => 'chuong-trinh-quet-thu',
         ]);
+
+        $giaChamHo = \App\Models\BoardingRate::create(['name' => 'Giá quét thử', 'monthly_price' => 200000, 'is_active' => true]);
+        \App\Models\BoardingWindow::create(['group_key' => 'tet', 'name' => 'Tết quét thử', 'return_on' => now()->addMonths(4)->toDateString(), 'is_active' => true]);
+        (new \App\Models\BoardingBooking())->forceFill([
+            'code' => 'CHQUETTHU',
+            'user_id' => \App\Models\User::factory()->create()->id,
+            'boarding_rate_id' => $giaChamHo->id,
+            'plant_name' => 'Cây quét thử',
+            'mode' => 'thang',
+            'months' => 1,
+            'drop_off_on' => now()->toDateString(),
+            'return_on' => now()->addMonth()->toDateString(),
+            'handover' => 'tu_mang',
+            'contact_phone' => '0912345678',
+            'monthly_price' => 200000,
+            'yearly_price' => 2400000,
+            'care_amount' => 200000,
+            'status' => 'cho_duyet',
+        ])->save();
 
         $danhMuc = \App\Models\BlogCategory::create([
             'name' => 'Chuyên mục quét thử',

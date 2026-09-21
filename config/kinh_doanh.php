@@ -41,4 +41,13 @@ return [
         'danh_gia_chi_sao' => 3,
     ],
 
+    'cham_ho' => [
+        /* Phí khi khách cần nhận cây gấp (báo trước ít hơn bao_gap_ngay ngày). 0 = không thu. */
+        'phi_gap' => 0,
+        'bao_gap_ngay' => 2,
+
+        /* Trước hạn trả bao nhiêu ngày thì phiếu chuyển sang "Sắp trả cây" và nhắc khách. */
+        'nhac_truoc_ngay' => 7,
+    ],
+
 ];

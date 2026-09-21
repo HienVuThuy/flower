@@ -33,11 +33,7 @@ class ThamSoKinhDoanh
         'kinh_doanh.han_doi_ngay' => ['nhom' => 'Kho & giỏ hàng', 'nhan' => 'Hạn đổi hàng sau khi giao', 'kieu' => 'so', 'min' => 0, 'max' => 90, 'don_vi' => 'ngày'],
 
         'shipping.free_from' => ['nhom' => 'Giao hàng', 'nhan' => 'Miễn phí giao cho đơn từ', 'kieu' => 'tien', 'min' => 0, 'max' => 1000000000,
-            'goi_y' => 'Đặt 0 để không miễn phí giao.'],
-        'shipping.zones.inner.fee' => ['nhom' => 'Giao hàng', 'nhan' => 'Phí giao nội thành Hà Nội', 'kieu' => 'tien', 'min' => 0, 'max' => 10000000],
-        'shipping.zones.near.fee' => ['nhom' => 'Giao hàng', 'nhan' => 'Phí giao tỉnh lân cận', 'kieu' => 'tien', 'min' => 0, 'max' => 10000000],
-        'shipping.zones.far.fee' => ['nhom' => 'Giao hàng', 'nhan' => 'Phí giao tỉnh xa', 'kieu' => 'tien', 'min' => 0, 'max' => 10000000],
-        'shipping.zones.remote.fee' => ['nhom' => 'Giao hàng', 'nhan' => 'Phí giao miền núi, hải đảo', 'kieu' => 'tien', 'min' => 0, 'max' => 10000000],
+            'goi_y' => 'Phí giao do GHN tính theo địa chỉ; đơn từ mức này cửa hàng chịu phí. Đặt 0 để không miễn phí giao.'],
 
         'kinh_doanh.diem.dong_moi_diem_tich' => ['nhom' => 'Điểm thưởng', 'nhan' => 'Chi bao nhiêu thì được 1 điểm', 'kieu' => 'tien', 'min' => 1000, 'max' => 10000000],
         'kinh_doanh.diem.dong_moi_diem_dung' => ['nhom' => 'Điểm thưởng', 'nhan' => '1 điểm trừ được', 'kieu' => 'tien', 'min' => 1, 'max' => 100000],
@@ -45,6 +41,12 @@ class ThamSoKinhDoanh
         'kinh_doanh.diem.phan_tram_toi_da' => ['nhom' => 'Điểm thưởng', 'nhan' => 'Điểm trừ tối đa', 'kieu' => 'so', 'min' => 1, 'max' => 100, 'don_vi' => '% tiền hàng'],
         'kinh_doanh.diem.danh_gia_nhan_xet' => ['nhom' => 'Điểm thưởng', 'nhan' => 'Thưởng đánh giá có nhận xét', 'kieu' => 'so', 'min' => 0, 'max' => 1000, 'don_vi' => 'điểm'],
         'kinh_doanh.diem.danh_gia_chi_sao' => ['nhom' => 'Điểm thưởng', 'nhan' => 'Thưởng đánh giá chỉ chấm sao', 'kieu' => 'so', 'min' => 0, 'max' => 1000, 'don_vi' => 'điểm'],
+
+        'kinh_doanh.cham_ho.phi_gap' => ['nhom' => 'Chăm cây hộ', 'nhan' => 'Phí nhận cây gấp', 'kieu' => 'tien', 'min' => 0, 'max' => 10000000,
+            'goi_y' => 'Thu khi khách cần nhận cây lại mà báo trước quá ít ngày. Đặt 0 để không thu.'],
+        'kinh_doanh.cham_ho.bao_gap_ngay' => ['nhom' => 'Chăm cây hộ', 'nhan' => 'Báo trước dưới bao nhiêu ngày thì tính là gấp', 'kieu' => 'so', 'min' => 0, 'max' => 30, 'don_vi' => 'ngày'],
+        'kinh_doanh.cham_ho.nhac_truoc_ngay' => ['nhom' => 'Chăm cây hộ', 'nhan' => 'Nhắc khách trước hạn trả cây', 'kieu' => 'so', 'min' => 1, 'max' => 60, 'don_vi' => 'ngày',
+            'goi_y' => 'Đến mốc này phiếu chuyển sang "Sắp trả cây" để cửa hàng chuẩn bị.'],
 
         'risk.thresholds.high_value' => ['nhom' => 'Rủi ro đơn hàng', 'nhan' => 'Đơn COD giá trị cao từ', 'kieu' => 'tien', 'min' => 0, 'max' => 1000000000,
             'goi_y' => 'Đơn trả khi nhận hàng từ mức này bị cộng điểm rủi ro.'],

@@ -1,0 +1,140 @@
+@extends('layouts.admin')
+
+@section('title', 'Phiếu chăm hộ ' . $phieu->code)
+
+@section('content')
+
+@php use App\Enums\BoardingHandover; use App\Enums\BoardingStatus; $tt = $phieu->status; @endphp
+
+<div class="mb-4">
+    <p class="mb-1"><a data-admin-link href="{{ route('admin.boarding.index') }}">&larr; Chăm cây hộ</a></p>
+    <h1 class="admin-page-title">
+        Phiếu {{ $phieu->code }}
+        <span class="badge text-bg-{{ $tt->tone() }} align-middle">{{ $tt->label() }}</span>
+    </h1>
+    <p class="admin-page-subtitle mb-0">{{ $phieu->plant_name }} · {{ $phieu->rate?->name }} · {{ $phieu->mode->label() }}</p>
+</div>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <div class="admin-panel p-4 mb-4">
+            <dl class="boarding-money mb-0">
+                <dt>Khách</dt><dd>{{ $phieu->user?->name }} · {{ $phieu->contact_phone }}</dd>
+                <dt>Giao nhận</dt><dd>{{ $phieu->handover->label() }}</dd>
+                @if($phieu->address)<dt>Địa chỉ</dt><dd>{{ $phieu->address }}</dd>@endif
+                <dt>{{ $phieu->received_on ? 'Đã nhận cây' : 'Hẹn nhận cây' }}</dt><dd>{{ ($phieu->received_on ?? $phieu->drop_off_on)->format('d/m/Y') }}</dd>
+                <dt>{{ $phieu->returned_on ? 'Đã trả cây' : 'Hẹn trả cây' }}</dt><dd>{{ ($phieu->returned_on ?? $phieu->return_on)?->format('d/m/Y') ?? 'Khi khách báo' }}</dd>
+                @if($phieu->window)<dt>Dịp</dt><dd>{{ $phieu->window->name }}{{ $phieu->repeat_yearly ? ' · lặp lại mỗi năm' : '' }}</dd>@endif
+                @if($phieu->product)<dt>Sản phẩm của cửa hàng</dt><dd>{{ $phieu->product->name }}</dd>@endif
+                @if($phieu->parent)<dt>Kỳ trước</dt><dd><a data-admin-link href="{{ route('admin.boarding.show', $phieu->parent) }}">{{ $phieu->parent->code }}</a></dd>@endif
+                @if($phieu->plant_note)<dt>Tình trạng khách ghi</dt><dd>{{ $phieu->plant_note }}</dd>@endif
+                @if($phieu->customer_note)<dt>Lời nhắn</dt><dd>{{ $phieu->customer_note }}</dd>@endif
+                @if($phieu->reject_reason)<dt>Lý do</dt><dd>{{ $phieu->reject_reason }}</dd>@endif
+            </dl>
+
+            @if($phieu->photo)
+                <img src="{{ asset('storage/' . $phieu->photo) }}" alt="Ảnh cây khách gửi" class="boarding-timeline__photo mt-3">
+            @endif
+        </div>
+
+        @unless($tt->daKetThuc())
+            <form method="POST" action="{{ route('admin.boarding.update', $phieu) }}" enctype="multipart/form-data" class="admin-panel p-4 mb-4">
+                @csrf
+                <h2 class="h6 fw-bold mb-2">Gửi cập nhật cho khách</h2>
+                <textarea name="note" rows="2" maxlength="1000" class="form-control mb-2 @error('note') is-invalid @enderror"
+                          placeholder="Đã tỉa cành, bón phân; cây ra nụ đều…">{{ old('note') }}</textarea>
+                <x-form-error name="note" />
+                <div class="d-flex flex-wrap gap-2 align-items-center">
+                    <input type="file" name="photo" accept="image/jpeg,image/png,image/webp" class="form-control" style="max-width: 20rem" aria-label="Ảnh cây">
+                    <button type="submit" class="btn btn-primary-brand ms-auto">Gửi cập nhật</button>
+                </div>
+                <x-form-error name="photo" />
+            </form>
+        @endunless
+
+        <div class="admin-panel p-4">
+            <h2 class="h6 fw-bold mb-3">Nhật ký</h2>
+            @include('shop.boarding._timeline')
+        </div>
+    </div>
+
+    <div class="col-xl-5">
+        <div class="admin-panel p-4 mb-4">
+            <h2 class="h6 fw-bold mb-3">Tiền</h2>
+            @include('shop.boarding._tien')
+        </div>
+
+        @if($tt === BoardingStatus::ChoDuyet)
+            <form method="POST" action="{{ route('admin.boarding.confirm', $phieu) }}" class="admin-panel p-4 mb-3" data-xac-nhan-cham-ho>
+                @csrf @method('PATCH')
+                <h2 class="h6 fw-bold mb-3">Xác nhận</h2>
+                <label class="form-label small" for="xn-gui">Hẹn ngày nhận cây</label>
+                <input id="xn-gui" type="date" name="drop_off_on" required class="form-control mb-2" value="{{ old('drop_off_on', $phieu->drop_off_on->toDateString()) }}">
+                <x-form-error name="drop_off_on" />
+                @if($phieu->handover === BoardingHandover::CuaHangLay)
+                    <label class="form-label small" for="xn-phi">Phí đến lấy và trả cây</label>
+                    <input id="xn-phi" type="number" name="handover_fee" min="0" step="1000" class="form-control mb-2" value="{{ old('handover_fee', 0) }}">
+                @endif
+                <label class="form-label small" for="xn-dc">Điều chỉnh giá (âm là giảm)</label>
+                <input id="xn-dc" type="number" name="adjustment" step="1000" class="form-control mb-2" value="{{ old('adjustment', 0) }}">
+                <input type="text" name="adjustment_reason" maxlength="255" class="form-control mb-2 @error('adjustment_reason') is-invalid @enderror"
+                       placeholder="Lý do điều chỉnh (cây to, chậu nặng…)" value="{{ old('adjustment_reason') }}" aria-label="Lý do điều chỉnh">
+                <x-form-error name="adjustment_reason" />
+                <input type="text" name="note" maxlength="500" class="form-control mb-3" placeholder="Lời nhắn cho khách (không bắt buộc)" aria-label="Lời nhắn">
+                <button type="submit" class="btn btn-primary-brand w-100">Xác nhận và báo khách</button>
+            </form>
+
+            <form method="POST" action="{{ route('admin.boarding.reject', $phieu) }}" class="admin-panel p-4 mb-3">
+                @csrf @method('PATCH')
+                <input type="text" name="reason" required maxlength="255" class="form-control mb-2" placeholder="Lý do từ chối (cây bệnh, hết chỗ…)" aria-label="Lý do từ chối">
+                <button type="submit" class="btn btn-outline-danger w-100">Từ chối</button>
+            </form>
+        @endif
+
+        @if($tt === BoardingStatus::DaXacNhan)
+            <form method="POST" action="{{ route('admin.boarding.receive', $phieu) }}" class="admin-panel p-4 mb-3">
+                @csrf @method('PATCH')
+                <h2 class="h6 fw-bold mb-3">Nhận cây</h2>
+                <input type="date" name="ngay" required class="form-control mb-2" value="{{ $homNay->toDateString() }}" aria-label="Ngày nhận cây">
+                <input type="text" name="note" maxlength="500" class="form-control mb-3" placeholder="Tình trạng cây lúc nhận" aria-label="Tình trạng cây lúc nhận">
+                <button type="submit" class="btn btn-primary-brand w-100">Đã nhận cây</button>
+            </form>
+        @endif
+
+        @if(in_array($tt, [BoardingStatus::DangCham, BoardingStatus::ChoTra], true))
+            <form method="POST" action="{{ route('admin.boarding.return', $phieu) }}" class="admin-panel p-4 mb-3">
+                @csrf @method('PATCH')
+                <h2 class="h6 fw-bold mb-2">Trả cây</h2>
+                <p class="admin-page-subtitle small">Tiền chăm tính lại theo ngày thực trả.
+                    @if($phieu->repeat_yearly) Khách chọn lặp lại — trả xong hệ thống mở phiếu kỳ sau. @endif
+                </p>
+                <input type="date" name="ngay" required class="form-control mb-3" value="{{ $homNay->toDateString() }}" aria-label="Ngày trả cây">
+                <x-form-error name="ngay" />
+                <button type="submit" class="btn btn-primary-brand w-100">Đã trả cây</button>
+            </form>
+        @endif
+
+        @if(in_array($tt, [BoardingStatus::DaXacNhan, BoardingStatus::DangCham, BoardingStatus::ChoTra, BoardingStatus::DaTra], true))
+            <form method="POST" action="{{ route('admin.boarding.payment', $phieu) }}" class="admin-panel p-4 mb-3" data-ghi-tien-cham-ho>
+                @csrf
+                <h2 class="h6 fw-bold mb-2">Ghi tiền</h2>
+                <p class="admin-page-subtitle small">Nhập số âm khi trả lại tiền cho khách.</p>
+                <input type="number" name="amount" step="1000" required class="form-control mb-2 @error('amount') is-invalid @enderror"
+                       value="{{ bccomp($phieu->conLai(), '0', 2) !== 0 ? (int) $phieu->conLai() : '' }}" aria-label="Số tiền">
+                <x-form-error name="amount" />
+                <input type="text" name="note" maxlength="200" class="form-control mb-3" placeholder="Tiền mặt / chuyển khoản…" aria-label="Ghi chú">
+                <button type="submit" class="btn btn-outline-admin w-100">Ghi tiền</button>
+            </form>
+        @endif
+
+        @if($tt->khachHuyDuoc())
+            <form method="POST" action="{{ route('admin.boarding.cancel', $phieu) }}" class="admin-panel p-4">
+                @csrf @method('PATCH')
+                <input type="text" name="reason" required maxlength="255" class="form-control mb-2" placeholder="Lý do huỷ" aria-label="Lý do huỷ">
+                <button type="submit" class="btn btn-outline-danger w-100">Huỷ phiếu</button>
+            </form>
+        @endif
+    </div>
+</div>
+
+@endsection

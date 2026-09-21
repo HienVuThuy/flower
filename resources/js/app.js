@@ -15,6 +15,7 @@ import { initBannerRotator } from './components/banner-rotator';
 import { initAccountMenu } from './account-menu';
 import { initSearchSuggest } from './search-suggest';
 import { initFlash } from './flash';
+import { initBoardingQuote } from './boarding-quote';
 import { initAnnouncement } from './announcement';
 import { initCartLive } from './cart-live';
 import { initAddToCart } from './add-to-cart';
@@ -93,6 +94,7 @@ export function bootUi() {
     initPromotionProducts();
     initQuickBuy();
     initFilterLoading();
+    initBoardingQuote();
 }
 
 bootUi();
