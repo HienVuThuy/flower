@@ -192,7 +192,7 @@ class Product extends Model
     public function scopeNewArrivals(Builder $query): Builder
     {
         return $query
-            ->where('created_at', '>=', now()->subDays((int) config('catalog.new_arrival_days', 60)))
+            ->where('created_at', '>=', now()->subDays(\App\Services\Shop\ThamSoKinhDoanh::so('catalog.new_arrival_days')))
             ->latest();
     }
 

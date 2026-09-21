@@ -267,8 +267,8 @@ class CheckoutController extends Controller
 
             return back()
                 ->with('error', 'Chưa dùng được điểm cho đơn này: cần dùng từ '
-                    . \App\Services\Points\PointRedemption::TOI_THIEU . ' điểm, trong số dư và trong mức '
-                    . \App\Services\Points\PointRedemption::PHAN_TRAM_TOI_DA . '% tiền hàng.')
+                    . \App\Services\Points\PointRedemption::toiThieu() . ' điểm, trong số dư và trong mức '
+                    . \App\Services\Points\PointRedemption::phanTramToiDa() . '% tiền hàng.')
                 ->withInput($giu);
         }
 

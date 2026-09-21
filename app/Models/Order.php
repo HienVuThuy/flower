@@ -307,7 +307,7 @@ class Order extends Model
 
     public function needsRiskReview(): bool
     {
-        return $this->risk_score >= (int) config('risk.review_from', 40);
+        return $this->risk_score >= \App\Services\Shop\ThamSoKinhDoanh::so('risk.review_from');
     }
 
     public function riskFlags(): array

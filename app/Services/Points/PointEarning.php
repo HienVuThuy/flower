@@ -13,12 +13,6 @@ use App\Models\User;
 /** Luật kiếm điểm từ mua hàng và đánh giá — một chỗ khai, một chỗ tính. */
 class PointEarning
 {
-    public const DONG_MOI_DIEM = 10000;
-
-    public const DANH_GIA_NHAN_XET = 10;
-
-    public const DANH_GIA_CHI_SAO = 3;
-
     public const NHAN_XET_TOI_THIEU = 30;
 
     public function __construct(
@@ -26,9 +20,24 @@ class PointEarning
     ) {
     }
 
+    public static function dongMoiDiem(): int
+    {
+        return \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.diem.dong_moi_diem_tich');
+    }
+
+    public static function danhGiaNhanXet(): int
+    {
+        return \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.diem.danh_gia_nhan_xet');
+    }
+
+    public static function danhGiaChiSao(): int
+    {
+        return \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.diem.danh_gia_chi_sao');
+    }
+
     public static function diemChoTien(string $tien): int
     {
-        return max(0, (int) bcdiv($tien, (string) self::DONG_MOI_DIEM, 0));
+        return max(0, (int) bcdiv($tien, (string) self::dongMoiDiem(), 0));
     }
 
     public function donHoanTat(Order $order): int
@@ -100,8 +109,8 @@ class PointEarning
         }
 
         $diem = mb_strlen(trim((string) $review->comment)) >= self::NHAN_XET_TOI_THIEU
-            ? self::DANH_GIA_NHAN_XET
-            : self::DANH_GIA_CHI_SAO;
+            ? self::danhGiaNhanXet()
+            : self::danhGiaChiSao();
 
         return $this->so->cong(
             $user,

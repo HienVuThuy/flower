@@ -18,6 +18,7 @@
         ],
         'cai-dat' => [
             ['route' => 'admin.settings.edit', 'khop' => 'admin.settings.*', 'nhan' => 'Cài đặt chung'],
+            ['route' => 'admin.business-params.edit', 'khop' => 'admin.business-params.*', 'nhan' => 'Tham số kinh doanh'],
             ['route' => 'admin.page-contents.edit', 'khop' => 'admin.page-contents.*', 'nhan' => 'Trang nội dung'],
         ],
     ];

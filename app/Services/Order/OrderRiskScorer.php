@@ -78,7 +78,7 @@ class OrderRiskScorer
             return null;
         }
 
-        $threshold = (float) config('risk.thresholds.high_value', 1500000);
+        $threshold = (float) \App\Services\Shop\ThamSoKinhDoanh::giaTri('risk.thresholds.high_value');
 
         if ((float) $order->grand_total < $threshold) {
             return null;

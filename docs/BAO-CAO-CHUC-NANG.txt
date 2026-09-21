@@ -53,13 +53,13 @@ A3. Kiến trúc (chia lớp rõ ràng)
   OrderService, điểm chỉ ghi ở PointLedger, thuế chỉ tính ở TaxCalculator…
 
 A4. Quy mô (đếm từ mã nguồn)
-  - 299 đường dẫn (route), trong đó 156 thuộc khu quản trị
-  - 74 controller, 140 lớp service, 58 model, 65 enum
+  - 301 đường dẫn (route), trong đó 158 thuộc khu quản trị
+  - 75 controller, 141 lớp service, 58 model, 65 enum
   - 95 migration, 133 bảng
-  - 246 view Blade, 46 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
+  - 247 view Blade, 46 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
   - 16 lệnh artisan tự viết, 6 tác vụ chạy theo lịch
-  - 139 tệp kiểm thử, 1347 bài kiểm thử, 5030 phép khẳng định
-  - Tài liệu: docs/ (quyết định thiết kế 311 mục, luồng hoạt động, kiểm thử,
+  - 140 tệp kiểm thử, 1355 bài kiểm thử, 5060 phép khẳng định
+  - Tài liệu: docs/ (quyết định thiết kế 312 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
 
@@ -287,7 +287,7 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
 4.1  Phân quyền 3 vai trò + 9 khu vực quyền
      Chủ cửa hàng (toàn quyền), Nhân viên (theo khu vực được giao), Khách hàng.
      9 khu vực: Đơn hàng · Sản phẩm · Kho · Khuyến mại · Đánh giá · Báo cáo ·
-     Tài chính · Hệ thống · Hỗ trợ khách hàng. Cả 156 đường dẫn quản trị đều gắn
+     Tài chính · Hệ thống · Hỗ trợ khách hàng. Cả 158 đường dẫn quản trị đều gắn
      quyền.
      → app/Enums/{UserRole, Quyen}, Middleware/{EnsureUserHasRole, CoQuyen}
 
@@ -405,7 +405,15 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
 4.13 Cấu hình cửa hàng
      Tên, logo, hotline, email, địa chỉ, cam kết dịch vụ, theme, ảnh hero từng
      theme, định dạng tiền tệ (khoá VND); sửa nội dung trang chính sách.
-     → Admin/{SettingsController, PageContentController}, Services/Shop/*
+     Tab "Tham số kinh doanh": admin tự đổi 24 con số trước đây nằm cứng trong
+     code, chia 6 nhóm — Danh mục & hiển thị (ngưỡng Hoa cao cấp, mốc khoảng giá,
+     hàng mới về, "Chỉ còn X", nhắc ngày lễ), Kho & giỏ hàng (sắp hết hàng, tối đa
+     mỗi món, hạn đổi hàng), Giao hàng (miễn phí từ, phí 4 vùng), Điểm thưởng
+     (tỉ lệ tích / đổi, tối thiểu, tối đa %, điểm đánh giá), Rủi ro đơn hàng,
+     Trợ lý AI (trần lượt hỏi). Mỗi ô có trần/sàn, hiện mặc định, xoá trắng là về
+     mặc định, mỗi lần đổi ghi nhật ký.
+     → Admin/{SettingsController, PageContentController, BusinessParamsController},
+       Services/Shop/* (ThamSoKinhDoanh)
 
 4.14 Nhật ký thao tác quản trị (không có đường xoá)
      → Services/Audit/ActivityLogger, Admin/ActivityLogController
@@ -714,7 +722,7 @@ D1. Xác thực & tài khoản
 
 D2. Phân quyền
     - Vai trò (role:admin,staff) + quyền theo khu vực (quyen:...) trên TỪNG route
-      quản trị; đã kiểm: 156/156 route có quyền
+      quản trị; đã kiểm: 158/158 route có quyền
     - Ba chốt chặn khi đổi vai trò; thanh toán và hoàn tiền cần quyền tài chính
     - Kiểm CHỦ SỞ HỮU mọi tài nguyên của khách: địa chỉ, giỏ, đơn, nhật ký, thông
       báo, đánh giá, bài Góc cây (tìm theo user_id rồi mới findOrFail → trả 404,
@@ -820,7 +828,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1347 bài / 5030 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1355 bài / 5060 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,
@@ -832,7 +840,7 @@ E4. Hiệu năng: đo trước khi tối ưu (lệnh do:hieu-nang); ảnh WebP d
     sẵn quan hệ (chỉ còn 2 chỗ nạp lười khi đo bằng preventLazyLoading trên toàn
     bộ kiểm thử); header cache ở .htaccess; nén; tải trước trang; làm nóng
     trang quản trị; OPcache (docs/OPCACHE-XAMPP.md).
-E5. Tài liệu: docs/DOMAIN-DECISIONS.md (311 quyết định), LUONG-HOAT-DONG.md,
+E5. Tài liệu: docs/DOMAIN-DECISIONS.md (312 quyết định), LUONG-HOAT-DONG.md,
     KIEM-THU.md, HIEU-NANG.md, TU-DONG-HOA.md, MYSQL-XAMPP.md, CHU-THICH-CODE.md.
 E6. Quản lý mã nguồn: Git, mỗi thay đổi một commit có mô tả.
 E7. Khả năng tiếp cận (a11y): icon SVG có aria-label, không dùng emoji làm icon,

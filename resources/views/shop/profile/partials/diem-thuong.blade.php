@@ -61,9 +61,9 @@
     @endphp
     <h3 class="text-h5 mb-2">Cách kiếm điểm</h3>
     <ul class="points-history list-unstyled mb-4" data-cach-kiem-diem>
-        <li class="points-history__row"><span>Mua hàng (tính khi đơn đã giao, không gồm phí vận chuyển)</span><strong>1 điểm / {{ number_format($kiem::DONG_MOI_DIEM, 0, ',', '.') }}đ</strong></li>
-        <li class="points-history__row"><span>Đánh giá sản phẩm đã mua, có nhận xét từ {{ $kiem::NHAN_XET_TOI_THIEU }} ký tự</span><strong>+{{ $kiem::DANH_GIA_NHAN_XET }}</strong></li>
-        <li class="points-history__row"><span>Đánh giá chỉ chấm sao</span><strong>+{{ $kiem::DANH_GIA_CHI_SAO }}</strong></li>
+        <li class="points-history__row"><span>Mua hàng (tính khi đơn đã giao, không gồm phí vận chuyển)</span><strong>1 điểm / {{ number_format($kiem::dongMoiDiem(), 0, ',', '.') }}đ</strong></li>
+        <li class="points-history__row"><span>Đánh giá sản phẩm đã mua, có nhận xét từ {{ $kiem::NHAN_XET_TOI_THIEU }} ký tự</span><strong>+{{ $kiem::danhGiaNhanXet() }}</strong></li>
+        <li class="points-history__row"><span>Đánh giá chỉ chấm sao</span><strong>+{{ $kiem::danhGiaChiSao() }}</strong></li>
         <li class="points-history__row"><span>Bài Góc cây được duyệt (có ảnh +{{ $baiViet::CO_ANH }}, nổi bật +{{ $baiViet::NOI_BAT }})</span><strong>+{{ $baiViet::CO_BAN }}</strong></li>
         <li class="points-history__row"><span>Người khác thích bài Góc cây của bạn (tối đa {{ $baiViet::THICH_TOI_DA_MOI_TUAN }} điểm mỗi tuần)</span><strong>+{{ $baiViet::LUOT_THICH }}</strong></li>
         <li class="points-history__row"><span>Chuỗi ngày ghé thăm: ngày thứ 3 / mỗi 7 ngày</span><strong>+{{ \App\Services\Points\VisitStreak::moc(3) }} / +{{ \App\Services\Points\VisitStreak::moc(7) }}</strong></li>

@@ -551,11 +551,11 @@
 
                             <p class="text-caption mb-2">
                                 Bạn có <strong>{{ number_format($soDuDiem, 0, ',', '.') }}</strong> điểm
-                                (1 điểm = {{ \App\Services\Points\PointRedemption::DONG_MOI_DIEM }}đ).
+                                (1 điểm = {{ \App\Services\Points\PointRedemption::dongMoiDiem() }}đ).
                                 @if($diemToiDa > 0)
                                     Đơn này dùng được tối đa <strong>{{ number_format($diemToiDa, 0, ',', '.') }}</strong> điểm.
                                 @else
-                                    Cần dùng từ {{ \App\Services\Points\PointRedemption::TOI_THIEU }} điểm, tối đa {{ \App\Services\Points\PointRedemption::PHAN_TRAM_TOI_DA }}% tiền hàng.
+                                    Cần dùng từ {{ \App\Services\Points\PointRedemption::toiThieu() }} điểm, tối đa {{ \App\Services\Points\PointRedemption::phanTramToiDa() }}% tiền hàng.
                                 @endif
                             </p>
 

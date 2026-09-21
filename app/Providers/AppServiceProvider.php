@@ -83,8 +83,8 @@ class AppServiceProvider extends ServiceProvider
 
         /* Trợ lý AI tốn tiền theo lượt hỏi: chặn cả theo phút lẫn theo ngày. */
         RateLimiter::for('tro-ly-ai', fn (Request $request) => [
-            Limit::perMinute((int) config('ai.moi_phut', 10))->by($request->user()?->id ?: $request->ip()),
-            Limit::perDay((int) config('ai.moi_ngay', 80))->by($request->user()?->id ?: $request->ip()),
+            Limit::perMinute(\App\Services\Shop\ThamSoKinhDoanh::so('ai.moi_phut'))->by($request->user()?->id ?: $request->ip()),
+            Limit::perDay(\App\Services\Shop\ThamSoKinhDoanh::so('ai.moi_ngay'))->by($request->user()?->id ?: $request->ip()),
         ]);
     }
 }

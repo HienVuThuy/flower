@@ -28,7 +28,6 @@ class ProductController extends Controller
 
     use LogsAdminActivity;
 
-    private const LOW_STOCK = 5;
 
     public function __construct(
         private readonly ProductImageService $images,
@@ -67,7 +66,7 @@ class ProductController extends Controller
 
             ->when($request->query('kho') === 'sap-het', fn ($q) => $q
                 ->where('track_inventory', true)
-                ->whereBetween('stock_quantity', [1, self::LOW_STOCK]))
+                ->whereBetween('stock_quantity', [1, \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.sap_het_hang')]))
 
             ->tap(fn ($q) => $this->applySort($q, $request, [
                 'ten' => 'name',
@@ -84,7 +83,7 @@ class ProductController extends Controller
         return view('admin.products.index', [
             'products' => $products,
             'categories' => Category::orderBy('name')->get(['id', 'name']),
-            'lowStock' => self::LOW_STOCK,
+            'lowStock' => \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.sap_het_hang'),
             'soDaXoa' => Product::onlyTrashed()->count(),
             'thungRac' => $request->query('thung_rac') === '1',
         ]);

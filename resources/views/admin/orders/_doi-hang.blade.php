@@ -9,7 +9,7 @@
     <h2 class="h6 fw-bold mb-1">Đổi hàng</h2>
 
     <p class="admin-page-subtitle mb-3">
-        Hạn đổi {{ \App\Services\Exchange\ExchangeService::HAN_DOI_NGAY }} ngày kể từ khi giao.
+        Hạn đổi {{ \App\Services\Exchange\ExchangeService::hanDoiNgay() }} ngày kể từ khi giao.
         Hoa tươi không đổi được. Lỗi cửa hàng thì cửa hàng chịu phí ship, khách đổi ý thì khách trả.
     </p>
 

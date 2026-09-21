@@ -9,18 +9,18 @@ CÁCH CHIA
     controller, service, model, migration, giao diện, JavaScript, CSS đến bài
     kiểm thử), để mỗi người trình bày được một luồng hoàn chỉnh từ đầu đến cuối
     thay vì mỗi người giữ một "tầng" rời rạc.
-  - Mọi tệp code của dự án (1044 tệp, không tính ảnh / phông / tài liệu)
+  - Mọi tệp code của dự án (1049 tệp, không tính ảnh / phông / tài liệu)
     đều được giao cho ĐÚNG MỘT người. Danh sách được sinh bằng script từ chính kho
     mã nên đường dẫn chính xác.
   - Khối lượng cân nhau:
-      Hưng   246 tệp, khoảng 24.068 dòng code
-      Hùng   196 tệp, khoảng 22.725 dòng code
+      Hưng   249 tệp, khoảng 24.579 dòng code
+      Hùng   197 tệp, khoảng 22.769 dòng code
       Huy    195 tệp, khoảng 24.650 dòng code
       Dũng   191 tệp, khoảng 23.001 dòng code
       Hiền   216 tệp, khoảng 26.968 dòng code
   - "Phối hợp" ghi rõ chỗ hai khối gọi sang nhau, để khi sửa một bên thì báo
     người kia.
-  - Tài liệu nên đọc chung: docs/HUONG-DAN-DOC-CODE.txt (kiến thức nền + 26 luồng),
+  - Tài liệu nên đọc chung: docs/HUONG-DAN-DOC-CODE.txt (kiến thức nền + 27 luồng),
     docs/BAO-CAO-CHUC-NANG.txt, docs/CHU-THICH-CODE.md (tìm theo tên tệp),
     docs/DOMAIN-DECISIONS.md (lý do thiết kế).
 
@@ -89,7 +89,7 @@ DANH SÁCH TỆP
     routes/admin.php
     routes/console.php
     routes/web.php
-  [Controller] (18)
+  [Controller] (19)
     app/Http/Controllers/Admin/ActivityLogController.php
     app/Http/Controllers/Admin/Concerns/HandlesBulkAction.php
     app/Http/Controllers/Admin/Concerns/LogsAdminActivity.php
@@ -97,6 +97,7 @@ DANH SÁCH TỆP
     app/Http/Controllers/Admin/DashboardController.php
     app/Http/Controllers/Admin/PageContentController.php
     app/Http/Controllers/Admin/SettingsController.php
+    app/Http/Controllers/Admin/BusinessParamsController.php
     app/Http/Controllers/Admin/UserController.php
     app/Http/Controllers/Auth/AuthController.php
     app/Http/Controllers/Auth/EmailVerificationController.php
@@ -121,7 +122,7 @@ DANH SÁCH TỆP
     app/Http/Requests/Auth/ResetPasswordRequest.php
     app/Http/Requests/Shop/ChangePasswordRequest.php
     app/Http/Requests/Shop/ProfileRequest.php
-  [Service (luật nghiệp vụ)] (19)
+  [Service (luật nghiệp vụ)] (20)
     app/Services/Admin/WorkQueue.php
     app/Services/Audit/ActivityLogger.php
     app/Services/Auth/AccountDeleter.php
@@ -138,6 +139,7 @@ DANH SÁCH TỆP
     app/Services/Shop/Money.php
     app/Services/Shop/ServiceCommitments.php
     app/Services/Shop/StoreProfile.php
+    app/Services/Shop/ThamSoKinhDoanh.php
     app/Services/Theme/HeroImages.php
     app/Services/Theme/ThemeRegistry.php
     app/Services/Time/Gio.php
@@ -204,11 +206,12 @@ DANH SÁCH TỆP
     database/seeders/AdminUserSeeder.php
     database/seeders/ChuongTrinhKhuyenMaiMauSeeder.php
     database/seeders/DatabaseSeeder.php
-  [Giao diện Blade] (60)
+  [Giao diện Blade] (61)
     resources/views/admin/activity-logs/index.blade.php
     resources/views/admin/dashboard.blade.php
     resources/views/admin/pages/edit.blade.php
     resources/views/admin/settings/edit.blade.php
+    resources/views/admin/settings/tham-so.blade.php
     resources/views/admin/users/_form.blade.php
     resources/views/admin/users/create.blade.php
     resources/views/admin/users/edit.blade.php
@@ -318,7 +321,7 @@ DANH SÁCH TỆP
     resources/css/themes/noel.css
     resources/css/themes/tet.css
     resources/css/themes/valentine.css
-  [Kiểm thử] (26)
+  [Kiểm thử] (27)
     tests/Feature/Security/ChongLamDungTest.php
     tests/Feature/Admin/ActivityLogTest.php
     tests/Feature/Admin/AdminDarkModeTest.php
@@ -330,6 +333,7 @@ DANH SÁCH TỆP
     tests/Feature/Admin/PhanQuyenTest.php
     tests/Feature/Admin/QuanLyNguoiDungTest.php
     tests/Feature/Admin/SaoLuuTest.php
+    tests/Feature/Admin/ThamSoKinhDoanhTest.php
     tests/Feature/Admin/SortAndBulkTest.php
     tests/Feature/Admin/StoreSettingsTest.php
     tests/Feature/Admin/TongQuanKhongTrungTest.php
@@ -472,8 +476,9 @@ DANH SÁCH TỆP
     app/Console/Commands/LinkProductPhotos.php
     app/Console/Commands/ReindexSearch.php
     app/Console/Commands/ToiUuAnh.php
-  [Cấu hình / Ngôn ngữ] (1)
+  [Cấu hình / Ngôn ngữ] (2)
     config/catalog.php
+    config/kinh_doanh.php
   [Migration (bảng CSDL)] (23)
     database/migrations/2026_08_18_182726_create_categories_table.php
     database/migrations/2026_08_18_182759_create_products_table.php

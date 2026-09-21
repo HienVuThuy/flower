@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\CommunityModerationController;
 use App\Http\Controllers\Admin\PricingAdvisorController;
 use App\Http\Controllers\Admin\PromotionController;
 use App\Http\Controllers\Admin\SettingsController;
+use App\Http\Controllers\Admin\BusinessParamsController;
 use App\Http\Controllers\Admin\SupplierController;
 use App\Http\Controllers\Admin\ExpenseController;
 use App\Http\Controllers\Admin\SupplierReturnController;
@@ -476,4 +477,9 @@ Route::prefix('admin')
             ->middleware('quyen:he-thong')->name('settings.edit');
         Route::put('settings', [SettingsController::class, 'update'])
             ->middleware('quyen:he-thong')->name('settings.update');
+
+        Route::get('settings/tham-so', [BusinessParamsController::class, 'edit'])
+            ->middleware('quyen:he-thong')->name('business-params.edit');
+        Route::put('settings/tham-so', [BusinessParamsController::class, 'update'])
+            ->middleware('quyen:he-thong')->name('business-params.update');
     });

@@ -6,6 +6,7 @@ use App\Enums\CareDifficulty;
 use App\Enums\FlowerCollection;
 use App\Services\Catalog\FlowerCollections;
 use App\Services\Shop\Money;
+use App\Services\Shop\ThamSoKinhDoanh;
 use App\Enums\SellingForm;
 use App\Enums\UserEventType;
 use App\Http\Controllers\Controller;
@@ -225,7 +226,7 @@ class ProductController extends Controller
     {
         $out = [];
 
-        foreach ((array) config('catalog.khoang_gia', []) as [$tu, $den]) {
+        foreach (ThamSoKinhDoanh::khoangGia() as [$tu, $den]) {
             $dem = clone $query;
             $this->search->filter($dem, $search);
             $soLuong = $dem->effectivePriceBetween($tu, $den)->count();

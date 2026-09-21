@@ -161,7 +161,7 @@ class CartController extends Controller
         $this->authorizeItem($cartItem);
 
         $validated = $request->validate([
-            'quantity' => ['required', 'integer', 'min:0', 'max:' . CartService::MAX_QUANTITY],
+            'quantity' => ['required', 'integer', 'min:0', 'max:' . CartService::toiDaMoiMon()],
         ], [], ['quantity' => 'số lượng']);
 
         $this->cart->updateQuantity($cartItem, (int) $validated['quantity']);
@@ -213,7 +213,7 @@ class CartController extends Controller
         $validated = $request->validate([
             'product_id' => ['required', 'integer', 'exists:products,id'],
             'variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
-            'quantity' => ['nullable', 'integer', 'min:1', 'max:' . CartService::MAX_QUANTITY],
+            'quantity' => ['nullable', 'integer', 'min:1', 'max:' . CartService::toiDaMoiMon()],
         ], [], [
             'product_id' => 'sản phẩm',
             'variant_id' => 'phiên bản',

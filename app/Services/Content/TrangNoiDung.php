@@ -142,8 +142,9 @@ class TrangNoiDung
     {
         $dong = ['| Khu vực | Phí giao |'];
 
-        foreach ((array) config('shipping.zones', []) as $zone) {
-            $dong[] = '| ' . str_replace('|', '/', (string) ($zone['label'] ?? '')) . ' | ' . Money::format((string) ($zone['fee'] ?? 0)) . ' |';
+        foreach ((array) config('shipping.zones', []) as $khoa => $zone) {
+            $phi = \App\Services\Shop\ThamSoKinhDoanh::giaTri("shipping.zones.{$khoa}.fee") ?? 0;
+            $dong[] = '| ' . str_replace('|', '/', (string) ($zone['label'] ?? '')) . ' | ' . Money::format((string) $phi) . ' |';
         }
 
         return $this->bang($dong);
@@ -158,7 +159,7 @@ class TrangNoiDung
             '{hotline}' => e((string) StoreProfile::hotline()),
             '{email}' => e((string) StoreProfile::email()),
             '{dia_chi}' => e((string) StoreProfile::address()),
-            '{mien_phi_giao_tu}' => e(Money::format((string) config('shipping.free_from', 0))),
+            '{mien_phi_giao_tu}' => e(Money::format((string) \App\Services\Shop\ThamSoKinhDoanh::giaTri('shipping.free_from'))),
         ]);
 
         $chu = preg_replace_callback('/\[([^\]]+)\]\(([^)\s]+)\)/u', function ($m) {

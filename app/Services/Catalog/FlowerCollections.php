@@ -9,6 +9,7 @@ use App\Enums\ProductType;
 use App\Enums\TraitType;
 use App\Models\Product;
 use App\Models\ProductTrait;
+use App\Services\Shop\ThamSoKinhDoanh;
 use App\Services\Time\Gio;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -20,7 +21,7 @@ class FlowerCollections
         return match ($bst) {
             FlowerCollection::CaoCap => $query
                 ->whereIn('product_type', [ProductType::Flower->value, ProductType::Artificial->value])
-                ->effectivePriceBetween((int) config('catalog.cao_cap_tu'), null),
+                ->effectivePriceBetween(ThamSoKinhDoanh::so('catalog.cao_cap_tu'), null),
 
             FlowerCollection::TheoMua => $query->whereHas('traits', fn ($q) => $q
                 ->where('trait_type', TraitType::Season->value)
@@ -100,8 +101,14 @@ class FlowerCollections
      * Ngày lễ tặng hoa gần nhất trong $ngay ngày tới mà cửa hàng CÓ hàng hợp dịp.
      * Nhắc sớm để khách kịp đặt — không nhắc dịp mà bấm vào chỉ thấy trang trống.
      */
-    public function dipSapToi(array $soLuongTheoDip, int $ngay = 30): ?array
+    public function dipSapToi(array $soLuongTheoDip, ?int $ngay = null): ?array
     {
+        $ngay ??= ThamSoKinhDoanh::so('kinh_doanh.nhac_dip_truoc_ngay');
+
+        if ($ngay <= 0) {
+            return null;
+        }
+
         $homNay = now(Gio::mui())->startOfDay();
 
         return collect(config('occasions', []))

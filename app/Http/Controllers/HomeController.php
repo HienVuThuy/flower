@@ -39,7 +39,7 @@ class HomeController extends Controller
             ->mainCatalog()
             ->whereIn('status', ['active', 'out_of_stock'])
             ->newArrivals()
-            ->take((int) config('catalog.new_arrival_limit', 8))
+            ->take(\App\Services\Shop\ThamSoKinhDoanh::so('catalog.new_arrival_limit'))
             ->get();
 
         $noiBat = Product::query()

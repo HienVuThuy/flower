@@ -3,6 +3,7 @@
 /*
  * PHÍ GIAO HÀNG THEO VÙNG
  * ⚠️ SỐ TIỀN DƯỚI ĐÂY LÀ MỨC MẪU, KHÔNG PHẢI BẢNG GIÁ THẬT.
+ * Admin đổi phí từng vùng và mức miễn phí giao ở Cài đặt › Tham số kinh doanh.
  */
 
 return [

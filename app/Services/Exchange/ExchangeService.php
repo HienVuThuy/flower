@@ -23,7 +23,10 @@ use Illuminate\Support\Str;
 /** Đổi hàng: khách trả món này, nhận món khác. */
 class ExchangeService
 {
-    public const HAN_DOI_NGAY = 7;
+    public static function hanDoiNgay(): int
+    {
+        return \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.han_doi_ngay');
+    }
 
     public function __construct(
         private readonly StockReturn $stock,
@@ -41,12 +44,12 @@ class ExchangeService
             return 'Đơn này chưa có mốc giao hàng nên không tính được hạn đổi.';
         }
 
-        $hetHan = $order->completed_at->copy()->addDays(self::HAN_DOI_NGAY);
+        $hetHan = $order->completed_at->copy()->addDays(self::hanDoiNgay());
 
         if ($hetHan->isPast()) {
             return sprintf(
                 'Đã quá hạn đổi %d ngày kể từ khi giao (hết hạn %s).',
-                self::HAN_DOI_NGAY,
+                self::hanDoiNgay(),
                 \App\Services\Time\Gio::hien($hetHan)->format('d/m/Y'),
             );
         }

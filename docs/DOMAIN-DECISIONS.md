@@ -8519,6 +8519,7 @@ hỏi: dữ liệu có đúng bản chất không, khách cảm thấy thế nà
 
 - LỌC GIÁ tính bằng GIÁ ĐANG BÁN (đã trừ khuyến mại), dùng lại đúng biểu thức
   SQL của sắp xếp theo giá (`Product::giaHieuLucSql()`), không viết luật thứ hai.
+  Mốc chia khoảng và ngưỡng "cao cấp" admin tự đổi được (xem QĐ-312).
   Lọc theo giá gốc sẽ giấu mất món đang giảm — đúng món khách săn giá muốn thấy.
   Hàng "liên hệ báo giá" không có giá nên không lọt vào khoảng nào.
 - KHOẢNG GIÁ GỢI SẴN chỉ ghi con số ("Dưới 300.000₫", "300.000 – 500.000₫"…),
@@ -8572,3 +8573,32 @@ hỏi: dữ liệu có đúng bản chất không, khách cảm thấy thế nà
   không nhân đôi. Cả lô ghi trong một giao dịch và mỗi dòng một bản ghi nhật ký.
 - Biểu mẫu kiểu cũ (một `gift_product_id` / `gift_item_id`) vẫn được nhận và quy
   về danh sách, để không gãy chỗ nào đang gửi theo kiểu đó.
+
+## QĐ-312. Tham số kinh doanh do admin tự chỉnh, không nằm chết trong code
+
+Trước đây các con số như ngưỡng "Hoa cao cấp", mốc khoảng giá, phí giao từng vùng,
+mức miễn phí giao, tỉ lệ tích / đổi điểm, hạn đổi hàng, trần lượt hỏi AI nằm trong
+config hoặc hằng số PHP — muốn đổi phải sửa code và triển khai lại.
+
+- MỘT BẢNG ĐĂNG KÝ: `App\Services\Shop\ThamSoKinhDoanh::DS` khai mỗi tham số một
+  lần — nhóm, nhãn, kiểu (tiền / số / danh sách mốc tiền), giới hạn nhỏ nhất và
+  lớn nhất, gợi ý. Trang Cài đặt › Tham số kinh doanh dựng hoàn toàn từ bảng này;
+  thêm tham số mới chỉ cần thêm một dòng và đổi chỗ dùng sang `ThamSoKinhDoanh::so()`.
+- MẶC ĐỊNH VẪN Ở CONFIG (config/catalog.php, shipping.php, risk.php, ai.php và file
+  mới config/kinh_doanh.php cho các hằng số cũ). Admin lưu thì ghi vào bảng settings
+  với tiền tố `tham_so:`; xoá trắng ô hoặc nhập đúng mặc định thì xoá bản ghi đè.
+  Nhờ vậy bộ kiểm thử vẫn chỉnh được bằng `config([...])` như trước.
+- MỌI NƠI ĐỌC QUA MỘT CỬA: bộ lọc giá, bộ sưu tập, SocialProof, giỏ hàng, đổi hàng,
+  phí giao, điểm thưởng (cả dòng chữ giải thích ở trang thanh toán và trang Điểm
+  thưởng), chấm điểm rủi ro, trần AI. Hằng số cũ bị xoá hẳn để không ai đọc nhầm
+  giá trị cũ; chỗ còn cần thì gọi hàm (`ExchangeService::hanDoiNgay()`,
+  `PointRedemption::dongMoiDiem()`…).
+- KIỂM TRA Ở MÁY CHỦ: mỗi ô có trần/sàn (vd. điểm trừ tối đa 1–100% tiền hàng, giỏ
+  tối đa 999 cái/món). Có một ô sai thì không lưu ô nào. Mỗi lần đổi ghi nhật ký
+  thao tác kèm giá trị trước / sau. Chỉ quyền "hệ thống" vào được.
+- KHÔNG ĐƯA LÊN TRANG NÀY: khoá bí mật (MoMo, GHN, AI — nằm trong .env), trần chống
+  quá tải và chống dò mật khẩu (thuộc bảo mật, đổi nhầm là mở cửa cho tấn công),
+  thông số kỹ thuật (chất lượng ảnh, thời gian nhớ đệm). Thuế và tiền tệ đã có ở
+  Cài đặt chung; trả góp có trang cấu hình riêng.
+- Chưa có bảng settings (cài mới, chưa chạy migrate) thì tự dùng mặc định thay
+  vì làm sập trang.

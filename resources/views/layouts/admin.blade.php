@@ -202,7 +202,7 @@
                 <x-site.icon name="clock-history" />
                 <span>Nhật ký</span>
             </a>
-            <a data-admin-link href="{{ route('admin.settings.edit') }}" class="admin-nav-link {{ request()->routeIs('admin.settings.*', 'admin.page-contents.*') ? 'is-active' : '' }}">
+            <a data-admin-link href="{{ route('admin.settings.edit') }}" class="admin-nav-link {{ request()->routeIs('admin.settings.*', 'admin.page-contents.*', 'admin.business-params.*') ? 'is-active' : '' }}">
                 <x-site.icon name="gear" />
                 <span>Cài đặt</span>
             </a>

@@ -7,7 +7,7 @@
 <div class="mb-4">
     <h1 class="admin-page-title">Phiếu đổi hàng</h1>
     <p class="admin-page-subtitle">
-        Hạn đổi {{ \App\Services\Exchange\ExchangeService::HAN_DOI_NGAY }} ngày kể từ khi giao.
+        Hạn đổi {{ \App\Services\Exchange\ExchangeService::hanDoiNgay() }} ngày kể từ khi giao.
         Phiếu lập từ trang đơn hàng.
     </p>
 </div>

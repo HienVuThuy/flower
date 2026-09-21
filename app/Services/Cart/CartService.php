@@ -12,7 +12,10 @@ use Illuminate\Support\Facades\DB;
 /** Mọi thao tác với giỏ hàng đi qua đây. */
 class CartService
 {
-    public const MAX_QUANTITY = 99;
+    public static function toiDaMoiMon(): int
+    {
+        return \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.gio_toi_da_moi_mon');
+    }
 
     private ?Cart $resolved = null;
 
@@ -56,7 +59,7 @@ class CartService
 
                 if ($existing) {
                     $existing->update([
-                        'quantity' => min(self::MAX_QUANTITY, $existing->quantity + $item->quantity),
+                        'quantity' => min(self::toiDaMoiMon(), $existing->quantity + $item->quantity),
                     ]);
 
                     continue;
@@ -215,7 +218,7 @@ class CartService
     private function clampToStock(int $wanted, Product $product, ?ProductVariant $variant): int
     {
         $stock = $this->stockOf($product, $variant);
-        $limit = $stock === null ? self::MAX_QUANTITY : min($stock, self::MAX_QUANTITY);
+        $limit = $stock === null ? self::toiDaMoiMon() : min($stock, self::toiDaMoiMon());
 
         return max(1, min($wanted, $limit));
     }

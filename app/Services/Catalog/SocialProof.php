@@ -10,8 +10,6 @@ use App\Services\Analytics\KhoangThoiGian;
 /** Số liệu THẬT để khách tự tin mua: đã bán bao nhiêu, còn bao nhiêu, quy cách nào được chọn nhiều. */
 class SocialProof
 {
-    public const NGUONG_CHI_CON = 5;
-
     public const TOI_THIEU_PHO_BIEN = 3;
 
     public function banGanDay(Product $product, int $soNgay = 30): int
@@ -34,7 +32,7 @@ class SocialProof
 
         $ton = (int) $product->stock_quantity;
 
-        return $ton >= 1 && $ton <= self::NGUONG_CHI_CON ? $ton : null;
+        return $ton >= 1 && $ton <= \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.nguong_chi_con') ? $ton : null;
     }
 
     public function quyCachBanChay(Product $product, int $soNgay = 90): ?int

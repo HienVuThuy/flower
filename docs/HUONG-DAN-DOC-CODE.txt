@@ -7,7 +7,7 @@ Tài liệu này dạy cách đọc code của dự án theo thứ tự dễ →
   PHẦN 0. Cách dùng tài liệu và cách tìm nhanh trong VS Code
   PHẦN 1. Kiến thức nền: 22 khái niệm gặp liên tục trong dự án
   PHẦN 2. Bản đồ thư mục: tệp nào nằm ở đâu, làm gì
-  PHẦN 3. 26 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
+  PHẦN 3. 27 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
   PHẦN 4. Tự học và gỡ lỗi
   PHẦN 5. Bảng tra nhanh thuật ngữ
 
@@ -1167,7 +1167,7 @@ LUỒNG 26. Lọc theo giá, dịp tặng, bộ sưu tập tự động, quà k�
   LỌC GIÁ — /san-pham?gia-tu=300000&gia-den=500000
   1. Shop\ProductController@index → khoangGiaDaChon(): chỉ giữ chữ số ("300.000"
      cũng được), nhập ngược thì đảo, trần 1 tỉ.
-  2. khoangGia(): đếm số món cho từng khoảng trong config('catalog.khoang_gia'),
+  2. khoangGia(): đếm số món cho từng khoảng lấy từ ThamSoKinhDoanh::khoangGia(),
      đếm TRÊN ĐÚNG bộ lọc khách đang dùng; khoảng 0 món thì bỏ.
   3. Product::scopeEffectivePriceBetween() so với Product::giaHieuLucSql() —
      cùng biểu thức SQL mà sắp xếp theo giá dùng (giá sau khuyến mại, bỏ hàng
@@ -1189,7 +1189,7 @@ LUỒNG 26. Lọc theo giá, dịp tặng, bộ sưu tập tự động, quà k�
   BỘ SƯU TẬP TỰ ĐỘNG — /san-pham?bo-suu-tap=cao-cap | theo-mua
     App\Enums\FlowerCollection, App\Services\Catalog\FlowerCollections
     apDung()        luật vào bộ: cao-cap = hoa (tươi hoặc giả) có giá đang bán
-                    >= config('catalog.cao_cap_tu'); theo-mua = hoa gắn mùa này
+                    >= ThamSoKinhDoanh::so('catalog.cao_cap_tu'); theo-mua = hoa gắn mùa này
                     hoặc mùa kế
     soLuong(), soLuongTheoDip()   đếm để ẩn bộ / dịp chưa có hàng
     dipSapToi()     ngày lễ trong 30 ngày tới (config/occasions.php, khoá 'dip')
@@ -1209,6 +1209,33 @@ LUỒNG 26. Lọc theo giá, dịp tặng, bộ sưu tập tự động, quà k�
      quà; mỗi cặp (sản phẩm × quà) một dòng product_gifts trong một giao dịch;
      trung() tìm dòng đã có để cập nhật thay vì nhân đôi. Quy cách kích hoạt chỉ
      áp cho sản phẩm đang sửa.
+
+LUỒNG 27. Admin đổi tham số kinh doanh (ngưỡng, phí, điểm, hạn)
+--------------------------------------------------------------------------------
+  1. /admin/settings/tham-so → Admin\BusinessParamsController@edit
+     resources/views/admin/settings/tham-so.blade.php dựng các ô từ
+     ThamSoKinhDoanh::nhom() — mỗi ô hiện giá trị đang dùng, mặc định, nhãn "đã đổi".
+     Tên ô dùng "__" thay dấu chấm (catalog.cao_cap_tu → ts[catalog__cao_cap_tu])
+     vì Laravel hiểu dấu chấm là mảng lồng nhau.
+  2. PUT → update(): bỏ ký tự không phải số ("800.000" = 800000), kiểm trần/sàn
+     từng ô; ô mốc giá đọc bằng ThamSoKinhDoanh::docMoc() (tự sắp tăng dần, tối đa
+     6 mốc). Có lỗi thì ném ValidationException, không lưu ô nào.
+  3. ThamSoKinhDoanh::luu() ghi Setting "tham_so:<khoá>"; ô trống hoặc bằng mặc
+     định thì xoá bản ghi đè. Setting::set() xoá bộ nhớ đệm nên trang khác thấy ngay.
+  4. Ghi nhật ký 'settings.params' với giá trị trước / sau.
+
+  ĐỌC Ở ĐÂU
+    ThamSoKinhDoanh::giaTri($khoa)  bản ghi đè trong settings, không có thì config($khoa)
+    ThamSoKinhDoanh::so($khoa)      như trên, ép số nguyên
+    ThamSoKinhDoanh::khoangGia()    dựng [từ, đến] từ các mốc cho bộ lọc giá
+  Nơi dùng: Shop\ProductController (khoảng giá), FlowerCollections (cao cấp, nhắc
+  dịp), Product::scopeNewArrivals, HomeController, SocialProof::chiCon,
+  Admin\ProductController (sắp hết hàng), CartService::toiDaMoiMon,
+  ExchangeService::hanDoiNgay, ShippingRates, TrangNoiDung (bảng phí ở trang chính
+  sách), PointEarning / PointRedemption, OrderRiskScorer, Order::needsRiskReview,
+  AppServiceProvider (trần AI).
+  THÊM MỘT THAM SỐ: đặt mặc định trong config → thêm một dòng vào
+  ThamSoKinhDoanh::DS → đổi chỗ dùng sang ThamSoKinhDoanh::so('<khoá>').
 ================================================================================
 PHẦN 4. TỰ HỌC VÀ GỠ LỖI
 ================================================================================
