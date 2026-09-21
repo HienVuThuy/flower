@@ -15,7 +15,8 @@ use Illuminate\Support\Carbon;
 
 /**
  * Dữ liệu mẫu cho dịch vụ chăm cây hộ: giá tham khảo, lịch Tết, vài phiếu ở đủ các trạng thái
- * và việc làm thêm (đã đồng ý, cửa hàng đề xuất, chờ báo giá).
+ * việc làm thêm (đã đồng ý, cửa hàng đề xuất, chờ báo giá) và một phiếu đang chờ khách xác nhận
+ * báo giá kèm đoạn trao đổi với nhân viên.
  * ⚠️ DỮ LIỆU MẪU — giá là mức gợi ý để trình diễn; cửa hàng sửa ở Quản trị › Chăm cây hộ › Bảng giá.
  * Phiếu đi qua đúng BoardingService (lùi đồng hồ về từng thời điểm), không chèn thẳng vào bảng,
  * nên tiền, nhật ký và thông báo khớp như dùng thật. Chạy lại không tạo trùng.
@@ -32,8 +33,10 @@ class BoardingSampleSeeder extends Seeder
         $this->admin = User::query()->where('role', UserRole::Admin->value)->orderBy('id')->firstOrFail();
 
         if (BoardingBooking::query()->exists()) {
-            $this->command?->warn('Đã có phiếu chăm hộ — chỉ bổ sung việc làm thêm mẫu nếu chưa có.');
+            $this->command?->warn('Đã có phiếu chăm hộ — chỉ bổ sung phần mẫu còn thiếu (việc làm thêm, báo giá, trao đổi).');
+            $this->danhDauDacThu();
             $this->viecMau();
+            $this->baoGiaMau();
 
             return;
         }
@@ -52,9 +55,12 @@ class BoardingSampleSeeder extends Seeder
             'plant_name' => 'Đào thế trực chậu gốm, cao khoảng 1,3m', 'plant_note' => 'Mua ở cửa hàng Tết năm ngoái, sau Tết lá vàng nhiều.',
             'handover' => 'cua_hang_lay', 'contact_phone' => '0912000101', 'address' => 'Ngõ 42 Phú Diễn, Bắc Từ Liêm',
         ], null));
-        $this->luc($homNay->copy()->subDays(59), fn () => $this->dv->xacNhan($p, $this->admin, [
-            'drop_off_on' => $homNay->copy()->subDays(57)->toDateString(), 'handover_fee' => 100000, 'note' => 'Thứ bảy nhân viên qua lấy cây buổi sáng.',
+        $this->luc($homNay->copy()->subDays(59), fn () => $this->dv->guiBaoGia($p, $this->admin, [
+            'drop_off_on' => $homNay->copy()->subDays(57)->toDateString(), 'return_on' => $p->return_on?->toDateString(),
+            'monthly_price' => 300000, 'yearly_price' => 3000000, 'handover_fee' => 100000,
+            'note' => 'Cây cao 1,3m, giá theo bảng. Thứ bảy nhân viên qua lấy cây buổi sáng.',
         ]));
+        $this->luc($homNay->copy()->subDays(58), fn () => $this->dv->chapNhanBaoGia($p->fresh(), $p->user));
         $this->luc($homNay->copy()->subDays(57), fn () => $this->dv->nhanCay($p->fresh(), $this->admin, $homNay->copy()->subDays(57)->toDateString(), 'Cây khoẻ, rễ hơi chặt chậu.'));
         $this->luc($homNay->copy()->subDays(57), fn () => $this->dv->ghiThu($p->fresh(), $this->admin, '500000.00', BoardingPaymentMethod::ChuyenKhoan, 'Đặt cọc khi lấy cây'));
         $this->luc($homNay->copy()->subDays(40), fn () => $this->dv->capNhat($p->fresh(), $this->admin, 'Đã thay đất, cắt bớt rễ già, bón phân hữu cơ.', null));
@@ -67,7 +73,11 @@ class BoardingSampleSeeder extends Seeder
             'plant_name' => 'Bonsai tùng la hán dáng trực', 'plant_note' => 'Đi công tác 3 tháng.',
             'handover' => 'tu_mang', 'contact_phone' => '0912000102',
         ], null));
-        $this->luc($homNay->copy()->subDays(99), fn () => $this->dv->xacNhan($p, $this->admin, ['drop_off_on' => $homNay->copy()->subDays(98)->toDateString()]));
+        $this->luc($homNay->copy()->subDays(99), fn () => $this->dv->guiBaoGia($p, $this->admin, [
+            'drop_off_on' => $homNay->copy()->subDays(98)->toDateString(), 'return_on' => $p->return_on?->toDateString(),
+            'monthly_price' => 400000, 'yearly_price' => 4000000,
+        ]));
+        $this->luc($homNay->copy()->subDays(99), fn () => $this->dv->chapNhanBaoGia($p->fresh(), $p->user));
         $this->luc($homNay->copy()->subDays(98), fn () => $this->dv->nhanCay($p->fresh(), $this->admin, $homNay->copy()->subDays(98)->toDateString()));
         $this->luc($homNay->copy()->subDays(60), fn () => $this->dv->capNhat($p->fresh(), $this->admin, 'Đã tỉa tán, uốn lại hai cành phụ.', null));
         $this->luc($homNay->copy()->subDays(7), fn () => $this->dv->traCay($p->fresh(), $this->admin, $homNay->copy()->subDays(7)->toDateString()));
@@ -102,8 +112,48 @@ class BoardingSampleSeeder extends Seeder
         ], null));
 
         $this->viecMau();
+        $this->baoGiaMau();
 
         $this->command?->info('Đã tạo ' . count($gia) . ' dòng giá, lịch Tết và ' . BoardingBooking::count() . ' phiếu chăm hộ mẫu.');
+    }
+
+    /** Bonsai và đào / mai thế: giá trị cao, mỗi cây mỗi khác → luôn báo giá riêng. */
+    private function danhDauDacThu(): void
+    {
+        BoardingRate::query()->whereIn('name', ['Bonsai', 'Đào, mai, quất thế chậu'])->update(['needs_quote' => true]);
+    }
+
+    /**
+     * Một phiếu đang chờ khách xác nhận báo giá, kèm đoạn trao đổi với nhân viên:
+     * khách hỏi → nhân viên trả lời → gửi báo giá chi tiết (tiền chăm, việc làm thêm, phí đến lấy).
+     */
+    private function baoGiaMau(): void
+    {
+        if (\App\Models\BoardingQuote::query()->where('status', 'dang_cho')->exists()) {
+            return;
+        }
+
+        $p = BoardingBooking::query()->where('status', 'cho_duyet')->whereNotNull('user_id')->orderByDesc('id')->first();
+
+        if (! $p || ! $p->user) {
+            return;
+        }
+
+        $homNay = Carbon::now(\App\Services\Time\Gio::mui())->startOfDay();
+
+        $this->luc($homNay->copy()->subHours(20), fn () => $this->dv->yeuCauThem($p, $p->user, 'Thay chậu gốm lớn hơn', 'Lá đang vàng mép, có cần thay chậu không?'));
+        $this->luc($homNay->copy()->subHours(20), fn () => $this->dv->nhanTin($p->fresh(), $p->user, 'Monstera nhà mình cao khoảng 90cm, lá to. Shop xem giúp giá có khác bảng không ạ?'));
+        $this->luc($homNay->copy()->subHours(18), fn () => $this->dv->nhanTin($p->fresh(), $this->admin, 'Chào anh, cây cỡ này bên em tính 150.000đ/tháng vì cần chỗ rộng và tưới nhiều hơn. Lá vàng mép thường do chậu chật, em báo giá thay chậu luôn nhé.'));
+
+        $x = BoardingExtra::query()->where('boarding_booking_id', $p->id)->where('status', 'cho_bao_gia')->first();
+
+        $this->luc($homNay->copy()->subHours(17), fn () => $this->dv->guiBaoGia($p->fresh(), $this->admin, [
+            'drop_off_on' => $p->drop_off_on->toDateString(), 'return_on' => $p->return_on?->toDateString(),
+            'monthly_price' => 150000, 'handover_fee' => 120000,
+            'extras' => $x ? [$x->id => ['gia' => 180000, 'ghi_chu' => 'Gồm chậu gốm 40cm và đất trộn']] : [],
+            'them' => [['viec' => 'Xử lý nấm lá', 'gia' => 50000]],
+            'note' => 'Giá tháng cao hơn bảng vì cây lớn. Nhân viên qua lấy cây theo hẹn.',
+        ]));
     }
 
     /** Việc làm thêm mẫu: khách xin → cửa hàng báo giá → khách đồng ý; cửa hàng đề xuất; một yêu cầu đang chờ báo giá. */
@@ -149,6 +199,7 @@ class BoardingSampleSeeder extends Seeder
             $out[$ma] = BoardingRate::query()->firstOrCreate(['name' => $ten], [
                 'care_difficulty' => $doKho, 'monthly_price' => $thang, 'yearly_price' => $nam,
                 'description' => $moTa, 'is_active' => true, 'sort_order' => $thuTu += 10,
+                'needs_quote' => in_array($ma, ['dao', 'bonsai'], true),
             ]);
         }
 

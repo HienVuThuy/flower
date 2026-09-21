@@ -48,6 +48,12 @@ return [
 
         /* Trước hạn trả bao nhiêu ngày thì phiếu chuyển sang "Sắp trả cây" và nhắc khách. */
         'nhac_truoc_ngay' => 7,
+
+        /* Khách khai giá trị cây từ mức này thì bắt buộc báo giá riêng (0 = không xét). */
+        'gia_tri_cao_tu' => 5000000,
+
+        /* Báo giá có hiệu lực bao nhiêu ngày. */
+        'bao_gia_hieu_luc_ngay' => 3,
     ],
 
 ];

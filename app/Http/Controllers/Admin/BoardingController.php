@@ -69,6 +69,8 @@ class BoardingController extends Controller
             'customer_name' => ['required', 'string', 'max:120'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'nhan_cay_ngay' => ['nullable', 'boolean'],
+            'declared_value' => ['nullable', 'numeric', 'min:0', 'max:10000000000'],
+            'yeu_cau_rieng' => ['nullable', 'string', 'max:2500'],
             'monthly_price' => ['nullable', 'numeric', 'min:1000', 'max:100000000'],
             'yearly_price' => ['nullable', 'numeric', 'min:1000', 'max:1000000000'],
             'boarding_rate_id' => ['required', 'integer', Rule::exists('boarding_rates', 'id')->where('is_active', true)],
@@ -112,7 +114,7 @@ class BoardingController extends Controller
 
     public function show(BoardingBooking $booking): View
     {
-        $booking->load(['user:id,name,email', 'rate', 'window', 'events.user:id,name', 'payments', 'extras', 'parent:id,code', 'product:id,name,slug']);
+        $booking->load(['user:id,name,email', 'rate', 'window', 'events.user:id,name', 'payments', 'extras', 'quotes.sender:id,name', 'messages.sender:id,name', 'parent:id,code', 'product:id,name,slug']);
 
         return view('admin.boarding.show', [
             'phieu' => $booking,
@@ -120,8 +122,13 @@ class BoardingController extends Controller
         ]);
     }
 
+    /** Một form cho cả hai cách: gửi báo giá cho khách xác nhận, hoặc xác nhận thẳng (chỉ khi phiếu không bắt buộc báo giá). */
     public function confirm(Request $request, BoardingBooking $booking): RedirectResponse
     {
+        if ($request->input('cach') === 'bao_gia') {
+            return $this->sendQuote($request, $booking);
+        }
+
         $d = $request->validate([
             'drop_off_on' => ['required', 'date'],
             'monthly_price' => ['required', 'numeric', 'min:1000', 'max:100000000'],
@@ -136,6 +143,54 @@ class BoardingController extends Controller
         $this->audit()->log('boarding.confirmed', 'Xác nhận phiếu chăm hộ ' . $booking->code);
 
         return back()->with('success', 'Đã xác nhận. Khách nhận được thông báo.');
+    }
+
+    private function sendQuote(Request $request, BoardingBooking $booking): RedirectResponse
+    {
+        $d = $request->validate([
+            'drop_off_on' => ['required', 'date'],
+            'return_on' => ['nullable', 'date'],
+            'monthly_price' => ['required', 'numeric', 'min:1000', 'max:100000000'],
+            'yearly_price' => ['nullable', 'numeric', 'min:1000', 'max:1000000000'],
+            'handover_fee' => ['nullable', 'numeric', 'min:0', 'max:100000000'],
+            'adjustment' => ['nullable', 'numeric', 'min:-100000000', 'max:100000000'],
+            'adjustment_reason' => ['nullable', 'required_unless:adjustment,0,null', 'string', 'max:255'],
+            'extras' => ['nullable', 'array'],
+            'extras.*.gia' => ['nullable', 'numeric', 'min:0', 'max:100000000'],
+            'extras.*.khong_nhan' => ['nullable', 'boolean'],
+            'extras.*.ly_do' => ['nullable', 'string', 'max:500'],
+            'extras.*.ghi_chu' => ['nullable', 'string', 'max:500'],
+            'them' => ['nullable', 'array', 'max:5'],
+            'them.*.viec' => ['nullable', 'string', 'max:200'],
+            'them.*.gia' => ['nullable', 'required_with:them.*.viec', 'numeric', 'min:0', 'max:100000000'],
+            'note' => ['nullable', 'string', 'max:1000'],
+        ], [
+            'adjustment_reason.required_unless' => 'Có điều chỉnh giá thì ghi lý do để khách hiểu.',
+            'them.*.gia.required_with' => 'Việc cửa hàng thêm cần có giá.',
+        ], ['monthly_price' => 'giá chốt mỗi tháng']);
+
+        $bg = $this->dichVu->guiBaoGia($booking, $request->user(), $d);
+        $this->audit()->log('boarding.quote', 'Gửi báo giá lần ' . $bg->version . ' phiếu ' . $booking->code, null, ['tong' => (string) $bg->total]);
+
+        return back()->with('success', 'Đã gửi báo giá lần ' . $bg->version . ' cho khách (tổng ' . \App\Services\Shop\Money::format((string) $bg->total) . ').');
+    }
+
+    public function withdrawQuote(Request $request, BoardingBooking $booking): RedirectResponse
+    {
+        $d = $request->validate(['ly_do' => ['nullable', 'string', 'max:500']]);
+
+        $this->dichVu->thuHoiBaoGia($booking, $request->user(), $d['ly_do'] ?? null);
+
+        return back()->with('success', 'Đã rút báo giá. Sửa rồi gửi lại cho khách.');
+    }
+
+    public function message(Request $request, BoardingBooking $booking): RedirectResponse
+    {
+        $d = $request->validate(['noi_dung' => ['required', 'string', 'max:1000']], [], ['noi_dung' => 'tin nhắn']);
+
+        $this->dichVu->nhanTin($booking, $request->user(), $d['noi_dung']);
+
+        return redirect()->to(route('admin.boarding.show', $booking) . '#trao-doi')->with('success', 'Đã gửi tin nhắn cho khách.');
     }
 
     public function reject(Request $request, BoardingBooking $booking): RedirectResponse

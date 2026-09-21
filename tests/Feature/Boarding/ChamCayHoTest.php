@@ -248,7 +248,7 @@ class ChamCayHoTest extends TestCase
 
         $admin = $this->admin();
         $this->actingAs($admin)->get(route('admin.boarding.index'))->assertOk()->assertSee(BoardingBooking::sole()->code);
-        $this->actingAs($admin)->get(route('admin.boarding.show', BoardingBooking::sole()))->assertOk()->assertSee('Xác nhận và báo khách');
+        $this->actingAs($admin)->get(route('admin.boarding.show', BoardingBooking::sole()))->assertOk()->assertSee('Gửi báo giá cho khách xác nhận');
         $this->actingAs($admin)->get(route('admin.boarding-rates.index'))->assertOk();
         $this->actingAs($admin)->get(route('admin.boarding-windows.index'))->assertOk();
 

@@ -6,6 +6,7 @@ use App\Enums\BoardingHandover;
 use App\Enums\BoardingExtraStatus;
 use App\Enums\BoardingMode;
 use App\Enums\BoardingPaymentMethod;
+use App\Enums\BoardingQuoteStatus;
 use App\Enums\BoardingSource;
 use App\Enums\MomoFlow;
 use App\Enums\BoardingStatus;
@@ -14,12 +15,15 @@ use App\Models\BoardingBooking;
 use App\Models\BoardingEvent;
 use App\Models\BoardingExtra;
 use App\Models\BoardingPayment;
+use App\Models\BoardingQuote;
 use App\Models\PaymentTransaction;
 use App\Models\BoardingRate;
 use App\Models\BoardingWindow;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\UserNotification;
+use App\Services\Chat\ChatException;
+use App\Services\Chat\LiveChat;
 use App\Services\Media\ImageStore;
 use App\Services\Payment\MomoGateway;
 use App\Services\Payment\PaymentException;
@@ -39,6 +43,7 @@ class BoardingService
     public function __construct(
         private readonly BoardingPricing $gia,
         private readonly ImageStore $anh,
+        private readonly LiveChat $chat,
     ) {
     }
 
@@ -129,6 +134,7 @@ class BoardingService
                 'product_id' => $sanPham,
                 'plant_name' => trim($d['plant_name']),
                 'plant_note' => $d['plant_note'] ?? null,
+                'declared_value' => ($d['declared_value'] ?? '') !== '' && $d['declared_value'] !== null ? bcadd((string) $d['declared_value'], '0', 2) : null,
                 'photo' => $duongAnh,
                 'mode' => $bg['mode'],
                 'months' => $bg['mode'] === BoardingMode::Thang ? (int) $d['months'] : null,
@@ -149,12 +155,26 @@ class BoardingService
 
             $this->ghi($p, $nguoiLap, $trangThai, $nguon === BoardingSource::TaiQuay ? 'Cửa hàng lập phiếu tại quầy.' : 'Khách gửi yêu cầu chăm hộ.');
 
+            foreach (self::tachYeuCau($d['yeu_cau_rieng'] ?? null) as $viec) {
+                $x = new BoardingExtra();
+                $x->forceFill([
+                    'boarding_booking_id' => $p->id,
+                    'title' => $viec,
+                    'proposed_by' => BoardingExtra::KHACH,
+                    'status' => BoardingExtraStatus::ChoBaoGia,
+                ])->save();
+            }
+
             return $p;
         });
     }
 
     public function xacNhan(BoardingBooking $p, User $admin, array $d): void
     {
+        if ($ly = $p->load(['rate', 'extras'])->lyDoPhaiBaoGia()) {
+            throw ValidationException::withMessages(['cach' => 'Phiếu này phải gửi báo giá cho khách: ' . implode('; ', $ly) . '.']);
+        }
+
         $this->doi($p, [BoardingStatus::ChoDuyet], function () use ($p, $d) {
             $gui = CarbonImmutable::parse($d['drop_off_on']);
 
@@ -187,7 +207,10 @@ class BoardingService
 
     public function huy(BoardingBooking $p, User $nguoi, ?string $lyDo = null): void
     {
-        $this->doi($p, [BoardingStatus::ChoDuyet, BoardingStatus::DaXacNhan], fn () => $p->forceFill(['status' => BoardingStatus::DaHuy, 'reject_reason' => $lyDo]), $nguoi, $lyDo);
+        $this->doi($p, [BoardingStatus::ChoDuyet, BoardingStatus::ChoKhachDuyet, BoardingStatus::DaXacNhan], fn () => $p->forceFill(['status' => BoardingStatus::DaHuy, 'reject_reason' => $lyDo]), $nguoi, $lyDo);
+
+        BoardingQuote::query()->where('boarding_booking_id', $p->id)->where('status', BoardingQuoteStatus::DangCho->value)
+            ->update(['status' => BoardingQuoteStatus::DaHuy->value, 'responded_at' => now(), 'response_note' => $lyDo]);
     }
 
     public function nhanCay(BoardingBooking $p, User $admin, string $ngay, ?string $ghiChu = null): void
@@ -297,9 +320,259 @@ class BoardingService
         });
     }
 
+    /* ---------- BÁO GIÁ: cửa hàng báo chi tiết + tổng, khách xác nhận / yêu cầu sửa / huỷ ---------- */
+
+    /**
+     * Gửi báo giá cho khách. Mọi yêu cầu riêng đang chờ phải có giá hoặc bị từ chối kèm lý do;
+     * cửa hàng thêm được việc của mình. Chụp các dòng + tổng thành một phiên bản báo giá.
+     */
+    public function guiBaoGia(BoardingBooking $p, User $admin, array $d): BoardingQuote
+    {
+        return DB::transaction(function () use ($p, $admin, $d) {
+            $khoa = BoardingBooking::query()->lockForUpdate()->findOrFail($p->id);
+
+            if ($khoa->status !== BoardingStatus::ChoDuyet) {
+                throw ValidationException::withMessages(['cach' => 'Phiếu đang "' . $khoa->status->label() . '", không gửi báo giá được.']);
+            }
+
+            $p->setRawAttributes($khoa->getAttributes(), true);
+            $p->load('extras');
+
+            $gui = CarbonImmutable::parse($d['drop_off_on']);
+            $tra = ! empty($d['return_on']) ? CarbonImmutable::parse($d['return_on']) : ($p->return_on ? CarbonImmutable::parse($p->return_on) : null);
+
+            if ($tra && $gui->gte($tra)) {
+                throw ValidationException::withMessages(['return_on' => 'Ngày trả phải sau ngày nhận cây.']);
+            }
+
+            $giaThang = bcadd((string) $d['monthly_price'], '0', 2);
+            $giaNam = ($d['yearly_price'] ?? '') !== '' && $d['yearly_price'] !== null ? bcadd((string) $d['yearly_price'], '0', 2) : bcmul($giaThang, '12', 2);
+            $soThang = $tra ? $this->gia->soThang($gui, $tra) : 1;
+
+            $loi = [];
+            foreach ($p->extras->where('status', BoardingExtraStatus::ChoBaoGia) as $x) {
+                $o = $d['extras'][$x->id] ?? [];
+
+                if (! empty($o['khong_nhan'])) {
+                    if (trim((string) ($o['ly_do'] ?? '')) === '') {
+                        $loi["extras.{$x->id}.ly_do"] = 'Ghi lý do không nhận "' . $x->title . '".';
+                    }
+                } elseif (($o['gia'] ?? '') === '' || ! is_numeric($o['gia']) || $o['gia'] < 0) {
+                    $loi["extras.{$x->id}.gia"] = 'Báo giá cho "' . $x->title . '" hoặc đánh dấu không nhận.';
+                }
+            }
+
+            if ($loi !== []) {
+                throw ValidationException::withMessages($loi);
+            }
+
+            $p->forceFill([
+                'drop_off_on' => $gui,
+                'return_on' => $tra,
+                'monthly_price' => $giaThang,
+                'yearly_price' => $giaNam,
+                'care_amount' => $this->gia->tienCham($giaThang, $giaNam, $soThang),
+                'handover_fee' => $p->handover === BoardingHandover::CuaHangLay ? bcadd((string) ($d['handover_fee'] ?? 0), '0', 2) : '0.00',
+                'adjustment' => bcadd((string) ($d['adjustment'] ?? 0), '0', 2),
+                'adjustment_reason' => $d['adjustment_reason'] ?? null,
+                'status' => BoardingStatus::ChoKhachDuyet,
+            ])->save();
+
+            foreach ($p->extras->where('status', BoardingExtraStatus::ChoBaoGia) as $x) {
+                $o = $d['extras'][$x->id] ?? [];
+
+                $x->forceFill(! empty($o['khong_nhan'])
+                    ? ['status' => BoardingExtraStatus::CuaHangTuChoi, 'shop_note' => trim((string) $o['ly_do'])]
+                    : ['status' => BoardingExtraStatus::ChoKhach, 'price' => bcadd((string) $o['gia'], '0', 2), 'shop_note' => $o['ghi_chu'] ?? null, 'quoted_at' => now()]
+                )->save();
+            }
+
+            foreach ($d['them'] ?? [] as $dong) {
+                if (trim((string) ($dong['viec'] ?? '')) === '') {
+                    continue;
+                }
+
+                $x = new BoardingExtra();
+                $x->forceFill([
+                    'boarding_booking_id' => $p->id,
+                    'title' => trim((string) $dong['viec']),
+                    'proposed_by' => BoardingExtra::CUA_HANG,
+                    'price' => bcadd((string) ($dong['gia'] ?? 0), '0', 2),
+                    'status' => BoardingExtraStatus::ChoKhach,
+                    'quoted_at' => now(),
+                ])->save();
+            }
+
+            $p->unsetRelation('extras');
+            $p->load('extras');
+
+            [$dong, $tong] = $this->dongBaoGia($p, $soThang, $tra === null);
+
+            BoardingQuote::query()->where('boarding_booking_id', $p->id)->where('status', BoardingQuoteStatus::DangCho->value)
+                ->update(['status' => BoardingQuoteStatus::ThayThe->value]);
+
+            $bg = new BoardingQuote();
+            $bg->forceFill([
+                'boarding_booking_id' => $p->id,
+                'version' => (int) BoardingQuote::query()->where('boarding_booking_id', $p->id)->max('version') + 1,
+                'lines' => $dong,
+                'total' => $tong,
+                'note' => $d['note'] ?? null,
+                'valid_until' => $this->homNay()->addDays(ThamSoKinhDoanh::so('kinh_doanh.cham_ho.bao_gia_hieu_luc_ngay')),
+                'sent_by' => $admin->id,
+                'status' => BoardingQuoteStatus::DangCho,
+            ])->save();
+
+            $tomTat = 'Báo giá lần ' . $bg->version . ': tổng ' . Money::format($tong) . ', hiệu lực đến ' . $bg->valid_until->format('d/m/Y') . '.';
+            $this->ghi($p, $admin, BoardingStatus::ChoKhachDuyet, $tomTat . ($bg->note ? ' ' . $bg->note : ''));
+            $this->nhanTinHeThong($p, $admin, 'Cửa hàng đã gửi ' . mb_strtolower($tomTat) . ' Xem từng dòng và xác nhận / yêu cầu sửa trên trang phiếu ' . $p->code . '.');
+
+            return $bg;
+        });
+    }
+
+    /** Khách đồng ý báo giá: chốt giá, các việc trong báo giá thành "đã đồng ý", phiếu sang "đã xác nhận" để trả tiền. */
+    public function chapNhanBaoGia(BoardingBooking $p, User $khach): void
+    {
+        $bg = $p->load('quotes')->baoGiaDangCho();
+
+        if (! $bg || $p->status !== BoardingStatus::ChoKhachDuyet) {
+            throw ValidationException::withMessages(['bao_gia' => 'Không có báo giá nào đang chờ bạn trả lời.']);
+        }
+
+        if ($bg->hetHan()) {
+            throw ValidationException::withMessages(['bao_gia' => 'Báo giá đã hết hạn ngày ' . $bg->valid_until->format('d/m/Y') . '. Bấm "Yêu cầu sửa" để cửa hàng báo giá lại.']);
+        }
+
+        $this->doi($p, [BoardingStatus::ChoKhachDuyet], function () use ($p, $bg) {
+            BoardingExtra::query()->where('boarding_booking_id', $p->id)->where('status', BoardingExtraStatus::ChoKhach->value)
+                ->update(['status' => BoardingExtraStatus::DaDongY->value, 'answered_at' => now()]);
+
+            $bg->forceFill(['status' => BoardingQuoteStatus::DaDongY, 'responded_at' => now()])->save();
+
+            $p->forceFill(['status' => BoardingStatus::DaXacNhan, 'price_agreed_at' => now()]);
+        }, $khach, 'Khách xác nhận báo giá lần ' . $bg->version . ' (' . Money::format((string) $bg->total) . ').');
+    }
+
+    /** Khách muốn sửa: ghi điều muốn đổi (vào chat với nhân viên), thêm yêu cầu mới nếu có; phiếu về "chờ báo giá". */
+    public function yeuCauSuaBaoGia(BoardingBooking $p, User $khach, string $noiDung, ?string $themYeuCau = null): void
+    {
+        $bg = $p->load('quotes')->baoGiaDangCho();
+
+        $this->doi($p, [BoardingStatus::ChoKhachDuyet], function () use ($p, $bg, $noiDung, $themYeuCau) {
+            $bg?->forceFill(['status' => BoardingQuoteStatus::YeuCauSua, 'responded_at' => now(), 'response_note' => $noiDung])->save();
+            $this->veChoBaoGia($p);
+
+            foreach (self::tachYeuCau($themYeuCau) as $viec) {
+                $x = new BoardingExtra();
+                $x->forceFill(['boarding_booking_id' => $p->id, 'title' => $viec, 'proposed_by' => BoardingExtra::KHACH, 'status' => BoardingExtraStatus::ChoBaoGia])->save();
+            }
+
+            $p->forceFill(['status' => BoardingStatus::ChoDuyet]);
+        }, $khach, 'Khách yêu cầu sửa báo giá: ' . Str::limit($noiDung, 300));
+
+        if ($p->user_id) {
+            $this->chat->gui($khach, $p->user, 'Yêu cầu sửa báo giá phiếu ' . $p->code . ': ' . $noiDung, $p);
+        }
+    }
+
+    /** Cửa hàng rút báo giá đang chờ để sửa (sau khi trao đổi với khách). */
+    public function thuHoiBaoGia(BoardingBooking $p, User $admin, ?string $lyDo = null): void
+    {
+        $this->doi($p, [BoardingStatus::ChoKhachDuyet], function () use ($p) {
+            BoardingQuote::query()->where('boarding_booking_id', $p->id)->where('status', BoardingQuoteStatus::DangCho->value)
+                ->update(['status' => BoardingQuoteStatus::ThayThe->value]);
+            $this->veChoBaoGia($p);
+            $p->forceFill(['status' => BoardingStatus::ChoDuyet]);
+        }, $admin, 'Cửa hàng rút báo giá để sửa' . ($lyDo ? ': ' . $lyDo : '') . '. Báo giá mới sẽ gửi lại.');
+    }
+
+    /** Nhắn tin về phiếu — đi vào hộp thư chat khách ↔ nhân viên, gắn mã phiếu. */
+    public function nhanTin(BoardingBooking $p, User $nguoi, string $noiDung): void
+    {
+        if (! $p->user) {
+            throw ValidationException::withMessages(['noi_dung' => 'Khách lập phiếu tại quầy không có tài khoản — liên hệ qua số ' . $p->contact_phone . '.']);
+        }
+
+        try {
+            $this->chat->gui($nguoi, $p->user, $noiDung, $p);
+        } catch (ChatException $e) {
+            throw ValidationException::withMessages(['noi_dung' => $e->getMessage()]);
+        }
+    }
+
+    /** Các dòng báo giá + tổng — tổng khớp đúng số khách sẽ phải trả khi đồng ý. */
+    private function dongBaoGia(BoardingBooking $p, int $soThang, bool $tamTinh): array
+    {
+        $dong = [[
+            'nhan' => 'Tiền chăm ' . $soThang . ' tháng (' . Money::format((string) $p->monthly_price) . '/tháng'
+                . ($soThang >= 12 ? ', đủ năm áp ' . Money::format((string) $p->yearly_price) . '/năm' : '') . ')'
+                . ($tamTinh ? ' — tạm tính, chưa hẹn ngày trả' : ''),
+            'tien' => (string) $p->care_amount,
+        ]];
+
+        foreach ($p->extras as $x) {
+            if ($x->price !== null && ($x->status === BoardingExtraStatus::ChoKhach || $x->status->tinhTien())) {
+                $dong[] = ['nhan' => ($x->proposed_by === BoardingExtra::KHACH ? 'Yêu cầu của bạn: ' : 'Cửa hàng đề xuất: ') . $x->title, 'tien' => (string) $x->price];
+            }
+        }
+
+        if (bccomp((string) $p->handover_fee, '0', 2) > 0) {
+            $dong[] = ['nhan' => 'Phí đến lấy và trả cây', 'tien' => (string) $p->handover_fee];
+        }
+
+        if (bccomp((string) $p->rush_fee, '0', 2) > 0) {
+            $dong[] = ['nhan' => 'Phí nhận gấp', 'tien' => (string) $p->rush_fee];
+        }
+
+        if (bccomp((string) $p->adjustment, '0', 2) !== 0) {
+            $dong[] = ['nhan' => 'Điều chỉnh' . ($p->adjustment_reason ? ': ' . $p->adjustment_reason : ''), 'tien' => (string) $p->adjustment];
+        }
+
+        $tong = '0.00';
+        foreach ($dong as $d) {
+            $tong = bcadd($tong, $d['tien'], 2);
+        }
+
+        return [$dong, bccomp($tong, '0', 2) < 0 ? '0.00' : $tong];
+    }
+
+    private function veChoBaoGia(BoardingBooking $p): void
+    {
+        BoardingExtra::query()->where('boarding_booking_id', $p->id)->where('status', BoardingExtraStatus::ChoKhach->value)
+            ->update(['status' => BoardingExtraStatus::ChoBaoGia->value]);
+    }
+
+    private function nhanTinHeThong(BoardingBooking $p, User $nhanVien, string $noiDung): void
+    {
+        if (! $p->user) {
+            return;
+        }
+
+        try {
+            $this->chat->gui($nhanVien, $p->user, $noiDung, $p);
+        } catch (ChatException) {
+            /* Không có quyền chat vẫn gửi báo giá được — khách nhận thông báo và thấy trên trang phiếu. */
+        }
+    }
+
+    /** "Yêu cầu riêng" khách gõ mỗi dòng một việc → tối đa 10 việc, mỗi việc 200 ký tự. */
+    public static function tachYeuCau(?string $chu): array
+    {
+        return collect(preg_split('/\r\n|\r|\n/', (string) $chu))
+            ->map(fn ($d) => trim(ltrim(trim($d), '-•*+ ')))
+            ->filter()
+            ->map(fn ($d) => Str::limit($d, 200, ''))
+            ->unique()
+            ->take(10)
+            ->values()
+            ->all();
+    }
+
     /* ---------- YÊU CẦU THÊM: báo giá từng việc, khách đồng ý mới tính tiền ---------- */
 
-    private const NHAN_YEU_CAU = [BoardingStatus::DaXacNhan, BoardingStatus::DangCham, BoardingStatus::ChoTra];
+    /* Chờ báo giá: yêu cầu mới vào báo giá sắp gửi. Đang có báo giá chờ trả lời thì dùng "Yêu cầu sửa". */
+    private const NHAN_YEU_CAU = [BoardingStatus::ChoDuyet, BoardingStatus::DaXacNhan, BoardingStatus::DangCham, BoardingStatus::ChoTra];
 
     public function yeuCauThem(BoardingBooking $p, User $khach, string $viec, ?string $ghiChu): BoardingExtra
     {

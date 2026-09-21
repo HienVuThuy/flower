@@ -48,6 +48,11 @@ class ThamSoKinhDoanh
         'kinh_doanh.cham_ho.nhac_truoc_ngay' => ['nhom' => 'Chăm cây hộ', 'nhan' => 'Nhắc khách trước hạn trả cây', 'kieu' => 'so', 'min' => 1, 'max' => 60, 'don_vi' => 'ngày',
             'goi_y' => 'Đến mốc này phiếu chuyển sang "Sắp trả cây" để cửa hàng chuẩn bị.'],
 
+        'kinh_doanh.cham_ho.gia_tri_cao_tu' => ['nhom' => 'Chăm cây hộ', 'nhan' => 'Cây khách khai giá trị từ mức này phải báo giá riêng', 'kieu' => 'tien', 'min' => 0, 'max' => 10000000000,
+            'goi_y' => 'Cây đắt (bonsai lâu năm, đào thế cổ…) rủi ro cao, cần xem cây và báo giá. Đặt 0 để không xét.'],
+        'kinh_doanh.cham_ho.bao_gia_hieu_luc_ngay' => ['nhom' => 'Chăm cây hộ', 'nhan' => 'Báo giá có hiệu lực', 'kieu' => 'so', 'min' => 1, 'max' => 60, 'don_vi' => 'ngày',
+            'goi_y' => 'Quá hạn thì khách phải xin báo giá lại (giá vật tư, chỗ trống có thể đã khác).'],
+
         'risk.thresholds.high_value' => ['nhom' => 'Rủi ro đơn hàng', 'nhan' => 'Đơn COD giá trị cao từ', 'kieu' => 'tien', 'min' => 0, 'max' => 1000000000,
             'goi_y' => 'Đơn trả khi nhận hàng từ mức này bị cộng điểm rủi ro.'],
         'risk.review_from' => ['nhom' => 'Rủi ro đơn hàng', 'nhan' => 'Cần xem lại khi điểm rủi ro từ', 'kieu' => 'so', 'min' => 1, 'max' => 100, 'don_vi' => 'điểm'],

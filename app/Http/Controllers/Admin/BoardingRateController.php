@@ -66,6 +66,6 @@ class BoardingRateController extends Controller
             'name' => 'tên', 'monthly_price' => 'giá tháng', 'yearly_price' => 'giá năm',
         ]);
 
-        return $d + ['is_active' => $request->boolean('is_active'), 'sort_order' => (int) ($d['sort_order'] ?? 0)];
+        return $d + ['is_active' => $request->boolean('is_active'), 'needs_quote' => $request->boolean('needs_quote'), 'sort_order' => (int) ($d['sort_order'] ?? 0)];
     }
 }

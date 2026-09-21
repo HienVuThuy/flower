@@ -153,11 +153,19 @@ class WorkQueue
             ],
 
             [
-                'label' => 'yêu cầu chăm cây hộ chờ xác nhận',
+                'label' => 'phiếu chăm cây hộ chờ xem cây và báo giá',
                 'count' => BoardingBooking::where('status', BoardingStatus::ChoDuyet)->count(),
                 'url' => route('admin.boarding.index', ['trang_thai' => BoardingStatus::ChoDuyet->value]),
                 'tone' => 'warning',
-                'hint' => 'Khách đã gửi yêu cầu và đang đợi cửa hàng hẹn ngày nhận cây.',
+                'hint' => 'Khách đã gửi yêu cầu (hoặc xin sửa báo giá) và đang đợi cửa hàng báo giá.',
+            ],
+
+            [
+                'label' => 'báo giá chăm hộ đang chờ khách trả lời',
+                'count' => BoardingBooking::where('status', BoardingStatus::ChoKhachDuyet)->count(),
+                'url' => route('admin.boarding.index', ['trang_thai' => BoardingStatus::ChoKhachDuyet->value]),
+                'tone' => 'info',
+                'hint' => 'Nhắn khách nếu để lâu — báo giá có hạn hiệu lực.',
             ],
 
             [

@@ -31,6 +31,7 @@ class BoardingBooking extends Model
             'returned_on' => 'date',
             'paid_at' => 'datetime',
             'price_agreed_at' => 'datetime',
+            'declared_value' => 'decimal:2',
             'monthly_price' => 'decimal:2',
             'yearly_price' => 'decimal:2',
             'care_amount' => 'decimal:2',
@@ -69,6 +70,49 @@ class BoardingBooking extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function quotes(): HasMany
+    {
+        return $this->hasMany(BoardingQuote::class)->orderByDesc('version');
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class)->orderBy('id');
+    }
+
+    /** Báo giá đang chờ khách trả lời (nếu có). */
+    public function baoGiaDangCho(): ?BoardingQuote
+    {
+        return $this->quotes->first(fn (BoardingQuote $q) => $q->status === \App\Enums\BoardingQuoteStatus::DangCho);
+    }
+
+    /**
+     * Phiếu PHẢI báo giá (không xác nhận thẳng theo giá tham khảo) khi: loại cây đặc thù,
+     * khách khai giá trị cây cao, hoặc khách có yêu cầu riêng chưa báo giá.
+     *
+     * @return list<string> lý do, rỗng = xác nhận thẳng được
+     */
+    public function lyDoPhaiBaoGia(): array
+    {
+        $ly = [];
+
+        if ($this->rate?->needs_quote) {
+            $ly[] = 'Loại cây đặc thù — cửa hàng đặt là phải báo giá riêng';
+        }
+
+        $nguong = \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.cham_ho.gia_tri_cao_tu');
+
+        if ($this->declared_value !== null && $nguong > 0 && bccomp((string) $this->declared_value, (string) $nguong, 2) >= 0) {
+            $ly[] = 'Khách khai giá trị cây từ ' . \App\Services\Shop\Money::format((string) $nguong);
+        }
+
+        if ($this->extras->contains(fn ($x) => $x->status === \App\Enums\BoardingExtraStatus::ChoBaoGia)) {
+            $ly[] = 'Có yêu cầu riêng chưa báo giá';
+        }
+
+        return $ly;
     }
 
     public function extras(): HasMany

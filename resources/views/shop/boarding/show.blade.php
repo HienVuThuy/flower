@@ -51,13 +51,56 @@
                     @endif
                 </div>
 
+                @php $bgCho = $phieu->baoGiaDangCho(); @endphp
+                @if($phieu->status === BoardingStatus::ChoKhachDuyet && $bgCho)
+                    <div class="surface-card p-4 mb-4 boarding-quote-cta" data-bao-gia-cho>
+                        <h2 class="text-h4 mb-1">Cửa hàng đã gửi báo giá</h2>
+                        <p class="text-caption">Xem từng dòng bên dưới. Đồng ý thì xác nhận để thanh toán; muốn đổi gì thì yêu cầu sửa hoặc nhắn nhân viên.</p>
+
+                        @include('shop.boarding._bao-gia', ['laAdmin' => false])
+
+                        @if($bgCho->hetHan())
+                            <p class="text-danger small mt-3 mb-0">Báo giá đã hết hạn — bấm "Yêu cầu sửa" để cửa hàng báo giá lại.</p>
+                        @else
+                            <form method="POST" action="{{ route('shop.boarding.quote.accept', $phieu) }}" class="mt-3">
+                                @csrf
+                                <button type="submit" class="btn btn-primary-brand w-100">Xác nhận báo giá {{ \App\Services\Shop\Money::format((string) $bgCho->total) }}</button>
+                            </form>
+                        @endif
+                        <x-form-error name="bao_gia" />
+
+                        <details class="mt-3" @if($errors->has('noi_dung') || $bgCho->hetHan()) open @endif>
+                            <summary class="small">Yêu cầu sửa báo giá</summary>
+                            <form method="POST" action="{{ route('shop.boarding.quote.revise', $phieu) }}" class="mt-2">
+                                @csrf
+                                <textarea name="noi_dung" rows="2" maxlength="1000" required class="form-control mb-2 @error('noi_dung') is-invalid @enderror"
+                                          placeholder="Muốn đổi gì: bỏ việc thay chậu, gửi thêm 1 tháng, xin giảm phí đến lấy…" aria-label="Điều muốn sửa">{{ old('noi_dung') }}</textarea>
+                                <x-form-error name="noi_dung" />
+                                <textarea name="them_yeu_cau" rows="2" maxlength="2500" class="form-control mb-2"
+                                          placeholder="Thêm yêu cầu mới (mỗi dòng một việc, không bắt buộc)" aria-label="Thêm yêu cầu">{{ old('them_yeu_cau') }}</textarea>
+                                <button type="submit" class="btn btn-secondary-brand">Gửi yêu cầu sửa</button>
+                            </form>
+                        </details>
+                    </div>
+                @elseif($phieu->quotes->isNotEmpty())
+                    <div class="surface-card p-4 mb-4">
+                        <h2 class="text-h5 mb-3">Báo giá</h2>
+                        @include('shop.boarding._bao-gia', ['laAdmin' => false])
+                    </div>
+                @endif
+
+                <div class="surface-card p-4 mb-4">
+                    <h2 class="text-h5 mb-2">Trao đổi với cửa hàng</h2>
+                    @include('shop.boarding._trao-doi', ['laAdmin' => false])
+                </div>
+
                 <div class="surface-card p-4 mb-4" data-yeu-cau-them>
                     <h2 class="text-h5 mb-1">Yêu cầu thêm</h2>
                     <p class="text-caption">Cần thay chậu, tạo dáng, kích hoa đúng dịp…? Gửi yêu cầu, cửa hàng xem cây rồi báo giá riêng. Bạn đồng ý mới tính tiền.</p>
 
                     @include('shop.boarding._viec-them', ['laAdmin' => false])
 
-                    @if(in_array($phieu->status, [BoardingStatus::DaXacNhan, BoardingStatus::DangCham, BoardingStatus::ChoTra], true))
+                    @if(in_array($phieu->status, [BoardingStatus::ChoDuyet, BoardingStatus::DaXacNhan, BoardingStatus::DangCham, BoardingStatus::ChoTra], true))
                         <form method="POST" action="{{ route('shop.boarding.extra.store', $phieu) }}" class="mt-3">
                             @csrf
                             <label class="form-label" for="yc-viec">Việc cần làm thêm</label>

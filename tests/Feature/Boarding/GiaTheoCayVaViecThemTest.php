@@ -132,16 +132,17 @@ class GiaTheoCayVaViecThemTest extends TestCase
     }
 
     #[Test]
-    public function khong_nhan_yeu_cau_khi_phieu_chua_xac_nhan_va_khach_khac_khong_tra_loi_duoc(): void
+    public function yeu_cau_luc_cho_bao_gia_vao_bao_gia_va_khach_khac_khong_tra_loi_duoc(): void
     {
         $khach = User::factory()->create();
         $p = $this->phieu($khach);
 
-        $this->actingAs($khach)->post(route('shop.boarding.extra.store', $p), ['viec' => 'Tạo dáng'])->assertSessionHasErrors('viec');
-
-        app(BoardingService::class)->xacNhan($p, $this->admin(), ['drop_off_on' => '2026-09-25', 'monthly_price' => 300000]);
-        $this->actingAs($khach)->post(route('shop.boarding.extra.store', $p), ['viec' => 'Tạo dáng']);
+        $this->actingAs($khach)->post(route('shop.boarding.extra.store', $p), ['viec' => 'Tạo dáng'])->assertSessionHasNoErrors();
         $x = BoardingExtra::sole();
+        $this->assertNotEmpty($p->fresh()->load(['rate', 'extras'])->lyDoPhaiBaoGia(), 'Có yêu cầu riêng thì phải báo giá');
+
+        app(BoardingService::class)->huy($p->fresh(), $khach, 'Đổi ý');
+        $this->actingAs($khach)->post(route('shop.boarding.extra.store', $p), ['viec' => 'Thêm'])->assertSessionHasErrors('viec');
 
         $this->actingAs(User::factory()->create())->post(route('shop.boarding.extra.answer', [$p, $x]), ['dong_y' => 1])->assertNotFound();
     }

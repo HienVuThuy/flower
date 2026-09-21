@@ -19,7 +19,8 @@ class LiveChat
 
     private const MOI_LAN_TAI = 100;
 
-    public function gui(User $nguoiGui, User $khach, string $noiDung): Message
+    /** $phieu: tin nhắn trao đổi về một phiếu chăm hộ — vẫn nằm trong hộp thư chat chung, có gắn mã phiếu. */
+    public function gui(User $nguoiGui, User $khach, string $noiDung, ?\App\Models\BoardingBooking $phieu = null): Message
     {
         $noiDung = trim($noiDung);
 
@@ -37,14 +38,19 @@ class LiveChat
 
         $tuKhach = $nguoiGui->is($khach);
 
-        if (! $tuKhach && ! $nguoiGui->duoc(\App\Enums\Quyen::HoTro)) {
+        if (! $tuKhach && ! $nguoiGui->duoc(\App\Enums\Quyen::HoTro) && ! ($phieu && $nguoiGui->duoc(\App\Enums\Quyen::DonHang))) {
             throw new ChatException('Tài khoản của bạn không có quyền trả lời tin nhắn.');
+        }
+
+        if ($phieu && (int) $phieu->user_id !== (int) $khach->id) {
+            throw new ChatException('Phiếu này không phải của khách đang nhắn.');
         }
 
         $tin = new Message();
         $tin->forceFill([
             'customer_id' => $khach->id,
             'sender_id' => $nguoiGui->id,
+            'boarding_booking_id' => $phieu?->id,
             'content' => $noiDung,
         ])->save();
 
@@ -60,7 +66,7 @@ class LiveChat
         return Message::query()
             ->where('customer_id', $khach->id)
             ->when($sauId > 0, fn ($q) => $q->where('id', '>', $sauId))
-            ->with('sender:id,name,role')
+            ->with(['sender:id,name,role', 'boardingBooking:id,code'])
             ->orderByDesc('id')
             ->limit(self::MOI_LAN_TAI)
             ->get()
@@ -151,6 +157,7 @@ class LiveChat
             },
             'luc' => Gio::hien($tin->created_at)?->format('d/m H:i'),
             'da_doc' => $tin->read_at !== null,
+            'phieu' => $tin->boardingBooking?->code,
         ];
     }
 

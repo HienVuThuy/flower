@@ -4,6 +4,9 @@
     use App\Enums\BoardingExtraStatus;
     use App\Models\BoardingExtra;
     use App\Services\Shop\Money;
+
+    /* Khi phiếu đang báo giá, mọi việc được báo giá / xác nhận trong báo giá — không tách lẻ từng việc. */
+    $dangBaoGia = in_array($phieu->status, [\App\Enums\BoardingStatus::ChoDuyet, \App\Enums\BoardingStatus::ChoKhachDuyet], true);
 @endphp
 
 @if($phieu->extras->isEmpty())
@@ -24,7 +27,11 @@
                 @if($x->customer_note)<span class="d-block small">Khách ghi: {{ $x->customer_note }}</span>@endif
                 @if($x->shop_note)<span class="d-block small">Cửa hàng: {{ $x->shop_note }}</span>@endif
 
-                @if($laAdmin)
+                @if($dangBaoGia)
+                    @if($x->status === BoardingExtraStatus::ChoBaoGia || $x->status === BoardingExtraStatus::ChoKhach)
+                        <span class="d-block small text-caption mt-1">Nằm trong báo giá của phiếu.</span>
+                    @endif
+                @elseif($laAdmin)
                     @if($x->status === BoardingExtraStatus::ChoBaoGia)
                         <form method="POST" action="{{ route('admin.boarding.extra.quote', [$phieu, $x]) }}" class="d-flex flex-wrap gap-2 mt-2">
                             @csrf @method('PATCH')

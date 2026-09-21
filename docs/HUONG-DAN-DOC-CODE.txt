@@ -1330,6 +1330,22 @@ LUỒNG 28. Chăm cây hộ: gửi yêu cầu → xác nhận → chăm → tr�
     Route khách: POST /cham-cay-ho/phieu/{mã}/yeu-cau-them[/{id}/tra-loi]
     Route admin: /admin/cham-cay-ho/{mã}/viec-them[/{id}/bao-gia|tu-choi|khach-tra-loi|xong]
     Giao diện chung: resources/views/shop/boarding/_viec-them.blade.php ($laAdmin).
+
+  BÁO GIÁ VÀ TRAO ĐỔI (QĐ-319)
+    Trạng thái: cho_duyet (chờ báo giá) → cho_khach_duyet (chờ khách) → da_xac_nhan …
+    Khách gửi: yeu_cau_rieng (mỗi dòng một việc → BoardingService::tachYeuCau),
+      declared_value. BoardingBooking::lyDoPhaiBaoGia() quyết định có được xác nhận
+      thẳng hay không.
+    Admin: một form (admin/boarding/_form-bao-gia) → PATCH …/xac-nhan
+      cach=bao_gia  → Admin\BoardingController::sendQuote → guiBaoGia()
+      cach=xac_nhan → xacNhan() (bị chặn nếu lyDoPhaiBaoGia() không rỗng)
+      Rút báo giá: PATCH …/bao-gia/rut → thuHoiBaoGia()
+    Khách: POST /cham-cay-ho/phieu/{mã}/bao-gia/xac-nhan → chapNhanBaoGia()
+           POST /cham-cay-ho/phieu/{mã}/bao-gia/yeu-cau-sua → yeuCauSuaBaoGia()
+    Phiên bản báo giá: bảng boarding_quotes (lines JSON, total, valid_until, status
+      theo App\Enums\BoardingQuoteStatus); hiển thị resources/views/shop/boarding/_bao-gia.
+    Tin nhắn: LiveChat::gui(..., $phieu) ghi messages.boarding_booking_id; trang
+      phiếu hiện qua resources/views/shop/boarding/_trao-doi; route nhan-tin ở hai phía.
 ================================================================================
 PHẦN 4. TỰ HỌC VÀ GỠ LỖI
 ================================================================================

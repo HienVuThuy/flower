@@ -38,6 +38,21 @@
               placeholder="Cây đang ra lộc, hay rụng lá…">{{ old('plant_note') }}</textarea>
 </div>
 
+<div class="row g-3 mb-3">
+    <div class="col-md-8">
+        <label class="form-label" for="ch-yeu-cau">Yêu cầu riêng <span class="text-caption">(mỗi dòng một việc, không bắt buộc)</span></label>
+        <textarea id="ch-yeu-cau" name="yeu_cau_rieng" rows="3" maxlength="2500" class="form-control @error('yeu_cau_rieng') is-invalid @enderror"
+                  placeholder="Thay chậu to hơn&#10;Canh cho hoa nở đúng mùng 1 Tết&#10;Tỉa tạo dáng tròn">{{ old('yeu_cau_rieng') }}</textarea>
+        <x-form-error name="yeu_cau_rieng" />
+    </div>
+    <div class="col-md-4">
+        <label class="form-label" for="ch-gia-tri">Giá trị cây ước tính <span class="text-caption">(không bắt buộc)</span></label>
+        <input id="ch-gia-tri" type="number" name="declared_value" min="0" step="100000" class="form-control @error('declared_value') is-invalid @enderror" value="{{ old('declared_value') }}">
+        <x-form-error name="declared_value" />
+    </div>
+    <p class="text-caption mb-0">Cây có yêu cầu riêng, cây giá trị cao hoặc loại đặc thù: cửa hàng xem cây rồi gửi báo giá chi tiết từng phần để bạn xác nhận trước khi trả tiền.</p>
+</div>
+
 <fieldset class="mb-3">
     <legend class="form-label">Gửi trong bao lâu?</legend>
     <div class="boarding-modes">

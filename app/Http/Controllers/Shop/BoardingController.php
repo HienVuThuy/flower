@@ -64,6 +64,8 @@ class BoardingController extends Controller
         $d = $request->validate($this->luatBaoGia() + [
             'plant_name' => ['required', 'string', 'max:150'],
             'plant_note' => ['nullable', 'string', 'max:500'],
+            'declared_value' => ['nullable', 'numeric', 'min:0', 'max:10000000000'],
+            'yeu_cau_rieng' => ['nullable', 'string', 'max:2500'],
             'photo' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             'product_id' => ['nullable', 'integer', 'exists:products,id'],
             'repeat_yearly' => ['nullable', 'boolean'],
@@ -101,7 +103,7 @@ class BoardingController extends Controller
     {
         $this->cuaKhach($request, $booking);
 
-        $booking->load(['rate', 'window', 'events', 'payments', 'extras', 'parent:id,code']);
+        $booking->load(['rate', 'window', 'events', 'payments', 'extras', 'quotes', 'messages.sender:id,name', 'parent:id,code']);
 
         return view('shop.boarding.show', [
             'phieu' => $booking,
@@ -142,6 +144,40 @@ class BoardingController extends Controller
         } catch (PaymentException $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    public function quoteAccept(Request $request, BoardingBooking $booking): RedirectResponse
+    {
+        $this->cuaKhach($request, $booking);
+
+        $this->dichVu->chapNhanBaoGia($booking, $request->user());
+
+        return back()->with('success', 'Đã xác nhận báo giá. Bạn có thể thanh toán ngay hoặc khi giao cây.');
+    }
+
+    public function quoteRevise(Request $request, BoardingBooking $booking): RedirectResponse
+    {
+        $this->cuaKhach($request, $booking);
+
+        $d = $request->validate([
+            'noi_dung' => ['required', 'string', 'max:1000'],
+            'them_yeu_cau' => ['nullable', 'string', 'max:2500'],
+        ], [], ['noi_dung' => 'điều muốn sửa']);
+
+        $this->dichVu->yeuCauSuaBaoGia($booking, $request->user(), $d['noi_dung'], $d['them_yeu_cau'] ?? null);
+
+        return back()->with('success', 'Đã gửi yêu cầu sửa. Nhân viên sẽ nhắn lại và gửi báo giá mới.');
+    }
+
+    public function message(Request $request, BoardingBooking $booking): RedirectResponse
+    {
+        $this->cuaKhach($request, $booking);
+
+        $d = $request->validate(['noi_dung' => ['required', 'string', 'max:1000']], [], ['noi_dung' => 'tin nhắn']);
+
+        $this->dichVu->nhanTin($booking, $request->user(), $d['noi_dung']);
+
+        return redirect()->to(route('shop.boarding.show', $booking) . '#trao-doi')->with('success', 'Đã gửi tin nhắn cho cửa hàng.');
     }
 
     /** Khách xin thêm việc cho cây đang gửi — cửa hàng báo giá, khách đồng ý mới tính tiền. */

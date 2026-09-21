@@ -64,6 +64,10 @@
                 <input type="checkbox" class="form-check-input" name="is_active" value="1" @checked($gia?->is_active ?? true)>
                 <span>Đang nhận</span>
             </label>
+            <label class="d-flex align-items-center gap-2 mb-0">
+                <input type="checkbox" class="form-check-input" name="needs_quote" value="1" @checked($gia?->needs_quote)>
+                <span>Loại đặc thù — luôn báo giá riêng</span>
+            </label>
             <button type="submit" class="btn btn-sm btn-primary-brand ms-auto">{{ $gia ? 'Lưu' : 'Thêm' }}</button>
         </div>
     </form>

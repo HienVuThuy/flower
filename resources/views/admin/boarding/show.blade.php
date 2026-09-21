@@ -53,6 +53,18 @@
             </form>
         @endunless
 
+        @if($phieu->quotes->isNotEmpty())
+            <div class="admin-panel p-4 mb-4" data-lich-su-bao-gia>
+                <h2 class="h6 fw-bold mb-3">Báo giá đã gửi</h2>
+                @include('shop.boarding._bao-gia', ['laAdmin' => true])
+            </div>
+        @endif
+
+        <div class="admin-panel p-4 mb-4">
+            <h2 class="h6 fw-bold mb-3">Trao đổi với khách</h2>
+            @include('shop.boarding._trao-doi', ['laAdmin' => true])
+        </div>
+
         <div class="admin-panel p-4 mb-4" data-viec-them-admin>
             <h2 class="h6 fw-bold mb-1">Việc làm thêm</h2>
             <p class="admin-page-subtitle small">Mỗi việc báo giá riêng theo cây; khách đồng ý mới cộng vào tiền phiếu.</p>
@@ -84,47 +96,25 @@
         </div>
 
         @if($tt === BoardingStatus::ChoDuyet)
-            <form method="POST" action="{{ route('admin.boarding.confirm', $phieu) }}" class="admin-panel p-4 mb-3" data-xac-nhan-cham-ho>
-                @csrf @method('PATCH')
-                <h2 class="h6 fw-bold mb-3">Xác nhận</h2>
-                <label class="form-label small" for="xn-gui">Hẹn ngày nhận cây</label>
-                <input id="xn-gui" type="date" name="drop_off_on" required class="form-control mb-2" value="{{ old('drop_off_on', $phieu->drop_off_on->toDateString()) }}">
-                <x-form-error name="drop_off_on" />
-                <p class="admin-page-subtitle small mb-1">
-                    Giá chốt cho CÂY NÀY. Khách chọn dòng "{{ $phieu->rate?->name }}" — giá tham khảo
-                    {{ \App\Services\Shop\Money::format((string) $phieu->monthly_price) }}/tháng; xem cây thật rồi sửa nếu cần.
-                </p>
-                <div class="d-flex gap-2 mb-2">
-                    <div>
-                        <label class="form-label small" for="xn-thang">Giá / tháng</label>
-                        <input id="xn-thang" type="number" name="monthly_price" required min="1000" step="1000" class="form-control @error('monthly_price') is-invalid @enderror"
-                               value="{{ old('monthly_price', (int) $phieu->monthly_price) }}">
-                    </div>
-                    <div>
-                        <label class="form-label small" for="xn-nam">Giá / năm</label>
-                        <input id="xn-nam" type="number" name="yearly_price" min="1000" step="1000" class="form-control @error('yearly_price') is-invalid @enderror"
-                               value="{{ old('yearly_price', (int) $phieu->yearly_price) }}" placeholder="12 tháng">
-                    </div>
-                </div>
-                <x-form-error name="monthly_price" />
-                @if($phieu->handover === BoardingHandover::CuaHangLay)
-                    <label class="form-label small" for="xn-phi">Phí đến lấy và trả cây</label>
-                    <input id="xn-phi" type="number" name="handover_fee" min="0" step="1000" class="form-control mb-2" value="{{ old('handover_fee', 0) }}">
-                @endif
-                <label class="form-label small" for="xn-dc">Điều chỉnh một lần (âm là giảm)</label>
-                <input id="xn-dc" type="number" name="adjustment" step="1000" class="form-control mb-2" value="{{ old('adjustment', 0) }}">
-                <input type="text" name="adjustment_reason" maxlength="255" class="form-control mb-2 @error('adjustment_reason') is-invalid @enderror"
-                       placeholder="Lý do điều chỉnh (cây to, chậu nặng…)" value="{{ old('adjustment_reason') }}" aria-label="Lý do điều chỉnh">
-                <x-form-error name="adjustment_reason" />
-                <input type="text" name="note" maxlength="500" class="form-control mb-3" placeholder="Lời nhắn cho khách (không bắt buộc)" aria-label="Lời nhắn">
-                <button type="submit" class="btn btn-primary-brand w-100">Xác nhận và báo khách</button>
-            </form>
+            @include('admin.boarding._form-bao-gia')
 
             <form method="POST" action="{{ route('admin.boarding.reject', $phieu) }}" class="admin-panel p-4 mb-3">
                 @csrf @method('PATCH')
                 <input type="text" name="reason" required maxlength="255" class="form-control mb-2" placeholder="Lý do từ chối (cây bệnh, hết chỗ…)" aria-label="Lý do từ chối">
-                <button type="submit" class="btn btn-outline-danger w-100">Từ chối</button>
+                <button type="submit" class="btn btn-outline-danger w-100">Từ chối nhận cây</button>
             </form>
+        @endif
+
+        @if($tt === BoardingStatus::ChoKhachDuyet)
+            <div class="admin-panel p-4 mb-3">
+                <h2 class="h6 fw-bold mb-2">Đang chờ khách xác nhận báo giá</h2>
+                <p class="admin-page-subtitle small">Khách xác nhận / yêu cầu sửa / huỷ trên trang phiếu. Cần đổi giá sau khi trao đổi thì rút báo giá rồi gửi lại.</p>
+                <form method="POST" action="{{ route('admin.boarding.quote.withdraw', $phieu) }}">
+                    @csrf @method('PATCH')
+                    <input type="text" name="ly_do" maxlength="500" class="form-control mb-2" placeholder="Vì sao rút (không bắt buộc)" aria-label="Lý do rút báo giá">
+                    <button type="submit" class="btn btn-outline-admin w-100">Rút báo giá để sửa</button>
+                </form>
+            </div>
         @endif
 
         @if($tt === BoardingStatus::DaXacNhan)

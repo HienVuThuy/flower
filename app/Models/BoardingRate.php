@@ -13,7 +13,7 @@ class BoardingRate extends Model
 {
     public const CACHE_MO = 'boarding.dang_nhan';
 
-    protected $fillable = ['name', 'description', 'care_difficulty', 'monthly_price', 'yearly_price', 'is_active', 'sort_order'];
+    protected $fillable = ['name', 'description', 'care_difficulty', 'monthly_price', 'yearly_price', 'needs_quote', 'is_active', 'sort_order'];
 
     protected function casts(): array
     {
@@ -22,6 +22,7 @@ class BoardingRate extends Model
             'monthly_price' => 'decimal:2',
             'yearly_price' => 'decimal:2',
             'is_active' => 'boolean',
+            'needs_quote' => 'boolean',
         ];
     }
 

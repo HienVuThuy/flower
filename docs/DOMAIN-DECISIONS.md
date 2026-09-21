@@ -8738,3 +8738,39 @@ canh hoa nở đúng Tết…).
   và "khách đã đồng ý, chưa làm". Phiếu in liệt kê từng việc đã đồng ý; phiếu
   trắng có dòng "việc làm thêm — báo giá riêng".
 - Trang Bảng giá: ô "Thêm dòng giá mới" đứng ĐẦU trang.
+
+## QĐ-319. Chăm cây hộ: báo giá chi tiết để khách xác nhận, trao đổi qua tin nhắn
+
+Cây có yêu cầu riêng, cây giá trị cao, loại cây đặc thù không thể lấy giá bảng mà
+chốt luôn — cửa hàng phải xem cây, khách phải thấy từng khoản trước khi trả tiền.
+Phần lớn việc thương lượng diễn ra qua nhắn tin với nhân viên.
+
+- KHI GỬI YÊU CẦU khách ghi được DANH SÁCH YÊU CẦU RIÊNG (mỗi dòng một việc, tối đa
+  10) và GIÁ TRỊ CÂY ƯỚC TÍNH. Mỗi yêu cầu thành một việc "chờ báo giá".
+- BẮT BUỘC BÁO GIÁ (`BoardingBooking::lyDoPhaiBaoGia`) khi: loại cây admin đánh dấu
+  "đặc thù — luôn báo giá" (`boarding_rates.needs_quote`), khách khai giá trị từ
+  ngưỡng trong Tham số kinh doanh (mặc định 5 triệu), hoặc còn yêu cầu riêng chưa
+  báo giá. Cây thường vẫn "xác nhận thẳng" được — nút đó bị khoá khi phải báo giá.
+- BÁO GIÁ (`BoardingService::guiBaoGia`): admin chốt ngày nhận / trả, giá tháng /
+  năm cho cây, phí đến lấy, điều chỉnh; MỖI yêu cầu riêng phải có giá hoặc bị từ
+  chối kèm lý do; thêm được việc của cửa hàng. Hệ thống dựng các DÒNG CHI TIẾT +
+  TỔNG, chụp thành một PHIÊN BẢN (`boarding_quotes`, lần 1, 2, 3…) có hạn hiệu lực
+  (mặc định 3 ngày, chỉnh ở Tham số kinh doanh). Tổng báo giá đúng bằng số khách sẽ
+  phải trả khi đồng ý.
+- KHÁCH TRẢ LỜI trên trang phiếu:
+  XÁC NHẬN → chốt giá, các việc trong báo giá thành "đã đồng ý", phiếu "đã xác
+  nhận" → lúc này mới trả tiền (trực tiếp hoặc MoMo). Báo giá hết hạn thì không xác
+  nhận được.
+  YÊU CẦU SỬA → ghi điều muốn đổi (tin này vào luôn hộp thư chat của nhân viên),
+  thêm yêu cầu mới nếu có → phiếu về "chờ báo giá", báo giá lần sau thay lần trước.
+  HUỶ → phiếu huỷ, báo giá đánh dấu huỷ.
+- CỬA HÀNG RÚT BÁO GIÁ được khi đang chờ khách (đã trao đổi, cần sửa) → về chờ báo
+  giá, gửi lại bản mới.
+- TRAO ĐỔI QUA TIN NHẮN: dùng lại hệ thống chat khách ↔ nhân viên sẵn có; tin nhắn
+  gắn mã phiếu (`messages.boarding_booking_id`). Nhân viên thấy trong hộp thư Hỗ trợ
+  khách hàng như mọi tin khác (kèm "phiếu CH…"), còn trang phiếu ở hai phía chỉ hiện
+  đoạn nói về phiếu đó. Nhân viên có quyền đơn hàng nhắn được về phiếu dù không có
+  quyền hỗ trợ. Mỗi lần gửi báo giá, hệ thống nhắn khách một tin tóm tắt.
+  Khách tại quầy không có tài khoản thì trao đổi qua số điện thoại ghi trên phiếu.
+- Khi đang báo giá, không duyệt lẻ từng việc — mọi việc được quyết định trong báo
+  giá. Sau khi xác nhận, việc phát sinh vẫn đi luồng "yêu cầu thêm" từng việc.

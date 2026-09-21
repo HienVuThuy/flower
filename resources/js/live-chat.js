@@ -14,7 +14,7 @@ export function veTin(tin, laToi) {
 
     const meta = document.createElement('span');
     meta.className = 'chat-msg__meta';
-    meta.textContent = `${tin.nguoi_gui} · ${tin.luc}`;
+    meta.textContent = `${tin.nguoi_gui} · ${tin.luc}${tin.phieu ? ` · phiếu ${tin.phieu}` : ''}`;
 
     khoi.append(chu, meta);
 

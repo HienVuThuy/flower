@@ -246,7 +246,7 @@ class ThanhToanVaPhieuInTest extends TestCase
         $this->assertSame(5, BoardingRate::count());
         $this->assertSame(5, BoardingBooking::count());
         $trangThai = BoardingBooking::pluck('status')->map->value->all();
-        foreach (['dang_cham', 'da_tra', 'cho_tra', 'cho_duyet'] as $tt) {
+        foreach (['dang_cham', 'da_tra', 'cho_tra', 'cho_khach_duyet'] as $tt) {
             $this->assertContains($tt, $trangThai);
         }
         $this->assertSame(1, BoardingBooking::where('source', 'tai_quay')->count());

@@ -336,6 +336,8 @@ Route::prefix('admin')
                 Route::post('cham-cay-ho', [AdminBoardingController::class, 'store'])->name('boarding.store');
                 Route::patch('cham-cay-ho/{booking}/xac-nhan', [AdminBoardingController::class, 'confirm'])->name('boarding.confirm');
                 Route::patch('cham-cay-ho/{booking}/tu-choi', [AdminBoardingController::class, 'reject'])->name('boarding.reject');
+                Route::patch('cham-cay-ho/{booking}/bao-gia/rut', [AdminBoardingController::class, 'withdrawQuote'])->name('boarding.quote.withdraw');
+                Route::post('cham-cay-ho/{booking}/nhan-tin', [AdminBoardingController::class, 'message'])->name('boarding.message');
                 Route::patch('cham-cay-ho/{booking}/huy', [AdminBoardingController::class, 'cancel'])->name('boarding.cancel');
                 Route::patch('cham-cay-ho/{booking}/nhan-cay', [AdminBoardingController::class, 'receive'])->name('boarding.receive');
                 Route::post('cham-cay-ho/{booking}/cap-nhat', [AdminBoardingController::class, 'update'])->name('boarding.update');
