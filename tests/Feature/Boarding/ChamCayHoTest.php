@@ -168,7 +168,7 @@ class ChamCayHoTest extends TestCase
         $this->assertSame('300000.00', (string) $p->care_amount, 'Gửi thực 26 ngày: tính 1 tháng, không phải 3');
         $this->assertSame('480000.00', $p->tongTien(), '300k + 80k giao nhận + 50k gấp + 50k điều chỉnh');
 
-        $this->actingAs($admin)->post(route('admin.boarding.payment', $p), ['amount' => 900000, 'note' => 'Khách trả trước'])->assertSessionHasNoErrors();
+        $this->actingAs($admin)->post(route('admin.boarding.payment', $p), ['amount' => 900000, 'method' => 'chuyen_khoan', 'note' => 'Khách trả trước'])->assertSessionHasNoErrors();
         $this->assertSame('-420000.00', $p->fresh()->conLai(), 'Âm: cửa hàng phải trả lại khách');
     }
 

@@ -89,6 +89,17 @@ class MomoController extends Controller
         }
 
         $ketQua = $this->ghiNhanThanhToan($payload);
+
+        if ($phieu = $this->momo->transactionFrom($payload)?->boardingBooking) {
+            $ve = redirect()->route('shop.boarding.show', $phieu);
+
+            return match ($ketQua) {
+                'cham_ho', 'already' => $ve->with('success', 'Đã nhận tiền qua MoMo. Cảm ơn bạn!'),
+                'mismatch' => $ve->with('error', 'Số tiền MoMo báo về không khớp. Cửa hàng sẽ liên hệ với bạn.'),
+                default => $ve->with('error', $this->loiCuaMomo($payload)),
+            };
+        }
+
         $order = $this->timDon($payload);
 
         $ve = $order
@@ -141,6 +152,20 @@ class MomoController extends Controller
                 $this->momo->markFailed($transaction, $payload);
 
                 return 'failed';
+            }
+
+            if ($transaction->boarding_booking_id !== null) {
+                if ((int) round((float) $transaction->amount) !== (int) ($payload['amount'] ?? 0)) {
+                    $this->momo->markFailed($transaction, $payload);
+                    Log::error('Số tiền MoMo báo về không khớp phiếu chăm hộ.', ['giao_dich' => $transaction->gateway_order_id]);
+
+                    return 'mismatch';
+                }
+
+                $this->momo->markPaid($transaction, $payload);
+                app(\App\Services\Boarding\BoardingService::class)->thuMomo($transaction->fresh());
+
+                return 'cham_ho';
             }
 
             $order = Order::lockForUpdate()->find($transaction->order_id);

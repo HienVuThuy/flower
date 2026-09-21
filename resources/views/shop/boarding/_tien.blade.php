@@ -28,6 +28,11 @@
     <dt>Đã thanh toán</dt>
     <dd>{{ Money::format($phieu->paid_amount) }}</dd>
 
+    @foreach($phieu->payments as $tra)
+        <dt class="boarding-money__phu">{{ $tra->paid_at->format('d/m/Y') }} · {{ $tra->method->label() }}</dt>
+        <dd class="boarding-money__phu">{{ Money::format((string) $tra->amount) }}</dd>
+    @endforeach
+
     @php $con = $phieu->conLai(); @endphp
     @if(bccomp($con, '0', 2) !== 0)
         <dt>{{ bccomp($con, '0', 2) > 0 ? 'Còn phải trả' : 'Cửa hàng trả lại bạn' }}</dt>

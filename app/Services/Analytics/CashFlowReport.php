@@ -2,6 +2,7 @@
 
 namespace App\Services\Analytics;
 
+use App\Models\BoardingPayment;
 use App\Models\Expense;
 use Illuminate\Support\Carbon;
 
@@ -37,8 +38,9 @@ class CashFlowReport
         $thuMua = app(PurchasingReport::class)->trong($khoang)->tongQuan();
 
         $chiPhi = self::chiPhi($khoang);
+        $chamHo = self::chamHo($khoang);
 
-        $tienVao = bcadd((string) $don['net_revenue'], '0', 2);
+        $tienVao = bcadd((string) $don['net_revenue'], $chamHo, 2);
         $tienRa = bcadd($thuMua['tong'], $chiPhi['tong'], 2);
 
         $buShipTien = ($buShip['tinh_duoc'] ?? 0) > 0 && (float) $buShip['chenh'] > 0
@@ -50,7 +52,7 @@ class CashFlowReport
         $laiRong = bcsub(
             bcsub(
                 bcsub(
-                    bcsub(bcadd($loi['lai_gop'], $laiHoa, 2), $chiPhi['tong'], 2),
+                    bcsub(bcadd(bcadd($loi['lai_gop'], $laiHoa ?? '0', 2), $chamHo, 2), $chiPhi['tong'], 2),
                     $buShipTien,
                     2,
                 ),
@@ -66,6 +68,8 @@ class CashFlowReport
 
             'dong_tien' => [
                 'tien_vao' => $tienVao,
+                'tu_don' => bcadd((string) $don['net_revenue'], '0', 2),
+                'cham_ho' => $chamHo,
                 'thu_mua' => $thuMua['tong'],
                 'chi_phi' => $chiPhi['tong'],
                 'tien_ra' => $tienRa,
@@ -75,6 +79,7 @@ class CashFlowReport
             'lai' => [
                 'lai_gop_hang' => $loi['lai_gop'],
                 'lai_gop_hoa' => $hoa['lai_gop'],
+                'cham_ho' => $chamHo,
                 'chi_phi' => $chiPhi['tong'],
                 'bu_ship' => $buShipTien,
                 'hoan_tien' => bcadd((string) $loi['hoan_tien'], '0', 2),
@@ -87,6 +92,18 @@ class CashFlowReport
 
             'chi_phi_theo_loai' => $chiPhi['theo_loai'],
         ];
+    }
+
+    /**
+     * Tiền dịch vụ chăm cây hộ thực thu trong kỳ (trừ khoản trả lại), theo NGÀY THU TIỀN.
+     * Không có giá vốn riêng: công chăm, phân, nước đã nằm trong chi phí vận hành.
+     */
+    public static function chamHo(KhoangThoiGian $khoang): string
+    {
+        $q = BoardingPayment::query();
+        $khoang->apDung($q, 'paid_at');
+
+        return bcadd((string) $q->sum('amount'), '0', 2);
     }
 
     public static function chiPhi(KhoangThoiGian $khoang): array

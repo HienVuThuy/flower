@@ -36,7 +36,7 @@
 
                     <ul class="risk-panel__list">
                         @foreach($order->riskFlags() as $flag)
-                            <li>{{ $flag['label'] }} <span class="risk-panel__points">+{{ $flag['points'] }}</span></li>
+                            <li>{{ $flag['label'] }} <span class="risk-panel__points">{{ $flag['points'] >= 0 ? '+' : '−' }}{{ abs($flag['points']) }}</span></li>
                         @endforeach
                     </ul>
 

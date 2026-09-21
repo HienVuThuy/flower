@@ -12,14 +12,15 @@
         Phiếu {{ $phieu->code }}
         <span class="badge text-bg-{{ $tt->tone() }} align-middle">{{ $tt->label() }}</span>
     </h1>
-    <p class="admin-page-subtitle mb-0">{{ $phieu->plant_name }} · {{ $phieu->rate?->name }} · {{ $phieu->mode->label() }}</p>
+    <p class="admin-page-subtitle mb-0">{{ $phieu->plant_name }} · {{ $phieu->rate?->name }} · {{ $phieu->mode->label() }} · {{ $phieu->source->label() }}</p>
+    <a href="{{ route('admin.boarding.print', $phieu) }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-admin mt-2">In phiếu</a>
 </div>
 
 <div class="row g-4">
     <div class="col-xl-7">
         <div class="admin-panel p-4 mb-4">
             <dl class="boarding-money mb-0">
-                <dt>Khách</dt><dd>{{ $phieu->user?->name }} · {{ $phieu->contact_phone }}</dd>
+                <dt>Khách</dt><dd>{{ $phieu->tenKhach() }} · {{ $phieu->contact_phone }}{{ $phieu->user ? '' : ' · không có tài khoản' }}</dd>
                 <dt>Giao nhận</dt><dd>{{ $phieu->handover->label() }}</dd>
                 @if($phieu->address)<dt>Địa chỉ</dt><dd>{{ $phieu->address }}</dd>@endif
                 <dt>{{ $phieu->received_on ? 'Đã nhận cây' : 'Hẹn nhận cây' }}</dt><dd>{{ ($phieu->received_on ?? $phieu->drop_off_on)->format('d/m/Y') }}</dd>
@@ -117,12 +118,17 @@
         @if(in_array($tt, [BoardingStatus::DaXacNhan, BoardingStatus::DangCham, BoardingStatus::ChoTra, BoardingStatus::DaTra], true))
             <form method="POST" action="{{ route('admin.boarding.payment', $phieu) }}" class="admin-panel p-4 mb-3" data-ghi-tien-cham-ho>
                 @csrf
-                <h2 class="h6 fw-bold mb-2">Ghi tiền</h2>
-                <p class="admin-page-subtitle small">Nhập số âm khi trả lại tiền cho khách.</p>
+                <h2 class="h6 fw-bold mb-2">Ghi tiền trực tiếp</h2>
+                <p class="admin-page-subtitle small">Tiền khách trả tại quầy hoặc khi giao nhận cây. Nhập số âm khi trả lại tiền cho khách. Tiền trả online qua MoMo tự ghi vào đây.</p>
+                <select name="method" class="form-select mb-2" aria-label="Cách trả">
+                    @foreach(\App\Enums\BoardingPaymentMethod::ghiTay() as $cach)
+                        <option value="{{ $cach->value }}" @selected(old('method') === $cach->value)>{{ $cach->label() }}</option>
+                    @endforeach
+                </select>
                 <input type="number" name="amount" step="1000" required class="form-control mb-2 @error('amount') is-invalid @enderror"
                        value="{{ bccomp($phieu->conLai(), '0', 2) !== 0 ? (int) $phieu->conLai() : '' }}" aria-label="Số tiền">
                 <x-form-error name="amount" />
-                <input type="text" name="note" maxlength="200" class="form-control mb-3" placeholder="Tiền mặt / chuyển khoản…" aria-label="Ghi chú">
+                <input type="text" name="note" maxlength="200" class="form-control mb-3" placeholder="Ghi chú (mã chuyển khoản…)" aria-label="Ghi chú">
                 <button type="submit" class="btn btn-outline-admin w-100">Ghi tiền</button>
             </form>
         @endif

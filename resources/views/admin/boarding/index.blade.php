@@ -9,12 +9,18 @@
 <div class="mb-4">
     <h1 class="admin-page-title">Chăm cây hộ</h1>
     <p class="admin-page-subtitle">
-        Khách gửi cây cho cửa hàng chăm và nhận lại đúng hẹn hoặc đúng dịp. Tiền chăm tính theo tháng thực gửi,
-        thu trực tiếp khi giao nhận cây rồi ghi vào phiếu.
+        Khách gửi cây cho cửa hàng chăm và nhận lại đúng hẹn hoặc đúng dịp. Tiền chăm tính theo tháng thực gửi.
+        Khách trả trực tiếp (cửa hàng ghi vào phiếu) hoặc trả online qua MoMo (tự ghi). Tiền đã thu vào Sổ thu chi.
+        Tháng này đã thu: <strong>{{ \App\Services\Shop\Money::format(\App\Services\Analytics\CashFlowReport::chamHo(\App\Services\Analytics\CashFlowReport::khoangThang(now(\App\Services\Time\Gio::mui())->format('Y-m')))) }}</strong>.
     </p>
 </div>
 
 <x-admin.nhom-tab ten="cham-ho" />
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a data-admin-link href="{{ route('admin.boarding.create') }}" class="btn btn-primary-brand">Lập phiếu tại quầy</a>
+    <a href="{{ route('admin.boarding.blank') }}" target="_blank" rel="noopener" class="btn btn-outline-admin">In phiếu trắng</a>
+</div>
 
 <nav class="d-flex flex-wrap gap-2 mb-3" aria-label="Lọc theo tình trạng">
     <a data-admin-link href="{{ route('admin.boarding.index', request()->except('trang_thai', 'page')) }}"
@@ -54,8 +60,8 @@
                             <span class="d-block admin-page-subtitle small"><x-site.time :at="$p->created_at" format="d/m/Y" /></span>
                         </td>
                         <td>
-                            {{ $p->user?->name }}
-                            <span class="d-block admin-page-subtitle small">{{ $p->plant_name }} · {{ $p->rate?->name }}</span>
+                            {{ $p->tenKhach() }}
+                            <span class="d-block admin-page-subtitle small">{{ $p->plant_name }} · {{ $p->rate?->name }}{{ $p->source === \App\Enums\BoardingSource::TaiQuay ? ' · tại quầy' : '' }}</span>
                         </td>
                         <td class="small">
                             {{ $p->mode->label() }}

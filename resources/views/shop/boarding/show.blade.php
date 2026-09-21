@@ -56,9 +56,27 @@
             </div>
 
             <div class="col-lg-5">
-                <div class="surface-card p-4 mb-4">
+                <div class="surface-card p-4 mb-4" data-tien-phieu>
                     <h2 class="text-h5 mb-3">Chi phí</h2>
                     @include('shop.boarding._tien')
+
+                    @if($phieu->traOnlineDuoc())
+                        @if($coMomo)
+                            <form method="POST" action="{{ route('shop.boarding.momo', $phieu) }}" class="mt-3" data-tra-momo>
+                                @csrf
+                                <button type="submit" class="btn btn-primary-brand w-100">
+                                    Trả online qua MoMo {{ \App\Services\Shop\Money::format($phieu->conLai()) }}
+                                </button>
+                            </form>
+                            <p class="text-caption mt-2 mb-0">Hoặc trả trực tiếp (tiền mặt / chuyển khoản) khi giao nhận cây.</p>
+                        @else
+                            <p class="text-caption mt-3 mb-0">Thanh toán trực tiếp (tiền mặt hoặc chuyển khoản) khi giao nhận cây.</p>
+                        @endif
+                    @elseif($phieu->status === \App\Enums\BoardingStatus::ChoDuyet)
+                        <p class="text-caption mt-3 mb-0">Cửa hàng xác nhận phiếu xong thì bạn trả được — trực tiếp hoặc online.</p>
+                    @endif
+
+                    <a href="{{ route('shop.boarding.print', $phieu) }}" target="_blank" rel="noopener" class="btn btn-ghost w-100 mt-3">In phiếu</a>
                 </div>
 
                 @if(in_array($phieu->status, [BoardingStatus::DangCham, BoardingStatus::ChoTra], true))

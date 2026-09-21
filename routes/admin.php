@@ -327,9 +327,13 @@ Route::prefix('admin')
             Route::get('cham-cay-ho', [AdminBoardingController::class, 'index'])->name('boarding.index');
             Route::get('cham-cay-ho/bang-gia', [BoardingRateController::class, 'index'])->name('boarding-rates.index');
             Route::get('cham-cay-ho/lich-dip', [BoardingWindowController::class, 'index'])->name('boarding-windows.index');
+            Route::get('cham-cay-ho/tao', [AdminBoardingController::class, 'create'])->name('boarding.create');
+            Route::get('cham-cay-ho/phieu-trang', [AdminBoardingController::class, 'blank'])->name('boarding.blank');
             Route::get('cham-cay-ho/{booking}', [AdminBoardingController::class, 'show'])->name('boarding.show');
+            Route::get('cham-cay-ho/{booking}/in', [AdminBoardingController::class, 'print'])->name('boarding.print');
 
             Route::middleware('throttle:30,1')->group(function () {
+                Route::post('cham-cay-ho', [AdminBoardingController::class, 'store'])->name('boarding.store');
                 Route::patch('cham-cay-ho/{booking}/xac-nhan', [AdminBoardingController::class, 'confirm'])->name('boarding.confirm');
                 Route::patch('cham-cay-ho/{booking}/tu-choi', [AdminBoardingController::class, 'reject'])->name('boarding.reject');
                 Route::patch('cham-cay-ho/{booking}/huy', [AdminBoardingController::class, 'cancel'])->name('boarding.cancel');

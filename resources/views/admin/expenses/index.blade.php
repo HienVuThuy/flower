@@ -35,7 +35,8 @@
             <p class="admin-page-subtitle small">Tiền thật đi vào và đi ra trong tháng.</p>
 
             <dl class="admin-detail-list mb-0">
-                <div><dt>Tiền vào từ đơn đã giao (sau hoàn tiền)</dt><dd>{{ $tien($dt['tien_vao']) }}</dd></div>
+                <div><dt>Tiền vào từ đơn đã giao (sau hoàn tiền)</dt><dd>{{ $tien($dt['tu_don']) }}</dd></div>
+                <div data-dong="cham-ho"><dt>Tiền dịch vụ chăm cây hộ đã thu</dt><dd>{{ $tien($dt['cham_ho']) }}</dd></div>
                 <div><dt>Tiền nhập hàng và lô hoa</dt><dd>− {{ $tien($dt['thu_mua']) }}</dd></div>
                 <div><dt>Chi phí vận hành</dt><dd>− {{ $tien($dt['chi_phi']) }}</dd></div>
                 <div class="fw-bold" data-dong="chenh-dong-tien">
@@ -69,6 +70,7 @@
                         @endif
                     </dd>
                 </div>
+                <div><dt>Doanh thu chăm cây hộ</dt><dd>{{ $tien($lai['cham_ho']) }}</dd></div>
                 <div><dt>Chi phí vận hành</dt><dd>− {{ $tien($lai['chi_phi']) }}</dd></div>
                 <div><dt>Cửa hàng bù ship</dt><dd>− {{ $tien($lai['bu_ship']) }}</dd></div>
                 <div><dt>Hoàn tiền cho đơn đã giao</dt><dd>− {{ $tien($lai['hoan_tien']) }}</dd></div>

@@ -8644,8 +8644,7 @@ khách quay lại mỗi năm, và bớt nỗi sợ "mua về làm chết" khi kh
 - TRẠNG THÁI đổi có khoá dòng (hai người bấm cùng lúc không làm phiếu nhảy sai);
   khách chỉ tự huỷ được khi cây CHƯA về cửa hàng. Lệnh `cham-ho:nhac` chạy 7:30 mỗi
   sáng chuyển phiếu sắp đến hạn sang "Sắp trả cây" và báo khách.
-- CHƯA LÀM (ghi rõ để báo cáo): chưa trả tiền online cho phiếu chăm hộ; tiền dịch
-  vụ chưa cộng vào báo cáo doanh thu bán hàng (xem riêng ở danh sách phiếu).
+- Hai việc để ngỏ lúc đầu (trả online, đưa tiền vào báo cáo) đã làm ở QĐ-315.
 
 ## QĐ-314. Chấm điểm rủi ro đơn hàng — giải bài toán gì, và giới hạn
 
@@ -8656,7 +8655,55 @@ khách quay lại mỗi năm, và bớt nỗi sợ "mua về làm chết" khi kh
 - CHỈ GẮN CỜ, KHÔNG TỰ CHẶN: sai một đơn thật thì mất khách; người quyết định.
 - ĐIỂM HIỆN TẠI là điểm khởi đầu theo kinh nghiệm, chưa học từ dữ liệu. Ngưỡng COD
   giá trị cao và ngưỡng "cần xem lại" admin chỉnh ở Tham số kinh doanh.
-- HẠN CHẾ ĐÃ BIẾT: "từng huỷ đơn" đếm cả đơn do CỬA HÀNG huỷ (hết hàng) — nên chỉ
-  đếm đơn khách huỷ hoặc giao thất bại; chưa trừ điểm cho khách đã nhận hàng tốt
-  nhiều lần (CreditScore đã có dữ liệu này); "khách vãng lai" và "không email" là
-  tín hiệu yếu; chưa tính loại hàng (hoa tươi rủi ro mất trắng cao hơn cây chậu).
+- Bốn hạn chế ban đầu đã sửa ở QĐ-316.
+
+## QĐ-315. Chăm cây hộ: trả trực tiếp và trả online, phiếu giấy và phiếu web là một
+
+- SỔ THU THEO DÒNG (`boarding_payments`): mỗi lần thu là một dòng có ngày, cách trả
+  (tiền mặt / chuyển khoản / MoMo), người ghi; số âm là trả lại khách. Cột
+  `paid_amount` trên phiếu chỉ là tổng các dòng, tính lại sau mỗi lần ghi. Nhờ có
+  NGÀY THU nên báo cáo thu chi đếm đúng tháng tiền vào (không theo ngày lập phiếu).
+- TRẢ TRỰC TIẾP: admin ghi ở trang phiếu, chọn tiền mặt hoặc chuyển khoản. Admin
+  không tự ghi được "MoMo" — dòng MoMo chỉ do cổng thanh toán báo về.
+- TRẢ ONLINE: dùng lại đúng cổng MoMo của đơn hàng (cùng chữ ký HMAC, cùng IPN,
+  cùng cách chống ghi hai lần khi IPN gửi lại). `payment_transactions` thêm cột
+  `boarding_booking_id` và `order_id` được phép trống. extraData mang tiền tố
+  `chamho:` để không bao giờ bị hiểu nhầm là mã đơn hàng. Số tiền = phần khách
+  CÒN THIẾU, do máy chủ tính. Nút chỉ hiện khi phiếu đã được xác nhận, còn thiếu
+  tiền, và MoMo đã cấu hình khoá — không hiện nút cho thứ chưa chạy được.
+- PHIẾU TẠI QUẦY: khách không cần tài khoản (`user_id` được trống, tên khách ghi
+  thẳng trên phiếu, `source` = tai_quay). Ghi email trùng tài khoản thì phiếu gắn
+  vào tài khoản đó để khách xem được trên web. Cửa hàng lập nên phiếu vào thẳng
+  "Đã xác nhận"; tích "khách mang cây đến ngay" thì ghi nhận cây luôn.
+- MỘT MẪU CHO HAI KÊNH: form online và form tại quầy dùng CHUNG một partial ô nhập
+  (`shop/boarding/_fields`), và phiếu in (`shop/boarding/print`) theo đúng thứ tự 5
+  mục đó. In từ phiếu web thì điền sẵn; in PHIẾU TRẮNG thì mọi ô là dòng chấm để
+  khách viết tay, kèm bảng giá tham khảo — rồi cửa hàng chép lên hệ thống không
+  lệch ô. Phiếu trắng không chứa dữ liệu khách nên ai cũng in được
+  (/cham-cay-ho/phieu-trang).
+- BÁO CÁO: Sổ thu chi cộng tiền chăm hộ vào DÒNG TIỀN (tiền vào) và LÃI RÒNG
+  (dịch vụ không có giá vốn riêng — công, phân, nước đã nằm trong chi phí vận hành).
+  Doanh thu BÁN HÀNG ở trang Phân tích giữ nguyên, không trộn dịch vụ vào.
+
+## QĐ-316. Sửa chấm điểm rủi ro đơn hàng theo đúng bài toán bom hàng
+
+- CHỈ ĐƠN COD mới xét bom hàng. Đơn đã trả trước (MoMo) khách không nhận thì cửa
+  hàng vẫn có tiền — chỉ còn xét "đặt dồn dập".
+- "Từng huỷ" chỉ đếm đơn KHÁCH tự huỷ (người huỷ là chính khách) hoặc đơn huỷ khi
+  ĐÃ ĐI GIAO (khách không nhận). Đơn cửa hàng huỷ vì hết hàng không tính.
+- KHÁCH QUEN: đã nhận thành công từ 2 đơn thì TRỪ 20 điểm (điểm không xuống dưới 0)
+  — đừng bắt khách quen chờ gọi xác nhận.
+- HOA TƯƠI COD: +10 — hoa bị trả là héo, mất trắng; cây chậu còn bán lại được.
+- "Vãng lai" và "không email" hạ từ 10 xuống 5: nhiều người mua hoa tặng một lần
+  không tạo tài khoản, đó không phải dấu hiệu gian.
+- Điểm âm hiện dạng "−20" trên trang đơn. Các số vẫn là điểm khởi đầu (config/risk.php).
+
+## QĐ-317. Dữ liệu mẫu chăm cây hộ
+
+`BoardingSampleSeeder` (chạy riêng: `php artisan db:seed --class=BoardingSampleSeeder`)
+tạo 5 dòng giá, lịch Tết 2027 (06/02/2027) và Tết 2028 (26/01/2028) theo lịch âm
+thật, và 5 phiếu ở đủ trạng thái — đang chăm theo dịp có lặp lại, đã trả cây và
+thanh toán đủ, chưa hẹn ngày, lập tại quầy sắp đến hạn, chờ xác nhận. Seeder đi
+qua BoardingService (lùi đồng hồ về từng thời điểm) chứ không chèn thẳng vào
+bảng, nên tiền, nhật ký, thông báo khớp như dùng thật; đã có phiếu thì bỏ qua.
+Giá là mức gợi ý để trình diễn, cửa hàng sửa ở Bảng giá.

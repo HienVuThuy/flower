@@ -4,28 +4,34 @@ namespace App\Services\Order;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
+use App\Enums\ProductType;
 use App\Models\Order;
+use App\Models\OrderStatusEvent;
+use App\Services\Shop\ThamSoKinhDoanh;
+use Illuminate\Database\Eloquent\Builder;
 
-/** Chấm điểm rủi ro cho một đơn hàng vừa đặt. */
+/**
+ * Chấm điểm rủi ro cho một đơn hàng vừa đặt — bài toán "bom hàng" COD: khách không nhận,
+ * cửa hàng mất phí giao hai chiều, hoa tươi héo thì mất trắng. Chỉ gắn cờ để người gọi xác nhận,
+ * không tự chặn. Đơn đã trả trước thì không có rủi ro bom hàng, chỉ còn xét đặt dồn dập.
+ */
 class OrderRiskScorer
 {
     public function score(Order $order): array
     {
-        $flags = [];
+        $cod = $order->payment_method === PaymentMethod::Cod;
 
-        foreach ([
-            $this->cancelledBefore($order),
+        $flags = array_values(array_filter([
+            $cod ? $this->cancelledBefore($order) : null,
             $this->highValueCod($order),
-            $this->guest($order),
-            $this->noEmail($order),
+            $cod ? $this->freshFlowerCod($order) : null,
+            $cod ? $this->guest($order) : null,
+            $cod ? $this->noEmail($order) : null,
             $this->burstOrders($order),
-        ] as $flag) {
-            if ($flag !== null) {
-                $flags[] = $flag;
-            }
-        }
+            $cod ? $this->trustedCustomer($order) : null,
+        ]));
 
-        $score = min(100, array_sum(array_column($flags, 'points')));
+        $score = max(0, min(100, array_sum(array_column($flags, 'points'))));
 
         return ['score' => $score, 'flags' => $flags];
     }
@@ -40,35 +46,51 @@ class OrderRiskScorer
         ])->save();
     }
 
-    private function cancelledBefore(Order $order): ?array
+    /** Đơn cùng khách (tài khoản, không có thì số điện thoại), trừ chính đơn này. */
+    private function cungKhach(Order $order): ?Builder
     {
-        $query = Order::query()
-            ->where('id', '!=', $order->id)
-            ->where('status', OrderStatus::Cancelled);
+        $q = Order::query()->where('id', '!=', $order->id);
 
         if ($order->user_id) {
-            $query->where('user_id', $order->user_id);
-        } elseif ($order->recipient_phone) {
-            $query->where('recipient_phone', $order->recipient_phone);
-        } else {
+            return $q->where('user_id', $order->user_id);
+        }
+
+        return $order->recipient_phone ? $q->where('recipient_phone', $order->recipient_phone) : null;
+    }
+
+    /**
+     * Chỉ đếm đơn do KHÁCH huỷ, hoặc đơn huỷ khi đã đi giao (khách không nhận).
+     * Đơn cửa hàng tự huỷ vì hết hàng không phải lỗi của khách.
+     */
+    private function cancelledBefore(Order $order): ?array
+    {
+        $q = $this->cungKhach($order);
+
+        if ($q === null) {
             return null;
         }
 
-        $count = $query->count();
+        $count = $q->where('status', OrderStatus::Cancelled->value)
+            ->where(function ($w) {
+                $w->whereIn('id', OrderStatusEvent::query()->where('status', OrderStatus::Shipping->value)->select('order_id'))
+                    ->orWhereIn('id', OrderStatusEvent::query()
+                        ->where('status', OrderStatus::Cancelled->value)
+                        ->whereColumn('order_status_events.changed_by', 'orders.user_id')
+                        ->select('order_id'));
+            })
+            ->count();
 
         if ($count === 0) {
             return null;
         }
 
-        $points = min(
-            (int) config('risk.cancelled_cap', 40),
-            $count * (int) config('risk.weights.cancelled_before', 20),
-        );
-
         return [
             'code' => 'cancelled_before',
-            'label' => "Đã từng huỷ {$count} đơn trước đây",
-            'points' => $points,
+            'label' => "Từng tự huỷ hoặc không nhận {$count} đơn",
+            'points' => min(
+                (int) config('risk.cancelled_cap', 40),
+                $count * (int) config('risk.weights.cancelled_before', 20),
+            ),
         ];
     }
 
@@ -78,7 +100,7 @@ class OrderRiskScorer
             return null;
         }
 
-        $threshold = (float) \App\Services\Shop\ThamSoKinhDoanh::giaTri('risk.thresholds.high_value');
+        $threshold = (float) ThamSoKinhDoanh::giaTri('risk.thresholds.high_value');
 
         if ((float) $order->grand_total < $threshold) {
             return null;
@@ -86,9 +108,23 @@ class OrderRiskScorer
 
         return [
             'code' => 'high_value_cod',
-            'label' => 'Đơn COD giá trị cao ('.number_format((float) $order->grand_total, 0, ',', '.').'đ)',
+            'label' => 'Đơn COD giá trị cao (' . number_format((float) $order->grand_total, 0, ',', '.') . 'đ)',
             'points' => (int) config('risk.weights.high_value_cod', 25),
         ];
+    }
+
+    /** Hoa tươi bị trả lại là mất trắng — cây chậu, phụ kiện thì còn bán lại được. */
+    private function freshFlowerCod(Order $order): ?array
+    {
+        $coHoaTuoi = $order->items()
+            ->whereHas('product', fn ($q) => $q->withTrashed()->where('product_type', ProductType::Flower->value))
+            ->exists();
+
+        return $coHoaTuoi ? [
+            'code' => 'fresh_flower_cod',
+            'label' => 'Có hoa tươi, trả khi nhận — khách không nhận là hoa héo, mất trắng',
+            'points' => (int) config('risk.weights.fresh_flower_cod', 10),
+        ] : null;
     }
 
     private function guest(Order $order): ?array
@@ -100,7 +136,7 @@ class OrderRiskScorer
         return [
             'code' => 'guest',
             'label' => 'Đặt hàng không đăng nhập',
-            'points' => (int) config('risk.weights.guest', 10),
+            'points' => (int) config('risk.weights.guest', 5),
         ];
     }
 
@@ -113,7 +149,7 @@ class OrderRiskScorer
         return [
             'code' => 'no_email',
             'label' => 'Không để lại email liên hệ',
-            'points' => (int) config('risk.weights.no_email', 10),
+            'points' => (int) config('risk.weights.no_email', 5),
         ];
     }
 
@@ -138,8 +174,30 @@ class OrderRiskScorer
 
         return [
             'code' => 'burst_orders',
-            'label' => ($count + 1)." đơn từ cùng số điện thoại trong {$hours} giờ",
+            'label' => ($count + 1) . " đơn từ cùng số điện thoại trong {$hours} giờ",
             'points' => (int) config('risk.weights.burst_orders', 20),
+        ];
+    }
+
+    /** Khách đã nhận hàng thành công nhiều lần thì bớt điểm — đừng bắt khách quen chờ gọi xác nhận. */
+    private function trustedCustomer(Order $order): ?array
+    {
+        $q = $this->cungKhach($order);
+
+        if ($q === null) {
+            return null;
+        }
+
+        $daNhan = $q->where('status', OrderStatus::Completed->value)->count();
+
+        if ($daNhan < (int) config('risk.thresholds.trusted_from', 2)) {
+            return null;
+        }
+
+        return [
+            'code' => 'trusted',
+            'label' => "Đã nhận thành công {$daNhan} đơn trước đây",
+            'points' => -1 * (int) config('risk.weights.trusted', 20),
         ];
     }
 }

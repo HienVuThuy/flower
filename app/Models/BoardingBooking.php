@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\BoardingHandover;
 use App\Enums\BoardingMode;
+use App\Enums\BoardingSource;
 use App\Enums\BoardingStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,6 +21,7 @@ class BoardingBooking extends Model
             'mode' => BoardingMode::class,
             'handover' => BoardingHandover::class,
             'status' => BoardingStatus::class,
+            'source' => BoardingSource::class,
             'repeat_yearly' => 'boolean',
             'waiting_next_window' => 'boolean',
             'early_return' => 'boolean',
@@ -66,6 +68,24 @@ class BoardingBooking extends Model
     public function parent(): BelongsTo
     {
         return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(BoardingPayment::class)->orderBy('paid_at')->orderBy('id');
+    }
+
+    /** Khách có tài khoản thì lấy tên tài khoản; phiếu tại quầy thì tên ghi trên phiếu. */
+    public function tenKhach(): string
+    {
+        return (string) ($this->customer_name ?: $this->user?->name ?: 'Khách tại quầy');
+    }
+
+    /** Khách được trả online khi cửa hàng đã chốt phiếu và còn thiếu tiền. */
+    public function traOnlineDuoc(): bool
+    {
+        return in_array($this->status, [BoardingStatus::DaXacNhan, BoardingStatus::DangCham, BoardingStatus::ChoTra, BoardingStatus::DaTra], true)
+            && bccomp($this->conLai(), '0', 2) > 0;
     }
 
     public function events(): HasMany

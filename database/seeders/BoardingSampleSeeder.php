@@ -1,0 +1,157 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Enums\BoardingPaymentMethod;
+use App\Enums\UserRole;
+use App\Models\BoardingBooking;
+use App\Models\BoardingRate;
+use App\Models\BoardingWindow;
+use App\Models\User;
+use App\Services\Boarding\BoardingService;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
+
+/**
+ * Dữ liệu mẫu cho dịch vụ chăm cây hộ: bảng giá, lịch Tết, và vài phiếu ở đủ các trạng thái.
+ * ⚠️ DỮ LIỆU MẪU — giá là mức gợi ý để trình diễn; cửa hàng sửa ở Quản trị › Chăm cây hộ › Bảng giá.
+ * Phiếu đi qua đúng BoardingService (lùi đồng hồ về từng thời điểm), không chèn thẳng vào bảng,
+ * nên tiền, nhật ký và thông báo khớp như dùng thật. Chạy lại không tạo trùng.
+ */
+class BoardingSampleSeeder extends Seeder
+{
+    private BoardingService $dv;
+
+    private User $admin;
+
+    public function run(): void
+    {
+        if (BoardingBooking::query()->exists()) {
+            $this->command?->warn('Đã có phiếu chăm hộ — bỏ qua dữ liệu mẫu.');
+
+            return;
+        }
+
+        $this->dv = app(BoardingService::class);
+        $this->admin = User::query()->where('role', UserRole::Admin->value)->orderBy('id')->firstOrFail();
+
+        $gia = $this->bangGia();
+        $this->lichDip();
+
+        $homNay = Carbon::now(\App\Services\Time\Gio::mui())->startOfDay();
+        $tet = BoardingWindow::query()->where('group_key', 'tet')->whereDate('return_on', '>', $homNay)->orderBy('return_on')->first();
+
+        /* 1. Đào thế gửi đến Tết, cửa hàng đến lấy, lặp lại mỗi năm — đang chăm, đã trả trước một phần. */
+        $p = $this->luc($homNay->copy()->subDays(60), fn () => $this->dv->taoPhieu($this->khach('maianh@khachmau.test'), [
+            'boarding_rate_id' => $gia['dao']->id, 'mode' => $tet ? 'theo_dip' : 'thang', 'months' => 4,
+            'boarding_window_id' => $tet?->id, 'repeat_yearly' => 1,
+            'drop_off_on' => $homNay->copy()->subDays(57)->toDateString(),
+            'plant_name' => 'Đào thế trực chậu gốm, cao khoảng 1,3m', 'plant_note' => 'Mua ở cửa hàng Tết năm ngoái, sau Tết lá vàng nhiều.',
+            'handover' => 'cua_hang_lay', 'contact_phone' => '0912000101', 'address' => 'Ngõ 42 Phú Diễn, Bắc Từ Liêm',
+        ], null));
+        $this->luc($homNay->copy()->subDays(59), fn () => $this->dv->xacNhan($p, $this->admin, [
+            'drop_off_on' => $homNay->copy()->subDays(57)->toDateString(), 'handover_fee' => 100000, 'note' => 'Thứ bảy nhân viên qua lấy cây buổi sáng.',
+        ]));
+        $this->luc($homNay->copy()->subDays(57), fn () => $this->dv->nhanCay($p->fresh(), $this->admin, $homNay->copy()->subDays(57)->toDateString(), 'Cây khoẻ, rễ hơi chặt chậu.'));
+        $this->luc($homNay->copy()->subDays(57), fn () => $this->dv->ghiThu($p->fresh(), $this->admin, '500000.00', BoardingPaymentMethod::ChuyenKhoan, 'Đặt cọc khi lấy cây'));
+        $this->luc($homNay->copy()->subDays(40), fn () => $this->dv->capNhat($p->fresh(), $this->admin, 'Đã thay đất, cắt bớt rễ già, bón phân hữu cơ.', null));
+        $this->luc($homNay->copy()->subDays(12), fn () => $this->dv->capNhat($p->fresh(), $this->admin, 'Cây ra lộc mới đều, đang cho nghỉ nước dần để chuẩn bị tuốt lá.', null));
+
+        /* 2. Bonsai gửi 3 tháng — đã trả cây, đã thanh toán đủ. */
+        $p = $this->luc($homNay->copy()->subDays(100), fn () => $this->dv->taoPhieu($this->khach('quocbao@khachmau.test'), [
+            'boarding_rate_id' => $gia['bonsai']->id, 'mode' => 'thang', 'months' => 3,
+            'drop_off_on' => $homNay->copy()->subDays(98)->toDateString(),
+            'plant_name' => 'Bonsai tùng la hán dáng trực', 'plant_note' => 'Đi công tác 3 tháng.',
+            'handover' => 'tu_mang', 'contact_phone' => '0912000102',
+        ], null));
+        $this->luc($homNay->copy()->subDays(99), fn () => $this->dv->xacNhan($p, $this->admin, ['drop_off_on' => $homNay->copy()->subDays(98)->toDateString()]));
+        $this->luc($homNay->copy()->subDays(98), fn () => $this->dv->nhanCay($p->fresh(), $this->admin, $homNay->copy()->subDays(98)->toDateString()));
+        $this->luc($homNay->copy()->subDays(60), fn () => $this->dv->capNhat($p->fresh(), $this->admin, 'Đã tỉa tán, uốn lại hai cành phụ.', null));
+        $this->luc($homNay->copy()->subDays(7), fn () => $this->dv->traCay($p->fresh(), $this->admin, $homNay->copy()->subDays(7)->toDateString()));
+        $this->luc($homNay->copy()->subDays(7), fn () => $this->dv->ghiThu($p->fresh(), $this->admin, $p->fresh()->tongTien(), BoardingPaymentMethod::TienMat, 'Khách trả khi nhận cây'));
+
+        /* 3. Lan hồ điệp, chưa hẹn ngày trả — đang chăm, chưa thanh toán. */
+        $p = $this->luc($homNay->copy()->subDays(22), fn () => $this->dv->taoPhieu($this->khach('thuha@khachmau.test'), [
+            'boarding_rate_id' => $gia['lan']->id, 'mode' => 'khong_hen',
+            'drop_off_on' => $homNay->copy()->subDays(20)->toDateString(),
+            'plant_name' => 'Lan hồ điệp tím 3 cành', 'plant_note' => 'Hoa đã tàn, muốn giữ cây cho năm sau ra hoa lại.',
+            'handover' => 'tu_mang', 'contact_phone' => '0912000103',
+        ], null));
+        $this->luc($homNay->copy()->subDays(21), fn () => $this->dv->xacNhan($p, $this->admin, ['drop_off_on' => $homNay->copy()->subDays(20)->toDateString()]));
+        $this->luc($homNay->copy()->subDays(20), fn () => $this->dv->nhanCay($p->fresh(), $this->admin, $homNay->copy()->subDays(20)->toDateString()));
+
+        /* 4. Phiếu lập tại quầy (khách không có tài khoản) — sắp đến hạn trả, đã trả tiền mặt. */
+        $p = $this->luc($homNay->copy()->subDays(26), fn () => $this->dv->taoTaiQuay($this->admin, [
+            'customer_name' => 'Chị Hương (khách tại quầy)',
+            'boarding_rate_id' => $gia['nho']->id, 'mode' => 'thang', 'months' => 1,
+            'drop_off_on' => $homNay->copy()->subDays(26)->toDateString(), 'nhan_cay_ngay' => 1,
+            'plant_name' => 'Ba chậu sen đá và một chậu xương rồng', 'handover' => 'tu_mang', 'contact_phone' => '0912000104',
+        ], null));
+        $this->luc($homNay->copy()->subDays(26), fn () => $this->dv->ghiThu($p->fresh(), $this->admin, $p->fresh()->tongTien(), BoardingPaymentMethod::TienMat, 'Trả khi gửi cây tại quầy'));
+        $this->dv->nhacDenHan();
+
+        /* 5. Yêu cầu mới chờ cửa hàng xác nhận. */
+        $this->luc($homNay->copy()->subDay(), fn () => $this->dv->taoPhieu($this->khach('minhduc@khachmau.test'), [
+            'boarding_rate_id' => $gia['vua']->id, 'mode' => 'thang', 'months' => 2,
+            'drop_off_on' => $homNay->copy()->addDays(3)->toDateString(),
+            'plant_name' => 'Monstera chậu gốm cao 90cm', 'plant_note' => 'Chuyển nhà, cần gửi 2 tháng.',
+            'handover' => 'cua_hang_lay', 'contact_phone' => '0912000105', 'address' => 'Số 8 Hồ Tùng Mậu, Cầu Giấy',
+        ], null));
+
+        $this->command?->info('Đã tạo ' . count($gia) . ' dòng giá, lịch Tết và ' . BoardingBooking::count() . ' phiếu chăm hộ mẫu.');
+    }
+
+    private function bangGia(): array
+    {
+        $dong = [
+            'nho' => ['Cây để bàn, sen đá, xương rồng', 'easy', 60000, 600000, 'Tưới theo lịch, lau lá, xoay chậu đón sáng.'],
+            'vua' => ['Cây chậu cỡ vừa (dưới 1m)', 'medium', 120000, 1200000, 'Tưới, bón phân định kỳ, cắt lá úa, phòng sâu.'],
+            'lan' => ['Lan hồ điệp, lan rừng', 'hard', 150000, 1500000, 'Giữ ẩm giá thể, bón phân lan, xử lý nhiệt độ để ra hoa lại.'],
+            'dao' => ['Đào, mai, quất thế chậu', 'hard', 300000, 3000000, 'Thay đất sau Tết, bón thúc, tuốt lá và canh nụ nở đúng Tết.'],
+            'bonsai' => ['Bonsai', 'hard', 400000, 4000000, 'Tỉa tán, uốn dáng, chăm rễ, giữ dáng thế.'],
+        ];
+
+        $out = [];
+        $thuTu = 0;
+
+        foreach ($dong as $ma => [$ten, $doKho, $thang, $nam, $moTa]) {
+            $out[$ma] = BoardingRate::query()->firstOrCreate(['name' => $ten], [
+                'care_difficulty' => $doKho, 'monthly_price' => $thang, 'yearly_price' => $nam,
+                'description' => $moTa, 'is_active' => true, 'sort_order' => $thuTu += 10,
+            ]);
+        }
+
+        return $out;
+    }
+
+    /** Ngày Tết âm lịch theo lịch vạn niên: 06/02/2027 và 26/01/2028. Mang cây về trước Tết ~1 tuần. */
+    private function lichDip(): void
+    {
+        foreach ([
+            ['Tết Đinh Mùi 2027', '2027-01-30', '2027-02-20'],
+            ['Tết Mậu Thân 2028', '2028-01-19', '2028-02-10'],
+        ] as [$ten, $ve, $lai]) {
+            BoardingWindow::query()->firstOrCreate(['name' => $ten], [
+                'group_key' => 'tet', 'return_on' => $ve, 'take_back_on' => $lai, 'is_active' => true,
+            ]);
+        }
+    }
+
+    /** Khách mẫu có sẵn thì dùng; không có thì phiếu vẫn tạo được cho một tài khoản khách bất kỳ. */
+    private function khach(string $email): User
+    {
+        return User::query()->where('email', $email)->first()
+            ?? User::query()->where('role', UserRole::Customer->value)->orderBy('id')->firstOrFail();
+    }
+
+    private function luc(Carbon $moc, \Closure $lam): mixed
+    {
+        Carbon::setTestNow($moc->copy()->setTime(9, 30)->setTimezone(config('app.timezone')));
+
+        try {
+            return $lam();
+        } finally {
+            Carbon::setTestNow();
+        }
+    }
+}

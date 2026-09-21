@@ -11,6 +11,7 @@ class PaymentTransaction extends Model
     protected $fillable = [
         'order_id',
         'installment_payment_id',
+        'boarding_booking_id',
         'gateway',
         'gateway_order_id',
         'transaction_id',
@@ -43,6 +44,11 @@ class PaymentTransaction extends Model
     public function installmentPayment(): BelongsTo
     {
         return $this->belongsTo(InstallmentPayment::class);
+    }
+
+    public function boardingBooking(): BelongsTo
+    {
+        return $this->belongsTo(BoardingBooking::class);
     }
 
     public function isPaid(): bool

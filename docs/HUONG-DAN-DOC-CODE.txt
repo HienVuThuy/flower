@@ -1285,6 +1285,36 @@ LUỒNG 28. Chăm cây hộ: gửi yêu cầu → xác nhận → chăm → tr�
     tienCham(tháng)    (tháng / 12) × giá năm + (tháng % 12) × giá tháng
     tổng phiếu         tiền chăm + phí giao nhận + phí gấp + điều chỉnh
                        (BoardingBooking::tongTien, conLai)
+
+  TIỀN — Services/Boarding/BoardingService
+    ghiThu()   một dòng boarding_payments (ngày thu, cách trả, người ghi, âm = trả
+               lại); paid_amount = tổng các dòng. Admin ghi ở trang phiếu (tiền mặt /
+               chuyển khoản); Admin\BoardingController@payment chặn chọn MoMo.
+    moMomo()   khách bấm "Trả online qua MoMo" (Shop\BoardingController@momo) →
+               MomoGateway::createBoardingPayment(): PaymentTransaction có
+               boarding_booking_id, orderId = <mã phiếu>-<id giao dịch>, extraData =
+               "chamho:<mã phiếu>". Số tiền = BoardingBooking::conLai().
+    thuMomo()  Shop\MomoController::ghiNhanThanhToan (callback + IPN): giao dịch có
+               boarding_booking_id → kiểm số tiền → markPaid → ghiThu(MoMo). Gửi lại
+               IPN thì giao dịch đã Paid nên không ghi hai lần. Callback đưa khách
+               về trang phiếu.
+    Báo cáo    Services/Analytics/CashFlowReport::chamHo(khoảng) cộng vào dòng tiền
+               và lãi ròng ở Sổ thu chi (admin/expenses).
+
+  PHIẾU TẠI QUẦY VÀ PHIẾU IN
+    /admin/cham-cay-ho/tao → Admin\BoardingController@create/store →
+    BoardingService::taoTaiQuay(): khách không cần tài khoản (customer_name,
+    source = tai_quay), email trùng tài khoản thì gắn vào; tích "mang cây đến ngay"
+    thì nhanCay() luôn.
+    Ô nhập chung: resources/views/shop/boarding/_fields.blade.php (form web + quầy).
+    Phiếu in chung: resources/views/shop/boarding/print.blade.php
+      $phieu = phiếu → in điền sẵn (khách: /cham-cay-ho/phieu/{mã}/in,
+                        admin: /admin/cham-cay-ho/{mã}/in)
+      $phieu = null  → PHIẾU TRẮNG để viết tay (/cham-cay-ho/phieu-trang,
+                        /admin/cham-cay-ho/phieu-trang), kèm bảng giá.
+
+  DỮ LIỆU MẪU: php artisan db:seed --class=BoardingSampleSeeder
+
 ================================================================================
 PHẦN 4. TỰ HỌC VÀ GỠ LỖI
 ================================================================================

@@ -160,3 +160,8 @@
         text-align: left !important;
     }
 }
+
+.boarding-money .boarding-money__phu {
+    font-size: 0.82rem;
+    padding-left: 0.75rem;
+}

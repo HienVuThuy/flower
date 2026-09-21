@@ -53,13 +53,13 @@ A3. Kiến trúc (chia lớp rõ ràng)
   OrderService, điểm chỉ ghi ở PointLedger, thuế chỉ tính ở TaxCalculator…
 
 A4. Quy mô (đếm từ mã nguồn)
-  - 325 đường dẫn (route), trong đó 174 thuộc khu quản trị
-  - 78 controller, 143 lớp service, 62 model, 68 enum
-  - 96 migration, 137 bảng
-  - 256 view Blade, 47 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
+  - 332 đường dẫn (route), trong đó 178 thuộc khu quản trị
+  - 78 controller, 143 lớp service, 63 model, 70 enum
+  - 97 migration, 138 bảng
+  - 259 view Blade, 47 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
   - 17 lệnh artisan tự viết, 7 tác vụ chạy theo lịch
-  - 141 tệp kiểm thử, 1366 bài kiểm thử, 5126 phép khẳng định
-  - Tài liệu: docs/ (quyết định thiết kế 314 mục, luồng hoạt động, kiểm thử,
+  - 143 tệp kiểm thử, 1378 bài kiểm thử, 5202 phép khẳng định
+  - Tài liệu: docs/ (quyết định thiết kế 317 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
 
@@ -287,7 +287,7 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
 4.1  Phân quyền 3 vai trò + 9 khu vực quyền
      Chủ cửa hàng (toàn quyền), Nhân viên (theo khu vực được giao), Khách hàng.
      9 khu vực: Đơn hàng · Sản phẩm · Kho · Khuyến mại · Đánh giá · Báo cáo ·
-     Tài chính · Hệ thống · Hỗ trợ khách hàng. Cả 174 đường dẫn quản trị đều gắn
+     Tài chính · Hệ thống · Hỗ trợ khách hàng. Cả 178 đường dẫn quản trị đều gắn
      quyền.
      → app/Enums/{UserRole, Quyen}, Middleware/{EnsureUserHasRole, CoQuyen}
 
@@ -422,18 +422,26 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
      (có phí gấp nếu báo quá sát). Giá do admin đặt theo loại cây / độ khó; báo giá
      tức thời do máy chủ tính; lúc trả cây tính lại theo thời gian thực gửi (đủ 12
      tháng áp giá năm). Admin xác nhận, nhận cây, gửi ảnh + ghi chú chăm sóc (khách
-     nhận thông báo), trả cây, ghi tiền. Chọn "lặp lại mỗi năm" thì trả cây xong hệ
-     thống tự mở phiếu cho dịp năm sau. Chưa có bảng giá thì dịch vụ ẩn hẳn.
+     nhận thông báo), trả cây. Chọn "lặp lại mỗi năm" thì trả cây xong hệ thống tự
+     mở phiếu cho dịp năm sau. Chưa có bảng giá thì dịch vụ ẩn hẳn.
+     Thanh toán hai cách: TRỰC TIẾP (admin ghi tiền mặt / chuyển khoản vào phiếu)
+     hoặc ONLINE qua MoMo (khách bấm trên trang phiếu, cổng báo về tự ghi); mỗi lần
+     thu là một dòng có ngày → tiền chăm hộ vào Sổ thu chi (dòng tiền, lãi ròng).
+     Phiếu TẠI QUẦY cho khách không có tài khoản; form web và form quầy dùng chung
+     ô nhập; in phiếu từ phiếu web hoặc in PHIẾU TRẮNG để khách viết tay — cùng một
+     mẫu 5 mục. Có dữ liệu mẫu (BoardingSampleSeeder).
      → Shop/BoardingController, Admin/{BoardingController, BoardingRateController,
        BoardingWindowController}, Services/Boarding/{BoardingPricing,
-       BoardingService}, lệnh cham-ho:nhac
+       BoardingService}, Services/Payment/MomoGateway::createBoardingPayment,
+       lệnh cham-ho:nhac
 
 4.14 Nhật ký thao tác quản trị (không có đường xoá)
      → Services/Audit/ActivityLogger, Admin/ActivityLogController
 
 4.15 Sổ thu chi
      Ghi chi phí vận hành theo loại; chép khoản cố định sang tháng mới bằng một
-     nút; dòng tiền và lãi ròng ước tính theo tháng.
+     nút; dòng tiền và lãi ròng ước tính theo tháng (có cả tiền dịch vụ chăm cây
+     hộ thực thu trong tháng).
      → Admin/ExpenseController, Services/Analytics/CashFlowReport
 
 4.16 Điều hướng quản trị không tải lại trang, giao diện tối cho quản trị
@@ -532,13 +540,15 @@ CẤP 6 — CHỨC NĂNG THÔNG MINH / NÂNG CAO
      → Services/Promotion/OccasionCalendar
 
 6.7  FRAUD DETECTION — Chấm điểm rủi ro đơn hàng
-     Từng huỷ đơn (20/lần, trần 40), COD giá trị cao (25), nhiều đơn cùng số
-     điện thoại trong 24 giờ (20), khách vãng lai (10), không có email (10). Chỉ
-     gắn cờ và nêu lý do để NGƯỜI quyết định, không tự chặn.
+     Chỉ xét đơn COD (đơn trả trước chỉ xét đặt dồn dập). Khách từng tự huỷ hoặc
+     không nhận hàng (20/lần, trần 40 — đơn cửa hàng tự huỷ không tính), COD giá
+     trị cao (25), có hoa tươi (10), nhiều đơn cùng số điện thoại trong 24 giờ (20),
+     khách vãng lai (5), không có email (5); khách đã nhận thành công từ 2 đơn TRỪ
+     20. Chỉ gắn cờ và nêu lý do để NGƯỜI quyết định, không tự chặn.
      Bài toán: "bom hàng" COD — khách không nhận, cửa hàng mất phí GHN hai chiều,
      hoa tươi héo thì mất trắng. Điểm chỉ ra đơn nào nên gọi xác nhận trước khi
      làm hàng. Ngưỡng COD cao và ngưỡng cần xem lại admin chỉnh được. Hạn chế và
-     hướng cải tiến: xem DOMAIN-DECISIONS QĐ-314.
+     các bước sửa: xem DOMAIN-DECISIONS QĐ-314 và QĐ-316.
      → Services/Order/OrderRiskScorer, config/risk.php
 
 6.8  LOYALTY — Điểm thưởng
@@ -739,7 +749,7 @@ D1. Xác thực & tài khoản
 
 D2. Phân quyền
     - Vai trò (role:admin,staff) + quyền theo khu vực (quyen:...) trên TỪNG route
-      quản trị; đã kiểm: 174/174 route có quyền
+      quản trị; đã kiểm: 178/178 route có quyền
     - Ba chốt chặn khi đổi vai trò; thanh toán và hoàn tiền cần quyền tài chính
     - Kiểm CHỦ SỞ HỮU mọi tài nguyên của khách: địa chỉ, giỏ, đơn, nhật ký, thông
       báo, đánh giá, bài Góc cây (tìm theo user_id rồi mới findOrFail → trả 404,
@@ -845,7 +855,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1366 bài / 5126 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1378 bài / 5202 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,
@@ -857,7 +867,7 @@ E4. Hiệu năng: đo trước khi tối ưu (lệnh do:hieu-nang); ảnh WebP d
     sẵn quan hệ (chỉ còn 2 chỗ nạp lười khi đo bằng preventLazyLoading trên toàn
     bộ kiểm thử); header cache ở .htaccess; nén; tải trước trang; làm nóng
     trang quản trị; OPcache (docs/OPCACHE-XAMPP.md).
-E5. Tài liệu: docs/DOMAIN-DECISIONS.md (314 quyết định), LUONG-HOAT-DONG.md,
+E5. Tài liệu: docs/DOMAIN-DECISIONS.md (317 quyết định), LUONG-HOAT-DONG.md,
     KIEM-THU.md, HIEU-NANG.md, TU-DONG-HOA.md, MYSQL-XAMPP.md, CHU-THICH-CODE.md.
 E6. Quản lý mã nguồn: Git, mỗi thay đổi một commit có mô tả.
 E7. Khả năng tiếp cận (a11y): icon SVG có aria-label, không dùng emoji làm icon,

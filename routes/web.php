@@ -71,6 +71,8 @@ Route::prefix('cham-cay-ho')
             ->middleware('throttle:60,1')
             ->name('quote');
 
+        Route::get('/phieu-trang', [BoardingController::class, 'blank'])->name('blank');
+
         Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/', [BoardingController::class, 'store'])
                 ->middleware('throttle:10,10')
@@ -81,6 +83,10 @@ Route::prefix('cham-cay-ho')
             Route::post('/phieu/{booking}/huy', [BoardingController::class, 'cancel'])->name('cancel');
             Route::post('/phieu/{booking}/nhan-som', [BoardingController::class, 'early'])->name('early');
             Route::post('/phieu/{booking}/lap-lai', [BoardingController::class, 'repeat'])->name('repeat');
+            Route::get('/phieu/{booking}/in', [BoardingController::class, 'print'])->name('print');
+            Route::post('/phieu/{booking}/tra-momo', [BoardingController::class, 'momo'])
+                ->middleware('throttle:10,1')
+                ->name('momo');
         });
     });
 

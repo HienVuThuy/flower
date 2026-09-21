@@ -2,13 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\BoardingHandover;
+use App\Enums\BoardingMode;
+use App\Enums\BoardingPaymentMethod;
 use App\Enums\BoardingStatus;
 use App\Http\Controllers\Admin\Concerns\LogsAdminActivity;
 use App\Http\Controllers\Controller;
 use App\Models\BoardingBooking;
+use App\Models\BoardingRate;
+use App\Models\BoardingWindow;
 use App\Services\Boarding\BoardingService;
+use App\Services\Shop\StoreProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 /** CHĂM CÂY HỘ phía cửa hàng: duyệt, nhận cây, cập nhật tình trạng, trả cây, ghi tiền. */
@@ -45,9 +52,64 @@ class BoardingController extends Controller
         ]);
     }
 
+    /** Lập phiếu tại quầy: chép từ phiếu giấy khách điền — cùng các ô với phiếu online. */
+    public function create(): View
+    {
+        return view('admin.boarding.create', [
+            'cacGia' => BoardingRate::query()->active()->get(),
+            'cacDip' => BoardingWindow::query()->sapToi($this->dichVu->homNay())->get(),
+            'homNay' => $this->dichVu->homNay(),
+        ]);
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $d = $request->validate([
+            'customer_name' => ['required', 'string', 'max:120'],
+            'customer_email' => ['nullable', 'email', 'max:255'],
+            'nhan_cay_ngay' => ['nullable', 'boolean'],
+            'boarding_rate_id' => ['required', 'integer', Rule::exists('boarding_rates', 'id')->where('is_active', true)],
+            'mode' => ['required', Rule::enum(BoardingMode::class)],
+            'drop_off_on' => ['required', 'date'],
+            'months' => ['nullable', 'integer', 'min:1', 'max:60'],
+            'years' => ['nullable', 'integer', 'min:1', 'max:5'],
+            'return_on' => ['nullable', 'date'],
+            'boarding_window_id' => ['nullable', 'integer'],
+            'plant_name' => ['required', 'string', 'max:150'],
+            'plant_note' => ['nullable', 'string', 'max:500'],
+            'photo' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+            'repeat_yearly' => ['nullable', 'boolean'],
+            'handover' => ['required', Rule::enum(BoardingHandover::class)],
+            'contact_phone' => ['required', 'string', 'max:20', function (string $o, mixed $v, \Closure $loi) {
+                if (! StoreProfile::laSoDienThoai(trim((string) $v))) {
+                    $loi('Số điện thoại chưa đúng (8-15 chữ số).');
+                }
+            }],
+            'address' => ['nullable', 'required_if:handover,' . BoardingHandover::CuaHangLay->value, 'string', 'max:255'],
+            'customer_note' => ['nullable', 'string', 'max:500'],
+        ], ['address.required_if' => 'Cửa hàng đến lấy cây thì cần địa chỉ.'], ['customer_name' => 'tên khách']);
+
+        $p = $this->dichVu->taoTaiQuay($request->user(), $d, $request->file('photo'));
+        $this->audit()->log('boarding.counter', 'Lập phiếu chăm hộ tại quầy ' . $p->code);
+
+        return redirect()->route('admin.boarding.show', $p)->with('success', 'Đã lập phiếu ' . $p->code . '. In phiếu đưa khách giữ.');
+    }
+
+    public function print(BoardingBooking $booking): View
+    {
+        $booking->load(['rate', 'window', 'payments', 'user:id,name']);
+
+        return view('shop.boarding.print', ['phieu' => $booking, 'cacGia' => collect(), 'quayLai' => route('admin.boarding.show', $booking)]);
+    }
+
+    public function blank(): View
+    {
+        return view('shop.boarding.print', ['phieu' => null, 'cacGia' => BoardingRate::query()->active()->get(), 'quayLai' => route('admin.boarding.index')]);
+    }
+
     public function show(BoardingBooking $booking): View
     {
-        $booking->load(['user:id,name,email', 'rate', 'window', 'events.user:id,name', 'parent:id,code', 'product:id,name,slug']);
+        $booking->load(['user:id,name,email', 'rate', 'window', 'events.user:id,name', 'payments', 'parent:id,code', 'product:id,name,slug']);
 
         return view('admin.boarding.show', [
             'phieu' => $booking,
@@ -128,10 +190,13 @@ class BoardingController extends Controller
     {
         $d = $request->validate([
             'amount' => ['required', 'numeric', 'not_in:0', 'min:-100000000', 'max:100000000'],
+            'method' => ['required', Rule::in(array_map(fn ($m) => $m->value, BoardingPaymentMethod::ghiTay()))],
             'note' => ['nullable', 'string', 'max:200'],
-        ], ['amount.not_in' => 'Nhập số tiền khác 0.'], ['amount' => 'số tiền']);
+        ], ['amount.not_in' => 'Nhập số tiền khác 0.'], ['amount' => 'số tiền', 'method' => 'cách trả']);
 
-        $this->dichVu->ghiThu($booking, $request->user(), number_format((float) $d['amount'], 2, '.', ''), $d['note'] ?? null);
+        abort_if(in_array($booking->status, [BoardingStatus::ChoDuyet, BoardingStatus::TuChoi], true), 422, 'Phiếu chưa xác nhận thì chưa ghi tiền.');
+
+        $this->dichVu->ghiThu($booking, $request->user(), number_format((float) $d['amount'], 2, '.', ''), BoardingPaymentMethod::from($d['method']), $d['note'] ?? null);
         $this->audit()->log('boarding.payment', 'Ghi tiền phiếu chăm hộ ' . $booking->code, null, ['so_tien' => $d['amount']]);
 
         return back()->with('success', 'Đã ghi tiền.');

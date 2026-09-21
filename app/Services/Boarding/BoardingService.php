@@ -4,16 +4,24 @@ namespace App\Services\Boarding;
 
 use App\Enums\BoardingHandover;
 use App\Enums\BoardingMode;
+use App\Enums\BoardingPaymentMethod;
+use App\Enums\BoardingSource;
+use App\Enums\MomoFlow;
 use App\Enums\BoardingStatus;
 use App\Enums\NotificationType;
 use App\Models\BoardingBooking;
 use App\Models\BoardingEvent;
+use App\Models\BoardingPayment;
+use App\Models\PaymentTransaction;
 use App\Models\BoardingRate;
 use App\Models\BoardingWindow;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\UserNotification;
 use App\Services\Media\ImageStore;
+use App\Services\Payment\MomoGateway;
+use App\Services\Payment\PaymentException;
+use App\Services\Shop\Money;
 use App\Services\Shop\ThamSoKinhDoanh;
 use App\Services\Time\Gio;
 use Carbon\CarbonImmutable;
@@ -69,16 +77,41 @@ class BoardingService
 
     public function taoPhieu(User $khach, array $d, ?UploadedFile $anh): BoardingBooking
     {
+        return $this->tao($khach, null, $d, $anh, BoardingSource::Online, $khach);
+    }
+
+    /**
+     * Phiếu lập TẠI QUẦY từ phiếu giấy khách điền: cùng các ô như phiếu online, khách không cần
+     * tài khoản. Có email trùng tài khoản thì gắn vào tài khoản đó để khách xem được trên web.
+     * Cửa hàng lập nên phiếu đã xác nhận luôn; khách mang cây đến ngay thì ghi nhận cây luôn.
+     */
+    public function taoTaiQuay(User $admin, array $d, ?UploadedFile $anh): BoardingBooking
+    {
+        $khach = ! empty($d['customer_email']) ? User::query()->where('email', $d['customer_email'])->first() : null;
+
+        $p = $this->tao($khach, trim((string) $d['customer_name']), $d, $anh, BoardingSource::TaiQuay, $admin, BoardingStatus::DaXacNhan);
+
+        if (! empty($d['nhan_cay_ngay'])) {
+            $this->nhanCay($p, $admin, $p->drop_off_on->toDateString(), 'Khách mang cây đến quầy.');
+        }
+
+        return $p->fresh();
+    }
+
+    private function tao(?User $khach, ?string $tenKhach, array $d, ?UploadedFile $anh, BoardingSource $nguon, User $nguoiLap, BoardingStatus $trangThai = BoardingStatus::ChoDuyet): BoardingBooking
+    {
         $bg = $this->baoGia($d);
 
         $sanPham = ! empty($d['product_id']) ? Product::query()->whereKey($d['product_id'])->value('id') : null;
         $duongAnh = $anh ? $this->anh->luu($anh, 'boarding') : null;
 
-        return DB::transaction(function () use ($khach, $d, $bg, $sanPham, $duongAnh) {
+        return DB::transaction(function () use ($khach, $tenKhach, $nguon, $nguoiLap, $trangThai, $d, $bg, $sanPham, $duongAnh) {
             $p = new BoardingBooking();
             $p->forceFill([
                 'code' => $this->maMoi(),
-                'user_id' => $khach->id,
+                'user_id' => $khach?->id,
+                'customer_name' => $tenKhach,
+                'source' => $nguon,
                 'boarding_rate_id' => $bg['rate']->id,
                 'product_id' => $sanPham,
                 'plant_name' => trim($d['plant_name']),
@@ -98,10 +131,10 @@ class BoardingService
                 'monthly_price' => $bg['rate']->monthly_price,
                 'yearly_price' => $bg['rate']->giaNam(),
                 'care_amount' => $bg['care_amount'],
-                'status' => BoardingStatus::ChoDuyet,
+                'status' => $trangThai,
             ])->save();
 
-            $this->ghi($p, $khach, BoardingStatus::ChoDuyet, 'Khách gửi yêu cầu chăm hộ.');
+            $this->ghi($p, $nguoiLap, $trangThai, $nguon === BoardingSource::TaiQuay ? 'Cửa hàng lập phiếu tại quầy.' : 'Khách gửi yêu cầu chăm hộ.');
 
             return $p;
         });
@@ -206,25 +239,62 @@ class BoardingService
         return $p->repeat_yearly && $p->mode === BoardingMode::TheoDip ? $this->taoKySau($p->fresh()) : null;
     }
 
-    /** Ghi tiền đã thu (âm = cửa hàng trả lại khách). */
-    public function ghiThu(BoardingBooking $p, User $admin, string $soTien, ?string $ghiChu = null): void
+    /** Ghi một lần thu (dương) hoặc trả lại khách (âm). Số đã thu trên phiếu = tổng các dòng. */
+    public function ghiThu(BoardingBooking $p, ?User $nguoiGhi, string $soTien, BoardingPaymentMethod $cach, ?string $ghiChu = null, ?PaymentTransaction $gd = null): BoardingPayment
     {
-        DB::transaction(function () use ($p, $admin, $soTien, $ghiChu) {
+        return DB::transaction(function () use ($p, $nguoiGhi, $soTien, $cach, $ghiChu, $gd) {
             $p = BoardingBooking::query()->lockForUpdate()->findOrFail($p->id);
 
-            $p->forceFill([
-                'paid_amount' => bcadd((string) $p->paid_amount, $soTien, 2),
+            $dong = new BoardingPayment();
+            $dong->forceFill([
+                'boarding_booking_id' => $p->id,
+                'amount' => $soTien,
+                'method' => $cach,
+                'note' => $ghiChu,
+                'user_id' => $nguoiGhi?->id,
+                'payment_transaction_id' => $gd?->id,
                 'paid_at' => now(),
             ])->save();
+
+            $p->forceFill([
+                'paid_amount' => (string) BoardingPayment::query()->where('boarding_booking_id', $p->id)->sum('amount'),
+                'paid_at' => now(),
+            ])->save();
+
+            $moTa = (bccomp($soTien, '0', 2) < 0 ? 'Cửa hàng trả lại khách ' : 'Đã nhận ') . Money::format(ltrim($soTien, '-'))
+                . ' (' . mb_strtolower($cach->label()) . ')' . ($ghiChu ? ' — ' . $ghiChu : '');
 
             $e = new BoardingEvent();
             $e->forceFill([
                 'boarding_booking_id' => $p->id,
-                'user_id' => $admin->id,
+                'user_id' => $nguoiGhi?->id,
                 'kind' => BoardingEvent::CAP_NHAT,
-                'note' => (bccomp($soTien, '0', 2) < 0 ? 'Cửa hàng trả lại khách ' : 'Cửa hàng đã thu ') . \App\Services\Shop\Money::format(ltrim($soTien, '-')) . ($ghiChu ? ' — ' . $ghiChu : ''),
+                'note' => $moTa,
             ])->save();
+
+            if ($nguoiGhi === null) {
+                $this->baoKhach($p, $moTa);
+            }
+
+            return $dong;
         });
+    }
+
+    /** Tạo lượt trả online qua MoMo cho phần khách còn thiếu. */
+    public function moMomo(BoardingBooking $p, ?MomoFlow $cach = null): string
+    {
+        if (! $p->traOnlineDuoc()) {
+            throw new PaymentException('Phiếu này hiện không có khoản nào cần trả.');
+        }
+
+        return app(MomoGateway::class)->createBoardingPayment($p, $p->conLai(), $cach);
+    }
+
+    public function thuMomo(PaymentTransaction $gd): void
+    {
+        $p = BoardingBooking::query()->findOrFail($gd->boarding_booking_id);
+
+        $this->ghiThu($p, null, bcadd((string) $gd->amount, '0', 2), BoardingPaymentMethod::Momo, 'Mã giao dịch ' . ($gd->transaction_id ?? $gd->gateway_order_id), $gd);
     }
 
     public function doiLapLai(BoardingBooking $p, bool $bat): void
@@ -340,13 +410,17 @@ class BoardingService
             'note' => $ghiChu,
         ])->save();
 
-        if ($nguoi === null || $nguoi->id !== $p->user_id) {
+        if ($nguoi === null || (int) $nguoi->id !== (int) $p->user_id) {
             $this->baoKhach($p, $tt->label() . ($ghiChu ? ' — ' . $ghiChu : ''));
         }
     }
 
     private function baoKhach(BoardingBooking $p, string $noiDung): void
     {
+        if ($p->user_id === null) {
+            return;
+        }
+
         (new UserNotification())->forceFill([
             'user_id' => $p->user_id,
             'type' => NotificationType::ChamHo,

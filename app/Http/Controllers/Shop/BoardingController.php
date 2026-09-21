@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Shop;
 
 use App\Enums\BoardingHandover;
 use App\Enums\BoardingMode;
+use App\Enums\MomoFlow;
 use App\Http\Controllers\Controller;
 use App\Models\BoardingBooking;
 use App\Models\BoardingRate;
 use App\Models\BoardingWindow;
 use App\Models\Product;
 use App\Services\Boarding\BoardingService;
+use App\Services\Payment\MomoGateway;
+use App\Services\Payment\PaymentException;
 use App\Services\Shop\Money;
 use App\Services\Shop\StoreProfile;
 use Illuminate\Http\JsonResponse;
@@ -97,12 +100,47 @@ class BoardingController extends Controller
     {
         $this->cuaKhach($request, $booking);
 
-        $booking->load(['rate', 'window', 'events', 'parent:id,code']);
+        $booking->load(['rate', 'window', 'events', 'payments', 'parent:id,code']);
 
         return view('shop.boarding.show', [
             'phieu' => $booking,
             'homNay' => $this->dichVu->homNay(),
+            'coMomo' => app(MomoGateway::class)->configured(),
         ]);
+    }
+
+    /** Phiếu trắng để in — không có thông tin khách, ai cũng in được để viết tay tại quầy. */
+    public function blank(): View
+    {
+        return view('shop.boarding.print', [
+            'phieu' => null,
+            'cacGia' => BoardingRate::query()->active()->get(),
+            'quayLai' => route('shop.boarding.index'),
+        ]);
+    }
+
+    public function print(Request $request, BoardingBooking $booking): View
+    {
+        $this->cuaKhach($request, $booking);
+
+        $booking->load(['rate', 'window', 'payments', 'user:id,name']);
+
+        return view('shop.boarding.print', [
+            'phieu' => $booking,
+            'cacGia' => collect(),
+            'quayLai' => route('shop.boarding.show', $booking),
+        ]);
+    }
+
+    public function momo(Request $request, BoardingBooking $booking): RedirectResponse
+    {
+        $this->cuaKhach($request, $booking);
+
+        try {
+            return redirect()->away($this->dichVu->moMomo($booking, MomoFlow::tryFrom((string) $request->input('cach', ''))));
+        } catch (PaymentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
     }
 
     public function cancel(Request $request, BoardingBooking $booking): RedirectResponse

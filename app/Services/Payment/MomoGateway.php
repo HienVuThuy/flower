@@ -16,6 +16,9 @@ class MomoGateway implements PaymentGateway
 {
     public const GATEWAY = 'momo';
 
+    /** extraData của lượt trả phiếu chăm hộ, để không bị nhầm là mã đơn hàng. */
+    public const TIEN_TO_CHAM_HO = 'chamho:';
+
     public function configured(): bool
     {
         return (bool) config('payment.gateways.momo.enabled', false);
@@ -37,7 +40,43 @@ class MomoGateway implements PaymentGateway
             'status' => PaymentTransactionStatus::Pending,
         ]);
 
-        $data = $this->buildRequest($order, $transaction, $flow);
+        return $this->guiYeuCau(
+            $transaction,
+            (string) $order->order_number,
+            (string) $order->order_number,
+            'Thanh toan don hang ' . $order->order_number,
+            $flow,
+            '. Bạn có thể thử lại, hoặc chọn thanh toán khi nhận hàng.',
+        );
+    }
+
+    /** Lượt trả online cho phiếu chăm cây hộ — cùng cổng, cùng chữ ký, cùng IPN với đơn hàng. */
+    public function createBoardingPayment(\App\Models\BoardingBooking $phieu, string $soTien, ?MomoFlow $flow = null): string
+    {
+        if (! $this->configured()) {
+            throw new PaymentException('Cổng MoMo chưa được cấu hình.');
+        }
+
+        $transaction = PaymentTransaction::create([
+            'boarding_booking_id' => $phieu->id,
+            'gateway' => self::GATEWAY,
+            'amount' => $soTien,
+            'status' => PaymentTransactionStatus::Pending,
+        ]);
+
+        return $this->guiYeuCau(
+            $transaction,
+            (string) $phieu->code,
+            self::TIEN_TO_CHAM_HO . $phieu->code,
+            'Thanh toan phieu cham cay ' . $phieu->code,
+            $flow ?? MomoFlow::macDinh(),
+            '. Bạn có thể thử lại, hoặc trả trực tiếp khi giao nhận cây.',
+        );
+    }
+
+    private function guiYeuCau(PaymentTransaction $transaction, string $ma, string $extraData, string $orderInfo, MomoFlow $flow, string $loiThem): string
+    {
+        $data = $this->buildRequest($ma, $extraData, $orderInfo, $transaction, $flow);
 
         $transaction->update([
             'gateway_order_id' => $data['orderId'],
@@ -57,7 +96,7 @@ class MomoGateway implements PaymentGateway
 
         if (empty($result['payUrl'])) {
             Log::error('MoMo từ chối tạo yêu cầu thanh toán.', [
-                'order' => $order->order_number,
+                'ma' => $ma,
                 'result_code' => $result['resultCode'] ?? null,
                 'message' => $result['message'] ?? null,
             ]);
@@ -65,14 +104,14 @@ class MomoGateway implements PaymentGateway
             throw new PaymentException(
                 'Chưa kết nối được tới MoMo'
                 . (isset($result['message']) ? ': ' . $result['message'] : '')
-                . '. Bạn có thể thử lại, hoặc chọn thanh toán khi nhận hàng.'
+                . $loiThem
             );
         }
 
         return (string) $result['payUrl'];
     }
 
-    private function buildRequest(Order $order, PaymentTransaction $transaction, MomoFlow $flow): array
+    private function buildRequest(string $ma, string $extraData, string $orderInfo, PaymentTransaction $transaction, MomoFlow $flow): array
     {
         $partnerCode = (string) config('payment.gateways.momo.partner_code');
         $accessKey = (string) config('payment.gateways.momo.access_key');
@@ -80,11 +119,7 @@ class MomoGateway implements PaymentGateway
 
         $amount = (string) (int) round((float) $transaction->amount);
 
-        $orderId = $order->order_number . '-' . $transaction->id;
-
-        $extraData = (string) $order->order_number;
-
-        $orderInfo = 'Thanh toan don hang ' . $order->order_number;
+        $orderId = $ma . '-' . $transaction->id;
         $requestId = $orderId . '-' . time();
         $requestType = $flow->requestType();
         $redirectUrl = $this->redirectUrl();
