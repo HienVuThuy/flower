@@ -19,6 +19,10 @@ enum TraitType: string
 
     case Color = 'color';
 
+    case Occasion = 'occasion';
+
+    case Season = 'season';
+
     public function label(): string
     {
         return match ($this) {
@@ -29,18 +33,22 @@ enum TraitType: string
             self::GrowthForm => 'Dạng sống',
             self::Shape => 'Dáng',
             self::Color => 'Màu sắc',
+            self::Occasion => 'Dịp tặng',
+            self::Season => 'Mùa hoa',
         };
     }
 
     public static function filterable(): array
     {
         return [
+            self::Occasion,
             self::Color,
             self::GrowthForm,
             self::Habitat,
             self::Shape,
             self::Placement,
             self::FengShui,
+            self::Season,
         ];
     }
 
@@ -54,6 +62,8 @@ enum TraitType: string
             self::GrowthForm => 'dang-song',
             self::Shape => 'dang',
             self::Color => 'mau',
+            self::Occasion => 'dip',
+            self::Season => 'mua',
         };
     }
 
@@ -78,6 +88,8 @@ enum TraitType: string
             self::GrowthForm => GrowthForm::options(),
             self::Shape => PlantShape::options(),
             self::Color => PlantColor::options(),
+            self::Occasion => GiftOccasion::options(),
+            self::Season => FlowerSeason::options(),
         };
     }
 

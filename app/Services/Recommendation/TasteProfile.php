@@ -292,6 +292,8 @@ class TasteProfile
             TraitType::Placement => 'Cũng hợp đặt ' . mb_strtolower($nhan),
             TraitType::FengShui => 'Cũng hợp mệnh ' . $nhan,
             TraitType::AccessoryFor => 'Dùng kèm ' . mb_strtolower($nhan),
+            TraitType::Occasion => 'Cũng hợp dịp ' . mb_strtolower($nhan),
+            TraitType::Season => 'Cũng nở vào ' . mb_strtolower($nhan),
         };
     }
 

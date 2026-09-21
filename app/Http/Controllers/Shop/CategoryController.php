@@ -15,6 +15,7 @@ class CategoryController extends Controller
     {
         $categories = Category::query()
             ->where('is_active', true)
+            ->whereHas('products', fn ($q) => $q->whereIn('status', ['active', 'out_of_stock']))
             ->withCount([
                 'products' => fn ($query) => $query->whereIn('status', ['active', 'out_of_stock']),
             ])

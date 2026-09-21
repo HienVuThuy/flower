@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Enums\CareDifficulty;
+use App\Enums\FlowerCollection;
+use App\Services\Catalog\FlowerCollections;
+use App\Services\Shop\Money;
 use App\Enums\SellingForm;
 use App\Enums\UserEventType;
 use App\Http\Controllers\Controller;
@@ -30,6 +33,7 @@ class ProductController extends Controller
         private readonly ProductSearch $search,
         private readonly RecommendationService $recommendations,
         private readonly PlantAdvisor $advisor,
+        private readonly FlowerCollections $boSuuTap,
     ) {
     }
 
@@ -104,8 +108,21 @@ class ProductController extends Controller
             }
         }
 
+        $boSuuTap = FlowerCollection::tryFrom((string) $request->query('bo-suu-tap', ''));
+
+        if ($boSuuTap) {
+            $this->boSuuTap->apDung($query, $boSuuTap);
+        }
+
         $search = $this->search->terms($request->query('q'));
         $sort = $request->string('sort')->toString();
+
+        [$giaTu, $giaDen] = $this->khoangGiaDaChon($request);
+        $khoangGia = $this->khoangGia($query, $search, $giaTu, $giaDen);
+
+        if ($giaTu !== null || $giaDen !== null) {
+            $query->effectivePriceBetween($giaTu, $giaDen);
+        }
 
         $withoutKeywords = clone $query;
 
@@ -140,6 +157,7 @@ class ProductController extends Controller
         $categories = Category::query()
             ->plants()
             ->where('is_active', true)
+            ->whereHas('products', fn ($q) => $q->whereIn('status', ['active', 'out_of_stock']))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -159,13 +177,79 @@ class ProductController extends Controller
         ) + [
             'traitOptions' => $this->traitOptionsInUse(),
 
+            'khoangGia' => $khoangGia,
+            'giaTu' => $giaTu,
+            'giaDen' => $giaDen,
+
+            'boSuuTap' => $boSuuTap,
+            'boSuuTapTieuDe' => $boSuuTap ? $this->boSuuTap->tieuDe($boSuuTap) : null,
+            'boSuuTapMoTa' => $boSuuTap ? $this->boSuuTap->moTa($boSuuTap) : null,
+            'soLuongBoSuuTap' => $this->boSuuTap->soLuong(),
+
             'careDifficulties' => app(\App\Services\Recommendation\PlantAdvisor::class)->availableDifficulties(),
 
             'moiThamSoLoc' => array_merge(
-                ['q', 'category', 'selling_form', 'sort', 'kinh-nghiem', 'loai', 'promotion'],
+                ['q', 'category', 'selling_form', 'sort', 'kinh-nghiem', 'loai', 'promotion', 'bo-suu-tap', 'gia-tu', 'gia-den'],
                 array_map(fn (TraitType $t) => $t->queryKey(), TraitType::filterable()),
             ),
         ]);
+    }
+
+    /** @return array{0: ?int, 1: ?int} */
+    private function khoangGiaDaChon(Request $request): array
+    {
+        $doc = function (string $khoa) use ($request): ?int {
+            $giaTri = $request->query($khoa);
+
+            if (! is_string($giaTri)) {
+                return null;
+            }
+
+            $so = preg_replace('/\D/', '', $giaTri);
+
+            return $so === '' ? null : min((int) $so, 1_000_000_000);
+        };
+
+        $tu = $doc('gia-tu') ?: null;
+        $den = $doc('gia-den');
+
+        if ($tu !== null && $den !== null && $tu > $den) {
+            [$tu, $den] = [$den, $tu];
+        }
+
+        return [$tu, $den];
+    }
+
+    /** Các khoảng giá gợi sẵn kèm số sản phẩm — đếm trên đúng bộ lọc khách đang dùng, bỏ khoảng trống. */
+    private function khoangGia(Builder $query, SearchTerms $search, ?int $giaTu, ?int $giaDen): array
+    {
+        $out = [];
+
+        foreach ((array) config('catalog.khoang_gia', []) as [$tu, $den]) {
+            $dem = clone $query;
+            $this->search->filter($dem, $search);
+            $soLuong = $dem->effectivePriceBetween($tu, $den)->count();
+
+            $dangChon = $giaTu === $tu && $giaDen === $den;
+
+            if ($soLuong === 0 && ! $dangChon) {
+                continue;
+            }
+
+            $out[] = [
+                'tu' => $tu,
+                'den' => $den,
+                'nhan' => match (true) {
+                    $tu === null => 'Dưới ' . Money::format($den),
+                    $den === null => 'Từ ' . Money::format($tu),
+                    default => Money::number($tu) . ' – ' . Money::format($den),
+                },
+                'so_luong' => $soLuong,
+                'dang_chon' => $dangChon,
+            ];
+        }
+
+        return $out;
     }
 
     private function traitOptionsInUse(): array

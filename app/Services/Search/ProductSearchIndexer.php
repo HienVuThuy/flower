@@ -2,6 +2,7 @@
 
 namespace App\Services\Search;
 
+use App\Enums\TraitType;
 use App\Models\Category;
 use App\Models\Product;
 use Illuminate\Support\Facades\Cache;
@@ -28,6 +29,7 @@ class ProductSearchIndexer
             $product->category?->name,
             $product->selling_form?->label(),
             $product->product_type?->label(),
+            ...$this->nhanDipVaMua($product),
         ];
 
         $text = $this->normalizer->normalize(implode(' ', array_filter($parts)));
@@ -36,6 +38,24 @@ class ProductSearchIndexer
             'search_name' => mb_substr($name, 0, 255),
             'search_text' => mb_substr($this->dedupe($text), 0, 1000),
         ];
+    }
+
+    /** "hoa sinh nhật", "hoa tình yêu", "hoa mùa xuân" phải tìm ra đúng hàng đã gắn nhãn. */
+    private function nhanDipVaMua(Product $product): array
+    {
+        if (! $product->exists) {
+            return [];
+        }
+
+        $out = [];
+
+        foreach ([TraitType::Occasion, TraitType::Season] as $loai) {
+            foreach ($product->traitValues($loai) as $giaTri) {
+                $out[] = 'hoa ' . $loai->labelFor($giaTri);
+            }
+        }
+
+        return $out;
     }
 
     public function fill(Product $product): void
@@ -56,7 +76,7 @@ class ProductSearchIndexer
 
         Product::query()
             ->withTrashed()
-            ->with('category')
+            ->with(['category', 'traits'])
             ->chunkById(200, function ($products) use (&$written, &$scanned) {
                 foreach ($products as $product) {
                     $scanned++;

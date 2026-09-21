@@ -2,6 +2,7 @@
 
 namespace App\Services\AI;
 
+use App\Enums\TraitType;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -71,7 +72,7 @@ class AdvisorContext
         $toiDa = (int) config('ai.max_products', 8);
 
         $truyVan = fn () => Product::query()
-            ->with(['category', 'promotions'])
+            ->with(['category', 'promotions', 'traits'])
             ->whereIn('status', ['active', 'out_of_stock']);
 
         $q = $truyVan();
@@ -103,6 +104,14 @@ class AdvisorContext
                 . ($v->price !== null ? ' ' . Money::format((string) $v->price) : '')
                 . ($v->track_inventory ? ((int) $v->stock_quantity > 0 ? ' (còn ' . $v->stock_quantity . ')' : ' (hết hàng)') : ''))
                 ->implode('; ');
+        }
+
+        foreach ([TraitType::Occasion, TraitType::Season] as $loai) {
+            $giaTri = $p->traitValues($loai);
+
+            if ($giaTri !== []) {
+                $dong[] = '  ' . $loai->label() . ': ' . implode(', ', array_map(fn ($v) => $loai->labelFor($v), $giaTri));
+            }
         }
 
         $nhan = $p->careProfile()->fields();

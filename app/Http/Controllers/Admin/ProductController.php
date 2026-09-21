@@ -170,6 +170,8 @@ class ProductController extends Controller
                         );
                     }
 
+                    $product->save();
+
 
                     foreach (
                         $variants
@@ -486,6 +488,8 @@ class ProductController extends Controller
                             (array) ($traits[$traitType->value] ?? []),
                         );
                     }
+
+                    $product->save();
 
 
                     $existingIds =

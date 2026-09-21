@@ -4,6 +4,8 @@
     use App\Enums\TraitType;
 
     $nhomNhan = collect([
+        TraitType::Occasion,
+        TraitType::Season,
         TraitType::GrowthForm,
         TraitType::Habitat,
         TraitType::Shape,

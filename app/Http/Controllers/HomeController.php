@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\Catalog\FlowerCollections;
 use App\Services\Recommendation\RecommendationService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,6 +13,7 @@ class HomeController extends Controller
 {
     public function __construct(
         private readonly RecommendationService $recommendations,
+        private readonly FlowerCollections $boSuuTap,
     ) {
     }
 
@@ -20,6 +22,7 @@ class HomeController extends Controller
         $categories = Category::query()
             ->plants()
             ->where('is_active', true)
+            ->whereHas('products', fn ($q) => $q->whereIn('status', ['active', 'out_of_stock']))
             ->withCount([
                 'products' => fn ($q) => $q->whereIn('status', ['active', 'out_of_stock']),
             ])
@@ -56,8 +59,13 @@ class HomeController extends Controller
             $request->session()->getId(),
         );
 
+        $theoDip = $this->boSuuTap->soLuongTheoDip();
+
         return view('welcome', [
             'categories' => $categories,
+            'theoDip' => $theoDip,
+            'dipSapToi' => $this->boSuuTap->dipSapToi($theoDip),
+            'soLuongBoSuuTap' => $this->boSuuTap->soLuong(),
             'featuredProducts' => $featuredProducts,
             'noiBat' => $noiBat,
             'mostWished' => $this->mostWished($reco['items']->pluck('product.id')->all()),

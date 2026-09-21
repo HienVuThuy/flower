@@ -7,7 +7,7 @@ Tài liệu này dạy cách đọc code của dự án theo thứ tự dễ →
   PHẦN 0. Cách dùng tài liệu và cách tìm nhanh trong VS Code
   PHẦN 1. Kiến thức nền: 22 khái niệm gặp liên tục trong dự án
   PHẦN 2. Bản đồ thư mục: tệp nào nằm ở đâu, làm gì
-  PHẦN 3. 25 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
+  PHẦN 3. 26 luồng chạy thật: bấm nút → tệp nào → hàm nào → kết quả
   PHẦN 4. Tự học và gỡ lỗi
   PHẦN 5. Bảng tra nhanh thuật ngữ
 
@@ -1161,6 +1161,54 @@ LUỒNG 25. Chương trình khuyến mại "Tặng quà" và nhãn trên thẻ s
   Kiểm thử: tests/Feature/Gift/QuaTangTest.php, tests/Feature/Catalog/NhanSanPhamTest.php
 
 
+
+LUỒNG 26. Lọc theo giá, dịp tặng, bộ sưu tập tự động, quà kèm chọn nhiều
+--------------------------------------------------------------------------------
+  LỌC GIÁ — /san-pham?gia-tu=300000&gia-den=500000
+  1. Shop\ProductController@index → khoangGiaDaChon(): chỉ giữ chữ số ("300.000"
+     cũng được), nhập ngược thì đảo, trần 1 tỉ.
+  2. khoangGia(): đếm số món cho từng khoảng trong config('catalog.khoang_gia'),
+     đếm TRÊN ĐÚNG bộ lọc khách đang dùng; khoảng 0 món thì bỏ.
+  3. Product::scopeEffectivePriceBetween() so với Product::giaHieuLucSql() —
+     cùng biểu thức SQL mà sắp xếp theo giá dùng (giá sau khuyến mại, bỏ hàng
+     "liên hệ báo giá" có giá 0).
+  4. Giao diện: resources/views/shop/products/_filter-form.blade.php, nhóm
+     "Khoảng giá" (data-loc-gia) và hai ô Từ / Đến.
+
+  DỊP TẶNG VÀ MÙA HOA — nhãn nhiều giá trị, bảng product_traits sẵn có
+    App\Enums\TraitType::Occasion (khoá lọc ?dip=), ::Season (?mua=)
+    App\Enums\GiftOccasion   tinh-yeu, sinh-nhat, chuc-mung, sinh-vien, chia-buon
+    App\Enums\FlowerSeason   xuan, ha, thu, dong; cua($ngay) cho mùa của một ngày
+  Admin tích ở form sản phẩm (nhóm "Nhãn phân loại"); lưu xong
+  Admin\ProductController gọi $product->save() lần nữa để chỉ mục tìm kiếm
+  (Services/Search/ProductSearchIndexer::nhanDipVaMua) ghi thêm "hoa sinh nhật"…
+  Dùng lại ở: bộ lọc, trang sản phẩm (components/product/classification),
+  gợi ý cá nhân (TasteProfile::lyDoNhan), trợ lý AI (AdvisorContext::moTa),
+  trang "Tặng người thương" (IntentController), sitemap.
+
+  BỘ SƯU TẬP TỰ ĐỘNG — /san-pham?bo-suu-tap=cao-cap | theo-mua
+    App\Enums\FlowerCollection, App\Services\Catalog\FlowerCollections
+    apDung()        luật vào bộ: cao-cap = hoa (tươi hoặc giả) có giá đang bán
+                    >= config('catalog.cao_cap_tu'); theo-mua = hoa gắn mùa này
+                    hoặc mùa kế
+    soLuong(), soLuongTheoDip()   đếm để ẩn bộ / dịp chưa có hàng
+    dipSapToi()     ngày lễ trong 30 ngày tới (config/occasions.php, khoá 'dip')
+  Trang chủ: HomeController → welcome.blade.php, khối data-theo-dip.
+  Tiêu đề + canonical riêng: shop/products/index.blade.php đặt
+  @section('canonical'), layouts/app truyền vào components/site/social-meta.
+
+  HOA GIẢ — ProductType::Artificial (không theo lô hoa tươi), danh mục hoa-gia
+  tạo bằng migration 2026_10_28_010000. Danh mục chưa có hàng bị ẩn ở trang chủ,
+  trang Danh mục, bộ lọc, sitemap (whereHas('products')).
+
+  QUÀ KÈM CHỌN NHIỀU — /admin/product-gifts/{product}/edit
+  1. Danh sách tích chọn: gift_product_ids[] (kèm gift_variant_ids[id]),
+     gift_item_ids[], also_product_ids[] — resources/js/admin/gift-variant-picker.js
+     lọc theo tên, đếm, mở ô quy cách khi tích.
+  2. Admin\ProductGiftController@store: gopTruongCu() nhận cả biểu mẫu cũ một
+     quà; mỗi cặp (sản phẩm × quà) một dòng product_gifts trong một giao dịch;
+     trung() tìm dòng đã có để cập nhật thay vì nhân đôi. Quy cách kích hoạt chỉ
+     áp cho sản phẩm đang sửa.
 ================================================================================
 PHẦN 4. TỰ HỌC VÀ GỠ LỖI
 ================================================================================

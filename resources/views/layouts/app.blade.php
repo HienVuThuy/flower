@@ -18,7 +18,8 @@
         :title="trim($__env->yieldContent('title'))"
         :description="trim($__env->yieldContent('meta_description'))"
         :image="trim($__env->yieldContent('og_image'))"
-        :type="trim($__env->yieldContent('og_type')) ?: 'website'" />
+        :type="trim($__env->yieldContent('og_type')) ?: 'website'"
+        :canonical="trim($__env->yieldContent('canonical'))" />
 
     {{-- Phông chữ nội dung: nạp sớm để chữ không đổi kiểu giữa chừng. --}}
     @foreach(['inter-vietnamese-400-normal', 'inter-latin-400-normal'] as $phong)

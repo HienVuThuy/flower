@@ -2,7 +2,7 @@
 <form method="GET" action="{{ route('shop.products.index') }}" class="filter-panel" data-form-loc>
 
     @foreach($moiThamSoLoc as $thamSo)
-        @continue(in_array($thamSo, ['q', 'sort'], true))
+        @continue(in_array($thamSo, ['q', 'sort', 'gia-tu', 'gia-den'], true))
         @continue(! request()->filled($thamSo))
 
         <input type="hidden" name="{{ $thamSo }}" value="{{ request($thamSo) }}">
@@ -21,6 +21,22 @@
             placeholder="Tên cây, hoa…"
         >
     </div>
+
+    @if($soLuongBoSuuTap !== [])
+        <div class="filter-panel__group">
+            <span class="filter-panel__label">Bộ sưu tập</span>
+            <div class="filter-chip-group">
+                @foreach($soLuongBoSuuTap as $ma => $soLuong)
+                    @php $dangChon = request('bo-suu-tap') === $ma; @endphp
+                    <a href="{{ request()->fullUrlWithQuery(['bo-suu-tap' => $dangChon ? null : $ma, 'page' => null]) }}"
+                       class="filter-chip {{ $dangChon ? 'is-active' : '' }}">
+                        {{ \App\Enums\FlowerCollection::from($ma)->label() }}
+                        <span class="filter-chip__count">{{ $soLuong }}</span>
+                    </a>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
     <div class="filter-panel__group">
         <span class="filter-panel__label">Danh mục</span>
@@ -44,6 +60,38 @@
                 </a>
             @endforeach
         </div>
+    </div>
+
+    <div class="filter-panel__group" data-loc-gia>
+        <span class="filter-panel__label">Khoảng giá</span>
+
+        @if($khoangGia !== [])
+            <div class="filter-chip-group">
+                @foreach($khoangGia as $khoang)
+                    <a href="{{ request()->fullUrlWithQuery($khoang['dang_chon']
+                            ? ['gia-tu' => null, 'gia-den' => null, 'page' => null]
+                            : ['gia-tu' => $khoang['tu'], 'gia-den' => $khoang['den'], 'page' => null]) }}"
+                       class="filter-chip {{ $khoang['dang_chon'] ? 'is-active' : '' }}">
+                        {{ $khoang['nhan'] }}
+                        <span class="filter-chip__count">{{ $khoang['so_luong'] }}</span>
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
+        <div class="filter-price">
+            <label class="visually-hidden" for="filter-gia-tu">Giá từ</label>
+            <input type="text" inputmode="numeric" name="gia-tu" id="filter-gia-tu" class="form-control"
+                   maxlength="13" placeholder="Từ" autocomplete="off"
+                   value="{{ $giaTu !== null ? \App\Services\Shop\Money::number($giaTu) : '' }}">
+            <span class="filter-price__dash" aria-hidden="true">–</span>
+            <label class="visually-hidden" for="filter-gia-den">Giá đến</label>
+            <input type="text" inputmode="numeric" name="gia-den" id="filter-gia-den" class="form-control"
+                   maxlength="13" placeholder="Đến" autocomplete="off"
+                   value="{{ $giaDen !== null ? \App\Services\Shop\Money::number($giaDen) : '' }}">
+        </div>
+
+        <p class="filter-panel__note">Theo giá đang bán, đã trừ khuyến mại.</p>
     </div>
 
     @if($careDifficulties->isNotEmpty())

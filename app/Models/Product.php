@@ -227,6 +227,28 @@ class Product extends Model
 
     public function scopeOrderByEffectivePrice(Builder $query, string $direction = 'asc'): Builder
     {
+        return $query->orderBy(self::giaHieuLucSql(), strtolower($direction) === 'desc' ? 'desc' : 'asc');
+    }
+
+    /** Lọc theo giá đang bán (sau khuyến mại). Hàng "liên hệ báo giá" không có giá nên không lọt vào khoảng nào. */
+    public function scopeEffectivePriceBetween(Builder $query, ?int $tu, ?int $den): Builder
+    {
+        $query->where('products.base_price', '>', 0);
+
+        if ($tu !== null) {
+            $query->where(self::giaHieuLucSql(), '>=', $tu);
+        }
+
+        if ($den !== null) {
+            $query->where(self::giaHieuLucSql(), '<=', $den);
+        }
+
+        return $query;
+    }
+
+    /** Giá đang bán tính bằng SQL — cùng luật với PricingService, để sắp xếp và lọc được ngay trong truy vấn. */
+    public static function giaHieuLucSql(): \Illuminate\Database\Query\Builder
+    {
         $now = now();
         $moc = $now->toDateTimeString();
 
@@ -281,7 +303,7 @@ class Product extends Model
                         ->where('pr.daily_start_time', '<=', $gio)
                         ->orWhere('pr.daily_end_time', '>=', $gio))));
 
-        return $query->orderBy($giaHieuLuc, strtolower($direction) === 'desc' ? 'desc' : 'asc');
+        return $giaHieuLuc;
     }
 
     protected static function booted(): void

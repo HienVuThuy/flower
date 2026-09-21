@@ -8510,3 +8510,65 @@ tài nguyên và chống tiêm lệnh vào AI.
   đoạn script nội tuyến và thuộc tính onchange. Nó vẫn chặn được việc nạp mã từ
   tên miền lạ — lớp chắn thứ hai nếu có chỗ nào lọt XSS. Muốn bỏ 'unsafe-inline'
   thì phải gỡ hết script nội tuyến và dùng nonce, ghi lại để làm sau.
+
+## QĐ-310. Lọc theo giá, "dịp tặng" thay vì thêm danh mục, và bộ sưu tập tự động
+
+Yêu cầu: thêm lọc giá; cân nhắc các danh mục Hoa tình yêu / sinh nhật / chúc
+mừng / sinh viên / theo mùa / cao cấp / hoa giả. Mỗi mục được xét theo ba câu
+hỏi: dữ liệu có đúng bản chất không, khách cảm thấy thế nào, cửa hàng được gì.
+
+- LỌC GIÁ tính bằng GIÁ ĐANG BÁN (đã trừ khuyến mại), dùng lại đúng biểu thức
+  SQL của sắp xếp theo giá (`Product::giaHieuLucSql()`), không viết luật thứ hai.
+  Lọc theo giá gốc sẽ giấu mất món đang giảm — đúng món khách săn giá muốn thấy.
+  Hàng "liên hệ báo giá" không có giá nên không lọt vào khoảng nào.
+- KHOẢNG GIÁ GỢI SẴN chỉ ghi con số ("Dưới 300.000₫", "300.000 – 500.000₫"…),
+  kèm số món, ẩn khoảng trống. KHÔNG có nhãn "giá rẻ" / "bình dân": người mua hoa
+  thường mua để tặng, chữ "rẻ" gắn vào món quà làm họ ngại. Tự kéo khoảng giá là
+  hành vi riêng tư — cùng một nhu cầu tiết kiệm nhưng khách tự chọn, không bị
+  gọi tên. Ô "Từ / Đến" nhận cả "300.000" lẫn "300000", nhập ngược tự đảo.
+- TÌNH YÊU / SINH NHẬT / CHÚC MỪNG / SINH VIÊN là DỊP, không phải DANH MỤC.
+  Danh mục là một-một (mỗi sản phẩm một danh mục); một bó hồng đỏ hợp cả tình yêu
+  lẫn sinh nhật. Làm danh mục thì phải nhân đôi sản phẩm hoặc bắt admin chọn một
+  — cả hai đều sai. Nên đây là nhãn nhiều giá trị `TraitType::Occasion` (enum
+  `GiftOccasion`), đi chung đường với các nhãn cũ: admin tích ô, bộ lọc "Dịp
+  tặng", link từ trang sản phẩm, gợi ý cá nhân ("Cũng hợp dịp sinh nhật"), chỉ
+  mục tìm kiếm ("hoa sinh nhật" ra đúng hàng), và ngữ cảnh trợ lý AI.
+  "Hoa sinh viên" đổi thành "Sinh viên & tốt nghiệp": ở VN "hoa sinh viên" hay bị
+  hiểu là "hoa rẻ" — gắn với dịp (tốt nghiệp, bảo vệ) thì giữ được ý mà không hạ
+  giá trị món quà. Thêm "Chia buồn" vì là nhu cầu có thật của tiệm hoa; chưa có
+  hàng thì không hiện ở đâu cả.
+- HOA THEO MÙA là nhãn `TraitType::Season` (xuân/hạ/thu/đông, chỉ gắn cho hoa có
+  mùa rõ) + bộ sưu tập TỰ ĐỔI theo tháng: gồm mùa này và mùa kế. Tháng 9 nó hiện
+  hoa mùa thu và cúc hoạ mi (sắp vào đông) — khách biết trước để đặt.
+- HOA CAO CẤP là bộ sưu tập theo NGƯỠNG GIÁ (`catalog.cao_cap_tu`, mặc định
+  800.000₫, tính theo giá đang bán), chỉ tính hoa (tươi hoặc giả) — bonsai 2,8
+  triệu không phải "hoa cao cấp". Tự động nên không bao giờ lệch với giá thật.
+  Có bộ "cao cấp" mà KHÔNG có bộ "giá rẻ" là cố ý: nhãn cao cấp làm món quà đắt
+  hơn trong mắt người nhận, nhãn rẻ làm ngược lại.
+- HOA GIẢ là DANH MỤC thật (khác bản chất, không phải dịp) và thêm loại sản phẩm
+  `ProductType::Artificial`. Không xếp vào loại "Hoa" vì hoa tươi đi theo lô,
+  báo héo, cho đổi vì héo — hoa sáp/lụa/giấy không có những thứ đó. Danh mục tạo
+  bằng migration, chưa có hàng nên cửa hàng tự ẩn (xem ý dưới).
+- DANH MỤC TRỐNG BỊ ẨN ở trang chủ, trang Danh mục, bộ lọc và sitemap. Bấm vào
+  một danh mục chỉ để thấy "không có sản phẩm" là ngõ cụt; đường dẫn trực tiếp
+  vẫn mở được.
+- TRANG CHỦ có hàng "Chọn hoa theo dịp" (chỉ dịp có hàng, kèm số món) và nhắc
+  ngày lễ trong 30 ngày tới nếu có hàng hợp dịp: config/occasions.php có thêm khoá
+  `dip` nối 14/2 → tình yêu, 8/3 · 20/10 · 20/11 · 27/2 → chúc mừng.
+- TRANG DỊP / BỘ SƯU TẬP có tiêu đề, mô tả và canonical riêng
+  (`/san-pham?dip=sinh-nhat`), có trong sitemap — "hoa sinh nhật" là cụm khách
+  gõ trên Google, trỏ canonical về /san-pham thì mất trang đó.
+
+## QĐ-311. Quà tặng kèm: chọn nhiều quà, gắn cho nhiều sản phẩm trong một lần
+
+- Trang "Quà kèm: <sản phẩm>" đổi ô chọn một sản phẩm thành danh sách tích chọn
+  (có ô lọc theo tên, đếm số đã chọn). Sản phẩm có quy cách thì ô quy cách của
+  riêng dòng đó chỉ mở khi đã tích.
+- Thêm mục "Gắn cho sản phẩm nào?": luôn gắn cho sản phẩm đang sửa, tích thêm để
+  gắn cùng quà và cùng luật cho sản phẩm khác. Quy cách kích hoạt ("Áp dụng khi
+  mua") chỉ thuộc sản phẩm đang sửa, nên sản phẩm gắn thêm áp cho mọi quy cách.
+- Mỗi cặp (sản phẩm, quà) vẫn là MỘT dòng luật riêng — đúng mô hình cũ, nên giỏ
+  hàng, đơn, trả hàng, báo cáo không phải đổi gì. Cặp đã có thì cập nhật luật,
+  không nhân đôi. Cả lô ghi trong một giao dịch và mỗi dòng một bản ghi nhật ký.
+- Biểu mẫu kiểu cũ (một `gift_product_id` / `gift_item_id`) vẫn được nhận và quy
+  về danh sách, để không gãy chỗ nào đang gửi theo kiểu đó.

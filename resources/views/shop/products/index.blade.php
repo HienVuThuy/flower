@@ -1,6 +1,20 @@
 @extends('layouts.app')
 
-@section('title', request('q') ? 'Tìm kiếm: ' . request('q') : 'Sản phẩm')
+@php
+    $dipDangChon = \App\Enums\GiftOccasion::tryFrom((string) request('dip'));
+
+    $tieuDeTrang = $boSuuTapTieuDe ?? $dipDangChon?->heading();
+    $moTaTrang = $boSuuTapMoTa ?? ($dipDangChon ? 'Gợi ý cho dịp: ' . mb_strtolower($dipDangChon->hint()) . '.' : null);
+@endphp
+
+@section('title', request('q') ? 'Tìm kiếm: ' . request('q') : ($tieuDeTrang ?? 'Sản phẩm'))
+
+@if($tieuDeTrang && ! request('q'))
+    @section('meta_description', $moTaTrang)
+    @section('canonical', $boSuuTap
+        ? route('shop.products.index', ['bo-suu-tap' => $boSuuTap->value])
+        : route('shop.products.index', ['dip' => $dipDangChon->value]))
+@endif
 
 @section('content')
 
@@ -20,6 +34,8 @@
                         {{ $activePromotion->name }}
                     @elseif(request('q'))
                         Kết quả cho "{{ request('q') }}"
+                    @elseif($tieuDeTrang)
+                        {{ $tieuDeTrang }}
                     @else
                         Tất cả sản phẩm
                     @endif
@@ -29,6 +45,8 @@
                     <p class="text-body-sm mt-2 mb-0" style="max-width: 52ch;">
                         {{ $activePromotion->short_description }}
                     </p>
+                @elseif($moTaTrang && ! request('q'))
+                    <p class="text-body-sm mt-2 mb-0" style="max-width: 60ch;">{{ $moTaTrang }}</p>
                 @endif
             </div>
         </div>

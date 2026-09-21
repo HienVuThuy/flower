@@ -13,6 +13,7 @@ use App\Models\ProductGift;
 use App\Models\ProductVariant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -64,26 +65,37 @@ class ProductGiftController extends Controller
                 ->orderBy('sort_order')
                 ->orderBy('id')
                 ->get(),
-            'sanPham' => Product::query()->orderBy('name')->get(['id', 'name']),
+            'sanPham' => Product::query()->orderBy('name')->get(['id', 'name', 'status']),
             'quyCach' => ProductVariant::query()->orderBy('product_id')->orderBy('sort_order')->orderBy('id')->get(['id', 'product_id', 'name']),
             'vatPhamRieng' => GiftItem::query()->whereNull('product_id')->orderBy('name')->get(['id', 'name', 'stock_quantity']),
         ]);
     }
 
+    /**
+     * Thêm quà — chọn được NHIỀU quà một lúc, và gắn cùng lúc cho NHIỀU sản phẩm.
+     * Mỗi cặp (sản phẩm, quà) là một dòng luật riêng; cặp đã có thì cập nhật, không nhân đôi.
+     */
     public function store(Request $request, Product $product): RedirectResponse
     {
+        $this->gopTruongCu($request);
+
         $nguon = $request->validate([
             'nguon' => ['required', Rule::in(['san_pham', 'vat_pham_co', 'vat_pham_moi'])],
-            'gift_product_id' => ['required_if:nguon,san_pham', 'nullable', 'integer', 'exists:products,id'],
-            'gift_variant_id' => ['nullable', 'integer', 'exists:product_variants,id'],
-            'gift_item_id' => ['required_if:nguon,vat_pham_co', 'nullable', 'integer', Rule::exists('gift_items', 'id')->whereNull('product_id')],
+            'gift_product_ids' => ['required_if:nguon,san_pham', 'nullable', 'array', 'max:50'],
+            'gift_product_ids.*' => ['integer', 'distinct', 'exists:products,id'],
+            'gift_variant_ids' => ['nullable', 'array'],
+            'gift_variant_ids.*' => ['nullable', 'integer', 'exists:product_variants,id'],
+            'gift_item_ids' => ['required_if:nguon,vat_pham_co', 'nullable', 'array', 'max:50'],
+            'gift_item_ids.*' => ['integer', 'distinct', Rule::exists('gift_items', 'id')->whereNull('product_id')],
             'name' => ['required_if:nguon,vat_pham_moi', 'nullable', 'string', 'max:150'],
             'kind' => ['required_if:nguon,vat_pham_moi', 'nullable', Rule::enum(GiftKind::class)],
             'stock_quantity' => ['required_if:nguon,vat_pham_moi', 'nullable', 'integer', 'min:0', 'max:1000000'],
             'value' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
+            'also_product_ids' => ['nullable', 'array', 'max:500'],
+            'also_product_ids.*' => ['integer', 'distinct', 'exists:products,id'],
         ], [
-            'gift_product_id.required_if' => 'Chọn sản phẩm dùng làm quà.',
-            'gift_item_id.required_if' => 'Chọn vật phẩm quà đã có.',
+            'gift_product_ids.required_if' => 'Chọn ít nhất một sản phẩm dùng làm quà.',
+            'gift_item_ids.required_if' => 'Chọn ít nhất một vật phẩm quà đã có.',
             'name.required_if' => 'Nhập tên vật phẩm quà.',
             'stock_quantity.required_if' => 'Nhập số lượng quà đang có — quà không đếm được là quà vô hạn.',
         ], [
@@ -92,34 +104,84 @@ class ProductGiftController extends Controller
 
         $luat = $this->luat($request, $product);
 
-        $vat = match ($nguon['nguon']) {
-            'san_pham' => $this->vatPhamTuSanPham((int) $nguon['gift_product_id'], $nguon['gift_variant_id'] ?? null, $nguon['value'] ?? null),
-            'vat_pham_co' => GiftItem::whereNull('product_id')->findOrFail($nguon['gift_item_id']),
-            'vat_pham_moi' => GiftItem::create([
+        $cacVat = match ($nguon['nguon']) {
+            'san_pham' => collect($nguon['gift_product_ids'])->map(fn ($id) => $this->vatPhamTuSanPham(
+                (int) $id,
+                $nguon['gift_variant_ids'][$id] ?? null,
+                $nguon['value'] ?? null,
+            )),
+            'vat_pham_co' => GiftItem::whereNull('product_id')->whereIn('id', $nguon['gift_item_ids'])->get(),
+            'vat_pham_moi' => collect([GiftItem::create([
                 'name' => trim($nguon['name']),
                 'kind' => $nguon['kind'],
                 'stock_quantity' => (int) $nguon['stock_quantity'],
                 'value' => $nguon['value'] ?? null,
                 'is_active' => true,
-            ]),
+            ])]),
         };
 
-        $qua = $this->trung($product, $luat['product_variant_id'], $vat->id) ?? new ProductGift();
-        $daCo = $qua->exists;
+        $sanPhamNhan = Product::query()
+            ->whereIn('id', array_map('intval', $nguon['also_product_ids'] ?? []))
+            ->whereKeyNot($product->id)
+            ->get()
+            ->prepend($product);
 
-        $qua->fill($luat + ['is_active' => true]);
-        $qua->product_id = $product->id;
-        $qua->product_variant_id = $luat['product_variant_id'];
-        $qua->gift_item_id = $vat->id;
-        $qua->save();
+        $moi = 0;
+        $capNhat = 0;
 
-        $this->audit()->log('product-gift.saved', 'Quà kèm "' . $vat->name . '" cho sản phẩm ' . $product->name, $product, [
-            'luat' => $qua->moTaLuat(),
-        ]);
+        DB::transaction(function () use ($sanPhamNhan, $cacVat, $luat, $product, &$moi, &$capNhat) {
+            foreach ($sanPhamNhan as $sp) {
+                /* Quy cách kích hoạt thuộc riêng sản phẩm đang sửa; sản phẩm gắn thêm áp cho mọi quy cách. */
+                $luatSp = $sp->is($product) ? $luat : ['product_variant_id' => null] + $luat;
+
+                foreach ($cacVat as $vat) {
+                    $qua = $this->trung($sp, $luatSp['product_variant_id'], $vat->id) ?? new ProductGift();
+                    $qua->exists ? $capNhat++ : $moi++;
+
+                    $qua->fill($luatSp + ['is_active' => true]);
+                    $qua->product_id = $sp->id;
+                    $qua->product_variant_id = $luatSp['product_variant_id'];
+                    $qua->gift_item_id = $vat->id;
+                    $qua->save();
+
+                    $this->audit()->log('product-gift.saved', 'Quà kèm "' . $vat->name . '" cho sản phẩm ' . $sp->name, $sp, [
+                        'luat' => $qua->moTaLuat(),
+                    ]);
+                }
+            }
+        });
 
         return redirect()
             ->route('admin.product-gifts.edit', $product)
-            ->with('success', $daCo ? 'Quà này đã gắn sẵn cho đúng quy cách đó — đã cập nhật luật.' : 'Đã thêm quà cho sản phẩm.');
+            ->with('success', $this->thongBaoLuu($moi, $capNhat, $cacVat->count(), $sanPhamNhan->count()));
+    }
+
+    /** Biểu mẫu cũ gửi một quà (gift_product_id / gift_item_id) — vẫn nhận, quy về dạng danh sách. */
+    private function gopTruongCu(Request $request): void
+    {
+        if ($request->filled('gift_product_id') && ! $request->has('gift_product_ids')) {
+            $id = $request->input('gift_product_id');
+
+            $request->merge([
+                'gift_product_ids' => [$id],
+                'gift_variant_ids' => $request->filled('gift_variant_id') ? [$id => $request->input('gift_variant_id')] : [],
+            ]);
+        }
+
+        if ($request->filled('gift_item_id') && ! $request->has('gift_item_ids')) {
+            $request->merge(['gift_item_ids' => [$request->input('gift_item_id')]]);
+        }
+    }
+
+    private function thongBaoLuu(int $moi, int $capNhat, int $soQua, int $soSanPham): string
+    {
+        if ($soQua === 1 && $soSanPham === 1) {
+            return $moi === 1 ? 'Đã thêm quà cho sản phẩm.' : 'Quà này đã gắn sẵn cho đúng quy cách đó — đã cập nhật luật.';
+        }
+
+        $cau = "Đã gắn {$soQua} quà cho {$soSanPham} sản phẩm: {$moi} dòng mới";
+
+        return $capNhat > 0 ? $cau . ", {$capNhat} dòng đã có được cập nhật luật." : $cau . '.';
     }
 
     public function update(Request $request, Product $product, ProductGift $productGift): RedirectResponse

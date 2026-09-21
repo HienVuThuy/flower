@@ -76,6 +76,40 @@
     align-items: center;
 }
 
+.filter-price {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.6rem;
+}
+
+.filter-price .form-control {
+    min-width: 0;
+    flex: 1 1 0;
+}
+
+.filter-price__dash {
+    color: var(--ink-500);
+}
+
+.occasion-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.occasion-row .filter-chip {
+    padding-block: 0.5rem;
+}
+
+.occasion-soon {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+    color: var(--ink-500);
+}
+
 
 .taxon-kingdom {
     margin-bottom: 2rem;

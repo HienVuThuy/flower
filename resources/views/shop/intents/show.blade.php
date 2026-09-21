@@ -17,6 +17,17 @@
                 <span class="text-label section-header__eyebrow d-block">Bạn đang tìm</span>
                 <h1 class="text-h2 section-header__title">{{ $intent->heading() }}</h1>
                 <p class="mb-0">{{ $intent->tagline() }}</p>
+
+                @if($theoDip !== [])
+                    <div class="occasion-row mt-3" data-theo-dip>
+                        @foreach($theoDip as $ma => $soLuong)
+                            <a href="{{ route('shop.products.index', ['dip' => $ma]) }}" class="filter-chip">
+                                {{ \App\Enums\GiftOccasion::from($ma)->heading() }}
+                                <span class="filter-chip__count">{{ $soLuong }}</span>
+                            </a>
+                        @endforeach
+                    </div>
+                @endif
             </div>
         </div>
 

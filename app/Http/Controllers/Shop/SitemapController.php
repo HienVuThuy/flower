@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BlogPost;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\Catalog\FlowerCollections;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 
@@ -39,7 +40,21 @@ class SitemapController extends Controller
                 }
             });
 
-        foreach (Category::query()->where('is_active', true)->get(['id', 'slug', 'updated_at']) as $dm) {
+        $boSuuTap = app(FlowerCollections::class);
+
+        foreach (array_keys($boSuuTap->soLuongTheoDip()) as $dip) {
+            $dong[] = [route('shop.products.index', ['dip' => $dip]), null, '0.7'];
+        }
+
+        foreach (array_keys($boSuuTap->soLuong()) as $ma) {
+            $dong[] = [route('shop.products.index', ['bo-suu-tap' => $ma]), null, '0.7'];
+        }
+
+        $coHang = Category::query()
+            ->where('is_active', true)
+            ->whereHas('products', fn ($q) => $q->whereIn('status', ['active', 'out_of_stock']));
+
+        foreach ($coHang->get(['id', 'slug', 'updated_at']) as $dm) {
             $dong[] = [route('shop.categories.show', $dm), $dm->updated_at, '0.7'];
         }
 

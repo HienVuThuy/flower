@@ -1274,3 +1274,64 @@ html.has-js .tuoi-so-lieu__tu-dong {
         border-bottom: 1px solid var(--border-soft);
     }
 }
+
+/* DANH SÁCH TÍCH CHỌN NHIỀU (quà kèm sản phẩm) */
+.chon-nhieu {
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md, 10px);
+    padding: 0.5rem;
+    background: var(--surface);
+}
+
+.chon-nhieu.is-invalid {
+    border-color: var(--bs-danger, #c62828);
+}
+
+.chon-nhieu__ds {
+    max-height: 15rem;
+    overflow-y: auto;
+    margin-top: 0.4rem;
+}
+
+.chon-nhieu--ngan .chon-nhieu__ds {
+    max-height: 9rem;
+    margin-top: 0;
+}
+
+.chon-nhieu__muc {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+    padding: 0.3rem 0.4rem;
+    border-radius: 6px;
+}
+
+.chon-nhieu__muc.is-chon {
+    background: var(--surface-alt);
+}
+
+.chon-nhieu__nhan {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1 1 12rem;
+    margin: 0;
+    cursor: pointer;
+}
+
+.chon-nhieu__nhan .form-check-input {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+.chon-nhieu__phu {
+    flex: 0 1 11rem;
+    width: auto;
+}
+
+.chon-nhieu__dem {
+    margin: 0.4rem 0 0;
+    font-size: 0.82rem;
+    color: var(--ink-500);
+}

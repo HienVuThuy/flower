@@ -1,16 +1,16 @@
 <?php
 
-/** Lịch các dịp bán hoa trong năm. */
+/** Lịch các dịp bán hoa trong năm. 'dip' nối sang nhãn Dịp tặng (GiftOccasion) để trang chủ nhắc đúng lúc. */
 return [
 
     ['key' => 'tet-duong-lich', 'name' => 'Tết Dương lịch', 'day' => 1, 'month' => 1, 'weight' => 3],
 
-    ['key' => 'valentine', 'name' => 'Lễ Tình nhân (Valentine)', 'day' => 14, 'month' => 2, 'weight' => 1,
+    ['key' => 'valentine', 'dip' => 'tinh-yeu', 'name' => 'Lễ Tình nhân (Valentine)', 'day' => 14, 'month' => 2, 'weight' => 1,
         'note' => 'Cao điểm hoa hồng — chuẩn bị hàng trước ít nhất một tuần.'],
 
-    ['key' => 'thay-thuoc', 'name' => 'Ngày Thầy thuốc Việt Nam', 'day' => 27, 'month' => 2, 'weight' => 3],
+    ['key' => 'thay-thuoc', 'dip' => 'chuc-mung', 'name' => 'Ngày Thầy thuốc Việt Nam', 'day' => 27, 'month' => 2, 'weight' => 3],
 
-    ['key' => 'quoc-te-phu-nu', 'name' => 'Quốc tế Phụ nữ', 'day' => 8, 'month' => 3, 'weight' => 1,
+    ['key' => 'quoc-te-phu-nu', 'dip' => 'chuc-mung', 'name' => 'Quốc tế Phụ nữ', 'day' => 8, 'month' => 3, 'weight' => 1,
         'note' => 'Một trong hai ngày bán nhiều nhất năm của ngành hoa.'],
 
     ['key' => 'gio-to', 'name' => 'Giỗ Tổ Hùng Vương', 'day' => null, 'month' => null, 'weight' => 4,
@@ -22,10 +22,10 @@ return [
 
     ['key' => 'quoc-khanh', 'name' => 'Quốc khánh', 'day' => 2, 'month' => 9, 'weight' => 4],
 
-    ['key' => 'phu-nu-viet-nam', 'name' => 'Ngày Phụ nữ Việt Nam', 'day' => 20, 'month' => 10, 'weight' => 1,
+    ['key' => 'phu-nu-viet-nam', 'dip' => 'chuc-mung', 'name' => 'Ngày Phụ nữ Việt Nam', 'day' => 20, 'month' => 10, 'weight' => 1,
         'note' => 'Ngang 8/3 về lượng đặt hoa.'],
 
-    ['key' => 'nha-giao', 'name' => 'Ngày Nhà giáo Việt Nam', 'day' => 20, 'month' => 11, 'weight' => 1,
+    ['key' => 'nha-giao', 'dip' => 'chuc-mung', 'name' => 'Ngày Nhà giáo Việt Nam', 'day' => 20, 'month' => 11, 'weight' => 1,
         'note' => 'Nhu cầu lớn về hoa bó và chậu cây làm quà tặng thầy cô.'],
 
     ['key' => 'giang-sinh', 'name' => 'Giáng sinh', 'day' => 24, 'month' => 12, 'weight' => 2,

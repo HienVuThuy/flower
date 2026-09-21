@@ -32,6 +32,7 @@ class DatabaseSeeder extends Seeder
 
         $this->call(PlantTaxonomySeeder::class);
         $this->call(PlantTraitSeeder::class);
+        $this->call(GiftOccasionSeeder::class);
 
         $this->call(TaxClassSeeder::class);
     }

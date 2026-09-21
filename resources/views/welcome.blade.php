@@ -117,6 +117,46 @@
     </div>
 </section>
 
+@if($theoDip !== [] || $soLuongBoSuuTap !== [])
+<section class="section-sm pt-0" data-theo-dip>
+    <div class="container-shop">
+
+        <div class="section-header">
+            <div>
+                <h2 class="text-h2 section-header__title">Chọn hoa theo dịp</h2>
+            </div>
+        </div>
+
+        <div class="occasion-row">
+            @foreach($theoDip as $ma => $soLuong)
+                <a href="{{ route('shop.products.index', ['dip' => $ma]) }}" class="filter-chip">
+                    {{ \App\Enums\GiftOccasion::from($ma)->heading() }}
+                    <span class="filter-chip__count">{{ $soLuong }}</span>
+                </a>
+            @endforeach
+
+            @foreach($soLuongBoSuuTap as $ma => $soLuong)
+                <a href="{{ route('shop.products.index', ['bo-suu-tap' => $ma]) }}" class="filter-chip">
+                    {{ \App\Enums\FlowerCollection::from($ma)->label() }}
+                    <span class="filter-chip__count">{{ $soLuong }}</span>
+                </a>
+            @endforeach
+        </div>
+
+        @if($dipSapToi)
+            <p class="occasion-soon" data-dip-sap-toi>
+                <x-site.icon name="gift" />
+                <span>
+                    Còn {{ $dipSapToi['con'] }} ngày nữa là {{ $dipSapToi['ten'] }} ({{ $dipSapToi['ngay']->format('d/m') }}) —
+                    <a href="{{ route('shop.products.index', ['dip' => $dipSapToi['dip']->value]) }}">xem {{ mb_strtolower($dipSapToi['dip']->heading()) }}</a>
+                </span>
+            </p>
+        @endif
+
+    </div>
+</section>
+@endif
+
 <section class="section-sm">
     <div class="container-shop">
 

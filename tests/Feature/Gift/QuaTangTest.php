@@ -360,12 +360,71 @@ class QuaTangTest extends TestCase
     {
         $this->actingAs($this->admin());
         $senDa = $this->sp();
+        $this->quyCach($this->sp(), 'Chậu 12cm');
 
         $html = $this->get(route('admin.product-gifts.edit', $senDa))->assertOk()->getContent();
 
         $this->assertLessThan(strpos($html, 'data-danh-sach-qua'), strpos($html, 'data-them-qua'), 'Khối Thêm quà đứng trước danh sách');
         $this->assertStringContainsString('Chưa có quà tặng kèm. Hãy thêm quà ở phía trên.', $html);
         $this->assertMatchesRegularExpression('#data-qua-chon-quy-cach[^>]*disabled#', $html, 'Chưa chọn sản phẩm thì ô quy cách khoá');
+    }
+
+    #[Test]
+    public function quan_tri_chon_nhieu_qua_va_gan_cho_nhieu_san_pham_mot_lan(): void
+    {
+        $this->actingAs($this->admin());
+        $senDa = $this->sp();
+        $nho = $this->quyCach($senDa, 'Chậu 12cm');
+        $xuongRong = $this->sp();
+        $lan = $this->sp();
+        $phanBon = $this->sp('20000.00');
+        $binhTuoi = $this->sp('35000.00');
+        $qcBinh = $this->quyCach($binhTuoi, 'Bình 1L');
+
+        $this->post(route('admin.product-gifts.store', $senDa), $this->luatHopLe([
+            'nguon' => 'san_pham',
+            'gift_product_ids' => [$phanBon->id, $binhTuoi->id],
+            'gift_variant_ids' => [$binhTuoi->id => $qcBinh->id],
+            'trigger_variant_id' => $nho->id,
+            'also_product_ids' => [$xuongRong->id, $lan->id],
+            'gift_quantity' => 2,
+        ]))->assertSessionHasNoErrors();
+
+        $this->assertSame(6, ProductGift::count(), '2 quà × 3 sản phẩm');
+        $this->assertSame(2, ProductGift::where('product_id', $senDa->id)->where('product_variant_id', $nho->id)->count(),
+            'Quy cách kích hoạt chỉ áp cho sản phẩm đang sửa');
+        $this->assertSame(4, ProductGift::whereIn('product_id', [$xuongRong->id, $lan->id])->whereNull('product_variant_id')->count(),
+            'Sản phẩm gắn thêm áp cho mọi quy cách');
+        $this->assertSame(6, ProductGift::where('gift_quantity', 2)->count(), 'Cùng một luật');
+        $this->assertSame($qcBinh->id, GiftItem::where('product_id', $binhTuoi->id)->sole()->product_variant_id);
+
+        $this->post(route('admin.product-gifts.store', $senDa), $this->luatHopLe([
+            'nguon' => 'san_pham',
+            'gift_product_ids' => [$phanBon->id],
+            'also_product_ids' => [$xuongRong->id],
+            'gift_quantity' => 3,
+            'trigger_variant_id' => $nho->id,
+        ]))->assertSessionHasNoErrors();
+
+        $this->assertSame(6, ProductGift::count(), 'Cặp đã có thì cập nhật, không nhân đôi');
+    }
+
+    #[Test]
+    public function quan_tri_chon_nhieu_vat_pham_rieng_mot_lan(): void
+    {
+        $this->actingAs($this->admin());
+        $senDa = $this->sp();
+        $tui = $this->vat(['name' => 'Túi vải']);
+        $the = $this->vat(['name' => 'Thẻ chăm cây']);
+
+        $this->post(route('admin.product-gifts.store', $senDa), $this->luatHopLe([
+            'nguon' => 'vat_pham_co', 'gift_item_ids' => [$tui->id, $the->id],
+        ]))->assertSessionHasNoErrors();
+
+        $this->assertEqualsCanonicalizing([$tui->id, $the->id], ProductGift::where('product_id', $senDa->id)->pluck('gift_item_id')->all());
+
+        $this->post(route('admin.product-gifts.store', $senDa), $this->luatHopLe(['nguon' => 'san_pham', 'gift_product_ids' => []]))
+            ->assertSessionHasErrors('gift_product_ids');
     }
 
     #[Test]

@@ -225,7 +225,7 @@
 
             <h2 class="h6 fw-bold mb-1">Nhãn phân loại</h2>
             <p class="admin-page-subtitle mb-4">
-                Dùng cho trang tư vấn chọn cây và gợi ý mua kèm. Bỏ trống thì sản
+                Dùng cho bộ lọc, trang tư vấn chọn cây và gợi ý mua kèm. Bỏ trống thì sản
                 phẩm không xuất hiện ở những chỗ đó — không sao, chỉ là mất một
                 đường để khách tìm ra nó.
             </p>
@@ -251,6 +251,16 @@
                             <p class="admin-page-subtitle mb-2" style="font-size: .78rem;">
                                 Chỉ tích cho <strong>phụ kiện</strong> (chậu, đĩa lót, phân bón).
                                 Cây và hoa để trống.
+                            </p>
+                        @elseif($traitType === \App\Enums\TraitType::Occasion)
+                            <p class="admin-page-subtitle mb-2" style="font-size: .78rem;">
+                                Một sản phẩm hợp nhiều dịp thì tích nhiều ô. Khách lọc và tìm
+                                "hoa sinh nhật", "hoa tình yêu"… theo đúng nhãn này.
+                            </p>
+                        @elseif($traitType === \App\Enums\TraitType::Season)
+                            <p class="admin-page-subtitle mb-2" style="font-size: .78rem;">
+                                Chỉ tích cho hoa có mùa rõ (đào Tết, cúc hoạ mi…). Hoa có quanh năm để
+                                trống. Mục "Hoa theo mùa" tự đổi theo tháng.
                             </p>
                         @endif
 

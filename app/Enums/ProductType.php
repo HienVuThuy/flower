@@ -7,12 +7,13 @@ enum ProductType: string
 {
     case Flower = 'flower';
     case Plant = 'plant';
+    case Artificial = 'artificial';
     case Other = 'other';
 
     public function allowedSellingForms(): array
     {
         return match ($this) {
-            self::Flower => [
+            self::Flower, self::Artificial => [
                 SellingForm::Bouquet,
                 SellingForm::Basket,
                 SellingForm::Box,
@@ -51,6 +52,7 @@ enum ProductType: string
         return match ($this) {
             self::Flower => 'Hoa',
             self::Plant => 'Cây cảnh',
+            self::Artificial => 'Hoa giả (sáp, lụa, giấy)',
             self::Other => 'Khác',
         };
     }

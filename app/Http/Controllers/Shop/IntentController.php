@@ -32,6 +32,7 @@ class IntentController extends Controller
             'intent' => $case,
             'products' => $this->productsFor($case),
             'extras' => $this->extrasFor($case),
+            'theoDip' => $case === ShoppingIntent::Gift ? app(\App\Services\Catalog\FlowerCollections::class)->soLuongTheoDip() : [],
         ]);
     }
 

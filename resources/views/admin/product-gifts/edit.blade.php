@@ -20,46 +20,71 @@
 
     <p class="fw-semibold mb-2">Quà là gì?</p>
     <div class="row g-3 mb-4">
+        @php
+            $quyCachTheoSp = $quyCach->groupBy('product_id');
+            $daChonSp = array_map('strval', (array) old('gift_product_ids', []));
+            $daChonQc = (array) old('gift_variant_ids', []);
+            $daChonVat = array_map('strval', (array) old('gift_item_ids', []));
+        @endphp
+
         <div class="col-lg-6">
             <label class="d-flex align-items-center gap-2 mb-2">
                 <input type="radio" class="form-check-input" name="nguon" value="san_pham" @checked(old('nguon', 'san_pham') === 'san_pham')>
-                <span>Sản phẩm có sẵn trong cửa hàng</span>
+                <span>Sản phẩm có sẵn trong cửa hàng <span class="admin-page-subtitle">— tích được nhiều món</span></span>
             </label>
 
-            <label class="form-label small mb-1" for="qg-sp">Bước 1 — Chọn sản phẩm</label>
-            <select id="qg-sp" name="gift_product_id" class="form-select mb-2 @error('gift_product_id') is-invalid @enderror" data-qua-chon-san-pham>
-                <option value="">Chọn sản phẩm…</option>
-                @foreach($sanPham as $sp)
-                    <option value="{{ $sp->id }}" @selected((string) old('gift_product_id') === (string) $sp->id)>{{ $sp->name }}</option>
-                @endforeach
-            </select>
-            <x-form-error name="gift_product_id" />
+            <div class="chon-nhieu @error('gift_product_ids') is-invalid @enderror" data-chon-nhieu data-nguon="san_pham">
+                <input type="search" class="form-control form-control-sm" placeholder="Lọc theo tên…" aria-label="Lọc sản phẩm làm quà" data-chon-nhieu-loc>
 
-            <label class="form-label small mb-1" for="qg-qc">Bước 2 — Chọn quy cách</label>
-            <select id="qg-qc" name="gift_variant_id" class="form-select @error('gift_variant_id') is-invalid @enderror"
-                    data-qua-chon-quy-cach @disabled(! old('gift_product_id'))>
-                <option value="">Không chọn quy cách</option>
-                @foreach($quyCach as $qc)
-                    <option value="{{ $qc->id }}" data-san-pham="{{ $qc->product_id }}"
-                            @if((string) old('gift_product_id') !== (string) $qc->product_id) hidden disabled @endif
-                            @selected((string) old('gift_variant_id') === (string) $qc->id)>{{ $qc->name }}</option>
-                @endforeach
-            </select>
-            <div class="form-text">Chọn sản phẩm trước — chỉ hiện quy cách của sản phẩm đó.</div>
+                <div class="chon-nhieu__ds">
+                    @foreach($sanPham as $sp)
+                        @php $qcCua = $quyCachTheoSp[$sp->id] ?? collect(); @endphp
+                        <div class="chon-nhieu__muc" data-chon-nhieu-muc data-ten="{{ mb_strtolower($sp->name) }}">
+                            <label class="chon-nhieu__nhan">
+                                <input type="checkbox" class="form-check-input" name="gift_product_ids[]" value="{{ $sp->id }}"
+                                       data-qua-chon-san-pham @checked(in_array((string) $sp->id, $daChonSp, true))>
+                                <span>{{ $sp->name }}</span>
+                            </label>
+
+                            @if($qcCua->isNotEmpty())
+                                <select name="gift_variant_ids[{{ $sp->id }}]" class="form-select form-select-sm chon-nhieu__phu"
+                                        aria-label="Quy cách quà của {{ $sp->name }}" data-qua-chon-quy-cach
+                                        @disabled(! in_array((string) $sp->id, $daChonSp, true))>
+                                    <option value="">Không chọn quy cách</option>
+                                    @foreach($qcCua as $qc)
+                                        <option value="{{ $qc->id }}" @selected((string) ($daChonQc[$sp->id] ?? '') === (string) $qc->id)>{{ $qc->name }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
+
+                <p class="chon-nhieu__dem">Đã chọn <strong data-chon-nhieu-dem>0</strong> sản phẩm</p>
+            </div>
+            <x-form-error name="gift_product_ids" />
             <x-form-error name="gift_variant_id" />
 
             @if($vatPhamRieng->isNotEmpty())
                 <label class="d-flex align-items-center gap-2 mt-3 mb-2">
                     <input type="radio" class="form-check-input" name="nguon" value="vat_pham_co" @checked(old('nguon') === 'vat_pham_co')>
-                    <span>Vật phẩm tặng riêng đã có</span>
+                    <span>Vật phẩm tặng riêng đã có <span class="admin-page-subtitle">— tích được nhiều món</span></span>
                 </label>
-                <select name="gift_item_id" class="form-select @error('gift_item_id') is-invalid @enderror" aria-label="Vật phẩm quà đã có">
-                    <option value="">Chọn vật phẩm…</option>
-                    @foreach($vatPhamRieng as $vat)
-                        <option value="{{ $vat->id }}" @selected((string) old('gift_item_id') === (string) $vat->id)>{{ $vat->name }} (còn {{ $vat->stock_quantity }})</option>
-                    @endforeach
-                </select>
-                <x-form-error name="gift_item_id" />
+
+                <div class="chon-nhieu chon-nhieu--ngan" data-chon-nhieu data-nguon="vat_pham_co">
+                    <div class="chon-nhieu__ds">
+                        @foreach($vatPhamRieng as $vat)
+                            <div class="chon-nhieu__muc" data-chon-nhieu-muc data-ten="{{ mb_strtolower($vat->name) }}">
+                                <label class="chon-nhieu__nhan">
+                                    <input type="checkbox" class="form-check-input" name="gift_item_ids[]" value="{{ $vat->id }}"
+                                           @checked(in_array((string) $vat->id, $daChonVat, true))>
+                                    <span>{{ $vat->name }} <span class="admin-page-subtitle">(còn {{ $vat->stock_quantity }})</span></span>
+                                </label>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+                <x-form-error name="gift_item_ids" />
             @endif
         </div>
 
@@ -96,6 +121,32 @@
 
     <p class="fw-semibold mb-2">Luật tặng</p>
     @include('admin.product-gifts._luat', ['pg' => new \App\Models\ProductGift(), 'ma' => 'them'])
+
+    <p class="fw-semibold mt-4 mb-1">Gắn cho sản phẩm nào?</p>
+    <p class="admin-page-subtitle small mb-2">
+        Luôn gắn cho <strong>{{ $product->name }}</strong>. Tích thêm để gắn cùng quà, cùng luật cho các sản phẩm khác
+        — ô "Áp dụng khi mua" ở trên chỉ áp cho sản phẩm này, sản phẩm gắn thêm áp cho mọi quy cách.
+    </p>
+    @php $daChonThem = array_map('strval', (array) old('also_product_ids', [])); @endphp
+    <div class="chon-nhieu" data-chon-nhieu>
+        <input type="search" class="form-control form-control-sm" placeholder="Lọc theo tên…" aria-label="Lọc sản phẩm được gắn quà" data-chon-nhieu-loc>
+
+        <div class="chon-nhieu__ds">
+            @foreach($sanPham as $sp)
+                @continue($sp->id === $product->id)
+                <div class="chon-nhieu__muc" data-chon-nhieu-muc data-ten="{{ mb_strtolower($sp->name) }}">
+                    <label class="chon-nhieu__nhan">
+                        <input type="checkbox" class="form-check-input" name="also_product_ids[]" value="{{ $sp->id }}"
+                               @checked(in_array((string) $sp->id, $daChonThem, true))>
+                        <span>{{ $sp->name }}</span>
+                    </label>
+                </div>
+            @endforeach
+        </div>
+
+        <p class="chon-nhieu__dem">Gắn thêm cho <strong data-chon-nhieu-dem>0</strong> sản phẩm</p>
+    </div>
+    <x-form-error name="also_product_ids" />
 
     <div class="text-end mt-3">
         <button type="submit" class="btn btn-primary-brand">Thêm quà</button>

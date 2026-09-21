@@ -54,12 +54,12 @@ A3. Kiến trúc (chia lớp rõ ràng)
 
 A4. Quy mô (đếm từ mã nguồn)
   - 299 đường dẫn (route), trong đó 156 thuộc khu quản trị
-  - 74 controller, 139 lớp service, 58 model, 62 enum
-  - 94 migration, 133 bảng
+  - 74 controller, 140 lớp service, 58 model, 65 enum
+  - 95 migration, 133 bảng
   - 246 view Blade, 46 tệp JavaScript, 48 tệp CSS (2 gói: cửa hàng và quản trị)
   - 16 lệnh artisan tự viết, 6 tác vụ chạy theo lịch
-  - 138 tệp kiểm thử, 1332 bài kiểm thử, 4963 phép khẳng định
-  - Tài liệu: docs/ (quyết định thiết kế 309 mục, luồng hoạt động, kiểm thử,
+  - 139 tệp kiểm thử, 1347 bài kiểm thử, 5030 phép khẳng định
+  - Tài liệu: docs/ (quyết định thiết kế 311 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
 
@@ -75,17 +75,25 @@ CẤP 1 — NỀN TẢNG: XEM VÀ TÌM HÀNG, TÀI KHOẢN
      Hero theo mùa, băng chuyền banner khuyến mại, "Chọn theo nhu cầu",
      "Sản phẩm nổi bật" (do quản trị đánh dấu, không có thì ẩn), "Được yêu
      thích gần đây" (dựng từ dữ liệu thật), "Hàng mới về" (giới hạn theo ngày,
-     được phép rỗng), khối gợi ý cá nhân hoá.
+     được phép rỗng), khối gợi ý cá nhân hoá, "Chọn hoa theo dịp" (chỉ dịp có
+     hàng) kèm lời nhắc ngày lễ tặng hoa trong 30 ngày tới.
      → HomeController, resources/views/welcome.blade.php
 
 1.2  Danh mục & danh sách sản phẩm
-     Lọc theo danh mục, hình thức bán (bó hoa, cây chậu, giỏ, lẵng…), giá, độ
-     khó chăm, màu, dáng, vị trí đặt…; sắp xếp theo GIÁ KHÁCH THẤY (đã tính
-     khuyến mại, làm bằng SQL) hoặc "Nổi bật trước"; phân trang.
+     Lọc theo danh mục, hình thức bán (bó hoa, cây chậu, giỏ, lẵng…), KHOẢNG
+     GIÁ (khoảng gợi sẵn kèm số món, hoặc tự nhập Từ / Đến — tính theo giá đang
+     bán sau khuyến mại), DỊP TẶNG (tình yêu, sinh nhật, chúc mừng, sinh viên &
+     tốt nghiệp, chia buồn), mùa hoa, độ khó chăm, màu, dáng, vị trí đặt…; bộ
+     sưu tập tự động "Hoa theo mùa" (mùa này + mùa kế, tự đổi theo tháng) và
+     "Hoa cao cấp" (theo ngưỡng giá); sắp xếp theo GIÁ KHÁCH THẤY (đã tính
+     khuyến mại, làm bằng SQL) hoặc "Nổi bật trước"; phân trang. Danh mục chưa
+     có hàng tự ẩn. Có danh mục Hoa giả (sáp, lụa, giấy) — loại sản phẩm riêng,
+     không đi theo lô hoa tươi.
      Góc trên trái ảnh mỗi thẻ sản phẩm có nhãn: "Giảm X%" (đang giảm giá),
      "Nổi bật", "Có quà" (có quà kèm hoặc thuộc chương trình tặng quà), "Hết hàng".
      → Shop/CategoryController, Shop/ProductController@index,
-       Product::scopeOrderByEffectivePrice
+       Product::{scopeOrderByEffectivePrice, scopeEffectivePriceBetween},
+       Services/Catalog/FlowerCollections
 
 1.3  Trang chi tiết sản phẩm
      Thư viện ảnh + video (đường dẫn nhúng hoặc MP4), mô tả theo khối chữ/ảnh,
@@ -363,6 +371,8 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
      khi thiếu kho và khi trả hàng; kho vật phẩm quà dùng chung cho quà kèm và
      chương trình tặng quà. Trang sản phẩm hiện cả quà kèm lẫn quà theo chương
      trình; giỏ hàng nhắc "Mua thêm X để nhận quà" khi chỉ còn thiếu tiền.
+     Chọn NHIỀU quà một lần (sản phẩm đang bán hoặc vật phẩm riêng) và gắn cùng
+     lúc cho NHIỀU sản phẩm; danh sách tích chọn có ô lọc theo tên.
      → Admin/{ProductGiftController, GiftItemController}, Services/Gift/*
 
 4.10 Hạng thành viên (Mầm, Lá, Hoa, Vườn, Rừng) — cấu hình trong bảng
@@ -606,6 +616,15 @@ C5. Neo giá (Anchoring)
       thật, luật "giá cuối ≤ giá gốc"
     → components/product/price.blade.php, Pricing/ProductPrice
 
+C5b. Khung giá không làm khách ngại (Price Framing)
+    - Có bộ "Hoa cao cấp" nhưng KHÔNG có bộ "hoa giá rẻ": nhãn rẻ gắn vào món
+      quà làm người mua ngại. Nhu cầu tiết kiệm vẫn được phục vụ bằng lọc khoảng
+      giá — khách tự chọn, khoảng giá chỉ ghi con số
+    - "Hoa sinh viên" đặt thành "Sinh viên & tốt nghiệp": gắn với dịp, không
+      gắn với giá
+    - Nhắc ngày lễ trước 30 ngày để khách kịp đặt (chỉ khi có hàng hợp dịp)
+    → Shop/ProductController::khoangGia, Services/Catalog/FlowerCollections
+
 C6. Hiệu ứng tiến tới mục tiêu (Goal-Gradient)
     - "Còn thiếu X để được miễn phí giao hàng"
     - "Mua thêm X để nhận quà" (chương trình tặng quà theo đơn tối thiểu)
@@ -801,7 +820,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1332 bài / 4963 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1347 bài / 5030 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,
@@ -813,7 +832,7 @@ E4. Hiệu năng: đo trước khi tối ưu (lệnh do:hieu-nang); ảnh WebP d
     sẵn quan hệ (chỉ còn 2 chỗ nạp lười khi đo bằng preventLazyLoading trên toàn
     bộ kiểm thử); header cache ở .htaccess; nén; tải trước trang; làm nóng
     trang quản trị; OPcache (docs/OPCACHE-XAMPP.md).
-E5. Tài liệu: docs/DOMAIN-DECISIONS.md (301 quyết định), LUONG-HOAT-DONG.md,
+E5. Tài liệu: docs/DOMAIN-DECISIONS.md (311 quyết định), LUONG-HOAT-DONG.md,
     KIEM-THU.md, HIEU-NANG.md, TU-DONG-HOA.md, MYSQL-XAMPP.md, CHU-THICH-CODE.md.
 E6. Quản lý mã nguồn: Git, mỗi thay đổi một commit có mô tả.
 E7. Khả năng tiếp cận (a11y): icon SVG có aria-label, không dùng emoji làm icon,
