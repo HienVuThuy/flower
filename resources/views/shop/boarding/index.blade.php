@@ -36,7 +36,8 @@
                 </ol>
 
                 @if($cacGia->isNotEmpty())
-                    <h2 class="text-h4 mt-4 mb-2">Bảng giá</h2>
+                    <h2 class="text-h4 mt-4 mb-1">Giá tham khảo</h2>
+                    <p class="text-caption mb-2">Mỗi cây mỗi khác (cỡ, dáng, tình trạng) nên cửa hàng xem cây rồi mới chốt giá cho bạn.</p>
                     <div class="boarding-rates" data-bang-gia-cham-ho>
                         @foreach($cacGia as $gia)
                             <div class="boarding-rates__row">
@@ -50,7 +51,7 @@
                                     @endif
                                 </div>
                                 <div class="text-end">
-                                    <span class="d-block">{{ Money::format($gia->monthly_price) }}<span class="text-caption"> / tháng</span></span>
+                                    <span class="d-block"><span class="text-caption">từ </span>{{ Money::format($gia->monthly_price) }}<span class="text-caption"> / tháng</span></span>
                                     <span class="d-block text-caption">{{ Money::format($gia->giaNam()) }} / năm</span>
                                 </div>
                             </div>
@@ -60,6 +61,7 @@
                     <ul class="boarding-rules text-caption">
                         <li>Tính tiền theo số tháng thực gửi; lố dưới {{ \App\Services\Boarding\BoardingPricing::NGAY_AN_HAN }} ngày không tính thêm tháng. Đủ 12 tháng thì áp giá năm.</li>
                         <li>Nhận cây sớm hơn hẹn thì tính lại theo thời gian thực gửi.</li>
+                        <li>Trong lúc gửi, bạn có thể yêu cầu thêm việc (thay chậu, tạo dáng…); cửa hàng báo giá riêng, bạn đồng ý mới tính.</li>
                         @if(($phiGap = \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.cham_ho.phi_gap')) > 0)
                             <li>Cần nhận gấp (báo trước dưới {{ \App\Services\Shop\ThamSoKinhDoanh::so('kinh_doanh.cham_ho.bao_gap_ngay') }} ngày): thêm {{ Money::format($phiGap) }}.</li>
                         @endif

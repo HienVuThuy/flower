@@ -1315,6 +1315,21 @@ LUỒNG 28. Chăm cây hộ: gửi yêu cầu → xác nhận → chăm → tr�
 
   DỮ LIỆU MẪU: php artisan db:seed --class=BoardingSampleSeeder
 
+
+  GIÁ CHỐT THEO CÂY VÀ VIỆC LÀM THÊM (QĐ-318)
+    Bảng giá = giá tham khảo. BoardingService::xacNhan() nhận monthly_price
+    (bắt buộc, Admin\BoardingController@confirm) + yearly_price → ghi
+    price_agreed_at, tính lại care_amount. taoTaiQuay() chốt giá luôn.
+    BoardingBooking::daChotGia(), tienLamThem(); tongTien() cộng việc đã đồng ý.
+    Bảng boarding_extras, enum App\Enums\BoardingExtraStatus:
+      cho_bao_gia → cho_khach → da_dong_y → da_lam
+                 ↘ cua_hang_tu_choi   ↘ khach_tu_choi
+    Service: yeuCauThem (khách), deXuat (cửa hàng), baoGiaThem, tuChoiThem,
+    traLoiThem (khách, hoặc admin ghi hộ), xongThem (kèm ảnh → nhật ký).
+    doiViec() khoá dòng, kiểm trạng thái trước khi đổi.
+    Route khách: POST /cham-cay-ho/phieu/{mã}/yeu-cau-them[/{id}/tra-loi]
+    Route admin: /admin/cham-cay-ho/{mã}/viec-them[/{id}/bao-gia|tu-choi|khach-tra-loi|xong]
+    Giao diện chung: resources/views/shop/boarding/_viec-them.blade.php ($laAdmin).
 ================================================================================
 PHẦN 4. TỰ HỌC VÀ GỠ LỖI
 ================================================================================

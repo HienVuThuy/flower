@@ -161,6 +161,22 @@ class WorkQueue
             ],
 
             [
+                'label' => 'yêu cầu thêm của khách gửi chăm hộ chờ báo giá',
+                'count' => \App\Models\BoardingExtra::where('status', \App\Enums\BoardingExtraStatus::ChoBaoGia)->count(),
+                'url' => route('admin.boarding.index'),
+                'tone' => 'warning',
+                'hint' => 'Khách muốn thêm việc (thay chậu, tạo dáng…) và đang đợi cửa hàng báo giá.',
+            ],
+
+            [
+                'label' => 'việc làm thêm khách đã đồng ý, chưa làm',
+                'count' => \App\Models\BoardingExtra::where('status', \App\Enums\BoardingExtraStatus::DaDongY)->count(),
+                'url' => route('admin.boarding.index'),
+                'tone' => 'info',
+                'hint' => 'Làm xong thì bấm "Đã làm" và gửi ảnh cho khách.',
+            ],
+
+            [
                 'label' => 'cây gửi chăm hộ sắp đến ngày trả',
                 'count' => BoardingBooking::where('status', BoardingStatus::ChoTra)->count(),
                 'url' => route('admin.boarding.index', ['trang_thai' => BoardingStatus::ChoTra->value]),

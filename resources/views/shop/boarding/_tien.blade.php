@@ -1,11 +1,16 @@
 {{-- Bảng tiền phiếu chăm hộ — mọi con số do máy chủ tính (BoardingPricing, BoardingBooking::tongTien). --}}
 @php use App\Services\Shop\Money; @endphp
 <dl class="boarding-money">
-    <dt>Giá áp dụng</dt>
+    <dt>{{ $phieu->daChotGia() ? 'Giá chốt cho cây này' : 'Giá tham khảo (chờ cửa hàng chốt)' }}</dt>
     <dd>{{ Money::format($phieu->monthly_price) }}/tháng · {{ Money::format($phieu->yearly_price) }}/năm</dd>
 
     <dt>Tiền chăm{{ $phieu->returned_on ? '' : ' (tạm tính)' }}</dt>
     <dd>{{ Money::format($phieu->care_amount) }}</dd>
+
+    @if(bccomp($phieu->tienLamThem(), '0', 2) > 0)
+        <dt>Việc làm thêm đã đồng ý</dt>
+        <dd>{{ Money::format($phieu->tienLamThem()) }}</dd>
+    @endif
 
     @if((float) $phieu->handover_fee > 0)
         <dt>Phí đến lấy / trả cây</dt>

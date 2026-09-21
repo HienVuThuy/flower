@@ -9,6 +9,7 @@ use App\Enums\BoardingStatus;
 use App\Http\Controllers\Admin\Concerns\LogsAdminActivity;
 use App\Http\Controllers\Controller;
 use App\Models\BoardingBooking;
+use App\Models\BoardingExtra;
 use App\Models\BoardingRate;
 use App\Models\BoardingWindow;
 use App\Services\Boarding\BoardingService;
@@ -68,6 +69,8 @@ class BoardingController extends Controller
             'customer_name' => ['required', 'string', 'max:120'],
             'customer_email' => ['nullable', 'email', 'max:255'],
             'nhan_cay_ngay' => ['nullable', 'boolean'],
+            'monthly_price' => ['nullable', 'numeric', 'min:1000', 'max:100000000'],
+            'yearly_price' => ['nullable', 'numeric', 'min:1000', 'max:1000000000'],
             'boarding_rate_id' => ['required', 'integer', Rule::exists('boarding_rates', 'id')->where('is_active', true)],
             'mode' => ['required', Rule::enum(BoardingMode::class)],
             'drop_off_on' => ['required', 'date'],
@@ -97,7 +100,7 @@ class BoardingController extends Controller
 
     public function print(BoardingBooking $booking): View
     {
-        $booking->load(['rate', 'window', 'payments', 'user:id,name']);
+        $booking->load(['rate', 'window', 'payments', 'extras', 'user:id,name']);
 
         return view('shop.boarding.print', ['phieu' => $booking, 'cacGia' => collect(), 'quayLai' => route('admin.boarding.show', $booking)]);
     }
@@ -109,7 +112,7 @@ class BoardingController extends Controller
 
     public function show(BoardingBooking $booking): View
     {
-        $booking->load(['user:id,name,email', 'rate', 'window', 'events.user:id,name', 'payments', 'parent:id,code', 'product:id,name,slug']);
+        $booking->load(['user:id,name,email', 'rate', 'window', 'events.user:id,name', 'payments', 'extras', 'parent:id,code', 'product:id,name,slug']);
 
         return view('admin.boarding.show', [
             'phieu' => $booking,
@@ -121,11 +124,13 @@ class BoardingController extends Controller
     {
         $d = $request->validate([
             'drop_off_on' => ['required', 'date'],
+            'monthly_price' => ['required', 'numeric', 'min:1000', 'max:100000000'],
+            'yearly_price' => ['nullable', 'numeric', 'min:1000', 'max:1000000000'],
             'handover_fee' => ['nullable', 'numeric', 'min:0', 'max:100000000'],
             'adjustment' => ['nullable', 'numeric', 'min:-100000000', 'max:100000000'],
             'adjustment_reason' => ['nullable', 'required_unless:adjustment,0,null', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:500'],
-        ], ['adjustment_reason.required_unless' => 'Có điều chỉnh giá thì ghi lý do để khách hiểu.']);
+        ], ['adjustment_reason.required_unless' => 'Có điều chỉnh giá thì ghi lý do để khách hiểu.'], ['monthly_price' => 'giá chốt mỗi tháng', 'yearly_price' => 'giá chốt mỗi năm']);
 
         $this->dichVu->xacNhan($booking, $request->user(), $d);
         $this->audit()->log('boarding.confirmed', 'Xác nhận phiếu chăm hộ ' . $booking->code);
@@ -184,6 +189,73 @@ class BoardingController extends Controller
         return back()->with('success', $kySau
             ? 'Đã trả cây. Kỳ sau đã mở: phiếu ' . $kySau->code . '.'
             : ($booking->fresh()->waiting_next_window ? 'Đã trả cây. Khách chọn lặp lại nhưng chưa có lịch dịp năm sau — thêm lịch ở tab "Lịch trả theo dịp".' : 'Đã trả cây.'));
+    }
+
+    public function extraPropose(Request $request, BoardingBooking $booking): RedirectResponse
+    {
+        $d = $request->validate([
+            'viec' => ['required', 'string', 'max:200'],
+            'gia' => ['required', 'numeric', 'min:0', 'max:100000000'],
+            'ghi_chu' => ['nullable', 'string', 'max:500'],
+        ], [], ['viec' => 'việc cần làm', 'gia' => 'giá']);
+
+        $this->dichVu->deXuat($booking, $request->user(), $d['viec'], bcadd((string) $d['gia'], '0', 2), $d['ghi_chu'] ?? null);
+
+        return back()->with('success', 'Đã gửi đề xuất, chờ khách đồng ý.');
+    }
+
+    public function extraQuote(Request $request, BoardingBooking $booking, BoardingExtra $extra): RedirectResponse
+    {
+        $this->cuaPhieu($booking, $extra);
+
+        $d = $request->validate([
+            'gia' => ['required', 'numeric', 'min:0', 'max:100000000'],
+            'ghi_chu' => ['nullable', 'string', 'max:500'],
+        ], [], ['gia' => 'giá']);
+
+        $this->dichVu->baoGiaThem($extra, $request->user(), bcadd((string) $d['gia'], '0', 2), $d['ghi_chu'] ?? null);
+
+        return back()->with('success', 'Đã báo giá cho khách.');
+    }
+
+    public function extraReject(Request $request, BoardingBooking $booking, BoardingExtra $extra): RedirectResponse
+    {
+        $this->cuaPhieu($booking, $extra);
+
+        $d = $request->validate(['ly_do' => ['required', 'string', 'max:500']], [], ['ly_do' => 'lý do']);
+
+        $this->dichVu->tuChoiThem($extra, $request->user(), $d['ly_do']);
+
+        return back()->with('success', 'Đã báo khách cửa hàng không nhận việc này.');
+    }
+
+    /** Ghi hộ câu trả lời của khách (khách tại quầy, hoặc khách đồng ý qua điện thoại). */
+    public function extraAnswer(Request $request, BoardingBooking $booking, BoardingExtra $extra): RedirectResponse
+    {
+        $this->cuaPhieu($booking, $extra);
+
+        $this->dichVu->traLoiThem($extra, $request->user(), $request->boolean('dong_y'));
+
+        return back()->with('success', 'Đã ghi câu trả lời của khách.');
+    }
+
+    public function extraDone(Request $request, BoardingBooking $booking, BoardingExtra $extra): RedirectResponse
+    {
+        $this->cuaPhieu($booking, $extra);
+
+        $d = $request->validate([
+            'ghi_chu' => ['nullable', 'string', 'max:500'],
+            'photo' => ['nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
+        ]);
+
+        $this->dichVu->xongThem($extra, $request->user(), $d['ghi_chu'] ?? null, $request->file('photo'));
+
+        return back()->with('success', 'Đã ghi là làm xong, khách nhận được cập nhật.');
+    }
+
+    private function cuaPhieu(BoardingBooking $p, BoardingExtra $x): void
+    {
+        abort_unless((int) $x->boarding_booking_id === (int) $p->id, 404);
     }
 
     public function payment(Request $request, BoardingBooking $booking): RedirectResponse

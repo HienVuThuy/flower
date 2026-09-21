@@ -7,6 +7,7 @@ use App\Enums\BoardingMode;
 use App\Enums\MomoFlow;
 use App\Http\Controllers\Controller;
 use App\Models\BoardingBooking;
+use App\Models\BoardingExtra;
 use App\Models\BoardingRate;
 use App\Models\BoardingWindow;
 use App\Models\Product;
@@ -100,7 +101,7 @@ class BoardingController extends Controller
     {
         $this->cuaKhach($request, $booking);
 
-        $booking->load(['rate', 'window', 'events', 'payments', 'parent:id,code']);
+        $booking->load(['rate', 'window', 'events', 'payments', 'extras', 'parent:id,code']);
 
         return view('shop.boarding.show', [
             'phieu' => $booking,
@@ -123,7 +124,7 @@ class BoardingController extends Controller
     {
         $this->cuaKhach($request, $booking);
 
-        $booking->load(['rate', 'window', 'payments', 'user:id,name']);
+        $booking->load(['rate', 'window', 'payments', 'extras', 'user:id,name']);
 
         return view('shop.boarding.print', [
             'phieu' => $booking,
@@ -141,6 +142,32 @@ class BoardingController extends Controller
         } catch (PaymentException $e) {
             return back()->with('error', $e->getMessage());
         }
+    }
+
+    /** Khách xin thêm việc cho cây đang gửi — cửa hàng báo giá, khách đồng ý mới tính tiền. */
+    public function extraStore(Request $request, BoardingBooking $booking): RedirectResponse
+    {
+        $this->cuaKhach($request, $booking);
+
+        $d = $request->validate([
+            'viec' => ['required', 'string', 'max:200'],
+            'ghi_chu' => ['nullable', 'string', 'max:500'],
+        ], [], ['viec' => 'việc cần làm']);
+
+        $this->dichVu->yeuCauThem($booking, $request->user(), $d['viec'], $d['ghi_chu'] ?? null);
+
+        return back()->with('success', 'Đã gửi yêu cầu. Cửa hàng sẽ báo giá cho việc này.');
+    }
+
+    public function extraAnswer(Request $request, BoardingBooking $booking, BoardingExtra $extra): RedirectResponse
+    {
+        $this->cuaKhach($request, $booking);
+        abort_unless((int) $extra->boarding_booking_id === (int) $booking->id, 404);
+
+        $dongY = $request->boolean('dong_y');
+        $this->dichVu->traLoiThem($extra, $request->user(), $dongY);
+
+        return back()->with('success', $dongY ? 'Đã đồng ý — cửa hàng sẽ làm và cập nhật ảnh cho bạn.' : 'Đã báo cửa hàng không làm việc này.');
     }
 
     public function cancel(Request $request, BoardingBooking $booking): RedirectResponse

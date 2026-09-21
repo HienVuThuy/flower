@@ -123,8 +123,15 @@
 
     <h2>5. Chi phí</h2>
     <table>
-        <tr><td>Giá áp dụng</td><td class="so">{!! $trang ? '<span class="dong dong--ngan"></span>' : Money::format((string) $phieu->monthly_price) . '/tháng · ' . Money::format((string) $phieu->yearly_price) . '/năm' !!}</td></tr>
+        <tr><td>{{ ! $trang && ! $phieu->daChotGia() ? 'Giá tham khảo (chưa chốt)' : 'Giá chốt cho cây' }}</td><td class="so">{!! $trang ? '<span class="dong dong--ngan"></span>' : Money::format((string) $phieu->monthly_price) . '/tháng · ' . Money::format((string) $phieu->yearly_price) . '/năm' !!}</td></tr>
         <tr><td>Tiền chăm {{ ! $trang && ! $phieu->returned_on ? '(tạm tính)' : '' }}</td><td class="so">{!! $tien($phieu?->care_amount) !!}</td></tr>
+        @if($trang)
+            <tr><td>Việc làm thêm (thay chậu, tạo dáng…) — báo giá riêng từng việc</td><td class="so"><span class="dong dong--ngan"></span></td></tr>
+        @else
+            @foreach($phieu->extras->filter(fn ($x) => $x->status->tinhTien()) as $x)
+                <tr><td>Làm thêm: {{ $x->title }}</td><td class="so">{{ Money::format((string) $x->price) }}</td></tr>
+            @endforeach
+        @endif
         <tr><td>Phí đến lấy / trả cây</td><td class="so">{!! $tien($phieu?->handover_fee) !!}</td></tr>
         <tr><td>Phí nhận gấp</td><td class="so">{!! $tien($phieu?->rush_fee) !!}</td></tr>
         <tr><td>Điều chỉnh {{ ! $trang && $phieu->adjustment_reason ? '— ' . $phieu->adjustment_reason : '' }}</td><td class="so">{!! $tien($phieu?->adjustment) !!}</td></tr>
@@ -149,6 +156,7 @@
 
     <h2>Điều khoản</h2>
     <ul class="dieu-khoan">
+        <li>Bảng giá là giá tham khảo; cửa hàng xem cây rồi chốt giá riêng cho từng cây. Việc làm thêm báo giá riêng, khách đồng ý mới tính.</li>
         <li>Tính tiền theo số tháng thực gửi; lố dưới {{ BoardingPricing::NGAY_AN_HAN }} ngày không tính thêm tháng; đủ 12 tháng áp giá năm.</li>
         <li>Nhận cây sớm hơn hẹn thì tính lại theo thời gian thực gửi; tiền trả thừa cửa hàng hoàn lại.</li>
         @if(ThamSoKinhDoanh::so('kinh_doanh.cham_ho.phi_gap') > 0)

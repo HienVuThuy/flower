@@ -9,7 +9,8 @@
 <div class="mb-4">
     <h1 class="admin-page-title">Chăm cây hộ</h1>
     <p class="admin-page-subtitle">
-        Cửa hàng tự đặt giá theo loại cây, độ khó, cỡ cây. Giá năm để trống thì bằng 12 tháng.
+        Đây là GIÁ THAM KHẢO theo loại cây, độ khó, cỡ cây — khách thấy "từ … /tháng". Mỗi cây mỗi khác nên
+        cửa hàng chốt giá riêng khi xác nhận phiếu. Giá năm để trống thì bằng 12 tháng.
         Chưa có dòng giá nào đang bật thì mọi lối vào dịch vụ phía khách đều ẩn.
         Sửa giá không đổi các phiếu đã gửi — phiếu giữ giá lúc gửi.
     </p>
@@ -17,14 +18,14 @@
 
 <x-admin.nhom-tab ten="cham-ho" />
 
-@foreach($cacGia->concat([null]) as $gia)
+@foreach(collect([null])->concat($cacGia) as $gia)
     <form method="POST" action="{{ $gia ? route('admin.boarding-rates.update', $gia) : route('admin.boarding-rates.store') }}"
-          class="admin-panel p-3 mb-3" data-dong-gia="{{ $gia?->id ?? 'moi' }}">
+          class="admin-panel p-3 mb-3 {{ $gia ? '' : 'border-success' }}" data-dong-gia="{{ $gia?->id ?? 'moi' }}">
         @csrf
         @if($gia) @method('PUT') @endif
 
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <strong>{{ $gia ? $gia->name : 'Thêm dòng giá' }}</strong>
+            <strong>{{ $gia ? $gia->name : 'Thêm dòng giá mới' }}</strong>
             @if($gia)<span class="admin-page-subtitle small">{{ $gia->bookings_count }} phiếu đã dùng</span>@endif
         </div>
 
@@ -42,7 +43,7 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <input type="number" name="monthly_price" required min="1000" step="1000" class="form-control" placeholder="Giá / tháng"
+                <input type="number" name="monthly_price" required min="1000" step="1000" class="form-control" placeholder="Giá từ / tháng"
                        value="{{ $gia ? (int) $gia->monthly_price : '' }}" aria-label="Giá mỗi tháng">
             </div>
             <div class="col-md-2">

@@ -51,6 +51,25 @@
                     @endif
                 </div>
 
+                <div class="surface-card p-4 mb-4" data-yeu-cau-them>
+                    <h2 class="text-h5 mb-1">Yêu cầu thêm</h2>
+                    <p class="text-caption">Cần thay chậu, tạo dáng, kích hoa đúng dịp…? Gửi yêu cầu, cửa hàng xem cây rồi báo giá riêng. Bạn đồng ý mới tính tiền.</p>
+
+                    @include('shop.boarding._viec-them', ['laAdmin' => false])
+
+                    @if(in_array($phieu->status, [BoardingStatus::DaXacNhan, BoardingStatus::DangCham, BoardingStatus::ChoTra], true))
+                        <form method="POST" action="{{ route('shop.boarding.extra.store', $phieu) }}" class="mt-3">
+                            @csrf
+                            <label class="form-label" for="yc-viec">Việc cần làm thêm</label>
+                            <input id="yc-viec" name="viec" required maxlength="200" class="form-control mb-2 @error('viec') is-invalid @enderror"
+                                   placeholder="Ví dụ: thay chậu to hơn, tỉa tạo dáng tròn" value="{{ old('viec') }}">
+                            <x-form-error name="viec" />
+                            <input name="ghi_chu" maxlength="500" class="form-control mb-2" placeholder="Ghi chú thêm (không bắt buộc)" aria-label="Ghi chú" value="{{ old('ghi_chu') }}">
+                            <button type="submit" class="btn btn-secondary-brand">Gửi yêu cầu</button>
+                        </form>
+                    @endif
+                </div>
+
                 <h2 class="text-h4 mb-3">Nhật ký chăm sóc</h2>
                 @include('shop.boarding._timeline')
             </div>

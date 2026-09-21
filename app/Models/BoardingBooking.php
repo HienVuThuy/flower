@@ -30,6 +30,7 @@ class BoardingBooking extends Model
             'received_on' => 'date',
             'returned_on' => 'date',
             'paid_at' => 'datetime',
+            'price_agreed_at' => 'datetime',
             'monthly_price' => 'decimal:2',
             'yearly_price' => 'decimal:2',
             'care_amount' => 'decimal:2',
@@ -70,6 +71,31 @@ class BoardingBooking extends Model
         return $this->belongsTo(self::class, 'parent_id');
     }
 
+    public function extras(): HasMany
+    {
+        return $this->hasMany(BoardingExtra::class)->orderBy('id');
+    }
+
+    /** Tổng tiền việc làm thêm khách đã đồng ý. */
+    public function tienLamThem(): string
+    {
+        $tong = '0.00';
+
+        foreach ($this->extras as $viec) {
+            if ($viec->status->tinhTien() && $viec->price !== null) {
+                $tong = bcadd($tong, (string) $viec->price, 2);
+            }
+        }
+
+        return $tong;
+    }
+
+    /** Cửa hàng đã xem cây và chốt giá riêng; trước đó chỉ là giá tham khảo. */
+    public function daChotGia(): bool
+    {
+        return $this->price_agreed_at !== null;
+    }
+
     public function payments(): HasMany
     {
         return $this->hasMany(BoardingPayment::class)->orderBy('paid_at')->orderBy('id');
@@ -93,10 +119,11 @@ class BoardingBooking extends Model
         return $this->hasMany(BoardingEvent::class)->latest('id');
     }
 
-    /** Tổng phải trả = tiền chăm + phí giao nhận + phí gấp + điều chỉnh (có thể âm), không dưới 0. */
+    /** Tổng phải trả = tiền chăm + việc làm thêm đã đồng ý + phí giao nhận + phí gấp + điều chỉnh (có thể âm), không dưới 0. */
     public function tongTien(): string
     {
         $tong = bcadd(bcadd((string) $this->care_amount, (string) $this->handover_fee, 2), bcadd((string) $this->rush_fee, (string) $this->adjustment, 2), 2);
+        $tong = bcadd($tong, $this->tienLamThem(), 2);
 
         return bccomp($tong, '0', 2) < 0 ? '0.00' : $tong;
     }

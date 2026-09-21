@@ -45,6 +45,20 @@
         <h2 class="h6 fw-bold mb-3">2–4. Cây, thời gian, giao nhận</h2>
         @include('shop.boarding._fields', ['tenCayMacDinh' => '', 'sdtMacDinh' => '', 'ngayGuiMacDinh' => $homNay])
 
+        <h2 class="h6 fw-bold mt-3 mb-1">5. Giá chốt cho cây này</h2>
+        <p class="admin-page-subtitle small mb-2">Đã xem cây tận mắt thì ghi giá chốt; bỏ trống là dùng giá tham khảo của loại cây đã chọn.</p>
+        <div class="d-flex gap-2">
+            <div>
+                <label class="form-label small" for="tq-thang">Giá / tháng</label>
+                <input id="tq-thang" type="number" name="monthly_price" min="1000" step="1000" class="form-control @error('monthly_price') is-invalid @enderror" value="{{ old('monthly_price') }}">
+            </div>
+            <div>
+                <label class="form-label small" for="tq-nam">Giá / năm</label>
+                <input id="tq-nam" type="number" name="yearly_price" min="1000" step="1000" class="form-control @error('yearly_price') is-invalid @enderror" value="{{ old('yearly_price') }}" placeholder="12 tháng">
+            </div>
+        </div>
+        <x-form-error name="monthly_price" />
+
         <label class="d-flex align-items-center gap-2 mt-3">
             <input type="checkbox" class="form-check-input" name="nhan_cay_ngay" value="1" @checked(old('nhan_cay_ngay', true))>
             <span>Khách mang cây đến ngay — ghi nhận cây về cửa hàng vào ngày gửi</span>

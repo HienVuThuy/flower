@@ -53,13 +53,13 @@ A3. Kiến trúc (chia lớp rõ ràng)
   OrderService, điểm chỉ ghi ở PointLedger, thuế chỉ tính ở TaxCalculator…
 
 A4. Quy mô (đếm từ mã nguồn)
-  - 332 đường dẫn (route), trong đó 178 thuộc khu quản trị
-  - 78 controller, 143 lớp service, 63 model, 70 enum
-  - 97 migration, 138 bảng
-  - 259 view Blade, 47 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
+  - 339 đường dẫn (route), trong đó 183 thuộc khu quản trị
+  - 78 controller, 143 lớp service, 64 model, 71 enum
+  - 98 migration, 139 bảng
+  - 260 view Blade, 47 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
   - 17 lệnh artisan tự viết, 7 tác vụ chạy theo lịch
-  - 143 tệp kiểm thử, 1378 bài kiểm thử, 5202 phép khẳng định
-  - Tài liệu: docs/ (quyết định thiết kế 317 mục, luồng hoạt động, kiểm thử,
+  - 144 tệp kiểm thử, 1383 bài kiểm thử, 5236 phép khẳng định
+  - Tài liệu: docs/ (quyết định thiết kế 318 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
 
@@ -287,7 +287,7 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
 4.1  Phân quyền 3 vai trò + 9 khu vực quyền
      Chủ cửa hàng (toàn quyền), Nhân viên (theo khu vực được giao), Khách hàng.
      9 khu vực: Đơn hàng · Sản phẩm · Kho · Khuyến mại · Đánh giá · Báo cáo ·
-     Tài chính · Hệ thống · Hỗ trợ khách hàng. Cả 178 đường dẫn quản trị đều gắn
+     Tài chính · Hệ thống · Hỗ trợ khách hàng. Cả 183 đường dẫn quản trị đều gắn
      quyền.
      → app/Enums/{UserRole, Quyen}, Middleware/{EnsureUserHasRole, CoQuyen}
 
@@ -419,8 +419,11 @@ CẤP 4 — QUẢN TRỊ VẬN HÀNH
 4.13b Chăm cây hộ (menu "Chăm cây hộ": Phiếu gửi cây · Bảng giá · Lịch trả theo dịp)
      Khách gửi cây cho cửa hàng chăm theo tháng, theo năm, đến một ngày, đúng dịp
      lễ (vd. mang đào về trước Tết), hoặc chưa hẹn ngày; cần gấp thì hẹn nhận sớm
-     (có phí gấp nếu báo quá sát). Giá do admin đặt theo loại cây / độ khó; báo giá
-     tức thời do máy chủ tính; lúc trả cây tính lại theo thời gian thực gửi (đủ 12
+     (có phí gấp nếu báo quá sát). Bảng giá theo loại cây / độ khó chỉ là GIÁ THAM
+     KHẢO ("từ … /tháng"); cửa hàng xem cây rồi CHỐT GIÁ RIÊNG cho từng cây khi xác
+     nhận. Trong lúc gửi, khách YÊU CẦU THÊM việc (thay chậu, tạo dáng…) hoặc cửa
+     hàng đề xuất: báo giá riêng từng việc, khách đồng ý mới cộng vào tiền. Báo giá
+     tạm tính do máy chủ tính; lúc trả cây tính lại theo thời gian thực gửi (đủ 12
      tháng áp giá năm). Admin xác nhận, nhận cây, gửi ảnh + ghi chú chăm sóc (khách
      nhận thông báo), trả cây. Chọn "lặp lại mỗi năm" thì trả cây xong hệ thống tự
      mở phiếu cho dịp năm sau. Chưa có bảng giá thì dịch vụ ẩn hẳn.
@@ -749,7 +752,7 @@ D1. Xác thực & tài khoản
 
 D2. Phân quyền
     - Vai trò (role:admin,staff) + quyền theo khu vực (quyen:...) trên TỪNG route
-      quản trị; đã kiểm: 178/178 route có quyền
+      quản trị; đã kiểm: 183/183 route có quyền
     - Ba chốt chặn khi đổi vai trò; thanh toán và hoàn tiền cần quyền tài chính
     - Kiểm CHỦ SỞ HỮU mọi tài nguyên của khách: địa chỉ, giỏ, đơn, nhật ký, thông
       báo, đánh giá, bài Góc cây (tìm theo user_id rồi mới findOrFail → trả 404,
@@ -855,7 +858,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1378 bài / 5202 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1383 bài / 5236 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,
@@ -867,7 +870,7 @@ E4. Hiệu năng: đo trước khi tối ưu (lệnh do:hieu-nang); ảnh WebP d
     sẵn quan hệ (chỉ còn 2 chỗ nạp lười khi đo bằng preventLazyLoading trên toàn
     bộ kiểm thử); header cache ở .htaccess; nén; tải trước trang; làm nóng
     trang quản trị; OPcache (docs/OPCACHE-XAMPP.md).
-E5. Tài liệu: docs/DOMAIN-DECISIONS.md (317 quyết định), LUONG-HOAT-DONG.md,
+E5. Tài liệu: docs/DOMAIN-DECISIONS.md (318 quyết định), LUONG-HOAT-DONG.md,
     KIEM-THU.md, HIEU-NANG.md, TU-DONG-HOA.md, MYSQL-XAMPP.md, CHU-THICH-CODE.md.
 E6. Quản lý mã nguồn: Git, mỗi thay đổi một commit có mô tả.
 E7. Khả năng tiếp cận (a11y): icon SVG có aria-label, không dùng emoji làm icon,

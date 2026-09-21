@@ -142,11 +142,11 @@ class ChamCayHoTest extends TestCase
         $p = BoardingBooking::sole();
 
         $this->actingAs($admin)->patch(route('admin.boarding.confirm', $p), [
-            'drop_off_on' => '2026-09-25', 'handover_fee' => 80000, 'adjustment' => 50000,
+            'drop_off_on' => '2026-09-25', 'monthly_price' => 300000, 'handover_fee' => 80000, 'adjustment' => 50000,
         ])->assertSessionHasErrors('adjustment_reason');
 
         $this->actingAs($admin)->patch(route('admin.boarding.confirm', $p), [
-            'drop_off_on' => '2026-09-25', 'handover_fee' => 80000, 'adjustment' => 50000, 'adjustment_reason' => 'Cây cao 1,8m',
+            'drop_off_on' => '2026-09-25', 'monthly_price' => 300000, 'yearly_price' => 3000000, 'handover_fee' => 80000, 'adjustment' => 50000, 'adjustment_reason' => 'Cây cao 1,8m',
         ])->assertSessionHasNoErrors();
 
         $this->actingAs($admin)->patch(route('admin.boarding.receive', $p), ['ngay' => '2026-09-25'])->assertSessionHasNoErrors();

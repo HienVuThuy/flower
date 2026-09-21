@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Enums\BoardingPaymentMethod;
 use App\Enums\UserRole;
 use App\Models\BoardingBooking;
+use App\Models\BoardingExtra;
 use App\Models\BoardingRate;
 use App\Models\BoardingWindow;
 use App\Models\User;
@@ -13,7 +14,8 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 /**
- * Dữ liệu mẫu cho dịch vụ chăm cây hộ: bảng giá, lịch Tết, và vài phiếu ở đủ các trạng thái.
+ * Dữ liệu mẫu cho dịch vụ chăm cây hộ: giá tham khảo, lịch Tết, vài phiếu ở đủ các trạng thái
+ * và việc làm thêm (đã đồng ý, cửa hàng đề xuất, chờ báo giá).
  * ⚠️ DỮ LIỆU MẪU — giá là mức gợi ý để trình diễn; cửa hàng sửa ở Quản trị › Chăm cây hộ › Bảng giá.
  * Phiếu đi qua đúng BoardingService (lùi đồng hồ về từng thời điểm), không chèn thẳng vào bảng,
  * nên tiền, nhật ký và thông báo khớp như dùng thật. Chạy lại không tạo trùng.
@@ -26,14 +28,15 @@ class BoardingSampleSeeder extends Seeder
 
     public function run(): void
     {
+        $this->dv = app(BoardingService::class);
+        $this->admin = User::query()->where('role', UserRole::Admin->value)->orderBy('id')->firstOrFail();
+
         if (BoardingBooking::query()->exists()) {
-            $this->command?->warn('Đã có phiếu chăm hộ — bỏ qua dữ liệu mẫu.');
+            $this->command?->warn('Đã có phiếu chăm hộ — chỉ bổ sung việc làm thêm mẫu nếu chưa có.');
+            $this->viecMau();
 
             return;
         }
-
-        $this->dv = app(BoardingService::class);
-        $this->admin = User::query()->where('role', UserRole::Admin->value)->orderBy('id')->firstOrFail();
 
         $gia = $this->bangGia();
         $this->lichDip();
@@ -98,7 +101,35 @@ class BoardingSampleSeeder extends Seeder
             'handover' => 'cua_hang_lay', 'contact_phone' => '0912000105', 'address' => 'Số 8 Hồ Tùng Mậu, Cầu Giấy',
         ], null));
 
+        $this->viecMau();
+
         $this->command?->info('Đã tạo ' . count($gia) . ' dòng giá, lịch Tết và ' . BoardingBooking::count() . ' phiếu chăm hộ mẫu.');
+    }
+
+    /** Việc làm thêm mẫu: khách xin → cửa hàng báo giá → khách đồng ý; cửa hàng đề xuất; một yêu cầu đang chờ báo giá. */
+    private function viecMau(): void
+    {
+        if (BoardingExtra::query()->exists()) {
+            return;
+        }
+
+        $homNay = Carbon::now(\App\Services\Time\Gio::mui())->startOfDay();
+        $dangCham = fn (string $email) => BoardingBooking::query()
+            ->whereIn('status', ['dang_cham', 'cho_tra'])
+            ->whereHas('user', fn ($q) => $q->where('email', $email))
+            ->first();
+
+        if ($p = $dangCham('maianh@khachmau.test')) {
+            $khach = $p->user;
+            $x = $this->luc($homNay->copy()->subDays(10), fn () => $this->dv->yeuCauThem($p, $khach, 'Canh nụ để hoa nở đúng mùng 1 Tết', 'Nhà có khách đầu năm, muốn hoa nở đẹp nhất đúng dịp.'));
+            $this->luc($homNay->copy()->subDays(9), fn () => $this->dv->baoGiaThem($x, $this->admin, '200000.00', 'Gồm tuốt lá đúng ngày và điều chỉnh nước, sáng.'));
+            $this->luc($homNay->copy()->subDays(9), fn () => $this->dv->traLoiThem($x->fresh(), $khach, true));
+            $this->luc($homNay->copy()->subDays(3), fn () => $this->dv->deXuat($p->fresh(), $this->admin, 'Thay chậu gốm to hơn một cỡ', '150000.00', 'Rễ đã kín chậu, thay chậu giúp cây khoẻ qua Tết.'));
+        }
+
+        if ($p = $dangCham('thuha@khachmau.test')) {
+            $this->luc($homNay->copy()->subDays(2), fn () => $this->dv->yeuCauThem($p, $p->user, 'Tách chiết thêm một chậu con', 'Cây có một mầm con ở gốc.'));
+        }
     }
 
     private function bangGia(): array

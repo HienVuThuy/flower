@@ -13,20 +13,20 @@ Cách đo lại (chạy trong thư mục dự án):
 --------------------------------------------------------------------------------
 A. QUY MÔ
 --------------------------------------------------------------------------------
-  332 đường dẫn (route), trong đó 178 thuộc khu quản trị
-  78 controller, 143 lớp service, 63 model, 70 enum
-  97 migration, 138 bảng trong cơ sở dữ liệu
-  259 view Blade, 47 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
+  339 đường dẫn (route), trong đó 183 thuộc khu quản trị
+  78 controller, 143 lớp service, 64 model, 71 enum
+  98 migration, 139 bảng trong cơ sở dữ liệu
+  260 view Blade, 47 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
   17 lệnh artisan tự viết, 7 tác vụ chạy theo lịch
-  143 tệp kiểm thử, 1378 bài, 5202 phép khẳng định — ĐẠT 100%
+  144 tệp kiểm thử, 1383 bài, 5236 phép khẳng định — ĐẠT 100%
 
 
 --------------------------------------------------------------------------------
 B. KẾT QUẢ KIỂM TRA
 --------------------------------------------------------------------------------
-  Kiểm thử tự động ......... 1378/1378 đạt
+  Kiểm thử tự động ......... 1383/1383 đạt
   Migration ................ không còn migration nào chờ chạy
-  Quyền khu quản trị ....... 178/178 đường dẫn đều gắn middleware quyen:*
+  Quyền khu quản trị ....... 183/183 đường dẫn đều gắn middleware quyen:*
   Biểu mẫu POST ............ không có biểu mẫu nào thiếu @csrf
   Liên kết nội bộ .......... bò qua 90 trang công khai, 0 liên kết hỏng
   Ảnh ...................... 0 bản ghi trỏ tới tệp ảnh không tồn tại
@@ -78,7 +78,8 @@ C. CẤU HÌNH HIỆN TẠI (và phải đổi gì khi chạy thật)
       → Mức miễn phí giao, ngưỡng Hoa cao cấp, mốc khoảng giá, tỉ lệ điểm, hạn đổi
         hàng, phí nhận cây gấp, trần lượt hỏi AI: chủ cửa hàng tự sửa ở
         Cài đặt › Tham số kinh doanh, không cần sửa code.
-  Chăm cây hộ: đã nạp DỮ LIỆU MẪU (5 dòng giá, lịch Tết 2027–2028, 5 phiếu)
+  Chăm cây hộ: đã nạp DỮ LIỆU MẪU (5 dòng giá tham khảo, lịch Tết 2027–2028,
+  5 phiếu, 3 việc làm thêm ở các bước khác nhau)
   bằng BoardingSampleSeeder → dịch vụ đang mở với khách.
       → Giá mẫu là mức gợi ý; sửa ở Quản trị › Chăm cây hộ › Bảng giá. Nút "Trả
         online qua MoMo" chỉ hiện khi đã điền khoá MoMo thật.
@@ -126,12 +127,12 @@ E. GỢI Ý DÀN Ý BÁO CÁO (bám theo tài liệu sẵn có trong docs/)
   4. Chức năng theo cấp độ (cửa hàng → quản trị → phân tích)
          → BAO-CAO-CHUC-NANG cấp 1 đến cấp 6
   5. Những quyết định thiết kế đáng nói và lý do
-         → docs/DOMAIN-DECISIONS.md (317 mục, mỗi mục một quyết định có số đo)
+         → docs/DOMAIN-DECISIONS.md (318 mục, mỗi mục một quyết định có số đo)
   6. Luồng chạy tiêu biểu để minh hoạ
          → docs/HUONG-DAN-DOC-CODE.txt (28 luồng, chỉ rõ tệp và hàm)
   7. Kiểm thử và chất lượng
-         → mục B ở trên (1378 bài, cách đo, kết quả)
+         → mục B ở trên (1383 bài, cách đo, kết quả)
   8. Hạn chế và hướng phát triển
          → mục C và D ở trên
   9. Phân công nhóm
-         → docs/PHAN-CONG-NHOM.txt (1086 tệp chia cho 5 người, không trùng)
+         → docs/PHAN-CONG-NHOM.txt (1091 tệp chia cho 5 người, không trùng)

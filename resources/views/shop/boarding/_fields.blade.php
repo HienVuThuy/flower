@@ -131,7 +131,7 @@
 </div>
 
 <div class="boarding-quote" data-bao-gia-ket-qua aria-live="polite" hidden>
-    <span class="text-caption" data-bao-gia-nhan>Tạm tính tiền chăm</span>
+    <span class="text-caption" data-bao-gia-nhan>Tạm tính theo giá tham khảo — cửa hàng xem cây rồi chốt giá</span>
     <strong class="boarding-quote__so" data-bao-gia-so></strong>
     <span class="text-caption" data-bao-gia-chi-tiet></span>
 </div>

@@ -8707,3 +8707,34 @@ thanh toán đủ, chưa hẹn ngày, lập tại quầy sắp đến hạn, ch�
 qua BoardingService (lùi đồng hồ về từng thời điểm) chứ không chèn thẳng vào
 bảng, nên tiền, nhật ký, thông báo khớp như dùng thật; đã có phiếu thì bỏ qua.
 Giá là mức gợi ý để trình diễn, cửa hàng sửa ở Bảng giá.
+
+## QĐ-318. Giá chăm cây không cố định: giá tham khảo, giá chốt theo cây, việc làm thêm
+
+Bài toán: cùng là "đào thế" nhưng cây 0,8m và cây 2m, cây khoẻ và cây đang yếu cần
+công chăm khác hẳn nhau. Một bảng giá cố định hoặc làm cửa hàng lỗ, hoặc làm khách
+nhỏ trả quá tay. Trong lúc gửi, khách còn nảy ra việc mới (thay chậu, tạo dáng,
+canh hoa nở đúng Tết…).
+
+- BẢNG GIÁ LÀ GIÁ THAM KHẢO: khách thấy "từ … /tháng" và báo giá tạm tính ghi rõ
+  "cửa hàng xem cây rồi chốt giá". Phiếu mới chỉ mang giá tham khảo
+  (`price_agreed_at` trống, trang phiếu ghi "Giá tham khảo (chờ cửa hàng chốt)").
+- GIÁ CHỐT THEO TỪNG CÂY: khi xác nhận, admin BẮT BUỘC ghi giá tháng cho cây này
+  (điền sẵn giá tham khảo), giá năm bỏ trống = 12 tháng. Tiền chăm tính lại theo
+  giá chốt. Lập tại quầy thì ghi giá chốt ngay (cửa hàng đã thấy cây). Khách
+  không đồng ý giá chốt thì vẫn tự huỷ được vì cây chưa về cửa hàng.
+  "Điều chỉnh" chỉ còn dùng cho khoản một lần (có lý do).
+- KỲ LẶP LẠI giữ giá đã chốt của kỳ trước (không quay về bảng giá), nhưng vẫn ở
+  "chờ xác nhận" để cửa hàng chốt lại cho năm mới — cây lớn thêm một năm.
+- VIỆC LÀM THÊM (`boarding_extras`): mỗi việc một dòng, giá báo riêng.
+  Khách yêu cầu → CHỜ BÁO GIÁ → cửa hàng báo giá (hoặc không nhận, có lý do) →
+  CHỜ KHÁCH ĐỒNG Ý → khách đồng ý / không làm → ĐÃ ĐỒNG Ý → cửa hàng làm xong,
+  gửi ghi chú + ảnh → ĐÃ LÀM. Cửa hàng cũng tự ĐỀ XUẤT được (cây bị sâu, rễ kín
+  chậu) — vẫn phải chờ khách đồng ý. Khách tại quầy không có tài khoản thì cửa
+  hàng GHI HỘ câu trả lời (khách đồng ý qua điện thoại).
+- CHỈ VIỆC ĐÃ ĐỒNG Ý (hoặc đã làm) mới cộng vào tổng tiền phiếu
+  (`BoardingBooking::tienLamThem`). Báo giá mà khách chưa gật đầu không bao giờ
+  thành nợ của khách. Nhận yêu cầu khi phiếu đã xác nhận / đang chăm / sắp trả.
+- Mỗi bước ghi nhật ký phiếu và báo khách; hàng việc dashboard có "chờ báo giá"
+  và "khách đã đồng ý, chưa làm". Phiếu in liệt kê từng việc đã đồng ý; phiếu
+  trắng có dòng "việc làm thêm — báo giá riêng".
+- Trang Bảng giá: ô "Thêm dòng giá mới" đứng ĐẦU trang.

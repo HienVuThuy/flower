@@ -53,6 +53,24 @@
             </form>
         @endunless
 
+        <div class="admin-panel p-4 mb-4" data-viec-them-admin>
+            <h2 class="h6 fw-bold mb-1">Việc làm thêm</h2>
+            <p class="admin-page-subtitle small">Mỗi việc báo giá riêng theo cây; khách đồng ý mới cộng vào tiền phiếu.</p>
+
+            @include('shop.boarding._viec-them', ['laAdmin' => true])
+
+            @if(in_array($tt, [BoardingStatus::DaXacNhan, BoardingStatus::DangCham, BoardingStatus::ChoTra], true))
+                <form method="POST" action="{{ route('admin.boarding.extra.propose', $phieu) }}" class="d-flex flex-wrap gap-2 mt-3 pt-3 border-top">
+                    @csrf
+                    <input name="viec" required maxlength="200" class="form-control form-control-sm" style="flex: 2 1 12rem" placeholder="Cửa hàng đề xuất: xử lý rệp sáp, thay đất…" aria-label="Việc đề xuất">
+                    <input type="number" name="gia" min="0" step="1000" required class="form-control form-control-sm" style="max-width: 9rem" placeholder="Giá" aria-label="Giá">
+                    <input name="ghi_chu" maxlength="500" class="form-control form-control-sm" style="flex: 1 1 10rem" placeholder="Vì sao cần" aria-label="Lý do đề xuất">
+                    <button type="submit" class="btn btn-sm btn-outline-admin">Đề xuất cho khách</button>
+                </form>
+                <x-form-error name="viec" />
+            @endif
+        </div>
+
         <div class="admin-panel p-4">
             <h2 class="h6 fw-bold mb-3">Nhật ký</h2>
             @include('shop.boarding._timeline')
@@ -72,11 +90,28 @@
                 <label class="form-label small" for="xn-gui">Hẹn ngày nhận cây</label>
                 <input id="xn-gui" type="date" name="drop_off_on" required class="form-control mb-2" value="{{ old('drop_off_on', $phieu->drop_off_on->toDateString()) }}">
                 <x-form-error name="drop_off_on" />
+                <p class="admin-page-subtitle small mb-1">
+                    Giá chốt cho CÂY NÀY. Khách chọn dòng "{{ $phieu->rate?->name }}" — giá tham khảo
+                    {{ \App\Services\Shop\Money::format((string) $phieu->monthly_price) }}/tháng; xem cây thật rồi sửa nếu cần.
+                </p>
+                <div class="d-flex gap-2 mb-2">
+                    <div>
+                        <label class="form-label small" for="xn-thang">Giá / tháng</label>
+                        <input id="xn-thang" type="number" name="monthly_price" required min="1000" step="1000" class="form-control @error('monthly_price') is-invalid @enderror"
+                               value="{{ old('monthly_price', (int) $phieu->monthly_price) }}">
+                    </div>
+                    <div>
+                        <label class="form-label small" for="xn-nam">Giá / năm</label>
+                        <input id="xn-nam" type="number" name="yearly_price" min="1000" step="1000" class="form-control @error('yearly_price') is-invalid @enderror"
+                               value="{{ old('yearly_price', (int) $phieu->yearly_price) }}" placeholder="12 tháng">
+                    </div>
+                </div>
+                <x-form-error name="monthly_price" />
                 @if($phieu->handover === BoardingHandover::CuaHangLay)
                     <label class="form-label small" for="xn-phi">Phí đến lấy và trả cây</label>
                     <input id="xn-phi" type="number" name="handover_fee" min="0" step="1000" class="form-control mb-2" value="{{ old('handover_fee', 0) }}">
                 @endif
-                <label class="form-label small" for="xn-dc">Điều chỉnh giá (âm là giảm)</label>
+                <label class="form-label small" for="xn-dc">Điều chỉnh một lần (âm là giảm)</label>
                 <input id="xn-dc" type="number" name="adjustment" step="1000" class="form-control mb-2" value="{{ old('adjustment', 0) }}">
                 <input type="text" name="adjustment_reason" maxlength="255" class="form-control mb-2 @error('adjustment_reason') is-invalid @enderror"
                        placeholder="Lý do điều chỉnh (cây to, chậu nặng…)" value="{{ old('adjustment_reason') }}" aria-label="Lý do điều chỉnh">

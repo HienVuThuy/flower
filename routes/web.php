@@ -84,6 +84,10 @@ Route::prefix('cham-cay-ho')
             Route::post('/phieu/{booking}/nhan-som', [BoardingController::class, 'early'])->name('early');
             Route::post('/phieu/{booking}/lap-lai', [BoardingController::class, 'repeat'])->name('repeat');
             Route::get('/phieu/{booking}/in', [BoardingController::class, 'print'])->name('print');
+            Route::post('/phieu/{booking}/yeu-cau-them', [BoardingController::class, 'extraStore'])
+                ->middleware('throttle:20,10')
+                ->name('extra.store');
+            Route::post('/phieu/{booking}/yeu-cau-them/{extra}/tra-loi', [BoardingController::class, 'extraAnswer'])->name('extra.answer');
             Route::post('/phieu/{booking}/tra-momo', [BoardingController::class, 'momo'])
                 ->middleware('throttle:10,1')
                 ->name('momo');

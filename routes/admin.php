@@ -341,6 +341,11 @@ Route::prefix('admin')
                 Route::post('cham-cay-ho/{booking}/cap-nhat', [AdminBoardingController::class, 'update'])->name('boarding.update');
                 Route::patch('cham-cay-ho/{booking}/tra-cay', [AdminBoardingController::class, 'returnPlant'])->name('boarding.return');
                 Route::post('cham-cay-ho/{booking}/ghi-tien', [AdminBoardingController::class, 'payment'])->name('boarding.payment');
+                Route::post('cham-cay-ho/{booking}/viec-them', [AdminBoardingController::class, 'extraPropose'])->name('boarding.extra.propose');
+                Route::patch('cham-cay-ho/{booking}/viec-them/{extra}/bao-gia', [AdminBoardingController::class, 'extraQuote'])->name('boarding.extra.quote');
+                Route::patch('cham-cay-ho/{booking}/viec-them/{extra}/tu-choi', [AdminBoardingController::class, 'extraReject'])->name('boarding.extra.reject');
+                Route::patch('cham-cay-ho/{booking}/viec-them/{extra}/khach-tra-loi', [AdminBoardingController::class, 'extraAnswer'])->name('boarding.extra.answer');
+                Route::patch('cham-cay-ho/{booking}/viec-them/{extra}/xong', [AdminBoardingController::class, 'extraDone'])->name('boarding.extra.done');
 
                 Route::post('cham-cay-ho/bang-gia', [BoardingRateController::class, 'store'])->name('boarding-rates.store');
                 Route::put('cham-cay-ho/bang-gia/{rate}', [BoardingRateController::class, 'update'])->name('boarding-rates.update');
