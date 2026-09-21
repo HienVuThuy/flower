@@ -14,7 +14,10 @@
         <span class="chat-badge chat-badge--toggle" data-chat-badge hidden></span>
     </summary>
 
-    <div class="ai-chat__panel">
+    <div class="ai-chat__panel" data-ai-chat-panel>
+        <button type="button" class="chat-keo" data-chat-keo
+                aria-label="Kéo để đổi kích thước khung chat (bấm đúp để về mặc định)"
+                title="Kéo để đổi kích thước — bấm đúp để về mặc định"></button>
         <div class="chat-tabs" role="tablist">
             <button type="button" class="chat-tabs__tab is-active" role="tab" aria-selected="true" data-chat-tab="ai">
                 Trợ lý AI

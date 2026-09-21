@@ -237,3 +237,65 @@
     color: var(--ink-500);
     font-size: 0.7rem;
 }
+
+/* Nút "Có tin mới" khi đang kéo lên đọc tin cũ. */
+.chat-tin-moi {
+    display: block;
+    margin: -0.25rem auto 0.5rem;
+    padding: 0.2rem 0.8rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--brand, #2f6b4f);
+    color: #fff;
+    font-size: 0.8rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Tay nắm kéo giãn khung chat — góc trên trái vì khung neo góc dưới phải. */
+.ai-chat__panel,
+.admin-chat__panel {
+    position: relative;
+}
+
+.chat-keo {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    border: 0;
+    border-top-left-radius: inherit;
+    background:
+        linear-gradient(135deg, var(--ink-500) 0 2px, transparent 2px 5px, var(--ink-500) 5px 7px, transparent 7px) top left / 10px 10px no-repeat;
+    opacity: 0.55;
+    cursor: nwse-resize;
+    touch-action: none;
+}
+
+.chat-keo:hover,
+.chat-keo:focus-visible {
+    opacity: 1;
+}
+
+.ai-chat__panel.da-keo {
+    max-width: calc(100vw - 32px);
+}
+
+.ai-chat__panel.da-keo .ai-chat__log,
+.ai-chat__panel.da-keo .chat-thread__log {
+    height: var(--chat-log-h);
+    max-height: none;
+}
+
+body.dang-keo-chat {
+    user-select: none;
+    cursor: nwse-resize;
+}
+
+@media (max-width: 575.98px) {
+    .chat-keo {
+        display: none;
+    }
+}

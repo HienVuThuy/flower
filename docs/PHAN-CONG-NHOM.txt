@@ -9,7 +9,7 @@ CÁCH CHIA
     controller, service, model, migration, giao diện, JavaScript, CSS đến bài
     kiểm thử), để mỗi người trình bày được một luồng hoàn chỉnh từ đầu đến cuối
     thay vì mỗi người giữ một "tầng" rời rạc.
-  - Mọi tệp code của dự án (1098 tệp, không tính ảnh / phông / tài liệu)
+  - Mọi tệp code của dự án (1099 tệp, không tính ảnh / phông / tài liệu)
     đều được giao cho ĐÚNG MỘT người. Danh sách được sinh bằng script từ chính kho
     mã nên đường dẫn chính xác.
   - Khối lượng cân nhau:
@@ -17,7 +17,7 @@ CÁCH CHIA
       Hùng   197 tệp, khoảng 22.769 dòng code
       Huy    196 tệp, khoảng 24.764 dòng code
       Dũng   239 tệp, khoảng 28.050 dòng code
-      Hiền   216 tệp, khoảng 26.968 dòng code
+      Hiền   217 tệp, khoảng 26.968 dòng code
   - "Phối hợp" ghi rõ chỗ hai khối gọi sang nhau, để khi sửa một bên thì báo
     người kia.
   - Tài liệu nên đọc chung: docs/HUONG-DAN-DOC-CODE.txt (kiến thức nền + 28 luồng),
@@ -1393,7 +1393,7 @@ DANH SÁCH TỆP
     resources/views/shop/journals/index.blade.php
     resources/views/shop/journals/show.blade.php
     resources/views/shop/notifications/index.blade.php
-  [JavaScript] (7)
+  [JavaScript] (8)
     resources/js/admin/live-chat.js
     resources/js/admin/receipt-lines.js
     resources/js/admin/stock-lock.js
@@ -1401,6 +1401,7 @@ DANH SÁCH TỆP
     resources/js/community.js
     resources/js/journal-form.js
     resources/js/live-chat.js
+    resources/js/chat-resize.js
   [CSS] (4)
     resources/css/components/ai-chat.css
     resources/css/components/blog.css

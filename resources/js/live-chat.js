@@ -1,4 +1,5 @@
 /* Nhắn tin với cửa hàng: tab trong khung chat nổi + trang /tin-nhan. */
+import { ganKeoGian } from './chat-resize';
 
 const NHIP_MO = 4000;
 const NHIP_DONG = 30000;
@@ -19,6 +20,42 @@ export function veTin(tin, laToi) {
     khoi.append(chu, meta);
 
     return khoi;
+}
+
+/** Đang xem gần cuối khung (lệch dưới 60px) — chỉ khi đó tin mới mới được tự kéo xuống. */
+export function sapCuoi(log) {
+    return log.scrollHeight - log.scrollTop - log.clientHeight < 60;
+}
+
+/**
+ * Có tin mới trong lúc người dùng đang kéo lên đọc tin cũ: KHÔNG giật khung xuống,
+ * chỉ hiện nút "Có tin mới" — bấm vào mới xuống cuối. Tự ẩn khi đã cuộn tới cuối.
+ */
+export function baoTinMoi(log) {
+    let nut = log.parentElement.querySelector(':scope > [data-chat-tin-moi]');
+
+    if (!nut) {
+        nut = document.createElement('button');
+        nut.type = 'button';
+        nut.className = 'chat-tin-moi';
+        nut.dataset.chatTinMoi = '';
+        nut.textContent = 'Có tin mới — xem';
+        nut.hidden = true;
+        nut.addEventListener('click', () => {
+            log.scrollTo({ top: log.scrollHeight, behavior: 'smooth' });
+            nut.hidden = true;
+        });
+        log.addEventListener('scroll', () => { if (sapCuoi(log)) nut.hidden = true; });
+        log.after(nut);
+    }
+
+    nut.hidden = false;
+}
+
+export function cuonCuoi(log) {
+    log.scrollTop = log.scrollHeight;
+    const nut = log.parentElement.querySelector(':scope > [data-chat-tin-moi]');
+    if (nut) nut.hidden = true;
 }
 
 export function ganPhimEnter(o, form) {
@@ -48,13 +85,23 @@ function hoiThoai(khung) {
     let cuoi = Math.max(0, ...[...log.querySelectorAll('[data-id]')].map((d) => Number(d.dataset.id)));
     let dangTai = false;
 
-    const them = (ds) => {
+    /* epCuoi: chính mình vừa gửi → luôn xuống cuối. Còn lại chỉ xuống khi đang ở cuối. */
+    const them = (ds, epCuoi = false) => {
+        const oCuoi = sapCuoi(log);
+        let coMoi = false;
+
         ds.filter((t) => t.id > cuoi).forEach((t) => {
             log.insertBefore(veTin(t, t.tu_khach), trong);
             cuoi = Math.max(cuoi, t.id);
+            coMoi = true;
         });
         if (trong) trong.hidden = log.querySelector('[data-id]') !== null;
-        log.scrollTop = log.scrollHeight;
+
+        if (epCuoi || (coMoi && oCuoi)) {
+            cuonCuoi(log);
+        } else if (coMoi) {
+            baoTinMoi(log);
+        }
     };
 
     const tai = async () => {
@@ -101,7 +148,7 @@ function hoiThoai(khung) {
             }
 
             o.value = '';
-            them([data.tin]);
+            them([data.tin], true);
         } catch {
             loi.textContent = 'Không kết nối được. Vui lòng thử lại.';
             loi.hidden = false;
@@ -154,6 +201,22 @@ export function initLiveChat() {
         setInterval(nhip, NHIP_MO);
         document.addEventListener('visibilitychange', nhip);
     });
+
+    if (noi) {
+        const panel = noi.querySelector('[data-ai-chat-panel]');
+        const logDangHien = () => panel.querySelector('[data-chat-pane]:not([hidden]) .ai-chat__log, [data-chat-pane]:not([hidden]) .chat-thread__log');
+
+        ganKeoGian(panel, panel.querySelector('[data-chat-keo]'), 'khach-chat-kich-thuoc', {
+            minW: 300,
+            minH: 160,
+            macDinh: { chieuCao: () => logDangHien()?.getBoundingClientRect().height || 300 },
+            apDung: (w, h) => {
+                panel.classList.toggle('da-keo', w !== null);
+                panel.style.width = w === null ? '' : `${w}px`;
+                panel.style.setProperty('--chat-log-h', h === null ? '' : `${h}px`);
+            },
+        });
+    }
 
     const urlChuaDoc = noi?.dataset.chatUnreadUrl;
 

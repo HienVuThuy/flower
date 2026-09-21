@@ -1010,6 +1010,9 @@ LUỒNG 21. Nhắn tin trực tiếp khách ↔ cửa hàng (livechat — lab07)
      resources/views/layouts/admin.blade.php NGOÀI thẻ <main> nên không mất khi
      trang quản trị chuyển trang kiểu không tải lại.
   5. resources/js/admin/live-chat.js → initAdminLiveChat()
+     Cuộn: chỉ tự xuống cuối khi mở lần đầu, khi mình vừa gửi, hoặc khi đang ở sát cuối;
+     đang đọc tin cũ thì hiện nút "Có tin mới" (sapCuoi / baoTinMoi / cuonCuoi trong live-chat.js).
+     Kéo giãn khung: resources/js/chat-resize.js (tay nắm góc trên trái, nhớ kích thước).
        taiDanhSach(): GET /admin/tin-nhan?q=... → Admin\ChatController@users
                       → LiveChat::hopThu() (khách, tin cuối, số chưa đọc)
        chon(id) / taiTin(): GET /admin/tin-nhan/{user}?sau=... → @messages

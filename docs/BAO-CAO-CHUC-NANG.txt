@@ -56,10 +56,10 @@ A4. Quy mô (đếm từ mã nguồn)
   - 344 đường dẫn (route), trong đó 185 thuộc khu quản trị
   - 78 controller, 143 lớp service, 65 model, 72 enum
   - 99 migration, 140 bảng
-  - 263 view Blade, 47 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
+  - 263 view Blade, 48 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
   - 17 lệnh artisan tự viết, 7 tác vụ chạy theo lịch
   - 145 tệp kiểm thử, 1392 bài kiểm thử, 5318 phép khẳng định
-  - Tài liệu: docs/ (quyết định thiết kế 319 mục, luồng hoạt động, kiểm thử,
+  - Tài liệu: docs/ (quyết định thiết kế 320 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
 
@@ -874,7 +874,7 @@ E4. Hiệu năng: đo trước khi tối ưu (lệnh do:hieu-nang); ảnh WebP d
     sẵn quan hệ (chỉ còn 2 chỗ nạp lười khi đo bằng preventLazyLoading trên toàn
     bộ kiểm thử); header cache ở .htaccess; nén; tải trước trang; làm nóng
     trang quản trị; OPcache (docs/OPCACHE-XAMPP.md).
-E5. Tài liệu: docs/DOMAIN-DECISIONS.md (319 quyết định), LUONG-HOAT-DONG.md,
+E5. Tài liệu: docs/DOMAIN-DECISIONS.md (320 quyết định), LUONG-HOAT-DONG.md,
     KIEM-THU.md, HIEU-NANG.md, TU-DONG-HOA.md, MYSQL-XAMPP.md, CHU-THICH-CODE.md.
 E6. Quản lý mã nguồn: Git, mỗi thay đổi một commit có mô tả.
 E7. Khả năng tiếp cận (a11y): icon SVG có aria-label, không dùng emoji làm icon,

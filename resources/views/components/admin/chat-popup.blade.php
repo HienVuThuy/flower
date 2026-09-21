@@ -10,6 +10,9 @@
     </button>
 
     <div class="admin-chat__panel" data-admin-chat-panel hidden>
+        <button type="button" class="chat-keo" data-chat-keo
+                aria-label="Kéo để đổi kích thước khung chat (bấm đúp để về mặc định)"
+                title="Kéo để đổi kích thước — bấm đúp để về mặc định"></button>
         <div class="admin-chat__head">
             <strong>Hỗ trợ khách hàng</strong>
             <button type="button" class="btn-close" data-admin-chat-close aria-label="Đóng"></button>

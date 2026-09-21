@@ -1,5 +1,6 @@
 /* Khung chat hỗ trợ khách trong trang quản trị. */
-import { veTin, ganPhimEnter } from '../live-chat';
+import { veTin, ganPhimEnter, sapCuoi, baoTinMoi, cuonCuoi } from '../live-chat';
+import { ganKeoGian } from '../chat-resize';
 
 const NHIP_TIN = 3000;
 const NHIP_DS = 6000;
@@ -89,9 +90,13 @@ export function initAdminLiveChat() {
         }
     };
 
-    const taiTin = async () => {
+    /* Tải tin mới 3 giây một lần — KHÔNG kéo xuống khi đang đọc tin cũ (xem baoTinMoi). */
+    const taiTin = async (epCuoi = false) => {
         if (!khachId) return;
         try {
+            const dauTien = cuoi === 0;
+            const oCuoi = sapCuoi(log);
+            let coMoi = false;
             const data = await layJson(`${goc.dataset.urlTin}/${khachId}?sau=${cuoi}`);
             if (cuoi === 0) {
                 log.replaceChildren();
@@ -106,8 +111,14 @@ export function initAdminLiveChat() {
             (data.tin ?? []).filter((t) => t.id > cuoi).forEach((t) => {
                 log.append(veTin(t, !t.tu_khach));
                 cuoi = t.id;
+                coMoi = true;
             });
-            log.scrollTop = log.scrollHeight;
+
+            if (dauTien || epCuoi || (coMoi && oCuoi)) {
+                cuonCuoi(log);
+            } else if (coMoi) {
+                baoTinMoi(log);
+            }
         } catch {
             /* thử lại lượt sau */
         }
@@ -174,7 +185,7 @@ export function initAdminLiveChat() {
                 return;
             }
             o.value = '';
-            await taiTin();
+            await taiTin(true);
             taiDanhSach();
         } finally {
             nut.disabled = false;
@@ -183,6 +194,17 @@ export function initAdminLiveChat() {
     });
 
     ganPhimEnter(o, form);
+
+    const than = goc.querySelector('.admin-chat__body');
+    ganKeoGian(panel, goc.querySelector('[data-chat-keo]'), 'admin-chat-kich-thuoc', {
+        minW: 480,
+        minH: 260,
+        macDinh: { chieuCao: () => than.getBoundingClientRect().height },
+        apDung: (w, h) => {
+            panel.style.width = w === null ? '' : `${w}px`;
+            than.style.height = h === null ? '' : `${h}px`;
+        },
+    });
 
     setInterval(() => { if (!panel.hidden && !document.hidden) taiTin(); }, NHIP_TIN);
     setInterval(() => { if (!panel.hidden && !document.hidden) taiDanhSach(); }, NHIP_DS);

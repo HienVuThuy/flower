@@ -8774,3 +8774,18 @@ Phần lớn việc thương lượng diễn ra qua nhắn tin với nhân viên
   Khách tại quầy không có tài khoản thì trao đổi qua số điện thoại ghi trên phiếu.
 - Khi đang báo giá, không duyệt lẻ từng việc — mọi việc được quyết định trong báo
   giá. Sau khi xác nhận, việc phát sinh vẫn đi luồng "yêu cầu thêm" từng việc.
+
+## QĐ-320. Khung chat: không giật xuống khi đang đọc tin cũ, kéo giãn được
+
+- LỖI: khung chat tải tin mới 3 giây một lần và lần nào cũng kéo xuống cuối — đang
+  kéo lên đọc lịch sử thì bị giật xuống. Cả khung Hỗ trợ khách hàng (admin) lẫn khung
+  "Nhắn cửa hàng" của khách đều mắc.
+- SỬA: chỉ tự xuống cuối khi (1) mở hội thoại lần đầu, (2) chính mình vừa gửi, hoặc
+  (3) có tin mới mà người xem đang ở sát cuối (lệch dưới 60px). Đang đọc tin cũ mà có
+  tin mới thì hiện nút "Có tin mới — xem", bấm mới xuống; tự ẩn khi cuộn tới cuối.
+  Hàm dùng chung: `sapCuoi`, `baoTinMoi`, `cuonCuoi` trong resources/js/live-chat.js.
+- KÉO GIÃN: tay nắm ở góc TRÊN TRÁI (khung neo góc dưới phải nên kéo lên / sang trái
+  là to ra). Có giới hạn nhỏ nhất, và luôn nằm gọn trong màn hình kể cả tiêu đề và ô
+  nhập. Kích thước nhớ theo trình duyệt (localStorage, chặn lưu trữ vẫn kéo được);
+  bấm đúp tay nắm để về mặc định; mũi tên bàn phím đổi 20px. Màn hình điện thoại ẩn
+  tay nắm vì khung đã chiếm hết bề ngang. Module resources/js/chat-resize.js.
