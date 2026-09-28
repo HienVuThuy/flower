@@ -171,6 +171,60 @@
                 </div>
             </div>
 
+            {{-- THƯ VIỆN ẢNH TRONG BÀI: tải lên bao nhiêu ảnh tuỳ ý rồi chép mã chèn vào nội dung --}}
+            <div class="admin-panel p-4 mb-4">
+                <h2 class="h6 fw-bold mb-1">Ảnh trong bài</h2>
+                <p class="admin-page-subtitle mb-3">
+                    Tải ảnh lên đây rồi bấm <strong>Chép mã</strong> và dán vào ô Nội dung ở chỗ
+                    muốn ảnh xuất hiện. Thân bài chỉ nhận ảnh của cửa hàng — dán địa chỉ ảnh ở
+                    trang khác vào thì ảnh sẽ bị bỏ khi lưu.
+                </p>
+
+                @if($post->exists && $post->images->isNotEmpty())
+                    <div class="row g-3 mb-3">
+                        @foreach($post->images as $anh)
+                            <div class="col-md-6">
+                                <div class="border rounded p-2 h-100">
+                                    <x-site.image :path="$anh->path" :alt="$anh->alt ?? 'Ảnh trong bài'"
+                                                  class="admin-thumb mb-2" />
+
+                                    <label class="form-label small mb-1" for="chu-thich-{{ $anh->id }}">
+                                        Chú thích
+                                    </label>
+                                    <input type="text" class="form-control form-control-sm mb-2"
+                                           id="chu-thich-{{ $anh->id }}"
+                                           name="chu_thich[{{ $anh->id }}]"
+                                           value="{{ old('chu_thich.' . $anh->id, $anh->alt) }}"
+                                           maxlength="200"
+                                           placeholder="Mô tả ngắn — cũng là chữ đọc cho người khiếm thị">
+
+                                    <div class="d-flex align-items-center gap-3">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary"
+                                                data-copy="{{ $anh->maChen() }}">
+                                            Chép mã
+                                        </button>
+
+                                        <label class="small mb-0">
+                                            <input type="checkbox" name="xoa_anh[]" value="{{ $anh->id }}">
+                                            Xoá ảnh này
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                <label class="form-label" for="anh_bai">Thêm ảnh</label>
+                <input type="file" name="anh_bai[]" id="anh_bai" class="form-control" multiple
+                       accept="image/png,image/jpeg,image/webp">
+                <x-form-error name="anh_bai.*"/>
+                <p class="form-text mb-0">
+                    Chọn được nhiều ảnh một lần (tối đa 12 ảnh mỗi lần lưu, mỗi ảnh dưới 4MB).
+                    @unless($post->exists) Lưu bài xong mới hiện mã để chép. @endunless
+                </p>
+            </div>
+
             <div class="admin-panel p-4 mb-4">
                 <h2 class="h6 fw-bold mb-1">Hiện trên Google</h2>
                 <p class="admin-page-subtitle mb-3">

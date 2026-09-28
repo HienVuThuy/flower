@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\BlogCategory;
 use App\Models\BlogPost;
 use App\Models\Product;
+use App\Services\Blog\BlogImageLibrary;
 use App\Services\Media\HtmlSanitizer;
 use App\Services\Media\ImageStore;
 use Illuminate\Http\RedirectResponse;
@@ -20,6 +21,11 @@ use Illuminate\View\View;
  */
 class BlogPostController extends Controller
 {
+    public function __construct(
+        private readonly BlogImageLibrary $thuVienAnh,
+    ) {
+    }
+
     public function index(Request $request): View
     {
         $posts = BlogPost::query()
@@ -55,6 +61,7 @@ class BlogPostController extends Controller
         $post->save();
 
         $this->ganSanPham($post, $request);
+        $this->capNhatAnhBai($post, $request);
 
         return redirect()
             ->route('admin.blog.edit', $post)
@@ -78,6 +85,7 @@ class BlogPostController extends Controller
         $post->save();
 
         $this->ganSanPham($post, $request);
+        $this->capNhatAnhBai($post, $request);
 
         return redirect()
             ->route('admin.blog.edit', $post)
@@ -87,6 +95,9 @@ class BlogPostController extends Controller
     public function destroy(BlogPost $post): RedirectResponse
     {
         $ten = $post->title;
+
+        $this->thuVienAnh->xoaTatCa($post);
+
         $post->delete();
 
         return redirect()
@@ -102,6 +113,13 @@ class BlogPostController extends Controller
             'excerpt' => ['nullable', 'string', 'max:300'],
             'body' => ['required', 'string'],
             'cover_image' => ['nullable', 'file', 'image', 'mimes:png,jpg,jpeg,webp', 'max:4096'],
+
+            'anh_bai' => ['nullable', 'array', 'max:12'],
+            'anh_bai.*' => ['file', 'image', 'mimes:png,jpg,jpeg,webp', 'max:4096'],
+            'chu_thich' => ['nullable', 'array'],
+            'chu_thich.*' => ['nullable', 'string', 'max:200'],
+            'xoa_anh' => ['nullable', 'array'],
+            'xoa_anh.*' => ['integer'],
             'meta_title' => ['nullable', 'string', 'max:200'],
             'meta_description' => ['nullable', 'string', 'max:300'],
 
@@ -114,6 +132,7 @@ class BlogPostController extends Controller
             'title' => 'tiêu đề',
             'body' => 'nội dung',
             'cover_image' => 'ảnh bìa',
+            'anh_bai.*' => 'ảnh trong bài',
             'published_at' => 'ngày đăng',
         ]);
 
@@ -123,9 +142,23 @@ class BlogPostController extends Controller
 
         $data['slug'] = $post?->slug ?: $this->slugDuyNhat($data['title']);
 
-        unset($data['cover_image'], $data['products']);
+        unset($data['cover_image'], $data['products'], $data['anh_bai'], $data['chu_thich'], $data['xoa_anh']);
 
         return $data;
+    }
+
+    /** Thư viện ảnh của bài: thêm ảnh mới, sửa chú thích, xoá ảnh đã tích chọn. */
+    private function capNhatAnhBai(BlogPost $post, Request $request): void
+    {
+        $xoa = array_map('intval', (array) $request->input('xoa_anh', []));
+
+        if ($xoa !== []) {
+            $this->thuVienAnh->xoa($post, $xoa);
+        }
+
+        $this->thuVienAnh->datChuThich($post, (array) $request->input('chu_thich', []));
+
+        $this->thuVienAnh->them($post, (array) $request->file('anh_bai', []));
     }
 
     private function slugDuyNhat(string $tieuDe): string

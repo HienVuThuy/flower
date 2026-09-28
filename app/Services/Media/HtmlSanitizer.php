@@ -10,13 +10,14 @@ class HtmlSanitizer
         'h2', 'h3', 'h4',
         'ul', 'ol', 'li',
         'blockquote', 'figure', 'figcaption',
-        'a', 'code', 'pre',
+        'a', 'code', 'pre', 'img',
         'table', 'thead', 'tbody', 'tr', 'th', 'td',
         'hr',
     ];
 
     private const THUOC_TINH_CHO_PHEP = [
         'a' => ['href', 'title'],
+        'img' => ['src', 'alt'],
         'td' => ['colspan', 'rowspan'],
         'th' => ['colspan', 'rowspan', 'scope'],
     ];
@@ -107,6 +108,25 @@ class HtmlSanitizer
 
         if ($ten === 'a') {
             $this->donLink($el);
+        }
+
+        if ($ten === 'img') {
+            $this->donAnh($el);
+        }
+    }
+
+    /**
+     * Ảnh trong bài CHỈ được lấy từ kho ảnh của chính cửa hàng (admin tải lên qua biểu mẫu).
+     * Dán địa chỉ ảnh của trang khác vào thân bài thì thẻ ảnh bị bỏ: tránh hotlink và tránh
+     * việc trang ngoài theo dõi người đọc.
+     */
+    private function donAnh(\DOMElement $el): void
+    {
+        $src = trim($el->getAttribute('src'));
+        $trongKho = str_starts_with($src, \Illuminate\Support\Facades\Storage::url(''));
+
+        if ($src === '' || ! $trongKho) {
+            $el->parentNode?->removeChild($el);
         }
     }
 

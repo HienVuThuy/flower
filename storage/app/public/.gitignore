@@ -19,16 +19,20 @@
 !.gitignore
 
 # ------------------------------------------------------------
-# Mở đúng ba thư mục ảnh hàng hoá.
+# Mở đúng bốn thư mục ảnh của cửa hàng.
 # ------------------------------------------------------------
+# `blog/` là ảnh trong bài Cẩm nang, do quản trị viên tải lên qua trang
+# quản trị — nội dung của cửa hàng, không phải ảnh riêng của khách.
 !products/
 !categories/
 !promotions/
+!blog/
 
-# Trong ba thư mục đó cũng cấm hết, rồi chỉ mở ảnh gốc và tệp ghi công.
+# Trong bốn thư mục đó cũng cấm hết, rồi chỉ mở ảnh gốc và tệp ghi công.
 products/**
 categories/**
 promotions/**
+blog/**
 
 !products/*.jpg
 !products/*.jpeg
@@ -50,6 +54,11 @@ promotions/**
 !promotions/*.jpeg
 !promotions/*.png
 !promotions/credits.json
+
+!blog/*.jpg
+!blog/*.jpeg
+!blog/*.png
+!blog/credits.json
 
 # ------------------------------------------------------------
 # KHÔNG đưa bản .webp lên kho.

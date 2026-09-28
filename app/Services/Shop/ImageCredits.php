@@ -20,6 +20,11 @@ class ImageCredits
             'disk' => 'public',
         ],
         [
+            'label' => 'Ảnh bài Cẩm nang',
+            'path' => 'blog/credits.json',
+            'disk' => 'public',
+        ],
+        [
             'label' => 'Ảnh minh hoạ nhu cầu',
             'path' => 'resources/images/catalog/credits.json',
             'disk' => null,
