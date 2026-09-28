@@ -58,8 +58,8 @@ A4. Quy mô (đếm từ mã nguồn)
   - 99 migration, 140 bảng
   - 263 view Blade, 48 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
   - 17 lệnh artisan tự viết, 7 tác vụ chạy theo lịch
-  - 145 tệp kiểm thử, 1392 bài kiểm thử, 5318 phép khẳng định
-  - Tài liệu: docs/ (quyết định thiết kế 320 mục, luồng hoạt động, kiểm thử,
+  - 145 tệp kiểm thử, 1393 bài kiểm thử, 5323 phép khẳng định
+  - Tài liệu: docs/ (quyết định thiết kế 322 mục, luồng hoạt động, kiểm thử,
     hiệu năng, tự động hoá, chú thích code)
 
 
@@ -192,7 +192,9 @@ CẤP 2 — MUA HÀNG
 
 2.9  Thanh toán
      - COD (thu tiền khi nhận)
-     - Ví MoMo (có chữ ký HMAC, nhận IPN, trả lại lần nữa được)
+     - Ví MoMo (có chữ ký HMAC, nhận IPN, trả lại lần nữa được); sang cổng qua
+       trang chuyển tiếp của cửa hàng vì header form-action chặn lượt đi thẳng
+       từ biểu mẫu ra tên miền ngoài (QĐ-321)
      - Trả góp trước khi giao (xem Cấp 6)
      → Services/Payment/MomoGateway, Shop/MomoController
 
@@ -262,7 +264,9 @@ CẤP 3 — SAU MUA HÀNG: CHĂM SÓC KHÁCH & CỘNG ĐỒNG
 
 3.5  Cẩm nang (blog)
      Chuyên mục, bài viết có HTML đã làm sạch, gắn sản phẩm liên quan, slug cố
-     định.
+     định. Ảnh bìa và THƯ VIỆN ẢNH TRONG BÀI: admin tải ảnh lên trong biểu mẫu
+     bài viết, đặt chú thích rồi chép mã chèn vào thân bài; thân bài chỉ nhận ảnh
+     của cửa hàng, ảnh trang ngoài bị bỏ khi lưu (QĐ-322).
      → Shop/BlogController, Admin/BlogPostController, Services/Media/HtmlSanitizer
 
 3.6  Góc cây của bạn (mạng xã hội thu nhỏ)
@@ -862,7 +866,7 @@ D7. Kiểm soát & truy vết
 PHẦN E. CHẤT LƯỢNG: KIỂM THỬ, HIỆU NĂNG, TỰ ĐỘNG HOÁ
 ================================================================================
 
-E1. Kiểm thử tự động: 1392 bài / 5318 phép khẳng định (PHPUnit), chạy trên
+E1. Kiểm thử tự động: 1393 bài / 5323 phép khẳng định (PHPUnit), chạy trên
     SQLite trong bộ nhớ, chia theo miền: AI, Admin, Auth, Blog, Cart, Catalog,
     Chat, Checkout, Community, Coupon, Gift, Installment, Journal, Loyalty, Media,
     Order, Payment, Points, Pricing, Profile, Recommendation, Security,
@@ -874,7 +878,7 @@ E4. Hiệu năng: đo trước khi tối ưu (lệnh do:hieu-nang); ảnh WebP d
     sẵn quan hệ (chỉ còn 2 chỗ nạp lười khi đo bằng preventLazyLoading trên toàn
     bộ kiểm thử); header cache ở .htaccess; nén; tải trước trang; làm nóng
     trang quản trị; OPcache (docs/OPCACHE-XAMPP.md).
-E5. Tài liệu: docs/DOMAIN-DECISIONS.md (320 quyết định), LUONG-HOAT-DONG.md,
+E5. Tài liệu: docs/DOMAIN-DECISIONS.md (322 quyết định), LUONG-HOAT-DONG.md,
     KIEM-THU.md, HIEU-NANG.md, TU-DONG-HOA.md, MYSQL-XAMPP.md, CHU-THICH-CODE.md.
 E6. Quản lý mã nguồn: Git, mỗi thay đổi một commit có mô tả.
 E7. Khả năng tiếp cận (a11y): icon SVG có aria-label, không dùng emoji làm icon,

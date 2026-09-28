@@ -8789,3 +8789,44 @@ Phần lớn việc thương lượng diễn ra qua nhắn tin với nhân viên
   nhập. Kích thước nhớ theo trình duyệt (localStorage, chặn lưu trữ vẫn kéo được);
   bấm đúp tay nắm để về mặc định; mũi tên bàn phím đổi 20px. Màn hình điện thoại ẩn
   tay nắm vì khung đã chiếm hết bề ngang. Module resources/js/chat-resize.js.
+
+## QĐ-321. Sang cổng thanh toán phải đi qua một trang của cửa hàng
+
+- LỖI: bấm "Đặt hàng" với ví MoMo thì màn hình đứng im; bấm lần hai lại ra trang đơn
+  hàng, phải bấm nút trả tiền ở đó mới sang được MoMo. Nguyên nhân KHÔNG phải MoMo
+  chậm: máy chủ trả 302 kèm payUrl trong khoảng nửa giây. Nút "Đặt hàng" là BIỂU MẪU,
+  mà header bảo mật đặt `form-action 'self'`, nên trình duyệt CHẶN lượt chuyển hướng
+  đi thẳng từ biểu mẫu ra tên miền MoMo (Console báo "violates ... form-action").
+  Nút trên trang đơn hàng vẫn chạy vì đó là LIÊN KẾT, không phải biểu mẫu.
+- SỬA: `/thanh-toan/momo/{đơn}` (và trả tiền phiếu chăm cây hộ, trả kỳ trả góp) không
+  redirect thẳng ra ngoài nữa mà trả TRANG CHUYỂN TIẾP cùng tên miền
+  (resources/views/shop/payment/chuyen-cong.blade.php, trait ChuyenSangCongThanhToan):
+  lượt đi từ biểu mẫu kết thúc hợp lệ trên tên miền cửa hàng, rồi trang tự sang cổng
+  như một lượt đi mới. Trang có meta refresh (chạy cả khi tắt JavaScript), lệnh
+  chuyển bằng JavaScript và một nút bấm tay để dự phòng.
+- KHÔNG nới `form-action` cho tên miền cổng thanh toán: giữ chính sách chặt, và cách
+  trên còn cho khách thấy "Đang chuyển tới MoMo…" thay vì màn hình đứng im.
+- Bấm "Đặt hàng" hai lần: khoá chống đặt trùng vẫn chỉ tạo MỘT đơn, nhưng nếu đơn đó
+  trả bằng MoMo và chưa thanh toán thì đưa khách đi tiếp tới cổng, không bỏ lại ở
+  trang đơn hàng (CheckoutController::place).
+- Nút "Đặt hàng" khoá lại và đổi chữ "Đang xử lý đơn…" ngay sau khi bấm
+  (resources/js/gui-mot-lan.js) vì bước tạo đơn mất vài giây.
+- Tải trước trang (speculation rules) BỎ QUA các đường mở lượt thanh toán
+  (/thanh-toan/momo/*, /don-hang/*/thanh-toan-momo, /don-hang/*/tra-gop-momo): tải
+  trước là tự tạo giao dịch ở cổng dù khách chưa bấm.
+
+## QĐ-322. Ảnh trong bài Cẩm nang: admin tự tải lên, thân bài chỉ nhận ảnh của cửa hàng
+
+- TRƯỚC: bài Cẩm nang chỉ có ẢNH BÌA; thân bài là HTML đã lọc, mà bộ lọc không cho thẻ
+  `img` nên admin không chèn được ảnh nào vào giữa bài — trang Cẩm nang toàn chữ.
+- NAY: mỗi bài có THƯ VIỆN ẢNH riêng (`blog_post_images`). Admin tải bao nhiêu ảnh tuỳ ý
+  trong biểu mẫu bài viết (tối đa 12 ảnh mỗi lần lưu, mỗi ảnh ≤ 4MB), đặt chú thích, rồi
+  bấm "Chép mã" để dán đoạn `<figure><img …><figcaption>…</figcaption></figure>` vào ô
+  Nội dung ở đúng chỗ muốn ảnh xuất hiện. Xoá ảnh, xoá bài thì xoá luôn tệp.
+- BỘ LỌC HTML (`HtmlSanitizer`) cho phép `img` nhưng CHỈ với ảnh nằm trong kho của cửa
+  hàng (đường dẫn bắt đầu bằng `Storage::url('')`, tức `/storage/…`). Dán địa chỉ ảnh của
+  trang khác vào thân bài thì thẻ ảnh bị bỏ khi lưu: tránh hotlink ảnh người khác và tránh
+  để trang ngoài theo dõi người đọc. Thuộc tính của `img` chỉ giữ `src` và `alt`.
+- Chú thích ảnh cũng là chữ thay thế (alt) cho người dùng trình đọc màn hình.
+- Ảnh Cẩm nang có ghi công tác giả riêng (`storage/app/public/blog/credits.json`,
+  hiện trong trang Nguồn ảnh cùng ảnh sản phẩm và ảnh danh mục).

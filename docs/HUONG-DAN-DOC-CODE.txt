@@ -680,7 +680,10 @@ LUỒNG 4. Thanh toán MoMo
   2. app/Services/Payment/MomoGateway.php → createPayment()
        ghép chuỗi theo đúng thứ tự MoMo quy định, ký bằng
        hash_hmac('sha256', chuỗi, secretKey), gọi API, nhận payUrl
-       → chuyển khách sang trang MoMo
+  2b. KHÔNG redirect thẳng ra momo.vn: trả trang chuyển tiếp cùng tên miền
+       (shop/payment/chuyen-cong.blade.php qua trait ChuyenSangCongThanhToan),
+       trang này tự sang payUrl. Lý do: header form-action 'self' chặn lượt
+       chuyển hướng đi thẳng từ BIỂU MẪU "Đặt hàng" ra tên miền khác (QĐ-321)
   3. MoMo gọi về HAI đường:
      - Trình duyệt quay về: GET /thanh-toan/momo/ket-qua → MomoController@callback
      - Máy chủ MoMo gọi thẳng: POST /thanh-toan/momo/ipn → MomoController@ipn

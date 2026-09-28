@@ -18,13 +18,13 @@ A. QUY MÔ
   99 migration, 140 bảng trong cơ sở dữ liệu
   263 view Blade, 48 tệp JavaScript, 49 tệp CSS (2 gói: cửa hàng và quản trị)
   17 lệnh artisan tự viết, 7 tác vụ chạy theo lịch
-  145 tệp kiểm thử, 1392 bài, 5318 phép khẳng định — ĐẠT 100%
+  145 tệp kiểm thử, 1393 bài, 5323 phép khẳng định — ĐẠT 100%
 
 
 --------------------------------------------------------------------------------
 B. KẾT QUẢ KIỂM TRA
 --------------------------------------------------------------------------------
-  Kiểm thử tự động ......... 1392/1392 đạt
+  Kiểm thử tự động ......... 1393/1393 đạt
   Migration ................ không còn migration nào chờ chạy
   Quyền khu quản trị ....... 185/185 đường dẫn đều gắn middleware quyen:*
   Biểu mẫu POST ............ không có biểu mẫu nào thiếu @csrf
@@ -128,11 +128,11 @@ E. GỢI Ý DÀN Ý BÁO CÁO (bám theo tài liệu sẵn có trong docs/)
   4. Chức năng theo cấp độ (cửa hàng → quản trị → phân tích)
          → BAO-CAO-CHUC-NANG cấp 1 đến cấp 6
   5. Những quyết định thiết kế đáng nói và lý do
-         → docs/DOMAIN-DECISIONS.md (320 mục, mỗi mục một quyết định có số đo)
+         → docs/DOMAIN-DECISIONS.md (322 mục, mỗi mục một quyết định có số đo)
   6. Luồng chạy tiêu biểu để minh hoạ
          → docs/HUONG-DAN-DOC-CODE.txt (28 luồng, chỉ rõ tệp và hàm)
   7. Kiểm thử và chất lượng
-         → mục B ở trên (1392 bài, cách đo, kết quả)
+         → mục B ở trên (1393 bài, cách đo, kết quả)
   8. Hạn chế và hướng phát triển
          → mục C và D ở trên
   9. Phân công nhóm
