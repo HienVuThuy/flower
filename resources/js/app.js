@@ -45,6 +45,7 @@ import { initPromotionForm } from './admin/promotion-form';
 import { initPromotionProducts } from './admin/promotion-products';
 import { initQuickBuy } from './components/quick-buy';
 import { initFilterLoading } from './components/filter-loading';
+import { initGuiMotLan } from './gui-mot-lan';
 
 const header = document.querySelector('.site-header');
 
@@ -70,6 +71,7 @@ export function bootUi() {
     initCartLive();
     initAddToCart();
     initCopyButtons();
+    initGuiMotLan();
     initOtpResend();
     initBulkActions();
     initSchemeToggle();

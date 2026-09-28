@@ -145,7 +145,31 @@ class MomoPaymentTest extends TestCase
         $this->assertSame(PaymentStatus::Unpaid, $order->payment_status);
 
         $this->get('/thanh-toan/momo/' . $order->order_number)
-            ->assertRedirect('https://test-payment.momo.vn/v2/gateway/pay?t=abc');
+            ->assertOk()
+            ->assertSee('href="https://test-payment.momo.vn/v2/gateway/pay?t=abc"', false);
+    }
+
+    #[Test]
+    public function buoc_sang_momo_KHONG_chuyen_thang_ra_ngoai_ten_mien(): void
+    {
+        /* Nút "Đặt hàng" là biểu mẫu; chính sách form-action 'self' chặn lượt chuyển hướng
+           từ biểu mẫu ra tên miền khác. Vì vậy bước sang MoMo phải là TRANG CỦA CỬA HÀNG
+           rồi mới tự chuyển tiếp — nếu quay lại kiểu redirect thẳng thì khách bấm xong
+           màn hình đứng im mà đơn vẫn được tạo. */
+        $this->momoNhan();
+        $order = $this->datHangMomo();
+
+        $res = $this->get('/thanh-toan/momo/' . $order->order_number);
+
+        $res->assertOk();
+        $res->assertSee('Đang chuyển tới MoMo', false);
+        $res->assertSee('href="https://test-payment.momo.vn/v2/gateway/pay?t=abc"', false);
+        $res->assertSee('http-equiv="refresh"', false);
+
+        $this->assertStringContainsString(
+            "form-action 'self'",
+            (string) $res->headers->get('Content-Security-Policy'),
+        );
     }
 
     #[Test]
@@ -312,7 +336,8 @@ class MomoPaymentTest extends TestCase
         $order = $this->datHangMomo();
 
         $this->get('/thanh-toan/momo/' . $order->order_number . '?cach=khong-co-that')
-            ->assertRedirect('https://test-payment.momo.vn/v2/gateway/pay?t=abc');
+            ->assertOk()
+            ->assertSee('href="https://test-payment.momo.vn/v2/gateway/pay?t=abc"', false);
 
         Http::assertSent(fn ($r) => $r->data()['requestType'] === MomoFlow::macDinh()->requestType());
     }
@@ -496,7 +521,8 @@ class MomoPaymentTest extends TestCase
         ));
 
         $this->get('/don-hang/' . $order->order_number . '/thanh-toan-momo')
-            ->assertRedirect('https://test-payment.momo.vn/v2/gateway/pay?t=abc');
+            ->assertOk()
+            ->assertSee('href="https://test-payment.momo.vn/v2/gateway/pay?t=abc"', false);
 
         $this->assertSame(1, Order::count());
         $this->assertSame(2, PaymentTransaction::where('gateway', 'momo')->count());

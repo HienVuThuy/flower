@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Shop;
 
 use App\Enums\MomoFlow;
 use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use App\Enums\UserEventType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Shop\CheckoutDetailsRequest;
@@ -326,6 +327,18 @@ class CheckoutController extends Controller
     public function place(Request $request): RedirectResponse
     {
         if ($existing = $this->guard->existingOrder()) {
+            /* Bấm "Đặt hàng" hai lần: đơn chỉ tạo một lần. Nếu đơn trả trước mà chưa trả tiền
+               thì đưa khách đi tiếp tới cổng, đừng bỏ khách lại ở trang đơn rồi bắt bấm lại. */
+            if ($existing->payment_method === PaymentMethod::Momo
+                && $existing->payment_status === PaymentStatus::Unpaid
+                && ! $existing->status->isFinal()
+            ) {
+                return redirect()->route('shop.payment.momo.start', [
+                    $existing,
+                    'cach' => $this->momoFlow(),
+                ]);
+            }
+
             return redirect()
                 ->route('shop.orders.show', $existing)
                 ->with('success', 'Đơn hàng của bạn đã được ghi nhận trước đó.');
@@ -400,16 +413,28 @@ class CheckoutController extends Controller
         $this->logPurchase($request, $order);
 
         if ($order->payment_method === PaymentMethod::Momo) {
-            $flow = MomoFlow::tryFrom((string) ($duLieuThanhToan['momo_flow'] ?? ''))
-                ?? MomoFlow::macDinh();
-
             return redirect()->route('shop.payment.momo.start', [
                 $order,
-                'cach' => $flow->value,
+                'cach' => $this->momoFlow($duLieuThanhToan),
             ]);
         }
 
         return redirect()->route('shop.orders.show', $order);
+    }
+
+    /**
+     * Cách trả tiền MoMo khách đã chọn ở bước 1: quét mã QR hay thẻ quốc tế.
+     * Đặt hàng xong thì phiên thanh toán bị dọn, nên nơi gọi truyền vào dữ liệu đã chụp
+     * trước đó; không có thì lui về mức mặc định.
+     */
+    private function momoFlow(?array $duLieuThanhToan = null): string
+    {
+        $duLieuThanhToan ??= session(self::SESSION_KEY, []);
+
+        $flow = MomoFlow::tryFrom((string) ($duLieuThanhToan['momo_flow'] ?? ''))
+            ?? MomoFlow::macDinh();
+
+        return $flow->value;
     }
 
     private function logPurchase(Request $request, Order $order): void

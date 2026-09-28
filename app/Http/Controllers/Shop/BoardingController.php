@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Shop;
 use App\Enums\BoardingHandover;
 use App\Enums\BoardingMode;
 use App\Enums\MomoFlow;
+use App\Http\Controllers\Concerns\ChuyenSangCongThanhToan;
 use App\Http\Controllers\Controller;
 use App\Models\BoardingBooking;
 use App\Models\BoardingExtra;
@@ -25,6 +26,8 @@ use Illuminate\View\View;
 /** CHĂM CÂY HỘ phía khách: xem bảng giá, báo giá, gửi yêu cầu, theo dõi phiếu. */
 class BoardingController extends Controller
 {
+    use ChuyenSangCongThanhToan;
+
     public function __construct(
         private readonly BoardingService $dichVu,
     ) {
@@ -135,12 +138,15 @@ class BoardingController extends Controller
         ]);
     }
 
-    public function momo(Request $request, BoardingBooking $booking): RedirectResponse
+    public function momo(Request $request, BoardingBooking $booking): RedirectResponse|View
     {
         $this->cuaKhach($request, $booking);
 
         try {
-            return redirect()->away($this->dichVu->moMomo($booking, MomoFlow::tryFrom((string) $request->input('cach', ''))));
+            return $this->chuyenSangCong(
+                $this->dichVu->moMomo($booking, MomoFlow::tryFrom((string) $request->input('cach', ''))),
+                quayLai: route('shop.boarding.show', $booking),
+            );
         } catch (PaymentException $e) {
             return back()->with('error', $e->getMessage());
         }

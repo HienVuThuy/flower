@@ -172,7 +172,9 @@ class ThanhToanVaPhieuInTest extends TestCase
         $p = $this->phieuDaXacNhan($khach);
 
         $this->actingAs($khach)->get(route('shop.boarding.show', $p))->assertSee('Trả online qua MoMo');
-        $this->actingAs($khach)->post(route('shop.boarding.momo', $p))->assertRedirect('https://test-payment.momo.vn/pay?t=x');
+        $this->actingAs($khach)->post(route('shop.boarding.momo', $p))
+            ->assertOk()
+            ->assertSee('href="https://test-payment.momo.vn/pay?t=x"', false);
 
         $gd = PaymentTransaction::sole();
         $this->assertSame($p->id, $gd->boarding_booking_id);

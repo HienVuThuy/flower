@@ -348,7 +348,9 @@ class TraGopTest extends TestCase
         $don = $this->datTraGop();
         $kyDau = $don->installmentPlan->payments[0];
 
-        $this->get(route('shop.orders.tra-gop.momo', $don))->assertRedirect('https://momo.test/pay?t=1');
+        $this->get(route('shop.orders.tra-gop.momo', $don))
+            ->assertOk()
+            ->assertSee('href="https://momo.test/pay?t=1"', false);
 
         $tx = PaymentTransaction::where('gateway', 'momo')->latest('id')->firstOrFail();
         $this->assertSame($kyDau->id, $tx->installment_payment_id);

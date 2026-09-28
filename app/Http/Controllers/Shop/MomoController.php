@@ -6,6 +6,7 @@ use App\Enums\MomoFlow;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Concerns\AuthorizesOrderAccess;
+use App\Http\Controllers\Concerns\ChuyenSangCongThanhToan;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Models\PaymentTransaction;
@@ -16,6 +17,7 @@ use App\Services\Order\PaidOrderFulfilment;
 use App\Services\Payment\MomoGateway;
 use App\Services\Payment\PaymentException;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -25,6 +27,7 @@ use Illuminate\Support\Facades\Log;
 class MomoController extends Controller
 {
     use AuthorizesOrderAccess;
+    use ChuyenSangCongThanhToan;
 
     public function __construct(
         private readonly MomoGateway $momo,
@@ -32,17 +35,17 @@ class MomoController extends Controller
     ) {
     }
 
-    public function start(Request $request, Order $order): RedirectResponse
+    public function start(Request $request, Order $order): RedirectResponse|View
     {
         return $this->chuyenSangMomo($request, $order);
     }
 
-    public function payAgain(Request $request, Order $order): RedirectResponse
+    public function payAgain(Request $request, Order $order): RedirectResponse|View
     {
         return $this->chuyenSangMomo($request, $order);
     }
 
-    private function chuyenSangMomo(Request $request, Order $order): RedirectResponse
+    private function chuyenSangMomo(Request $request, Order $order): RedirectResponse|View
     {
         $this->authorizeOrderAccess($order);
 
@@ -68,7 +71,10 @@ class MomoController extends Controller
             ?? MomoFlow::macDinh();
 
         try {
-            return redirect()->away($this->momo->createPayment($order, $flow));
+            return $this->chuyenSangCong(
+                $this->momo->createPayment($order, $flow),
+                quayLai: route('shop.orders.show', $order),
+            );
         } catch (PaymentException $e) {
             return redirect()
                 ->route('shop.orders.show', $order)

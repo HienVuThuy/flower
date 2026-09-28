@@ -138,7 +138,9 @@
 
                     <form method="POST" action="{{ route('shop.checkout.place') }}">
                         @csrf
-                        <button type="submit" class="btn btn-primary-brand btn-lg w-100">
+                        <button type="submit" class="btn btn-primary-brand btn-lg w-100"
+                                data-gui-mot-lan="Đang xử lý đơn…"
+                                data-gui-mot-lan-chu="Đặt hàng">
                             Đặt hàng
                         </button>
                     </form>
