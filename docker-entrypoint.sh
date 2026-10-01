@@ -37,6 +37,13 @@ if [ -n "$APP_DEBUG" ]; then
     sed -i "s|^APP_DEBUG=.*|APP_DEBUG=${APP_DEBUG}|" /var/www/html/.env
 fi
 
+FEATURE_CART="${FEATURE_CART:-true}"
+if grep -q "^FEATURE_CART=" /var/www/html/.env; then
+    sed -i "s|^FEATURE_CART=.*|FEATURE_CART=${FEATURE_CART}|" /var/www/html/.env
+else
+    echo "FEATURE_CART=${FEATURE_CART}" >> /var/www/html/.env
+fi
+
 # ==============================================================================
 # 3. Tạo symlink public/storage nếu chưa có
 # ==============================================================================

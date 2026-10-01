@@ -37,6 +37,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('welcome');
 
+Route::post('che-do-hien-thi', [DisplaySchemeController::class, 'update'])
+    ->name('shop.display-scheme');
+
 
 Route::prefix('danh-muc')
     ->name('shop.categories.')
@@ -171,8 +174,6 @@ if (config('features.cart')) {
                 ->name('fee');
         });
 
-    Route::post('che-do-hien-thi', [DisplaySchemeController::class, 'update'])
-        ->name('shop.display-scheme');
 
     Route::get('danh-gia-cua-toi', [ReviewController::class, 'mine'])
         ->middleware(['auth', 'verified'])
