@@ -44,6 +44,27 @@ else
     echo "FEATURE_CART=${FEATURE_CART}" >> /var/www/html/.env
 fi
 
+if [ -n "$APP_URL" ]; then
+    sed -i "s|^APP_URL=.*|APP_URL=${APP_URL}|" /var/www/html/.env
+fi
+
+if [ -n "$GEMINI_API_KEY" ]; then
+    echo "[Render Entrypoint] Đã nhận cấu hình GEMINI_API_KEY cho Trợ lý AI."
+    if grep -q "^GEMINI_API_KEY=" /var/www/html/.env; then
+        sed -i "s|^GEMINI_API_KEY=.*|GEMINI_API_KEY=${GEMINI_API_KEY}|" /var/www/html/.env
+    else
+        echo "GEMINI_API_KEY=${GEMINI_API_KEY}" >> /var/www/html/.env
+    fi
+fi
+
+if [ -n "$GEMINI_MODEL" ]; then
+    if grep -q "^GEMINI_MODEL=" /var/www/html/.env; then
+        sed -i "s|^GEMINI_MODEL=.*|GEMINI_MODEL=${GEMINI_MODEL}|" /var/www/html/.env
+    else
+        echo "GEMINI_MODEL=${GEMINI_MODEL}" >> /var/www/html/.env
+    fi
+fi
+
 # ==============================================================================
 # 3. Tạo symlink public/storage nếu chưa có
 # ==============================================================================
@@ -103,6 +124,12 @@ fi
 # Nạp toàn bộ dữ liệu mẫu (sản phẩm, danh mục, blog, đánh giá, cộng đồng, khuyến mãi, kho bãi)
 echo "[Render Entrypoint] Đảm bảo nạp đầy đủ dữ liệu mẫu (DatabaseSeeder)..."
 php artisan db:seed --force || true
+
+# Gán hình ảnh sản phẩm, danh mục và thư viện ảnh từ storage
+echo "[Render Entrypoint] Gán hình ảnh cho danh mục và sản phẩm..."
+php artisan categories:link-photos --force || true
+php artisan products:link-photos --force || true
+php artisan products:link-gallery || true
 
 
 # ==============================================================================

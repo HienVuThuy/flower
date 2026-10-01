@@ -40,5 +40,10 @@ class DatabaseSeeder extends Seeder
             ChuongTrinhKhuyenMaiMauSeeder::class,
             DuLieuMauKhoSeeder::class,
         ]);
+
+        // Gán ảnh mẫu cho danh mục và sản phẩm
+        \Illuminate\Support\Facades\Artisan::call('categories:link-photos', ['--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('products:link-photos', ['--force' => true]);
+        \Illuminate\Support\Facades\Artisan::call('products:link-gallery');
     }
 }
