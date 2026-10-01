@@ -66,6 +66,12 @@ class ReviewSampleSeeder extends Seeder
             return;
         }
 
+        if (Review::query()->exists()) {
+            $this->command?->info('Đã có đánh giá mẫu trong hệ thống — bỏ qua.');
+
+            return;
+        }
+
         $customers = collect(self::CUSTOMERS)->map(
             fn (array $row) => $this->customer($row[0], $row[1])
         );

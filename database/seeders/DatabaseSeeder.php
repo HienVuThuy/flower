@@ -11,29 +11,34 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * Seed the application's database.
+     * Seed the application's database with complete sample data.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        User::firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'name' => 'Khách hàng thử nghiệm',
+                'password' => 'password',
+            ]
+        );
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            AdminUserSeeder::class,
+            CatalogSeeder::class,
+            ExtraCatalogSeeder::class,
+            SupplyCatalogSeeder::class,
+            PlantAdvisorSeeder::class,
+            PlantTaxonomySeeder::class,
+            PlantTraitSeeder::class,
+            GiftOccasionSeeder::class,
+            TaxClassSeeder::class,
+            BlogSeeder::class,
+            ReviewSampleSeeder::class,
+            CommunityPostSampleSeeder::class,
+            BoardingSampleSeeder::class,
+            ChuongTrinhKhuyenMaiMauSeeder::class,
+            DuLieuMauKhoSeeder::class,
         ]);
-
-        $this->call(AdminUserSeeder::class);
-
-        $this->call(CatalogSeeder::class);
-
-        $this->call(SupplyCatalogSeeder::class);
-
-        $this->call(PlantAdvisorSeeder::class);
-
-        $this->call(PlantTaxonomySeeder::class);
-        $this->call(PlantTraitSeeder::class);
-        $this->call(GiftOccasionSeeder::class);
-
-        $this->call(TaxClassSeeder::class);
     }
 }

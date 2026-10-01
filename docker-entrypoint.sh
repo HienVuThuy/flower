@@ -100,16 +100,9 @@ else
     fi
 fi
 
-# Nạp dữ liệu sản phẩm & danh mục mẫu (các seeder này đều tự kiểm tra exists nên không bao giờ bị trùng lặp)
-echo "[Render Entrypoint] Đảm bảo dữ liệu mẫu danh mục và sản phẩm..."
-php artisan db:seed --class=AdminUserSeeder --force || true
-php artisan db:seed --class=CatalogSeeder --force || true
-php artisan db:seed --class=SupplyCatalogSeeder --force || true
-php artisan db:seed --class=PlantAdvisorSeeder --force || true
-php artisan db:seed --class=PlantTaxonomySeeder --force || true
-php artisan db:seed --class=PlantTraitSeeder --force || true
-php artisan db:seed --class=GiftOccasionSeeder --force || true
-php artisan db:seed --class=TaxClassSeeder --force || true
+# Nạp toàn bộ dữ liệu mẫu (sản phẩm, danh mục, blog, đánh giá, cộng đồng, khuyến mãi, kho bãi)
+echo "[Render Entrypoint] Đảm bảo nạp đầy đủ dữ liệu mẫu (DatabaseSeeder)..."
+php artisan db:seed --force || true
 
 
 # ==============================================================================
