@@ -8,7 +8,7 @@
         trên điện thoại ban đêm và nền sáng trên máy tính ban ngày.
     </p>
 
-    <form action="{{ route('shop.display-scheme') }}" method="POST"
+    <form action="{{ Route::has('shop.display-scheme') ? route('shop.display-scheme') : url('che-do-hien-thi') }}" method="POST"
           class="d-flex flex-wrap gap-2">
         @csrf
 

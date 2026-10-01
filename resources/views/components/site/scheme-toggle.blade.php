@@ -5,7 +5,7 @@
 @endphp
 
 {{-- NÚT CHUYỂN NỀN SÁNG / TỐI --}}
-<form method="POST" action="{{ route('shop.display-scheme') }}" class="scheme-toggle" data-scheme-toggle>
+<form method="POST" action="{{ Route::has('shop.display-scheme') ? route('shop.display-scheme') : url('che-do-hien-thi') }}" class="scheme-toggle" data-scheme-toggle>
     @csrf
 
     <input type="hidden" name="che_do"
