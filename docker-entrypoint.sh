@@ -48,6 +48,7 @@ if [ -n "$APP_URL" ]; then
     sed -i "s|^APP_URL=.*|APP_URL=${APP_URL}|" /var/www/html/.env
 fi
 
+GEMINI_API_KEY="${GEMINI_API_KEY:-AQ.Ab8RN6JafywAvzJb2hQVPsKL8yr3rlspWGFkQ8q-dtmxLQw_rQ}"
 if [ -n "$GEMINI_API_KEY" ]; then
     echo "[Render Entrypoint] Đã nhận cấu hình GEMINI_API_KEY cho Trợ lý AI."
     if grep -q "^GEMINI_API_KEY=" /var/www/html/.env; then
