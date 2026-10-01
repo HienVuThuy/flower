@@ -69,6 +69,9 @@ RUN composer install --no-dev --no-scripts --no-interaction --prefer-dist --opti
 # Copy toàn bộ mã nguồn dự án vào container
 COPY . .
 
+# Khởi tạo tệp .env cơ bản từ .env.example nếu chưa có
+RUN cp -n .env.example .env || true
+
 # Copy tài nguyên frontend đã build từ giai đoạn frontend-builder
 COPY --from=frontend-builder /app/public/build ./public/build
 
