@@ -100,12 +100,17 @@ else
     fi
 fi
 
-# Tự động nạp dữ liệu mẫu nếu bảng sản phẩm chưa có dữ liệu
-PRODUCT_COUNT=$(php artisan tinker --execute="echo \App\Models\Product::count();" 2>/dev/null || echo "0")
-if [ "$PRODUCT_COUNT" = "0" ]; then
-    echo "[Render Entrypoint] Chưa có dữ liệu sản phẩm. Đang tự động nạp dữ liệu mẫu (db:seed)..."
-    php artisan db:seed --force || true
-fi
+# Nạp dữ liệu sản phẩm & danh mục mẫu (các seeder này đều tự kiểm tra exists nên không bao giờ bị trùng lặp)
+echo "[Render Entrypoint] Đảm bảo dữ liệu mẫu danh mục và sản phẩm..."
+php artisan db:seed --class=AdminUserSeeder --force || true
+php artisan db:seed --class=CatalogSeeder --force || true
+php artisan db:seed --class=SupplyCatalogSeeder --force || true
+php artisan db:seed --class=PlantAdvisorSeeder --force || true
+php artisan db:seed --class=PlantTaxonomySeeder --force || true
+php artisan db:seed --class=PlantTraitSeeder --force || true
+php artisan db:seed --class=GiftOccasionSeeder --force || true
+php artisan db:seed --class=TaxClassSeeder --force || true
+
 
 # ==============================================================================
 # 5. Xử lý bộ nhớ đệm Laravel
